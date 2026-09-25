@@ -179,7 +179,7 @@ gate.addEventListener("click", (event) => { if (event.target === gate && canClos
 document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !gate.hidden && canClose()) closeAccount(); });
 document.addEventListener("click", (event) => {
   if (signedInUser) return;
-  const protectedAction = event.target.closest('[data-go="find"],[data-go="analyser"],[data-go="analyse"],[data-go="deals"],[data-plan],#pwPro,#pwMax');
+  const protectedAction = event.target.closest('[data-go="find"],[data-go="analyser"],[data-go="analyse"],[data-go="deals"],[data-go="community"],[data-plan],#pwPro,#pwMax');
   if (!protectedAction) return;
   event.preventDefault();
   event.stopImmediatePropagation();
