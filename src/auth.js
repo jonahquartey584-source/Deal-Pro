@@ -1,10 +1,12 @@
 import {
   AuthError,
   acceptInvite,
+  getSettings,
   getUser,
   handleAuthCallback,
   login,
   logout,
+  oauthLogin,
   requestPasswordRecovery,
   signup,
   updateUser,
@@ -18,6 +20,7 @@ let mode = "login";
 let saveTimer;
 let signedInUser = null;
 let inviteToken = null;
+let googleEnabled = false;
 
 function showMessage(text, error = false) {
   message.textContent = text;
@@ -37,6 +40,7 @@ function setMode(next) {
   $("#forgotPassword").hidden = mode !== "login";
   $("#authSwitch").hidden = settingPassword;
   $("#authClose").hidden = settingPassword;
+  $("#authOauth").hidden = settingPassword || !googleEnabled;
   $("#authPassword").autocomplete = mode === "login" ? "current-password" : "new-password";
   $("#authPasswordLabel").textContent = settingPassword ? "New password" : "Password";
   $("#authSubmit").textContent = { signup: "Create account", reset: "Save new password", invite: "Set password" }[mode] || "Sign in";
@@ -106,6 +110,11 @@ function signedOut() {
 }
 
 async function boot() {
+  // Show "Continue with Google" only when Google is switched on in Netlify Identity.
+  getSettings().then((settings) => {
+    googleEnabled = !!settings.providers?.google;
+    $("#authOauth").hidden = !googleEnabled || mode === "reset" || mode === "invite";
+  }).catch(() => {});
   let callback = null;
   try {
     callback = await handleAuthCallback();
@@ -170,6 +179,11 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
+$("#authGoogle").addEventListener("click", () => {
+  showMessage("Taking you to Google…");
+  localStorage.removeItem("dealpremium:active-user");
+  try { oauthLogin("google"); } catch (error) { showMessage("Google sign-in isn't available right now. Use your email instead.", true); }
+});
 $("#authSwitch").addEventListener("click", () => setMode(mode === "login" ? "signup" : "login"));
 $("#authClose").addEventListener("click", closeAccount);
 $("#homeSignIn").addEventListener("click", () => openAccount("login"));
