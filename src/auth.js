@@ -126,6 +126,7 @@ async function prepareAccount(user) {
   gate.hidden = true;
   document.body.classList.remove("auth-pending");
   document.body.classList.add("simple-mode");
+  window.dispatchEvent(new Event("dealpro:signed-in"));
   return true;
 }
 

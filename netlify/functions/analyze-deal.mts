@@ -1,72 +1,123 @@
-import OpenAI from "openai";
-import { getStore } from "@netlify/blobs";
 import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
-
-const ADMIN_EMAIL = "jonahquartey584@gmail.com";
-const FREE_ANALYSES = 2;
+import { accounts, jobs, currentWeek, refundJob, ADMIN_EMAIL, FREE_ANALYSES, LEVELS, WEEK_MS, WEEKLY_CREDITS, type LevelId, type Usage } from "../lib/ai.mts";
 
 const json = (data: unknown, status = 200) => Response.json(data, {
   status,
   headers: { "Cache-Control": "no-store" },
 });
 
+async function loadAccount(userId: string) {
+  const store = accounts();
+  const state = await store.get(`users/${userId}/state`, { type: "json" }) as Record<string, unknown> | null;
+  const usage = (await store.get(`users/${userId}/ai-usage`, { type: "json" }) as Usage | null) || {};
+  return { store, state, usage };
+}
+
+function creditSummary(isAdmin: boolean, plan: string, usage: Usage) {
+  const free = !isAdmin && plan === "Free";
+  const week = currentWeek(usage);
+  const weekly = isAdmin ? null : WEEKLY_CREDITS[plan] ?? 0;
+  return {
+    plan: isAdmin ? "Admin" : plan,
+    free,
+    freeLeft: free ? Math.max(0, FREE_ANALYSES - (Number(usage.count) || 0)) : null,
+    weeklyCredits: weekly,
+    creditsLeft: weekly === null ? null : Math.max(0, weekly - week.weekUsed),
+    resetsAt: week.weekStart ? new Date(Date.parse(week.weekStart) + WEEK_MS).toISOString() : null,
+    levels: Object.fromEntries(Object.entries(LEVELS).map(([id, l]) => [id, { credits: l.credits }])),
+  };
+}
+
 export default async (request: Request, _context: Context) => {
   const user = await getUser();
   if (!user) return json({ error: "Please sign in to analyse a deal." }, 401);
-
-  const body = await request.json().catch(() => null) as { deal?: string } | null;
-  const deal = body?.deal?.trim();
-  if (!deal) return json({ error: "Paste the property advert or deal details first." }, 400);
-  if (deal.length > 30_000) return json({ error: "Deal details must be under 30,000 characters." }, 413);
-
-  // Plan and free-usage limits are checked here, where the browser can't change them.
-  const store = getStore({ name: "deal-premium-accounts", consistency: "strong" });
   const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
-  const state = await store.get(`users/${user.id}/state`, { type: "json" }) as Record<string, unknown> | null;
+  const { store, state, usage } = await loadAccount(user.id);
+  const plan = String(state?.plan || "Free");
   if (!isAdmin && state?.accountEnabled === false) {
     return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
   }
-  const usageKey = `users/${user.id}/ai-usage`;
-  const usage = (await store.get(usageKey, { type: "json" }) as { count?: number } | null) || {};
-  const used = Number(usage.count) || 0;
-  const onFreePlan = !isAdmin && (!state?.plan || state.plan === "Free");
-  if (onFreePlan && used >= FREE_ANALYSES) {
-    return json({ error: `You've used your ${FREE_ANALYSES} free analyses. Subscribe for unlimited analyses.` }, 402);
+
+  if (request.method === "GET") {
+    const jobId = new URL(request.url).searchParams.get("job");
+    if (!jobId) return json(creditSummary(isAdmin, plan, usage));
+    if (!/^[0-9a-f-]{36}$/.test(jobId)) return json({ error: "Unknown analysis." }, 404);
+    const job = await jobs().get(jobId, { type: "json" }) as Record<string, unknown> | null;
+    if (!job || job.userId !== user.id) return json({ error: "Unknown analysis." }, 404);
+    // A job that never started or stalled is failed and refunded after 16 minutes.
+    if (job.status !== "done" && job.status !== "error" && Date.now() - Date.parse(String(job.createdAt)) > 16 * 60 * 1000) {
+      job.error = "The analysis took too long. Your credits have not been used; please try again.";
+      await refundJob(jobId, job, String(job.error));
+      job.status = "error";
+    }
+    // Finished jobs are deleted once collected, so the deal text isn't kept.
+    if (job.status === "done" || job.status === "error") await jobs().delete(jobId);
+    return json({
+      status: job.status,
+      analysis: job.status === "done" ? job.analysis : undefined,
+      error: job.error,
+      credits: creditSummary(isAdmin, plan, (await store.get(`users/${user.id}/ai-usage`, { type: "json" }) as Usage | null) || {}),
+    });
   }
 
+  if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
+
+  const body = await request.json().catch(() => null) as { deal?: string; level?: string } | null;
+  const deal = body?.deal?.trim();
+  const level = (body?.level && body.level in LEVELS ? body.level : "quick") as LevelId;
+  if (!deal) return json({ error: "Paste the property advert or deal details first." }, 400);
+  if (deal.length > 30_000) return json({ error: "Deal details must be under 30,000 characters." }, 413);
   if (!process.env.OPENAI_API_KEY) {
     console.error("OPENAI_API_KEY is not set");
     return json({ error: "The AI analyser is temporarily unavailable. Please try again later." }, 503);
   }
 
-  let analysis: unknown;
-  try {
-    const client = new OpenAI();
-    const completion = await client.chat.completions.create({
-      model: "gpt-5-mini",
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: `You are Deal Pro's UK property deal analyst. Analyse rent-to-rent and rent-to-serviced-accommodation opportunities conservatively. Never invent missing figures or claim that legal/planning/licensing checks are complete. Return valid JSON with exactly these keys: verdict (one of Strong, Potential, Weak, Insufficient information), summary (plain English, max 80 words), score (integer 0-100), monthly_profit (string), upfront_cash (string), break_even (string), risks (array of short strings), missing_information (array of short strings), next_actions (array of short strings). Clearly flag the London 90-night rule when relevant and tell the user to verify licensing, planning, lease/mortgage, insurance, landlord consent, and figures with qualified professionals.`,
-        },
-        { role: "user", content: deal },
-      ],
-    });
-    const content = completion.choices[0]?.message?.content;
-    if (!content) return json({ error: "The AI did not return an analysis. Please try again." }, 502);
-    analysis = JSON.parse(content);
-  } catch (error) {
-    console.error("Deal analysis failed", error);
-    return json({ error: "The analysis could not be completed. Please try again in a moment." }, 502);
+  // Limits are checked and credits reserved here, where the browser can't change them.
+  const next: Usage = { ...usage };
+  const cost = isAdmin ? 0 : LEVELS[level].credits;
+  if (!isAdmin && plan === "Free") {
+    if (level !== "quick") return json({ error: "Upgrade to use the deeper analysis levels." }, 402);
+    if ((Number(usage.count) || 0) >= FREE_ANALYSES) {
+      return json({ error: `You've used your ${FREE_ANALYSES} free analyses. Subscribe for unlimited analyses.` }, 402);
+    }
+    next.count = (Number(usage.count) || 0) + 1;
+  } else if (cost > 0) {
+    const week = currentWeek(usage);
+    const allowance = WEEKLY_CREDITS[plan] ?? 0;
+    if (week.weekUsed + cost > allowance) {
+      return json({ error: `Not enough credits left this week for this level (it uses ${cost}). Try a lighter level, or upgrade for more credits.` }, 402);
+    }
+    next.weekStart = week.weekStart || new Date().toISOString();
+    next.weekUsed = week.weekUsed + cost;
+    next.count = (Number(usage.count) || 0) + 1;
+  } else {
+    next.count = (Number(usage.count) || 0) + 1;
+  }
+  await store.setJSON(`users/${user.id}/ai-usage`, { ...next, updatedAt: new Date().toISOString() });
+
+  const jobId = crypto.randomUUID();
+  const runToken = crypto.randomUUID();
+  await jobs().setJSON(jobId, {
+    userId: user.id, level, deal, cost, freeUse: !isAdmin && plan === "Free",
+    runToken, status: "queued", createdAt: new Date().toISOString(),
+  });
+
+  const run = await fetch(new URL("/api/analyze-deal-run", request.url), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ jobId, runToken }),
+  }).catch((error) => { console.error("Could not start analysis", error); return null; });
+  if (!run || run.status >= 400) {
+    await store.setJSON(`users/${user.id}/ai-usage`, { ...usage, updatedAt: new Date().toISOString() });
+    await jobs().delete(jobId);
+    return json({ error: "The analysis could not be started. Please try again." }, 502);
   }
 
-  await store.setJSON(usageKey, { count: used + 1, updatedAt: new Date().toISOString() });
-  return json({ analysis });
+  return json({ jobId, credits: creditSummary(isAdmin, plan, next) }, 202);
 };
 
 export const config: Config = {
   path: "/api/analyze-deal",
-  method: "POST",
+  method: ["GET", "POST"],
 };

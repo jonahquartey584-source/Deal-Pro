@@ -667,6 +667,11 @@ td.t{text-align:right;color:var(--ink-2)}
 @media(max-width:560px){.tutorial-callout{align-items:stretch;flex-direction:column;gap:14px}.tutorial-callout-action{justify-content:center;width:100%}}
 
 /* AI-first analyser */
+.ai-levels{border:0;padding:0;margin:4px 0 14px;min-width:0}.ai-levels legend{font-size:13px;color:var(--ink-2);margin-bottom:8px;padding:0}
+.ai-level-opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.ai-level{position:relative;display:grid;gap:3px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:var(--surface)}
+.ai-level input{position:absolute;opacity:0;pointer-events:none}.ai-level b{font-size:14px}.ai-level span{font-size:12px;color:var(--ink-2)}.ai-level:has(input:checked){border-color:var(--brand);box-shadow:0 0 0 1px var(--brand) inset}
+.ai-level:has(input:focus-visible){outline:2px solid var(--brand);outline-offset:2px}.ai-level.locked{opacity:.55}.ai-credits{font-size:12px;color:var(--ink-2);margin:8px 0 0}
+@media(max-width:560px){.ai-level-opts{grid-template-columns:1fr}}
 .ai-simple{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:18px;margin-bottom:22px}
 .ai-entry,.ai-output{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:22px}.ai-entry h2,.ai-output h2{font-size:18px;margin-bottom:6px}.ai-entry>p,.ai-output>p{color:var(--muted);margin-bottom:16px}
 .ai-entry textarea{min-height:250px;resize:vertical}.ai-entry .btn{margin-top:12px}.ai-output{min-height:360px}.ai-output.empty{display:grid;place-items:center;text-align:center}.ai-output.empty>div{max-width:34ch}.ai-score{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:15px;border-bottom:1px solid var(--line)}.ai-score strong{font-size:30px}.ai-verdict{font-weight:600}.ai-verdict.strong{color:var(--good)}.ai-verdict.weak{color:var(--bad)}
@@ -861,6 +866,7 @@ td.t{text-align:right;color:var(--ink-2)}
         <h2>Analyse a deal with AI</h2>
         <p>Paste the advert, landlord message or deal details. Include the rent, deposit, area and expected nightly rate when you have them.</p>
         <label class="f"><span>Deal information</span><textarea class="inp" id="aiDealInput" placeholder="Paste the full property advert or describe the deal here…"></textarea></label>
+        <fieldset class="ai-levels" id="aiLevels"><legend>Power level</legend><div class="ai-level-opts" id="aiLevelOpts"></div><p class="ai-credits" id="aiCredits"></p></fieldset>
         <button class="btn primary block" id="analyseWithAI" type="button">Analyse with AI</button>
         <p class="note" id="aiDealStatus" role="status">The AI will explain its verdict and clearly show anything it could not verify.</p>
       </div>
@@ -1337,7 +1343,7 @@ function go(v,step){const m=VIEWS[v]||VIEWS.home;v=m[0];step=step||m[1];const ch
   const apply=()=>{curView=v;document.documentElement.dataset.page=v;
     $$('.tab').forEach(t=>{if(t.dataset.v===v)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current')});
     $$('[data-view]').forEach(s=>s.hidden=s.dataset.view!==v);
-    if(v==='home')renderHome();if(v==='find')renderFind();if(v==='analyser')openAnalyser(step||curStep());if(v==='deals')renderDeals();if(v==='community')renderCommunity();if(v==='plans')renderPlans();
+    if(v==='home')renderHome();if(v==='find')renderFind();if(v==='analyser'){openAnalyser(step||curStep());loadAICredits()}if(v==='deals')renderDeals();if(v==='community')renderCommunity();if(v==='plans')renderPlans();
     try{sessionStorage.setItem('dealpro:tab',v)}catch(e){}
     const nav=$('.nav'),act=$(`.tab[data-v="${v}"]`);if(nav&&act&&nav.scrollWidth>nav.clientWidth)nav.scrollLeft=Math.max(0,act.offsetLeft-nav.offsetLeft-24);
     if(v==='plans'&&step==='usage'){const us=$('#usage');if(us)setTimeout(()=>us.scrollIntoView({block:'start',behavior:reduced()?'auto':'smooth'}),30)}else window.scrollTo(0,0);heroUpdate();placeInd()};
@@ -1590,21 +1596,21 @@ function renderPlans(){
   if(!team){const mt=S.maxTier==='20'?'20':'5',mid='Max'+mt;
     box.innerHTML=`<div class="plan"><div class="plan-h"><h3>Free</h3></div><p class="plan-from">Try Deal Pro</p>
       <div class="price"><span class="mono">£0</span><span class="per">per month</span></div><div class="bill-note">Free forever</div>
-      <div class="lead">Limited usage</div>${feats(['3 Deal Finder searches a week','2 AI deal analyses','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
+      <div class="lead">Limited usage</div>${feats(['3 Deal Finder searches a week','2 Quick AI deal analyses','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
     <div class="plan feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div><p class="plan-from">For everyday sourcing</p>
       <div class="price"><span class="mono">£${ann?33:39}</span><span class="per">per month</span></div><div class="bill-note">${ann?'Billed annually (£396 upfront)':'Billed monthly'}</div>
-      <div class="lead">Everything in Free, plus:</div>${feats(['Unlimited deal analyses','More usage','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
+      <div class="lead">Everything in Free, plus:</div>${feats(['Unlimited Quick AI analyses','40 Standard/Deep credits a week','More usage','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
     <div class="plan"><div class="plan-h"><h3>Max</h3></div><p class="plan-from">From £100/month · For sourcers who work deals all day</p>
       <div class="seg segb tier" role="group" aria-label="Max usage tier"><button id="maxT5" data-tier="5" aria-pressed="${mt==='5'}">5x</button><button id="maxT20" data-tier="20" aria-pressed="${mt==='20'}">20x</button></div>
       <div class="price"><span class="mono">£${mt==='20'?200:100}</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
-      <div class="lead">Everything in Premium, plus:</div>${feats([`${mt}x more usage than Premium per session`,'Higher limits','Early access to new features','Priority at peak times'])}${planBtn(mid)}</div>`}
+      <div class="lead">Everything in Premium, plus:</div>${feats([`${mt}x more usage than Premium per session`,`${mt==='20'?800:200} Standard/Deep credits a week`,'Higher limits','Early access to new features','Priority at peak times'])}${planBtn(mid)}</div>`}
   else{const n=S.seats,sd=ann?20:25,pr=ann?100:125;const tot=x=>ann?`${gbp(x*n*12)} a year for ${n} seats`:`${gbp(x*n)} a month for ${n} seats`;
     box.innerHTML=`<div class="plan"><div class="plan-h"><h3>Standard seat</h3></div><p class="plan-from">For sourcing teams</p>
       <div class="price"><span class="mono">£${sd}</span><span class="per">per seat / month</span></div><div class="bill-note">${ann?'Billed annually':'Billed monthly'} · ${tot(sd)}</div>
-      <div class="lead">Everything in Premium, plus:</div>${feats(['More usage than Premium','Central billing','Admin controls','Shared deals'])}${planBtn('TeamStd',true)}</div>
+      <div class="lead">Everything in Premium, plus:</div>${feats(['More usage than Premium','40 Standard/Deep credits a week','Central billing','Admin controls','Shared deals'])}${planBtn('TeamStd',true)}</div>
     <div class="plan"><div class="plan-h"><h3>Premium seat</h3></div><p class="plan-from">For the heaviest users on your team</p>
       <div class="price"><span class="mono">£${pr}</span><span class="per">per seat / month</span></div><div class="bill-note">${ann?'Billed annually':'Billed monthly'} · ${tot(pr)}</div>
-      <div class="lead">Everything in Standard, plus:</div>${feats(['5x more usage than Standard seats'])}${planBtn('TeamPrem')}</div>`}
+      <div class="lead">Everything in Standard, plus:</div>${feats(['5x more usage than Standard seats','200 Standard/Deep credits a week'])}${planBtn('TeamPrem')}</div>`}
   let st=$('#seatsRow');if(team&&!st){box.insertAdjacentHTML('beforebegin','<div class="seats" id="seatsRow"><span>Seats</span><span class="stepper"><button id="seatDec" aria-label="Fewer seats">−</button><input type="number" id="seatN" min="5" max="500" aria-label="Number of seats"><button id="seatInc" aria-label="More seats">+</button></span><span class="muted">Minimum 5 seats</span></div>');st=$('#seatsRow')}
   if(st){st.hidden=!team;const sn=$('#seatN');if(document.activeElement!==sn)sn.value=S.seats}
   renderUsage()}
@@ -1965,11 +1971,33 @@ function renderAIAnalysis(a){
   const verdict=String(a.verdict||'Analysis complete'),tone=/strong/i.test(verdict)?'strong':/weak/i.test(verdict)?'weak':'';
   out.className='ai-output';out.innerHTML=`<div class="ai-score"><div><div class="ai-verdict ${tone}">${esc(verdict)}</div><p>${esc(String(a.summary||''))}</p></div><strong>${Math.max(0,Math.min(100,+a.score||0))}<span class="muted" style="font-size:13px">/100</span></strong></div>
     <div class="ai-metrics"><div class="ai-metric"><span>Monthly profit</span><b>${esc(String(a.monthly_profit||'Not enough information'))}</b></div><div class="ai-metric"><span>Upfront cash</span><b>${esc(String(a.upfront_cash||'Not enough information'))}</b></div><div class="ai-metric"><span>Break-even</span><b>${esc(String(a.break_even||'Not enough information'))}</b></div></div>
-    ${aiList('Important risks',a.risks)}${aiList('Missing information',a.missing_information)}${aiList('What to do next',a.next_actions)}`}
+    ${Array.isArray(a.occupancy_scenarios)&&a.occupancy_scenarios.length?aiList('Occupancy scenarios',a.occupancy_scenarios.map(o=>`${o.occupancy}: ${o.monthly_profit}`)):''}${Array.isArray(a.stress_tests)&&a.stress_tests.length?aiList('Stress tests',a.stress_tests.map(t=>`${t.scenario}: ${t.monthly_profit}${t.still_works===false?' (fails)':t.still_works?' (still works)':''}`)):''}${aiList('Important risks',a.risks)}${aiList('Assumptions',a.assumptions)}${aiList('Missing information',a.missing_information)}${aiList('What to do next',a.next_actions)}`}
 renderAIAnalysis(S.deal.aiAnalysis);
+/* power levels: ids must match LEVELS in netlify/lib/ai.mts */
+const AI_LEVELS=[{id:'quick',name:'Quick',desc:'Fast first look',time:'~10 sec'},{id:'standard',name:'Standard',desc:'Full analysis',time:'~30 sec'},{id:'deep',name:'Deep',desc:'Stress-tested, thorough',time:'1–2 min'}];
+const AIC={info:null,level:(()=>{try{return localStorage.getItem('dealpro:ai-level')||'quick'}catch(e){return 'quick'}})()};
+function renderAILevels(){const i=AIC.info,free=i&&i.free;if(free&&AIC.level!=='quick')AIC.level='quick';
+  $('#aiLevelOpts').innerHTML=AI_LEVELS.map(l=>{const cr=i&&i.levels&&i.levels[l.id]?i.levels[l.id].credits:null,locked=free&&l.id!=='quick';
+    const cost=locked?'Paid plans':cr==null?'':cr===0?(free?'Free analysis':'Unlimited'):`${cr} credits`;
+    return `<label class="ai-level${locked?' locked':''}"><input type="radio" name="aiLevel" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b>${esc(l.name)}</b><span>${esc(l.desc)} · ${esc(l.time)}</span><span>${esc(cost)}</span></label>`}).join('');
+  const c=$('#aiCredits');if(!i){c.textContent='';return}
+  c.textContent=i.plan==='Admin'?'Admin: unlimited credits.':i.free?`Free plan: ${i.freeLeft} of 2 free analyses left. Upgrade for Standard and Deep.`
+    :`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}. Quick is unlimited.`}
+async function loadAICredits(){if(!document.body.dataset.userId)return;try{const r=await fetch('/api/analyze-deal',{credentials:'same-origin'});if(r.ok){AIC.info=await r.json();renderAILevels()}}catch(e){}}
+$('#aiLevelOpts').addEventListener('change',e=>{if(e.target.name==='aiLevel'){AIC.level=e.target.value;try{localStorage.setItem('dealpro:ai-level',AIC.level)}catch(err){}}});
+renderAILevels();window.addEventListener('dealpro:signed-in',loadAICredits);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 $('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInput').value.trim(),btn=$('#analyseWithAI'),status=$('#aiDealStatus');if(!input){status.textContent='Paste the deal information first.';$('#aiDealInput').focus();return}
-  btn.disabled=true;btn.textContent='Analysing…';status.textContent='The AI is checking the numbers, risks and missing information…';
-  try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({deal:input})});const data=await r.json();if(!r.ok)throw new Error(data.error||'Analysis failed.');S.deal.aiAnalysis=data.analysis;S.deal.sourceText=input;save();renderAIAnalysis(data.analysis);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
+  const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];
+  btn.disabled=true;btn.textContent='Analysing…';status.textContent=`${lv.name} analysis started. This usually takes ${lv.time}.`;
+  try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({deal:input,level:lv.id})});const start=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(start.error||'Analysis failed.');if(start.credits){AIC.info=start.credits;renderAILevels()}
+    const t0=Date.now();let data;
+    for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(start.jobId),{credentials:'same-origin'});data=await p.json().catch(()=>({}));
+      if(!p.ok)throw new Error(data.error||'Analysis failed.');if(data.credits){AIC.info=data.credits;renderAILevels()}
+      if(data.status==='done')break;if(data.status==='error')throw new Error(data.error||'Analysis failed.');
+      status.textContent=`${lv.name} analysis in progress… ${Math.round((Date.now()-t0)/1000)}s`;if(Date.now()-t0>17*60e3)throw new Error('The analysis is taking too long. Please try again.')}
+    S.deal.aiAnalysis=data.analysis;S.deal.sourceText=input;save();renderAIAnalysis(data.analysis);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
   catch(e){status.textContent=e.message||'The analysis could not be completed. Please try again.'}finally{btn.disabled=false;btn.textContent='Analyse with AI'}});
 $('#advancedToggle').addEventListener('click',e=>{const on=document.body.classList.toggle('advanced-mode');e.currentTarget.setAttribute('aria-expanded',String(on));e.currentTarget.textContent=on?'Hide advanced controls':'Show advanced controls'});
 window.addEventListener('dealpro:save-error',()=>toast('Your latest change could not be saved. Check your connection and try again.'));
