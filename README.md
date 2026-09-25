@@ -7,7 +7,7 @@ Find UK rent-to-rent and serviced accommodation deals and analyse them with AI.
 This project is deployed on Netlify.
 
 - **Netlify project dashboard:** https://app.netlify.com/projects/deal-pro-app/overview
-- **Live site:** https://deal-pro-app.netlify.app
+- **Live site:** https://usedealpro.com (also https://deal-pro-app.netlify.app, which redirects)
 
 Deploy from this folder with the Netlify CLI:
 

@@ -4,4 +4,4 @@ Disallow: /admin.html
 Disallow: /scripts/
 Disallow: /src/
 
-Sitemap: https://deal-pro-app.netlify.app/sitemap.xml
+Sitemap: https://usedealpro.com/sitemap.xml
