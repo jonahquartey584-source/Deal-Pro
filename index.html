@@ -1129,7 +1129,7 @@ td.t{text-align:right;color:var(--ink-2)}
   <div class="dr-body">
     <div class="pw-opts">
       <div class="pw-opt feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div>
-        <div class="price"><span class="mono" id="pwProPrice">£20</span><span class="per">per month</span></div><div class="pw-note" id="pwProNote">or £17/month billed annually</div>
+        <div class="price"><span class="mono" id="pwProPrice">£39</span><span class="per">per month</span></div><div class="pw-note" id="pwProNote">or £33/month billed annually</div>
         <ul class="ticks"><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>Unlimited deal analyses</span></li><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>More usage</span></li><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>AI due diligence and deal packs</span></li></ul>
         <button class="btn primary block" id="pwPro">Subscribe to Premium</button></div>
       <div class="pw-opt"><div class="plan-h"><h3>Max</h3></div>
@@ -1583,7 +1583,7 @@ function renderPlans(){
       <div class="price"><span class="mono">£0</span><span class="per">per month</span></div><div class="bill-note">Free forever</div>
       <div class="lead">Limited usage</div>${feats(['2 AI deal analyses','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
     <div class="plan feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div><p class="plan-from">For everyday sourcing</p>
-      <div class="price"><span class="mono">£${ann?17:20}</span><span class="per">per month</span></div><div class="bill-note">${ann?'Billed annually (£200 upfront)':'Billed monthly'}</div>
+      <div class="price"><span class="mono">£${ann?33:39}</span><span class="per">per month</span></div><div class="bill-note">${ann?'Billed annually (£396 upfront)':'Billed monthly'}</div>
       <div class="lead">Everything in Free, plus:</div>${feats(['Unlimited deal analyses','More usage','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
     <div class="plan"><div class="plan-h"><h3>Max</h3></div><p class="plan-from">From £100/month · For sourcers who work deals all day</p>
       <div class="seg segb tier" role="group" aria-label="Max usage tier"><button id="maxT5" data-tier="5" aria-pressed="${mt==='5'}">5x</button><button id="maxT20" data-tier="20" aria-pressed="${mt==='20'}">20x</button></div>
@@ -1835,7 +1835,7 @@ $('#fResults').addEventListener('change',e=>{const t=e.target;
 /* ---------- paywall ---------- */
 const pw=$('#payWall');let pwRun=null,pwOpener=null;
 function openPaywall(run){pwRun=run;pwOpener=document.activeElement;const ann=S.billing==='annual';
-  $('#pwProPrice').textContent=ann?'£17':'£20';$('#pwProNote').textContent=ann?'Billed annually (£200 upfront)':'or £17/month billed annually';
+  $('#pwProPrice').textContent=ann?'£33':'£39';$('#pwProNote').textContent=ann?'Billed annually (£396 upfront)':'or £33/month billed annually';
   try{pw.showModal()}catch(e){pw.setAttribute('open','')}const t=$('#pwTitle');if(t)t.focus()}
 function closePaywall(){pwRun=null;try{pw.close()}catch(e){pw.removeAttribute('open')}}
 pw.addEventListener('close',()=>{if(pwOpener&&pwOpener.isConnected)try{pwOpener.focus()}catch(e){}});
@@ -1914,7 +1914,7 @@ function renderHome(){syncFee();
     <div class="pv-nums"><div class="pv-label">Deal Analyser · ${esc(S.deal.name||'Untitled deal')}</div>
       <div class="strip mini">${fig('Upfront cash',gbp(f.up))}${fig('Surplus at 60%',gbp(f.t60),f.t60<0?' neg':'')}${fig('Surplus at 80%',gbp(f.t80),f.t80<0?' neg':'')}${fig('Break-even',isFinite(f.be)?pct(f.be):'Never')}</div></div>`;
   const hp=(n,pr,per,sub,feat)=>`<div class="hplan${feat?' feat':''}"><div class="plan-h"><h3>${n}</h3>${feat?'<span class="tag">Most popular</span>':''}</div><div class="price"><span class="mono">${pr}</span><span class="per">${per}</span></div><div class="sub">${sub}</div></div>`;
-  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 2 AI deal analyses.')+hp('Premium','£20','per month','For everyday sourcing. Unlimited deal analyses. £17/month billed annually.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
+  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 2 AI deal analyses.')+hp('Premium','£39','per month','For everyday sourcing. Unlimited deal analyses. £33/month billed annually.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
 $('#homeTeam').addEventListener('click',()=>{S.plansTab='team';save();go('plans')});
 
 /* ---------- hero: slow liquid field, paused offscreen, static under reduced motion ---------- */
