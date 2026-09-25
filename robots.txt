@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /scripts/
+Disallow: /src/
+
+Sitemap: https://deal-pro-app.netlify.app/sitemap.xml

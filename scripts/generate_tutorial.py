@@ -103,11 +103,16 @@ narration = (
     "Finally, complete the due diligence checks, save the deal to your account, and prepare the deal pack. "
     "And remember, always verify legal, planning, licensing, and financial information independently."
 )
+# ElevenLabs "Adam" voice.
+VOICE_ID = "pNInz6obpgDQGcmJGAvB"
 elevenlabs_key = os.environ.get("ELEVENLABS_API_KEY", "").strip()
+if not elevenlabs_key and "--allow-system-voice" not in sys.argv:
+    sys.exit("ELEVENLABS_API_KEY is not set. Set it to narrate with Adam, "
+             "or pass --allow-system-voice to use the macOS voice instead.")
 if elevenlabs_key:
     audio = WORK / "narration.mp3"
     request = urllib.request.Request(
-        "https://api.elevenlabs.io/v1/text-to-speech/JBFqnCBsd6RMkjVDRZzb?output_format=mp3_44100_128",
+        f"https://api.elevenlabs.io/v1/text-to-speech/{VOICE_ID}?output_format=mp3_44100_128",
         data=json.dumps({
             "text": narration,
             "model_id": "eleven_multilingual_v2",
@@ -123,7 +128,10 @@ else:
     subprocess.run(["/usr/bin/say", "-v", "Flo (English (UK))", "-r", "200", "-o", str(audio), narration], check=True)
 
 sys.path.insert(0, "/tmp/deal-video-deps")
-import imageio_ffmpeg
+try:
+    import imageio_ffmpeg
+except ImportError:
+    sys.exit("Missing dependency: run  pip3 install pillow imageio-ffmpeg")
 ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
 probe = subprocess.run([ffmpeg, "-i", str(audio)], capture_output=True, text=True)
 match = re.search(r"Duration: (\d+):(\d+):(\d+(?:\.\d+)?)", probe.stderr)
