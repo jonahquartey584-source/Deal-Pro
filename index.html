@@ -1903,7 +1903,13 @@ function buildDeal(ls){ls=ls.filter(Boolean).filter(isOpen);if(!ls.length)return
   Object.assign(d,{id:'d'+Date.now(),name:areas.length>1?`${areas[0]} + ${areas.length-1} more`:areas[0],area:areas.join('; '),strat:'R2SA',london:true,status:'Checking',
     units:ls.map(x=>({label:`${x.type} · ${short(x.area)}`,rent:x.price,dep:x.price,rate:RATE_EST(x.beds),url:x.url}))});
   S.deal=d;FS.sel.clear();markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
-  toast(`Analysing ${ls.length} listing${ls.length>1?'s':''}. Nightly rate is an estimate, edit it.`)})}
+  // Fill in the deal for the AI and start the analysis straight away.
+  $('#aiDealInput').value=listingBrief(ls);renderAIAnalysis(null);$('#analyseWithAI').click();
+  toast(`Analysing ${ls.length} listing${ls.length>1?'s':''}. The nightly rate is an estimate.`)})}
+function listingBrief(ls){const one=x=>[`${x.type} in ${x.area}${x.postcode&&!x.area.includes(x.postcode)?` (${x.postcode})`:''}, listed on ${x.site}`,
+    `Rent ${gbp(x.price)} a month`,`Deposit about ${gbp(x.price)} (estimated, not stated in the listing)`,`Nightly rate about ${gbp(RATE_EST(x.beds))} (estimated for a ${bedsTxt(x.beds).toLowerCase()==='studio'?'studio':x.beds+' bed'})`,
+    `Furnished: ${x.furnished}`,`Listing: ${x.url}`].join('\n');
+  return `Rent-to-serviced-accommodation (R2SA) deal found with Deal Finder.\n\n`+(ls.length>1?ls.map((x,i)=>`Unit ${i+1}: ${one(x)}`).join('\n\n'):one(ls[0]))}
 $('#fResults').addEventListener('click',e=>{
   const s=e.target.closest('[data-sort]');if(s){const k=s.dataset.sort,c=S.find.sort;S.find.sort=c&&c.k===k?(c.dir>0?{k,dir:-1}:null):{k,dir:1};save();renderFind();const nb=$(`#fResults [data-sort="${k}"]`);if(nb)nb.focus();return}
   const u=e.target.closest('[data-unlock]');if(u){openUnlock(+u.dataset.unlock,+u.dataset.n||0);return}
