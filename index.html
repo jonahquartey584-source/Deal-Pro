@@ -676,7 +676,7 @@ td.t{text-align:right;color:var(--ink-2)}
 .ai-level-opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.ai-level{position:relative;display:grid;gap:3px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:var(--surface)}
 .ai-level input{position:absolute;opacity:0;pointer-events:none}.ai-level b{font-size:14px}.ai-level span{font-size:12px;color:var(--ink-2)}.ai-level{--lv:#34c26b}.ai-level.lv-standard{--lv:#f59e0b}.ai-level.lv-deep{--lv:#e0142b}.ai-level b{display:flex;align-items:center;gap:7px}.lv-dot{width:9px;height:9px;border-radius:50%;background:var(--lv);flex:none}
 .ai-level:has(input:checked){border-color:var(--lv);box-shadow:0 0 0 1px var(--lv) inset;background:color-mix(in srgb,var(--lv) 10%,var(--surface))}
-.ai-level:has(input:focus-visible){outline:2px solid var(--lv);outline-offset:2px}.ai-level.locked{opacity:.55}.ai-credits{font-size:12px;color:var(--ink-2);margin:8px 0 0}
+.ai-level:has(input:focus-visible){outline:2px solid var(--lv);outline-offset:2px}.ai-level.locked{opacity:.55}.ai-level .lv-use{color:var(--lv);font-weight:500}.ai-credits{font-size:12px;color:var(--ink-2);margin:8px 0 0}
 .ai-level-stack{grid-template-columns:1fr}
 @media(max-width:560px){.ai-level-opts{grid-template-columns:1fr}}
 .ai-simple{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:18px;margin-bottom:22px}
@@ -2011,11 +2011,11 @@ function renderAIAnalysis(a){
     ${Array.isArray(a.occupancy_scenarios)&&a.occupancy_scenarios.length?aiList('Occupancy scenarios',a.occupancy_scenarios.map(o=>`${o.occupancy}: ${o.monthly_profit}`)):''}${Array.isArray(a.stress_tests)&&a.stress_tests.length?aiList('Stress tests',a.stress_tests.map(t=>`${t.scenario}: ${t.monthly_profit}${t.still_works===false?' (fails)':t.still_works?' (still works)':''}`)):''}${aiList('Important risks',a.risks)}${aiList('Assumptions',a.assumptions)}${aiList('Missing information',a.missing_information)}${aiList('What to do next',a.next_actions)}`}
 renderAIAnalysis(S.deal.aiAnalysis);
 /* power levels: ids must match LEVELS in netlify/lib/ai.mts */
-const AI_LEVELS=[{id:'quick',name:'Scout',desc:'Fast first look',time:'~10 sec'},{id:'standard',name:'Analyst',desc:'Full analysis',time:'~30 sec'},{id:'deep',name:'Expert',desc:'Stress-tested, thorough',time:'1–2 min'}];
+const AI_LEVELS=[{id:'quick',name:'Scout',desc:'Fast first look',use:'Uses the least credits',time:'~10 sec'},{id:'standard',name:'Analyst',desc:'Full analysis',use:'Uses more credits',time:'~30 sec'},{id:'deep',name:'Expert',desc:'Stress-tested, thorough',use:'Uses the most credits',time:'1–2 min'}];
 const AIC={info:null,level:(()=>{try{return localStorage.getItem('dealpro:ai-level')||'quick'}catch(e){return 'quick'}})()};
 function levelOpts(name){const i=AIC.info,free=i&&i.free;
   return AI_LEVELS.map(l=>{const locked=free&&l.id!=='quick';
-    return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="${name}" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)}</span>${locked?'<span>Paid plans</span>':''}</label>`}).join('')}
+    return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="${name}" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)}</span><span class="lv-use">${locked?'Paid plans':esc(l.use)}</span></label>`}).join('')}
 function renderAILevels(){const i=AIC.info,free=i&&i.free;if(free&&AIC.level!=='quick')AIC.level='quick';
   $('#aiLevelOpts').innerHTML=levelOpts('aiLevel');$('#fLevelOpts').innerHTML=levelOpts('fLevel');
   const paid=i?(i.plan==='Admin'?'Admin: unlimited credits.':`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}.`):'';
