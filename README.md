@@ -1,6 +1,6 @@
 # Deal Pro
 
-Find direct-to-landlord property deals in the UK and analyse them with AI.
+Find UK rent-to-rent and serviced accommodation deals and analyse them with AI.
 
 ## Deployment
 
