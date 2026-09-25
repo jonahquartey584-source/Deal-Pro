@@ -7,12 +7,39 @@ import {
   login,
   logout,
   oauthLogin,
+  onAuthChange,
+  refreshSession,
   requestPasswordRecovery,
   signup,
   updateUser,
 } from "@netlify/identity";
 
 const $ = (selector) => document.querySelector(selector);
+
+// Stay signed in. @netlify/identity writes its nf_jwt / nf_refresh cookies as
+// session cookies, which browsers (Safari and iOS especially) drop when they
+// close; the library then treats the saved session as signed out. Rewrite them
+// to last 30 days, and restore them from the saved session if they're gone.
+const REMEMBER_SECONDS = 60 * 60 * 24 * 30;
+const readCookie = (name) => document.cookie.split("; ").find((c) => c.startsWith(name + "="))?.slice(name.length + 1) || "";
+const writeCookie = (name, value) => {
+  document.cookie = `${name}=${value}; path=/; max-age=${REMEMBER_SECONDS}; secure; samesite=lax`;
+};
+function rememberSession() {
+  ["nf_jwt", "nf_refresh"].forEach((name) => { const v = readCookie(name); if (v) writeCookie(name, v); });
+}
+function restoreSessionCookies() {
+  if (readCookie("nf_jwt")) return;
+  try {
+    const saved = JSON.parse(localStorage.getItem("gotrue.user") || "null");
+    const token = saved?.token;
+    if (token?.access_token && token?.refresh_token) {
+      writeCookie("nf_jwt", encodeURIComponent(token.access_token));
+      writeCookie("nf_refresh", encodeURIComponent(token.refresh_token));
+    }
+  } catch {}
+}
+onAuthChange((event) => { if (event !== "logout") rememberSession(); });
 const gate = $("#authGate");
 const form = $("#authForm");
 const message = $("#authMessage");
@@ -131,7 +158,15 @@ async function boot() {
     return;
   }
   try {
-    const user = await getUser();
+    restoreSessionCookies();
+    let user = await getUser();
+    if (user) {
+      // The access token lasts an hour; refresh it before calling the API so a
+      // returning visitor isn't treated as signed out.
+      await refreshSession();
+      user = await getUser();
+      rememberSession();
+    }
     if (!user) {
       gate.hidden = true;
       document.body.classList.remove("auth-pending");
