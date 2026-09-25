@@ -71,7 +71,9 @@ def slide(number, title, body, steps, filename):
         y += 36
     y += 28
     for item in steps:
-        d.ellipse((101, y + 7, 115, y + 21), fill=GREEN)
+        # Power levels keep their site colours: Scout green, Analyst orange, Expert red.
+        dot = {"Scout": "#34C26B", "Analyst": "#F59E0B", "Expert": "#E0142B"}.get(item.split(":")[0], GREEN)
+        d.ellipse((101, y + 7, 115, y + 21), fill=dot)
         d.text((137, y), item, font=font(23), fill=INK)
         y += 54
     d.text((98, H - 95), "AI-guided website tutorial", font=font(18), fill=MUTED)
@@ -82,12 +84,13 @@ def slide(number, title, body, steps, filename):
     im.save(filename, quality=95)
 
 slides = [
-    (1, "Welcome to Deal Pro", "Find, assess and organise property opportunities from one secure account.", ["Deal Finder", "AI Deal Analyser", "Deal Community"]),
-    (2, "Find an opportunity", "Open Deal Finder, set your filters and choose a power level: Scout, Analyst or Expert.", ["Full details and a link to every listing", "AI ranks the best deals for you", "Copy results into Google Sheets"]),
-    (3, "Analyse with AI", "Paste an advert or enter the deal figures. Deal Pro works out the numbers, risks and missing facts.", ["Plain-English verdict and score", "Profit at 60%, 80% and 100% occupancy", "Expert stress-tests the deal"]),
-    (4, "Complete due diligence", "Work through the checks before presenting or progressing a deal.", ["Licensing and planning", "Landlord and property evidence", "Costs, compliance and risk"]),
-    (5, "Deal Community", "Post deals where you've already spoken to the landlord or agent, and find deals other sourcers have contacted.", ["Filter by location, price and strategy", "Contact the poster directly", "R2SA, R2R, BTL, HMO and more"]),
-    (6, "Save and prepare", "Save the opportunity to your account and return whenever you need to continue.", ["Generate the deal pack", "Keep records together", "Use Deal Pro as decision support"]),
+    (1, "Welcome to Deal Pro", "Find, assess and organise property opportunities. Sign in with Google or your email.", ["Deal Finder", "AI Deal Analyser", "Deal Community"]),
+    (2, "Choose your power level", "Scout, Analyst or Expert. The deeper the level, the more credits it uses.", ["Scout: fast first look, uses the least credits", "Analyst: full analysis, uses more credits", "Expert: stress-tested, uses the most credits"]),
+    (3, "Find an opportunity", "Open Deal Finder, set your filters and search. The AI picks out the best deals for you.", ["Full details and a link to every listing", "Rent, commercial and more sites", "Copy results into Google Sheets"]),
+    (4, "Analyse with AI", "Paste an advert or enter the deal figures. Deal Pro works out the numbers, risks and missing facts.", ["Plain-English verdict and score", "Profit at 60%, 80% and 100% occupancy", "Expert stress-tests the deal"]),
+    (5, "Complete due diligence", "Work through the checks before presenting or progressing a deal.", ["Licensing and planning", "Landlord and property evidence", "Costs, compliance and risk"]),
+    (6, "Deal Community", "Post deals where you've already spoken to the landlord or agent, and find deals other sourcers have contacted.", ["Filter by location, price and strategy", "Contact the poster directly", "R2SA, R2R, BTL, HMO and more"]),
+    (7, "Save and prepare", "Save the opportunity to your account and return whenever you need to continue.", ["Generate the deal pack", "Keep records together", "Use Deal Pro as decision support"]),
 ]
 
 paths = []
@@ -100,11 +103,14 @@ shutil.copy2(paths[0], OUT / "deal-pro-tutorial-poster.png")
 
 narration = (
     "Hi, and welcome to Deal Pro. Here's how to get started. "
-    "First, open Deal Finder. Set your filters, then choose a power level. Scout gives you a fast first look, Analyst a full analysis, and Expert a thorough, stress-tested one. "
-    "Every result shows the full property details and a link to the listing, and the AI picks out the best deals for you. You can copy them straight into Google Sheets. "
+    "Sign in with Google or your email, and you'll stay signed in on your device. "
+    "Before you search or analyse, choose a power level. Scout gives you a fast first look and uses the least credits. "
+    "Analyst gives you a full analysis and uses more. And Expert is thorough and stress-tested, and uses the most. "
+    "Open Deal Finder, set your filters and search. Every result shows the full property details and a link to the listing, "
+    "and the AI picks out the best deals for you. You can copy them straight into Google Sheets. "
     "Next, open the AI Deal Analyser. Paste in an advert, or enter the rent, deposit and expected nightly rate yourself. "
     "Deal Pro explains the likely profit at different occupancy levels, the key risks, and anything that's still missing, without simply guessing. "
-    "Then work through the due diligence checks, save the deal to your account, and prepare the deal pack. "
+    "Then work through the due diligence checks, save the deal, and prepare the deal pack. "
     "You can also use the Deal Community to post deals where you've already spoken to the landlord or agent, and to find deals other sourcers have contacted. "
     "And remember, always verify legal, planning, licensing and financial information independently."
 )
