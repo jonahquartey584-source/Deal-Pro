@@ -778,7 +778,7 @@ td.t{text-align:right;color:var(--ink-2)}
       </ol>
     </section>
     <section class="hsec tutorial" aria-labelledby="tutorialTitle">
-      <div class="tutorial-media"><video controls preload="metadata" poster="/assets/deal-pro-tutorial-poster.png?v=3"><source src="/assets/deal-pro-tutorial.mp4?v=3" type="video/mp4">Your browser does not support this tutorial video.</video></div>
+      <div class="tutorial-media"><video controls preload="metadata" poster="/assets/deal-pro-tutorial-poster.png?v=4"><source src="/assets/deal-pro-tutorial.mp4?v=3" type="video/mp4">Your browser does not support this tutorial video.</video></div>
       <div class="tutorial-copy"><p class="eyebrow"><span class="eb-dot" aria-hidden="true"></span>AI-guided tutorial</p><h2 class="h2" id="tutorialTitle">Learn Deal Pro in under a minute</h2><p>Watch the complete workflow before starting your first deal.</p><ul class="tutorial-points"><li>Find and review an opportunity</li><li>Open the listing and check the details</li><li>Analyse the numbers and risks with AI</li><li>Save the deal and prepare its pack</li></ul><button class="btn primary" data-go="find">Start with Deal Finder</button></div>
     </section>
     <section class="hsec" aria-labelledby="hPlans">
@@ -817,7 +817,7 @@ td.t{text-align:right;color:var(--ink-2)}
               <label class="f"><span id="fMaxL">Max rent</span><span class="ix both"><span class="pre">£</span><input class="inp num" type="number" id="fMax" min="0" step="50"><span class="suf js-pcm">pcm</span></span></label>
             </div>
             <label class="f"><span>Location</span><input class="inp" id="fLoc" placeholder="e.g. SE1, Bayswater, W2" autocomplete="off"></label>
-            <label class="check"><input type="checkbox" id="fPrivate" checked><span>Private landlords only</span></label>
+            <label class="check"><input type="checkbox" id="fPrivate"><span>Private landlords only</span></label>
             <div class="row2">
               <label class="f"><span>Furnished</span><select class="inp" id="fFurn"><option value="any">Any</option><option value="furnished">Furnished</option><option value="unfurnished">Unfurnished</option></select></label>
               <label class="f"><span>Property type</span><select class="inp" id="fType"><option value="any">Any</option><option value="studio">Studio</option><option value="flat">Flat</option><option value="house">House</option><option value="commercial">Commercial</option></select></label>
@@ -1246,13 +1246,20 @@ function freshDeal(){const d=sampleDeal();Object.assign(d,{id:'d'+Date.now(),nam
 
 const PLAN_DEFS={Free:{name:'Free',s:6,w:6},Pro:{name:'Premium',s:30,w:300},Max5:{name:'Max 5x',s:150,w:1500},Max20:{name:'Max 20x',s:600,w:6000},
   TeamStd:{name:'Team Standard',s:40,w:400},TeamPrem:{name:'Team Premium',s:200,w:2000}};
+// Stripe payment links. A plan with no link here can't be bought online yet, so its
+// button asks the customer to get in touch instead of opening the wrong checkout.
 const CHECKOUT={
   Pro:'https://buy.stripe.com/aFa8wP5PW1GK4Qg8jS7g40a',
   Max5:'https://buy.stripe.com/9B6aEX7Y4clo1E47fO7g408',
-  Max20:'https://buy.stripe.com/9B6aEX7Y4clo1E47fO7g408',
-  TeamStd:'https://buy.stripe.com/7sYcN52DK5X0gyY57G7g409',
-  TeamPrem:'https://buy.stripe.com/7sYcN52DK5X0gyY57G7g409'
+  TeamStd:'https://buy.stripe.com/7sYcN52DK5X0gyY57G7g409'
 };
+const CHECKOUT_ANNUAL={};
+const CONTACT_EMAIL='jonahquartey584@gmail.com';
+function checkoutLink(id){return S.billing==='annual'?CHECKOUT_ANNUAL[id]:CHECKOUT[id]}
+function startCheckout(id){const url=checkoutLink(id);if(url){window.location.assign(checkoutURL(url));return true}
+  if(id==='Free'){toast(`To cancel your subscription, email ${CONTACT_EMAIL} and we'll sort it the same day.`);return false}
+  const name=PLAN_DEFS[id]?PLAN_DEFS[id].name:'this plan',when=S.billing==='annual'?' with annual billing':'';
+  toast(`Online checkout for ${name}${when} is coming soon. Email ${CONTACT_EMAIL} and we'll set it up for you.`);return false}
 const COST={search:2,import:1,dd:5,pack:3};// hidden usage units per action; deal numbers are free
 let S=store.get('state',null);
 if(!S||!S.deal){S={plan:'Free',deal:freshDeal(),saved:[]}}
@@ -1622,8 +1629,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('#seatDec,#seatIn
 document.addEventListener('input',e=>{if(e.target.id!=='seatN')return;const v=Math.round(+e.target.value);if(v>=5&&v<=500){S.seats=v;save();renderPlans()}});
 $('#plans').addEventListener('click',e=>{const t=e.target.closest('[data-tier]');if(t){S.maxTier=t.dataset.tier;save();renderPlans();const f=$(`[data-tier="${S.maxTier}"]`);if(f)f.focus();return}
   const b=e.target.closest('[data-plan]');if(!b||!PLAN_DEFS[b.dataset.plan])return;const id=b.dataset.plan;
-  if(CHECKOUT[id]){window.location.assign(checkoutURL(CHECKOUT[id]));return}
-  S.plan=id;save();renderTop();renderPlans();toast(`Switched to ${PLAN_DEFS[S.plan].name}`)});
+  if(id!==S.plan)startCheckout(id)});
 $('#xOn').addEventListener('click',()=>{if(S.plan==='Free'&&!S.extra.on){toast('Extra usage is available on paid plans.');return}S.extra.on=!S.extra.on;save();renderUsage();toast(S.extra.on?'Extra usage on':'Extra usage off')});
 $('#xCap').addEventListener('input',e=>{S.extra.cap=Math.max(0,+e.target.value||0);save();renderUsage()});
 $('#simSession').addEventListener('click',()=>{S.timeOffset=(+S.timeOffset||0)+SESSION;save();renderUsage();toast('Moved the demo clock on 5 hours')});
@@ -1714,7 +1720,7 @@ const LISTINGS=[
 ];
 const SITES=['OpenRent','SpareRoom','Gumtree','Rightmove','Zoopla','Facebook','RightmoveCommercial','Realla','NovaLoca','LoopNet'];
 const SITE_LABEL=s=>({Facebook:'Facebook Marketplace',RightmoveCommercial:'Rightmove Commercial'})[s]||s;
-const FIND_DEF=()=>({mode:'rent',beds:'any',min:1200,max:5000,loc:'',priv:true,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false}});
+const FIND_DEF=()=>({mode:'rent',beds:'any',min:1200,max:5000,loc:'',priv:false,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false}});
 if(!S.find||!S.find.f)S.find={f:FIND_DEF(),searched:false,sort:null};
 S.find.f=Object.assign(FIND_DEF(),S.find.f);S.find.f.sites=Object.assign(FIND_DEF().sites,S.find.f.sites);
 const FS={busy:false,sel:new Set()};
@@ -1858,9 +1864,7 @@ function closePaywall(){pwRun=null;try{pw.close()}catch(e){pw.removeAttribute('o
 pw.addEventListener('close',()=>{if(pwOpener&&pwOpener.isConnected)try{pwOpener.focus()}catch(e){}});
 pw.addEventListener('click',e=>{if(e.target===pw)closePaywall()});
 function checkoutURL(base){const u=new URL(base);const uid=document.body.dataset.userId,email=document.body.dataset.userEmail;if(uid)u.searchParams.set('client_reference_id',uid);if(email)u.searchParams.set('prefilled_email',email);return u.toString()}
-function subscribe(id){const url=CHECKOUT[id];if(url){window.location.assign(checkoutURL(url));return}
-  const run=pwRun;S.plan=id;save();renderTop();if(!$('[data-view="plans"]').hidden)renderPlans();pwRun=null;
-  try{pw.close()}catch(e){pw.removeAttribute('open')}if(run)run();toast(`Subscribed to ${PLAN_DEFS[id].name}`)}
+function subscribe(id){if(!startCheckout(id))closePaywall()}
 $('#pwPro').addEventListener('click',()=>subscribe('Pro'));$('#pwMax').addEventListener('click',()=>subscribe('Max5'));
 $('#pwNot').addEventListener('click',closePaywall);$('#pwClose').addEventListener('click',closePaywall);
 $('#pwAll').addEventListener('click',()=>{closePaywall();go('plans')});

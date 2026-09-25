@@ -61,6 +61,7 @@ export default async (request: Request, _context: Context) => {
       nextState.plan = stored.plan || "Free";
       nextState.accountEnabled = true;
       nextState.unlocked = Array.isArray(stored.unlocked) ? stored.unlocked : [];
+      if (stored.stripe) nextState.stripe = stored.stripe; else delete nextState.stripe;
     }
     await store.setJSON(key, nextState, {
       metadata: { userId: user.id, email: user.email ?? "", updatedAt: new Date().toISOString() },

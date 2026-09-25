@@ -71,7 +71,7 @@ def slide(number, title, body, steps, filename):
         y += 54
     d.text((98, H - 95), "AI-guided website tutorial", font=font(18), fill=MUTED)
     d.rounded_rectangle((W - 328, H - 112, W - 96, H - 72), radius=20, fill=RED)
-    d.text((W - 292, H - 104), "deal-pro-app.netlify.app", font=font(15, True), fill="white")
+    d.text((W - 292, H - 104), "usedealpro.com", font=font(15, True), fill="white")
     im.save(filename, quality=95)
 
 slides = [
