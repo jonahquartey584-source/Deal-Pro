@@ -50,7 +50,18 @@ export default async (request: Request, _context: Context) => {
     const encoded = JSON.stringify(body.state);
     if (encoded.length > 1_000_000) return json({ error: "Account data is too large." }, 413);
     const nextState = body.state as Record<string, unknown>;
-    if (isAdmin) { nextState.admin = true; nextState.plan = "Max20"; nextState.accountEnabled = true; }
+    if (isAdmin) {
+      nextState.admin = true; nextState.plan = "Max20"; nextState.accountEnabled = true;
+    } else {
+      // Membership, suspension and paid unlocks are only changed by the server or an administrator,
+      // never by the browser, so keep the stored values.
+      const stored = (await store.get(key, { type: "json" }) as Record<string, unknown> | null) || defaultState(false);
+      if (stored.accountEnabled === false) return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
+      nextState.admin = false;
+      nextState.plan = stored.plan || "Free";
+      nextState.accountEnabled = true;
+      nextState.unlocked = Array.isArray(stored.unlocked) ? stored.unlocked : [];
+    }
     await store.setJSON(key, nextState, {
       metadata: { userId: user.id, email: user.email ?? "", updatedAt: new Date().toISOString() },
     });

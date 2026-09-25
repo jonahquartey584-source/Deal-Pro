@@ -1,11 +1,13 @@
 import {
   AuthError,
+  acceptInvite,
   getUser,
   handleAuthCallback,
   login,
   logout,
   requestPasswordRecovery,
   signup,
+  updateUser,
 } from "@netlify/identity";
 
 const $ = (selector) => document.querySelector(selector);
@@ -15,6 +17,7 @@ const message = $("#authMessage");
 let mode = "login";
 let saveTimer;
 let signedInUser = null;
+let inviteToken = null;
 
 function showMessage(text, error = false) {
   message.textContent = text;
@@ -22,12 +25,25 @@ function showMessage(text, error = false) {
   message.hidden = !text;
 }
 
+// Modes: "login", "signup", "reset" (from a recovery email) and "invite" (from an invite email).
 function setMode(next) {
   mode = next;
+  const settingPassword = mode === "reset" || mode === "invite";
   $("#authNameWrap").hidden = mode !== "signup";
-  $("#authSubmit").textContent = mode === "signup" ? "Create account" : "Sign in";
-  $("#authTitle").textContent = mode === "signup" ? "Create your account" : "Welcome back";
+  $("#authEmailWrap").hidden = settingPassword;
+  $("#authEmail").required = !settingPassword;
+  $("#authConfirmWrap").hidden = !settingPassword;
+  $("#authConfirm").required = settingPassword;
+  $("#forgotPassword").hidden = mode !== "login";
+  $("#authSwitch").hidden = settingPassword;
+  $("#authClose").hidden = settingPassword;
+  $("#authPassword").autocomplete = mode === "login" ? "current-password" : "new-password";
+  $("#authPasswordLabel").textContent = settingPassword ? "New password" : "Password";
+  $("#authSubmit").textContent = { signup: "Create account", reset: "Save new password", invite: "Set password" }[mode] || "Sign in";
+  $("#authTitle").textContent = { signup: "Create your account", reset: "Set a new password", invite: "Accept your invitation" }[mode] || "Welcome back";
   $("#authSwitch").textContent = mode === "signup" ? "Already have an account? Sign in" : "New to Deal Pro? Create an account";
+  $("#authPassword").value = "";
+  $("#authConfirm").value = "";
   showMessage("");
 }
 
@@ -82,9 +98,30 @@ async function prepareAccount(user) {
   return true;
 }
 
+function signedOut() {
+  gate.hidden = true;
+  document.body.classList.remove("auth-pending");
+  document.body.classList.add("signed-out");
+  document.body.classList.add("simple-mode");
+}
+
 async function boot() {
+  let callback = null;
   try {
-    await handleAuthCallback();
+    callback = await handleAuthCallback();
+  } catch (error) {
+    signedOut();
+    openAccount("login");
+    showMessage("That email link is invalid or has expired. Request a new one below.", true);
+    return;
+  }
+  if (callback?.type === "recovery" || callback?.type === "invite") {
+    inviteToken = callback.token || null;
+    document.body.classList.remove("auth-pending");
+    openAccount(callback.type === "recovery" ? "reset" : "invite");
+    return;
+  }
+  try {
     const user = await getUser();
     if (!user) {
       gate.hidden = true;
@@ -96,10 +133,7 @@ async function boot() {
     }
     await prepareAccount(user);
   } catch (error) {
-    gate.hidden = true;
-    document.body.classList.remove("auth-pending");
-    document.body.classList.add("signed-out");
-    document.body.classList.add("simple-mode");
+    signedOut();
   }
 }
 
@@ -107,14 +141,22 @@ form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const button = $("#authSubmit");
   button.disabled = true;
-  showMessage(mode === "signup" ? "Creating your account…" : "Signing you in…");
   try {
     const email = $("#authEmail").value.trim();
     const password = $("#authPassword").value;
+    if (mode === "reset" || mode === "invite") {
+      if (password !== $("#authConfirm").value) throw new AuthError("The two passwords don't match.");
+      showMessage("Saving your password…");
+      const user = mode === "reset" ? await updateUser({ password }) : await acceptInvite(inviteToken, password);
+      localStorage.removeItem("dealpremium:active-user");
+      await prepareAccount(user);
+      return;
+    }
+    showMessage(mode === "signup" ? "Creating your account…" : "Signing you in…");
     const user = mode === "signup"
       ? await signup(email, password, { full_name: $("#authName").value.trim() })
       : await login(email, password);
-    if (!user.emailVerified) {
+    if (!user.confirmedAt) {
       showMessage("Check your email and confirm your account, then sign in.");
       setMode("login");
     } else {
@@ -132,8 +174,9 @@ $("#authSwitch").addEventListener("click", () => setMode(mode === "login" ? "sig
 $("#authClose").addEventListener("click", closeAccount);
 $("#homeSignIn").addEventListener("click", () => openAccount("login"));
 $("#homeCreateAccount").addEventListener("click", () => openAccount("signup"));
-gate.addEventListener("click", (event) => { if (event.target === gate) closeAccount(); });
-document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !gate.hidden) closeAccount(); });
+const canClose = () => mode !== "reset" && mode !== "invite";
+gate.addEventListener("click", (event) => { if (event.target === gate && canClose()) closeAccount(); });
+document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !gate.hidden && canClose()) closeAccount(); });
 document.addEventListener("click", (event) => {
   if (signedInUser) return;
   const protectedAction = event.target.closest('[data-go="find"],[data-go="analyser"],[data-go="analyse"],[data-go="deals"],[data-plan],#pwPro,#pwMax');
@@ -145,11 +188,15 @@ document.addEventListener("click", (event) => {
 $("#forgotPassword").addEventListener("click", async () => {
   const email = $("#authEmail").value.trim();
   if (!email) return showMessage("Enter your email address first.", true);
+  const button = $("#forgotPassword");
+  button.disabled = true;
   try {
     await requestPasswordRecovery(email);
-    showMessage("Password reset instructions have been sent to your email.");
+    showMessage("If an account exists for that email, a password reset link is on its way. Check your inbox and spam folder.");
   } catch (error) {
     showMessage(error?.message || "Could not send the reset email.", true);
+  } finally {
+    button.disabled = false;
   }
 });
 

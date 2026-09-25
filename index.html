@@ -10,7 +10,7 @@
 <meta name="author" content="Deal Pro">
 <meta name="theme-color" content="#0B0B0C">
 <link rel="canonical" href="https://deal-pro-app.netlify.app/">
-<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="any"><link rel="icon" href="/favicon.svg" type="image/svg+xml"><link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32"><link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Deal Pro">
 <meta property="og:locale" content="en_GB">
@@ -682,8 +682,9 @@ td.t{text-align:right;color:var(--ink-2)}
     <h1 id="authTitle">Welcome back</h1><p>Your deals, analysis and membership are kept securely in your account.</p>
     <div class="auth-fields">
       <label class="f" id="authNameWrap" hidden><span>Your name</span><input class="inp" id="authName" autocomplete="name"></label>
-      <label class="f"><span>Email address</span><input class="inp" id="authEmail" type="email" autocomplete="email" required></label>
-      <label class="f"><span>Password</span><input class="inp" id="authPassword" type="password" minlength="8" autocomplete="current-password" required></label>
+      <label class="f" id="authEmailWrap"><span>Email address</span><input class="inp" id="authEmail" type="email" autocomplete="email" required></label>
+      <label class="f"><span id="authPasswordLabel">Password</span><input class="inp" id="authPassword" type="password" minlength="8" autocomplete="current-password" required></label>
+      <label class="f" id="authConfirmWrap" hidden><span>Confirm new password</span><input class="inp" id="authConfirm" type="password" minlength="8" autocomplete="new-password"></label>
     </div>
     <div class="auth-actions"><button class="btn primary block" id="authSubmit" type="submit">Sign in</button><button class="auth-link" id="forgotPassword" type="button">Forgot password?</button><button class="auth-link" id="authSwitch" type="button">New to Deal Pro? Create an account</button></div>
     <div class="auth-message" id="authMessage" role="status" hidden></div>
