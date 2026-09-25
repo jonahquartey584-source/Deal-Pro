@@ -1882,16 +1882,18 @@ $('#fSearch').addEventListener('click',async()=>{if(FS.busy)return;readFind();co
   if(reduced()){finish();return}
   const step=1200/sites.length;let i=0;draw(0);
   const tick=()=>{i++;draw(i);setTimeout(i<sites.length?tick:finish,i<sites.length?step:150)};setTimeout(tick,step)});
+// The AI matches picks by listing id; if it mentions one ("similar to id 4"), show the listing's name instead.
+const rankText=v=>String(v??'').replace(/\b(?:listing\s+)?ids?\s*[:#]?\s*(\d+)\b/gi,(m,n)=>{const r=LISTINGS[+n];return r?`the ${r.type.toLowerCase()} on ${r.area.split(',')[0].replace(/\s*\(.*\)$/,'')}`:m});
 function rankHTML(){const R=FS.rank;if(!R)return '';const lv=R.level;
   if(R.status==='loading')return `<div class="rank lv-${lv.id}" role="status"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b id="fRankT">${esc(lv.name)} is ranking these deals…</b></div><p class="muted">Results are below. The AI's top picks will appear here.</p></div>`;
   if(R.status==='error')return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>AI ranking unavailable</b></div><p class="muted">${esc(R.error)}</p></div>`;
   const a=R.data||{},picks=Array.isArray(a.picks)?a.picks:[];
-  const li=p=>{const r=LISTINGS[+p.id];if(!r)return '';const notes=Array.isArray(p.notes)&&p.notes.length?`<ul class="rank-notes">${p.notes.map(n=>`<li>${esc(String(n))}</li>`).join('')}</ul>`:'';
+  const li=p=>{const r=LISTINGS[+p.id];if(!r)return '';const notes=Array.isArray(p.notes)&&p.notes.length?`<ul class="rank-notes">${p.notes.map(n=>`<li>${esc(rankText(n))}</li>`).join('')}</ul>`:'';
     return `<li><div class="rank-top"><b>${esc(r.type)} · ${esc(r.area)}</b><span class="mono">${gbp(r.price)} pcm</span><span class="rank-score">${Math.max(0,Math.min(100,+p.score||0))}/100 · ${esc(String(p.verdict||''))}</span></div>
-      <p>${esc(String(p.reason||''))}${p.monthly_profit_80?` <span class="muted">Est. at 80%: ${esc(String(p.monthly_profit_80))}</span>`:''}</p>${notes}
+      <p>${esc(rankText(p.reason))}${p.monthly_profit_80?` <span class="muted">Est. at 80%: ${esc(String(p.monthly_profit_80))}</span>`:''}</p>${notes}
       <div class="rank-act"><button class="btn xs primary" data-build="${r.k}">Analyse deal</button><a class="btn xs" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a></div></li>`};
-  return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>${esc(lv.name)}'s top picks</b></div>${a.summary?`<p>${esc(String(a.summary))}</p>`:''}
-    <ol class="rank-list">${picks.map(li).join('')}</ol>${Array.isArray(a.watch_outs)&&a.watch_outs.length?`<p class="muted">Watch out: ${a.watch_outs.map(w=>esc(String(w))).join(' · ')}</p>`:''}</div>`}
+  return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>${esc(lv.name)}'s top picks</b></div>${a.summary?`<p>${esc(rankText(a.summary))}</p>`:''}
+    <ol class="rank-list">${picks.map(li).join('')}</ol>${Array.isArray(a.watch_outs)&&a.watch_outs.length?`<p class="muted">Watch out: ${a.watch_outs.map(w=>esc(rankText(w))).join(' · ')}</p>`:''}</div>`}
 function openRows(){return sortRows(findRows()).filter(isOpen)}
 function findTsv(){const c=v=>{const s=String(v??'').replace(/[\t\r\n]+/g,' ');return /^[=+\-@]/.test(s)?"'"+s:s};
   return [['Site','Landlord','Type','Beds','Area','Postcode','Rent pcm','Furnished','Found','URL'],
