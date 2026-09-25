@@ -15,7 +15,7 @@ export const LEVELS: Record<LevelId, { credits: number; model: string; effort: E
 };
 const FALLBACK_MODEL = "gpt-5-mini";
 
-// Weekly credits for Standard and Deep. Quick is unlimited on paid plans.
+// Weekly credits for Analyst (standard) and Expert (deep). Scout (quick) is unlimited on paid plans.
 export const WEEKLY_CREDITS: Record<string, number> = { Pro: 40, Max5: 200, Max20: 800, TeamStd: 40, TeamPrem: 200 };
 
 export const accounts = () => getStore({ name: "deal-premium-accounts", consistency: "strong" });

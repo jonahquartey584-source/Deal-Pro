@@ -77,7 +77,7 @@ export default async (request: Request, _context: Context) => {
   const next: Usage = { ...usage };
   const cost = isAdmin ? 0 : LEVELS[level].credits;
   if (!isAdmin && plan === "Free") {
-    if (level !== "quick") return json({ error: "Upgrade to use the deeper analysis levels." }, 402);
+    if (level !== "quick") return json({ error: "Upgrade to use Analyst and Expert." }, 402);
     if ((Number(usage.count) || 0) >= FREE_ANALYSES) {
       return json({ error: `You've used your ${FREE_ANALYSES} free analyses. Subscribe for unlimited analyses.` }, 402);
     }
