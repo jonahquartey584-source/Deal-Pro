@@ -609,6 +609,11 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .stepper button:hover{background:var(--hover)}
 .stepper input{width:54px;height:30px;border:0;border-left:1px solid var(--line-2);border-right:1px solid var(--line-2);background:var(--field);text-align:center;font-family:var(--mono);font-size:13px;color:var(--ink);-moz-appearance:textfield}
 #feeLine{margin:12px 0 0}
+.rank{--lv:#34c26b;border:1px solid var(--line);border-left:3px solid var(--lv);border-radius:8px;padding:14px 16px;margin-bottom:14px;background:color-mix(in srgb,var(--lv) 6%,var(--surface))}.rank.lv-standard{--lv:#f59e0b}.rank.lv-deep{--lv:#e0142b}
+.rank-h{display:flex;align-items:center;gap:8px;margin-bottom:6px}.rank p{margin:4px 0;font-size:13px}.rank-list{margin:10px 0 4px;padding-left:20px;display:grid;gap:12px}.rank-top{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline}.rank-score{font-size:12px;color:var(--ink-2)}
+.rank-notes{margin:4px 0;padding-left:18px;font-size:12px;color:var(--ink-2)}.rank-act{display:flex;gap:6px;margin-top:6px}
+/* old browser-side usage meters; real credits are shown next to each AI tool */
+.ws-old-meter,#wsFree{display:none!important}
 .cform{margin-bottom:18px}.cform-acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cmsg{font-size:13px;color:var(--ink-2)}.cmsg.bad{color:var(--bad)}
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}.cgrid .dcard{width:auto}
 .ctags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}.ctag{font-size:12px;padding:2px 8px;border:1px solid var(--line);border-radius:999px;color:var(--ink-2)}.ctag.hot{border-color:rgba(224,20,43,.45);color:var(--ink)}
@@ -672,6 +677,7 @@ td.t{text-align:right;color:var(--ink-2)}
 .ai-level input{position:absolute;opacity:0;pointer-events:none}.ai-level b{font-size:14px}.ai-level span{font-size:12px;color:var(--ink-2)}.ai-level{--lv:#34c26b}.ai-level.lv-standard{--lv:#f59e0b}.ai-level.lv-deep{--lv:#e0142b}.ai-level b{display:flex;align-items:center;gap:7px}.lv-dot{width:9px;height:9px;border-radius:50%;background:var(--lv);flex:none}
 .ai-level:has(input:checked){border-color:var(--lv);box-shadow:0 0 0 1px var(--lv) inset;background:color-mix(in srgb,var(--lv) 10%,var(--surface))}
 .ai-level:has(input:focus-visible){outline:2px solid var(--lv);outline-offset:2px}.ai-level.locked{opacity:.55}.ai-credits{font-size:12px;color:var(--ink-2);margin:8px 0 0}
+.ai-level-stack{grid-template-columns:1fr}
 @media(max-width:560px){.ai-level-opts{grid-template-columns:1fr}}
 .ai-simple{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:18px;margin-bottom:22px}
 .ai-entry,.ai-output{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:22px}.ai-entry h2,.ai-output h2{font-size:18px;margin-bottom:6px}.ai-entry>p,.ai-output>p{color:var(--muted);margin-bottom:16px}
@@ -722,8 +728,8 @@ td.t{text-align:right;color:var(--ink-2)}
     </nav>
     <div class="ws">
       <div class="ws-head"><span class="ws-name">Your workspace</span><span class="ws-plan" id="planPill">Free plan</span></div>
-      <div class="ws-use"><span id="wsUseTxt">0% of session used</span><button class="linkbtn" data-go="usage">Usage</button></div>
-      <div class="meter" aria-hidden="true"><span id="wsUseBar" style="width:0%"></span></div>
+      <div class="ws-use ws-old-meter"><span id="wsUseTxt">0% of session used</span><button class="linkbtn" data-go="usage">Usage</button></div>
+      <div class="meter ws-old-meter" aria-hidden="true"><span id="wsUseBar" style="width:0%"></span></div>
       <div class="ws-free" id="wsFree" hidden><div class="ws-use"><span id="wsFreeTxt">0 of 2 free analyses used</span></div><div class="meter" aria-hidden="true"><span id="wsFreeBar" style="width:0%"></span></div></div>
       <span class="ws-pct" id="wsPct">0% used</span>
       <p class="ws-note">Your work is saved securely to your account.</p>
@@ -843,7 +849,8 @@ td.t{text-align:right;color:var(--ink-2)}
             </fieldset>
           </div>
         </div>
-        <div class="fs"><button class="btn primary block" id="fSearch" title="Uses usage">Search with AI</button></div>
+        <div class="fs"><fieldset class="ai-levels"><legend>Power level</legend><div class="ai-level-opts ai-level-stack" id="fLevelOpts"></div><p class="ai-credits" id="fCredits"></p></fieldset>
+          <button class="btn primary block" id="fSearch">Search with AI</button></div>
       </div>
       <div id="fResults"></div>
     </div>
@@ -1350,7 +1357,7 @@ function go(v,step){const m=VIEWS[v]||VIEWS.home;v=m[0];step=step||m[1];const ch
   const apply=()=>{curView=v;document.documentElement.dataset.page=v;
     $$('.tab').forEach(t=>{if(t.dataset.v===v)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current')});
     $$('[data-view]').forEach(s=>s.hidden=s.dataset.view!==v);
-    if(v==='home')renderHome();if(v==='find')renderFind();if(v==='analyser'){openAnalyser(step||curStep());loadAICredits()}if(v==='deals')renderDeals();if(v==='community')renderCommunity();if(v==='plans')renderPlans();
+    if(v==='home')renderHome();if(v==='find'){renderFind();loadAICredits()}if(v==='analyser'){openAnalyser(step||curStep());loadAICredits()}if(v==='deals')renderDeals();if(v==='community')renderCommunity();if(v==='plans')renderPlans();
     try{sessionStorage.setItem('dealpro:tab',v)}catch(e){}
     const nav=$('.nav'),act=$(`.tab[data-v="${v}"]`);if(nav&&act&&nav.scrollWidth>nav.clientWidth)nav.scrollLeft=Math.max(0,act.offsetLeft-nav.offsetLeft-24);
     if(v==='plans'&&step==='usage'){const us=$('#usage');if(us)setTimeout(()=>us.scrollIntoView({block:'start',behavior:reduced()?'auto':'smooth'}),30)}else window.scrollTo(0,0);heroUpdate();placeInd()};
@@ -1606,18 +1613,18 @@ function renderPlans(){
       <div class="lead">Limited usage</div>${feats(['3 Deal Finder searches a week','2 Scout AI deal analyses','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
     <div class="plan feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div><p class="plan-from">For everyday sourcing</p>
       <div class="price"><span class="mono">£${ann?33:39}</span><span class="per">per month</span></div><div class="bill-note">${ann?'Billed annually (£396 upfront)':'Billed monthly'}</div>
-      <div class="lead">Everything in Free, plus:</div>${feats(['Unlimited Scout AI analyses','40 Analyst/Expert credits a week','More usage','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
+      <div class="lead">Everything in Free, plus:</div>${feats(['60 AI credits a week for searches and analyses','More usage','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
     <div class="plan"><div class="plan-h"><h3>Max</h3></div><p class="plan-from">From £100/month · For sourcers who work deals all day</p>
       <div class="seg segb tier" role="group" aria-label="Max usage tier"><button id="maxT5" data-tier="5" aria-pressed="${mt==='5'}">5x</button><button id="maxT20" data-tier="20" aria-pressed="${mt==='20'}">20x</button></div>
       <div class="price"><span class="mono">£${mt==='20'?200:100}</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
-      <div class="lead">Everything in Premium, plus:</div>${feats([`${mt}x more usage than Premium per session`,`${mt==='20'?800:200} Analyst/Expert credits a week`,'Higher limits','Early access to new features','Priority at peak times'])}${planBtn(mid)}</div>`}
+      <div class="lead">Everything in Premium, plus:</div>${feats([`${mt}x more usage than Premium per session`,`${mt==='20'?1200:300} AI credits a week`,'Higher limits','Early access to new features','Priority at peak times'])}${planBtn(mid)}</div>`}
   else{const n=S.seats,sd=35,pr=115;const tot=x=>ann?`${gbp(x*n*12)} a year for ${n} seats`:`${gbp(x*n)} a month for ${n} seats`;
     box.innerHTML=`<div class="plan"><div class="plan-h"><h3>Standard seat</h3></div><p class="plan-from">For sourcing teams</p>
       <div class="price"><span class="mono">£${sd}</span><span class="per">per seat / month</span></div><div class="bill-note">${ann?'Billed annually':'Billed monthly'} · ${tot(sd)}</div>
-      <div class="lead">Everything in Premium, plus:</div>${feats(['More usage than Premium','40 Analyst/Expert credits a week','Central billing','Admin controls','Shared deals'])}${planBtn('TeamStd',true)}</div>
+      <div class="lead">Everything in Premium, plus:</div>${feats(['More usage than Premium','60 AI credits a week per seat','Central billing','Admin controls','Shared deals'])}${planBtn('TeamStd',true)}</div>
     <div class="plan"><div class="plan-h"><h3>Premium seat</h3></div><p class="plan-from">For the heaviest users on your team</p>
       <div class="price"><span class="mono">£${pr}</span><span class="per">per seat / month</span></div><div class="bill-note">${ann?'Billed annually':'Billed monthly'} · ${tot(pr)}</div>
-      <div class="lead">Everything in Standard, plus:</div>${feats(['5x more usage than Standard seats','200 Analyst/Expert credits a week'])}${planBtn('TeamPrem')}</div>`}
+      <div class="lead">Everything in Standard, plus:</div>${feats(['5x more usage than Standard seats','300 AI credits a week per seat'])}${planBtn('TeamPrem')}</div>`}
   let st=$('#seatsRow');if(team&&!st){box.insertAdjacentHTML('beforebegin','<div class="seats" id="seatsRow"><span>Seats</span><span class="stepper"><button id="seatDec" aria-label="Fewer seats">−</button><input type="number" id="seatN" min="5" max="500" aria-label="Number of seats"><button id="seatInc" aria-label="More seats">+</button></span><span class="muted">Minimum 5 seats</span></div>');st=$('#seatsRow')}
   if(st){st.hidden=!team;const sn=$('#seatN');if(document.activeElement!==sn)sn.value=S.seats}
   renderUsage()}
@@ -1804,7 +1811,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
       <tbody>${rows.map((r,i)=>{const o=isOpen(r);return `<tr data-k="${r.k}"><td class="rn">${i+1}</td><td class="ck">${o?`<input type="checkbox" id="fsel${r.k}" data-sel="${r.k}" aria-label="Select ${esc(r.type)}, ${esc(r.area)}"${FS.sel.has(r.k)?' checked':''}>`:''}</td>
         <td>${o?esc(r.site):L}</td><td class="clip"${o?` title="${esc(r.landlord)}"`:''}>${o?esc(r.landlord):L}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td><td class="muted">${esc(r.furnished)}</td><td class="muted">${esc(r.found)}</td>
         <td>${o?`<a class="xlink" href="${esc(r.url)}" target="_blank" rel="noopener">Open ↗</a>`:L}</td><td>${o?`<button class="btn xs" data-build="${r.k}">Analyse deal</button>`:`<button class="btn xs" data-unlock="${r.k}" data-n="${i+1}">Unlock · ${gbp(dealFee())}</button>`}</td></tr>`}).join('')}</tbody></table></div>`;
-  box.innerHTML=`<div class="ftool"><div><div class="fsum" id="fSummary">${sum}</div>${view==='sheet'?'<div class="fsub">Copy, then paste into cell A1 of a Google Sheet.</div>':''}</div>
+  box.innerHTML=rankHTML()+`<div class="ftool"><div><div class="fsum" id="fSummary">${sum}</div>${view==='sheet'?'<div class="fsub">Copy, then paste into cell A1 of a Google Sheet.</div>':''}</div>
     <div class="ph-actions">${acts}${toggle}</div></div>${body}`;
   const c=$('#fCards');if(c){c.style.scrollBehavior='auto';c.scrollLeft=prevScroll;c.style.scrollBehavior='';
     const upd=()=>{const p=$('#fPrev'),n=$('#fNext');if(p)p.disabled=c.scrollLeft<=2;if(n)n.disabled=c.scrollLeft+c.clientWidth>=c.scrollWidth-2};c.addEventListener('scroll',upd,{passive:true});upd()}
@@ -1816,17 +1823,43 @@ function syncFee(){$$('.js-fee').forEach(e=>e.textContent=gbp(dealFee()))}
 function onFind(){readFind();save();renderFind()}
 $('#fPanel').addEventListener('input',onFind);$('#fPanel').addEventListener('change',onFind);
 $('#fReset').addEventListener('click',()=>{S.find.f=FIND_DEF();bindFind();save();renderFind()});
-$('#fSearch').addEventListener('click',()=>{if(FS.busy)return;readFind();const sites=SITES.filter(s=>S.find.f.sites[s]);
+const FIND_MSG=m=>{const n=$('#nFind');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
+async function pollJob(jobId,onTick){const t0=Date.now();for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(jobId),{credentials:'same-origin'});const d=await p.json().catch(()=>({}));
+  if(!p.ok)throw new Error(d.error||'The AI could not finish. Please try again.');if(d.credits){AIC.info=d.credits;renderAILevels()}
+  if(d.status==='done')return d.analysis;if(d.status==='error')throw new Error(d.error||'The AI could not finish. Please try again.');
+  if(onTick)onTick(Math.round((Date.now()-t0)/1000));if(Date.now()-t0>17*60e3)throw new Error('The AI is taking too long. Please try again.')}}
+$('#fSearch').addEventListener('click',async()=>{if(FS.busy)return;readFind();const sites=SITES.filter(s=>S.find.f.sites[s]);
   if(!sites.length){toast('Tick at least one site to search');return}
-  if(!spend(COST.search,'AI search','#nFind'))return;FS.busy=true;const btn=$('#fSearch'),box=$('#fResults');btn.disabled=true;
-  const rows=findRows(),cnt=s=>rows.filter(r=>r.site===s).length;
+  const rows=findRows(),lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0],btn=$('#fSearch'),box=$('#fResults');
+  FS.busy=true;btn.disabled=true;$('#nFind').hidden=true;
+  // Start the AI ranking first: the server checks the plan and credits before anything runs.
+  let jobId=null;
+  if(rows.length){try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kind:'rank',level:lv.id,filters:S.find.f,listings:rows.map(x=>({id:String(x.k),site:x.site,type:x.type,beds:x.beds,area:x.area,postcode:x.postcode,rent_pcm:x.price,nightly_rate_est:RATE_EST(x.beds),furnished:x.furnished}))})});
+    const d=await r.json().catch(()=>({}));if(!r.ok){FS.busy=false;btn.disabled=false;FIND_MSG(d.error||'The search could not be started.');return}
+    jobId=d.jobId;if(d.credits){AIC.info=d.credits;renderAILevels()}}
+  catch(e){FS.busy=false;btn.disabled=false;FIND_MSG('The search could not be started. Check your connection and try again.');return}}
+  FS.rank=jobId?{status:'loading',level:lv}:null;
+  const cnt=s=>rows.filter(r=>r.site===s).length;
   const draw=i=>{box.innerHTML=`<div class="fprog" role="status" aria-live="polite"><div class="fprog-t">${i<sites.length?`Searching ${SITE_LABEL(sites[i])}…`:'Collating results…'}</div>
     <div class="meter"><span style="width:${Math.round(i/sites.length*100)}%"></span></div>
     <ol>${sites.map((s,j)=>`<li class="${j<i?'done':j===i?'act':''}"><span class="dot ${j<i?'good':'none'}"></span>${SITE_LABEL(s)}<span class="mono muted">${j<i?cnt(s)+' found':j===i?'searching':''}</span></li>`).join('')}</ol></div>`};
-  const finish=()=>{FS.busy=false;btn.disabled=false;S.find.searched=true;save();renderFind()};
+  const finish=()=>{FS.busy=false;btn.disabled=false;S.find.searched=true;save();renderFind();
+    if(jobId)pollJob(jobId,sec=>{const t=$('#fRankT');if(t)t.textContent=`${lv.name} is ranking these deals… ${sec}s`})
+      .then(a=>{FS.rank={status:'done',level:lv,data:a};renderFind()}).catch(e=>{FS.rank={status:'error',level:lv,error:e.message};renderFind()})};
   if(reduced()){finish();return}
   const step=1200/sites.length;let i=0;draw(0);
   const tick=()=>{i++;draw(i);setTimeout(i<sites.length?tick:finish,i<sites.length?step:150)};setTimeout(tick,step)});
+function rankHTML(){const R=FS.rank;if(!R)return '';const lv=R.level;
+  if(R.status==='loading')return `<div class="rank lv-${lv.id}" role="status"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b id="fRankT">${esc(lv.name)} is ranking these deals…</b></div><p class="muted">Results are below. The AI's top picks will appear here.</p></div>`;
+  if(R.status==='error')return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>AI ranking unavailable</b></div><p class="muted">${esc(R.error)}</p></div>`;
+  const a=R.data||{},picks=Array.isArray(a.picks)?a.picks:[];
+  const li=p=>{const r=LISTINGS[+p.id];if(!r)return '';const notes=Array.isArray(p.notes)&&p.notes.length?`<ul class="rank-notes">${p.notes.map(n=>`<li>${esc(String(n))}</li>`).join('')}</ul>`:'';
+    return `<li><div class="rank-top"><b>${esc(r.type)} · ${esc(r.area)}</b><span class="mono">${gbp(r.price)} pcm</span><span class="rank-score">${Math.max(0,Math.min(100,+p.score||0))}/100 · ${esc(String(p.verdict||''))}</span></div>
+      <p>${esc(String(p.reason||''))}${p.monthly_profit_80?` <span class="muted">Est. at 80%: ${esc(String(p.monthly_profit_80))}</span>`:''}</p>${notes}
+      <div class="rank-act"><button class="btn xs primary" data-build="${r.k}">Analyse deal</button><a class="btn xs" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a></div></li>`};
+  return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>${esc(lv.name)}'s top picks</b></div>${a.summary?`<p>${esc(String(a.summary))}</p>`:''}
+    <ol class="rank-list">${picks.map(li).join('')}</ol>${Array.isArray(a.watch_outs)&&a.watch_outs.length?`<p class="muted">Watch out: ${a.watch_outs.map(w=>esc(String(w))).join(' · ')}</p>`:''}</div>`}
 function openRows(){return sortRows(findRows()).filter(isOpen)}
 function findTsv(){const c=v=>{const s=String(v??'').replace(/[\t\r\n]+/g,' ');return /^[=+\-@]/.test(s)?"'"+s:s};
   return [['Site','Landlord','Type','Beds','Area','Postcode','Rent pcm','Furnished','Found','URL'],
@@ -1934,7 +1967,7 @@ function renderHome(){syncFee();
     <div class="pv-nums"><div class="pv-label">Deal Analyser · ${esc(S.deal.name||'Untitled deal')}</div>
       <div class="strip mini">${fig('Upfront cash',gbp(f.up))}${fig('Surplus at 60%',gbp(f.t60),f.t60<0?' neg':'')}${fig('Surplus at 80%',gbp(f.t80),f.t80<0?' neg':'')}${fig('Break-even',isFinite(f.be)?pct(f.be):'Never')}</div></div>`;
   const hp=(n,pr,per,sub,feat)=>`<div class="hplan${feat?' feat':''}"><div class="plan-h"><h3>${n}</h3>${feat?'<span class="tag">Most popular</span>':''}</div><div class="price"><span class="mono">${pr}</span><span class="per">${per}</span></div><div class="sub">${sub}</div></div>`;
-  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 2 AI deal analyses.')+hp('Premium','£39','per month','For everyday sourcing. Unlimited Scout analyses, billed monthly.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
+  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 2 AI deal analyses.')+hp('Premium','£39','per month','For everyday sourcing. AI searches and analyses at every power level, billed monthly.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
 $('#homeTeam').addEventListener('click',()=>{S.plansTab='team';save();go('plans')});
 
 /* ---------- hero: slow liquid field, paused offscreen, static under reduced motion ---------- */
@@ -1980,21 +2013,22 @@ renderAIAnalysis(S.deal.aiAnalysis);
 /* power levels: ids must match LEVELS in netlify/lib/ai.mts */
 const AI_LEVELS=[{id:'quick',name:'Scout',desc:'Fast first look',time:'~10 sec'},{id:'standard',name:'Analyst',desc:'Full analysis',time:'~30 sec'},{id:'deep',name:'Expert',desc:'Stress-tested, thorough',time:'1–2 min'}];
 const AIC={info:null,level:(()=>{try{return localStorage.getItem('dealpro:ai-level')||'quick'}catch(e){return 'quick'}})()};
+function levelOpts(name){const i=AIC.info,free=i&&i.free;
+  return AI_LEVELS.map(l=>{const locked=free&&l.id!=='quick';
+    return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="${name}" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)}</span>${locked?'<span>Paid plans</span>':''}</label>`}).join('')}
 function renderAILevels(){const i=AIC.info,free=i&&i.free;if(free&&AIC.level!=='quick')AIC.level='quick';
-  $('#aiLevelOpts').innerHTML=AI_LEVELS.map(l=>{const cr=i&&i.levels&&i.levels[l.id]?i.levels[l.id].credits:null,locked=free&&l.id!=='quick';
-    const cost=locked?'Paid plans':cr==null?'':cr===0?(free?'Free analysis':'Unlimited'):`${cr} credits`;
-    return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="aiLevel" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)} · ${esc(l.time)}</span><span>${esc(cost)}</span></label>`}).join('');
-  const c=$('#aiCredits');if(!i){c.textContent='';return}
-  c.textContent=i.plan==='Admin'?'Admin: unlimited credits.':i.free?`Free plan: ${i.freeLeft} of 2 free analyses left. Upgrade for Analyst and Expert.`
-    :`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}. Scout is unlimited.`}
+  $('#aiLevelOpts').innerHTML=levelOpts('aiLevel');$('#fLevelOpts').innerHTML=levelOpts('fLevel');
+  const paid=i?(i.plan==='Admin'?'Admin: unlimited credits.':`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}.`):'';
+  $('#aiCredits').textContent=!i?'':i.free?`Free plan: ${i.freeLeft} of 2 free analyses left. Upgrade for Analyst and Expert.`:paid;
+  $('#fCredits').textContent=!i?'':i.free?`Free plan: ${i.freeSearchesLeft} of 3 searches left this week. Upgrade for Analyst and Expert.`:paid}
 async function loadAICredits(){if(!document.body.dataset.userId)return;try{const r=await fetch('/api/analyze-deal',{credentials:'same-origin'});if(r.ok){AIC.info=await r.json();renderAILevels()}}catch(e){}}
-$('#aiLevelOpts').addEventListener('change',e=>{if(e.target.name==='aiLevel'){AIC.level=e.target.value;try{localStorage.setItem('dealpro:ai-level',AIC.level)}catch(err){}}});
+['#aiLevelOpts','#fLevelOpts'].forEach(id=>$(id).addEventListener('change',e=>{if(e.target.type==='radio'){AIC.level=e.target.value;try{localStorage.setItem('dealpro:ai-level',AIC.level)}catch(err){}renderAILevels()}}));
 renderAILevels();window.addEventListener('dealpro:signed-in',loadAICredits);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 $('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInput').value.trim(),btn=$('#analyseWithAI'),status=$('#aiDealStatus');if(!input){status.textContent='Paste the deal information first.';$('#aiDealInput').focus();return}
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];
   btn.disabled=true;btn.textContent='Analysing…';status.textContent=`${lv.name} analysis started. This usually takes ${lv.time}.`;
-  try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({deal:input,level:lv.id})});const start=await r.json().catch(()=>({}));
+  try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'analyse',deal:input,level:lv.id})});const start=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(start.error||'Analysis failed.');if(start.credits){AIC.info=start.credits;renderAILevels()}
     const t0=Date.now();let data;
     for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(start.jobId),{credentials:'same-origin'});data=await p.json().catch(()=>({}));

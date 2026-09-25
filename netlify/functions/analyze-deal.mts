@@ -1,6 +1,6 @@
 import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
-import { accounts, jobs, currentWeek, refundJob, ADMIN_EMAIL, FREE_ANALYSES, LEVELS, WEEK_MS, WEEKLY_CREDITS, type LevelId, type Usage } from "../lib/ai.mts";
+import { accounts, jobs, currentWeek, currentSearchWeek, refundJob, ADMIN_EMAIL, FREE_ANALYSES, FREE_SEARCHES_PER_WEEK, LEVELS, WEEK_MS, WEEKLY_CREDITS, type LevelId, type Reserved, type Usage } from "../lib/ai.mts";
 
 const json = (data: unknown, status = 200) => Response.json(data, {
   status,
@@ -17,15 +17,18 @@ async function loadAccount(userId: string) {
 function creditSummary(isAdmin: boolean, plan: string, usage: Usage) {
   const free = !isAdmin && plan === "Free";
   const week = currentWeek(usage);
-  const weekly = isAdmin ? null : WEEKLY_CREDITS[plan] ?? 0;
+  const sweek = currentSearchWeek(usage);
+  const weekly = isAdmin || free ? null : WEEKLY_CREDITS[plan] ?? 0;
+  // Per-level credit costs are deliberately not sent to the browser.
   return {
     plan: isAdmin ? "Admin" : plan,
     free,
     freeLeft: free ? Math.max(0, FREE_ANALYSES - (Number(usage.count) || 0)) : null,
+    freeSearchesLeft: free ? Math.max(0, FREE_SEARCHES_PER_WEEK - sweek.searchWeekUsed) : null,
+    searchResetsAt: free && sweek.searchWeekStart ? new Date(Date.parse(sweek.searchWeekStart) + WEEK_MS).toISOString() : null,
     weeklyCredits: weekly,
     creditsLeft: weekly === null ? null : Math.max(0, weekly - week.weekUsed),
-    resetsAt: week.weekStart ? new Date(Date.parse(week.weekStart) + WEEK_MS).toISOString() : null,
-    levels: Object.fromEntries(Object.entries(LEVELS).map(([id, l]) => [id, { credits: l.credits }])),
+    resetsAt: weekly !== null && week.weekStart ? new Date(Date.parse(week.weekStart) + WEEK_MS).toISOString() : null,
   };
 }
 
@@ -63,43 +66,64 @@ export default async (request: Request, _context: Context) => {
 
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
 
-  const body = await request.json().catch(() => null) as { deal?: string; level?: string } | null;
-  const deal = body?.deal?.trim();
+  // kind "analyse": one deal from the AI Deal Analyser. kind "rank": Deal Finder results to rank.
+  const body = await request.json().catch(() => null) as { kind?: string; deal?: string; level?: string; listings?: unknown; filters?: unknown } | null;
+  const kind = body?.kind === "rank" ? "rank" : "analyse";
   const level = (body?.level && body.level in LEVELS ? body.level : "quick") as LevelId;
-  if (!deal) return json({ error: "Paste the property advert or deal details first." }, 400);
-  if (deal.length > 30_000) return json({ error: "Deal details must be under 30,000 characters." }, 413);
+  let input: string;
+  if (kind === "analyse") {
+    input = body?.deal?.trim() || "";
+    if (!input) return json({ error: "Paste the property advert or deal details first." }, 400);
+    if (input.length > 30_000) return json({ error: "Deal details must be under 30,000 characters." }, 413);
+  } else {
+    const listings = Array.isArray(body?.listings) ? body.listings.slice(0, 80) : [];
+    if (!listings.length) return json({ error: "There are no results to rank." }, 400);
+    input = JSON.stringify({ filters: body?.filters ?? {}, listings });
+    if (input.length > 60_000) return json({ error: "Too many results to rank. Narrow your filters." }, 413);
+  }
   if (!process.env.OPENAI_API_KEY) {
     console.error("OPENAI_API_KEY is not set");
-    return json({ error: "The AI analyser is temporarily unavailable. Please try again later." }, 503);
+    return json({ error: "The AI is temporarily unavailable. Please try again later." }, 503);
   }
 
   // Limits are checked and credits reserved here, where the browser can't change them.
   const next: Usage = { ...usage };
-  const cost = isAdmin ? 0 : LEVELS[level].credits;
+  const reserved: Reserved = {};
   if (!isAdmin && plan === "Free") {
     if (level !== "quick") return json({ error: "Upgrade to use Analyst and Expert." }, 402);
-    if ((Number(usage.count) || 0) >= FREE_ANALYSES) {
-      return json({ error: `You've used your ${FREE_ANALYSES} free analyses. Subscribe for unlimited analyses.` }, 402);
+    if (kind === "analyse") {
+      if ((Number(usage.count) || 0) >= FREE_ANALYSES) {
+        return json({ error: `You've used your ${FREE_ANALYSES} free analyses. Subscribe to keep analysing deals.` }, 402);
+      }
+      next.count = (Number(usage.count) || 0) + 1;
+      reserved.count = 1;
+    } else {
+      const sweek = currentSearchWeek(usage);
+      if (sweek.searchWeekUsed >= FREE_SEARCHES_PER_WEEK) {
+        const resets = sweek.searchWeekStart ? new Date(Date.parse(sweek.searchWeekStart) + WEEK_MS).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" }) : "next week";
+        return json({ error: `You've used your ${FREE_SEARCHES_PER_WEEK} free searches this week. They reset ${resets}. Upgrade for more.` }, 402);
+      }
+      next.searchWeekStart = sweek.searchWeekStart || new Date().toISOString();
+      next.searchWeekUsed = sweek.searchWeekUsed + 1;
+      reserved.searches = 1;
     }
-    next.count = (Number(usage.count) || 0) + 1;
-  } else if (cost > 0) {
+  } else if (!isAdmin) {
+    const cost = LEVELS[level].credits;
     const week = currentWeek(usage);
-    const allowance = WEEKLY_CREDITS[plan] ?? 0;
-    if (week.weekUsed + cost > allowance) {
-      return json({ error: `Not enough credits left this week for this level (it uses ${cost}). Try a lighter level, or upgrade for more credits.` }, 402);
+    if (week.weekUsed + cost > (WEEKLY_CREDITS[plan] ?? 0)) {
+      return json({ error: "You don't have enough credits left this week for this level. Try Scout, or upgrade for more credits." }, 402);
     }
     next.weekStart = week.weekStart || new Date().toISOString();
     next.weekUsed = week.weekUsed + cost;
-    next.count = (Number(usage.count) || 0) + 1;
-  } else {
-    next.count = (Number(usage.count) || 0) + 1;
+    reserved.credits = cost;
+    if (kind === "analyse") { next.count = (Number(usage.count) || 0) + 1; reserved.count = 1; }
   }
   await store.setJSON(`users/${user.id}/ai-usage`, { ...next, updatedAt: new Date().toISOString() });
 
   const jobId = crypto.randomUUID();
   const runToken = crypto.randomUUID();
   await jobs().setJSON(jobId, {
-    userId: user.id, level, deal, cost, freeUse: !isAdmin && plan === "Free",
+    userId: user.id, kind, level, input, reserved,
     runToken, status: "queued", createdAt: new Date().toISOString(),
   });
 

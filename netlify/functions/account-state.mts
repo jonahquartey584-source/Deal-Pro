@@ -55,7 +55,7 @@ export default async (request: Request, _context: Context) => {
     } else {
       // Membership, suspension and paid unlocks are only changed by the server or an administrator,
       // never by the browser, so keep the stored values.
-      const stored = (await store.get(key, { type: "json" }) as Record<string, unknown> | null) || defaultState(false);
+      const stored = ((await store.get(key, { type: "json" }) as Record<string, unknown> | null) || defaultState(false)) as Record<string, unknown>;
       if (stored.accountEnabled === false) return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
       nextState.admin = false;
       nextState.plan = stored.plan || "Free";
