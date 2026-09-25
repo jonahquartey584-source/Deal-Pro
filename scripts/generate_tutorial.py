@@ -23,12 +23,15 @@ MUTED = "#A1A1AA"
 RED = "#E0142B"
 GREEN = "#5FB98A"
 
-FONT = "/System/Library/Fonts/SFNS.ttf"
-FONT_BOLD = "/System/Library/Fonts/SFNSDisplay.ttf"
+# macOS system font, falling back to DejaVu on Linux.
+FONTS = ["/System/Library/Fonts/SFNS.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"]
+FONTS_BOLD = ["/System/Library/Fonts/SFNSDisplay.ttf", "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"]
 
 def font(size, bold=False):
-    path = FONT_BOLD if bold and Path(FONT_BOLD).exists() else FONT
-    return ImageFont.truetype(path, size)
+    for path in (FONTS_BOLD if bold else []) + FONTS:
+        if Path(path).exists():
+            return ImageFont.truetype(path, size)
+    return ImageFont.load_default(size)
 
 def wrap(draw, text, fnt, width):
     words, lines, line = text.split(), [], ""
@@ -53,10 +56,12 @@ def slide(number, title, body, steps, filename):
     d.rounded_rectangle((64, 52, W - 64, H - 52), radius=26, fill=PANEL, outline=LINE, width=2)
     # Exact Deal Pro mark used in the website navigation: red rounded square,
     # white D silhouette and the red crossbar cut-out.
-    d.rounded_rectangle((96, 84, 160, 148), radius=13, fill=RED)
-    d.rectangle((115, 100, 127, 132), fill="white")
-    d.ellipse((115, 100, 148, 132), fill="white")
-    d.rectangle((115, 113, 128, 120), fill=RED)
+    # Same geometry as the site's 20x20 SVG, scaled to 64px.
+    u = 64 / 20
+    d.rounded_rectangle((96, 84, 160, 148), radius=4 * u, fill=RED)
+    d.rectangle((96 + 6 * u, 84 + 5 * u, 96 + 9.6 * u, 84 + 15 * u), fill="white")
+    d.pieslice((96 + 4.6 * u, 84 + 5 * u, 96 + 14.6 * u, 84 + 15 * u), start=-90, end=90, fill="white")
+    d.rectangle((96 + 6 * u, 84 + 9 * u, 96 + 10 * u, 84 + 11 * u), fill=RED)
     d.text((184, 97), "DEAL PRO", font=font(27, True), fill=INK)
     d.text((W - 176, 101), f"0{number}", font=font(22, True), fill=RED)
     d.text((96, 205), title, font=font(55, True), fill=INK)
@@ -71,15 +76,17 @@ def slide(number, title, body, steps, filename):
         y += 54
     d.text((98, H - 95), "AI-guided website tutorial", font=font(18), fill=MUTED)
     d.rounded_rectangle((W - 328, H - 112, W - 96, H - 72), radius=20, fill=RED)
-    d.text((W - 292, H - 104), "usedealpro.com", font=font(15, True), fill="white")
+    url, url_font = "usedealpro.com", font(15, True)
+    box = d.textbbox((0, 0), url, font=url_font)
+    d.text(((W - 328 + W - 96 - box[2] - box[0]) / 2, (H - 112 + H - 72 - box[3] - box[1]) / 2), url, font=url_font, fill="white")
     im.save(filename, quality=95)
 
 slides = [
-    (1, "Welcome to Deal Pro", "Find, assess and organise property opportunities from one secure account.", ["Deal Finder", "AI Deal Analyser", "Saved deals and deal packs"]),
-    (2, "Find an opportunity", "Open Deal Finder and use the filters to narrow the available private-landlord opportunities.", ["Review the headline numbers", "Compare occupancy scenarios", "Choose a deal worth investigating"]),
-    (3, "Unlock details safely", "Protected contact and address details stay hidden until the required process is complete.", ["Read and sign the agreement", "Continue to the secure payment step", "Details unlock only after verified payment"]),
-    (4, "Analyse with AI", "Paste an advert or enter the deal figures. Deal Pro highlights the numbers, risks and missing facts.", ["Read the plain-English verdict", "Check 60%, 80% and 100% occupancy", "Never rely on assumptions alone"]),
-    (5, "Complete due diligence", "Work through the checks before presenting or progressing a deal.", ["Licensing and planning", "Landlord and property evidence", "Costs, compliance and risk"]),
+    (1, "Welcome to Deal Pro", "Find, assess and organise property opportunities from one secure account.", ["Deal Finder", "AI Deal Analyser", "Deal Community"]),
+    (2, "Find an opportunity", "Open Deal Finder, set your filters and choose a power level: Scout, Analyst or Expert.", ["Full details and a link to every listing", "AI ranks the best deals for you", "Copy results into Google Sheets"]),
+    (3, "Analyse with AI", "Paste an advert or enter the deal figures. Deal Pro works out the numbers, risks and missing facts.", ["Plain-English verdict and score", "Profit at 60%, 80% and 100% occupancy", "Expert stress-tests the deal"]),
+    (4, "Complete due diligence", "Work through the checks before presenting or progressing a deal.", ["Licensing and planning", "Landlord and property evidence", "Costs, compliance and risk"]),
+    (5, "Deal Community", "Post deals where you've already spoken to the landlord or agent, and find deals other sourcers have contacted.", ["Filter by location, price and strategy", "Contact the poster directly", "R2SA, R2R, BTL, HMO and more"]),
     (6, "Save and prepare", "Save the opportunity to your account and return whenever you need to continue.", ["Generate the deal pack", "Keep records together", "Use Deal Pro as decision support"]),
 ]
 
@@ -93,15 +100,13 @@ shutil.copy2(paths[0], OUT / "deal-pro-tutorial-poster.png")
 
 narration = (
     "Hi, and welcome to Deal Pro. Here's how to get started. "
-    "First, open Deal Finder and use the filters to narrow down the available private landlord opportunities. "
-    "Take a look at the headline figures, and choose a deal you'd like to investigate. "
-    "The landlord, address, and listing details stay protected at this stage. "
-    "When you're ready, read and sign the Deal Introduction Agreement, then continue to secure payment. "
-    "The protected details only unlock once that payment has been verified. "
-    "Next, open the AI Deal Analyser. You can paste in an advert, or enter the rent, deposit, and expected nightly rate yourself. "
-    "Deal Pro will explain the likely return, key risks, and anything that's still missing, without simply guessing. "
-    "Finally, complete the due diligence checks, save the deal to your account, and prepare the deal pack. "
-    "And remember, always verify legal, planning, licensing, and financial information independently."
+    "First, open Deal Finder. Set your filters, then choose a power level. Scout gives you a fast first look, Analyst a full analysis, and Expert a thorough, stress-tested one. "
+    "Every result shows the full property details and a link to the listing, and the AI picks out the best deals for you. You can copy them straight into Google Sheets. "
+    "Next, open the AI Deal Analyser. Paste in an advert, or enter the rent, deposit and expected nightly rate yourself. "
+    "Deal Pro explains the likely profit at different occupancy levels, the key risks, and anything that's still missing, without simply guessing. "
+    "Then work through the due diligence checks, save the deal to your account, and prepare the deal pack. "
+    "You can also use the Deal Community to post deals where you've already spoken to the landlord or agent, and to find deals other sourcers have contacted. "
+    "And remember, always verify legal, planning, licensing and financial information independently."
 )
 # ElevenLabs "Adam" voice.
 VOICE_ID = "pNInz6obpgDQGcmJGAvB"
