@@ -1228,7 +1228,7 @@ function secondDeal(){const d=sampleDeal();Object.assign(d,{id:'d2',name:'Isling
   units:[{label:'Studio 1',rent:1700,dep:1700,rate:180},{label:'Studio 2',rent:1700,dep:1569,rate:180},{label:'Studio 3',rent:1700,dep:1700,rate:180}]});return d}
 function freshDeal(){const d=sampleDeal();Object.assign(d,{id:'d'+Date.now(),name:'New deal',area:'',london:false,status:'Checking',units:[{label:'Unit 1',rent:0,dep:0,rate:0}]});return d}
 
-const PLAN_DEFS={Free:{name:'Free',s:6,w:30},Pro:{name:'Premium',s:30,w:300},Max5:{name:'Max 5x',s:150,w:1500},Max20:{name:'Max 20x',s:600,w:6000},
+const PLAN_DEFS={Free:{name:'Free',s:6,w:6},Pro:{name:'Premium',s:30,w:300},Max5:{name:'Max 5x',s:150,w:1500},Max20:{name:'Max 20x',s:600,w:6000},
   TeamStd:{name:'Team Standard',s:40,w:400},TeamPrem:{name:'Team Premium',s:200,w:2000}};
 const CHECKOUT={
   Pro:'https://buy.stripe.com/bJe28ra6cfxA6YogQo7g407',
@@ -1268,14 +1268,14 @@ function limitNote(where,kind,feat){const el=$(where);const u=S.usage;let msg;
   else if(kind==='weekly')msg=`You've reached your weekly limit. It resets ${wkday(u.wStart+WEEK)}.`;
   else if(kind==='cap')msg=`You've reached your extra usage cap for this month. Raise the cap in Usage, or wait until it resets on ${nextMonth(now()).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}.`;
   else msg=`You've reached your session limit. It resets at ${hhmm(u.sStart+SESSION)}.`;
-  if(el){el.innerHTML=`<div>${msg}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button>${kind!=='feature'&&kind!=='cap'&&!S.extra.on?'<button class="btn sm" data-extra-on>Turn on extra usage</button>':''}${kind==='cap'?'<button class="btn sm" data-go="usage">Open usage</button>':''}<button class="btn ghost sm" data-ln-close>Dismiss</button></div>`;el.hidden=false}
+  if(el){el.innerHTML=`<div>${msg}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button>${kind!=='feature'&&kind!=='cap'&&!S.extra.on&&S.plan!=='Free'?'<button class="btn sm" data-extra-on>Turn on extra usage</button>':''}${kind==='cap'?'<button class="btn sm" data-go="usage">Open usage</button>':''}<button class="btn ghost sm" data-ln-close>Dismiss</button></div>`;el.hidden=false}
   toast(msg)}
 function feature(f,where){if(S.plan!=='Free')return true;limitNote(where,'feature',f);return false}
 // returns true if the action may go ahead (within limits, or covered by extra usage under the cap)
 function spend(n,what,where){rollWindows();const L=limits(),u=S.usage;
   const room=Math.max(0,Math.min(L.s-u.sUsed,L.w-u.wUsed)),over=Math.max(0,n-room);
   if(over>0){const kind=L.w-u.wUsed<n&&u.wStart!=null&&(L.w-u.wUsed)<=(L.s-u.sUsed)?'weekly':'session';
-    if(!S.extra.on){if(u.sStart==null)u.sStart=now();if(u.wStart==null)u.wStart=now();limitNote(where,kind);save();renderUsage();return false}
+    if(!S.extra.on||S.plan==='Free'){if(u.sStart==null)u.sStart=now();if(u.wStart==null)u.wStart=now();limitNote(where,kind);save();renderUsage();return false}
     const cost=over*XRATE;if(S.extra.spent+cost>S.extra.cap+1e-9){limitNote(where,'cap');return false}
     S.extra.spent+=cost}
   const t=now();if(u.sStart==null)u.sStart=t;if(u.wStart==null)u.wStart=t;u.sUsed+=n;u.wUsed+=n;
@@ -1581,7 +1581,7 @@ function renderPlans(){
   if(!team){const mt=S.maxTier==='20'?'20':'5',mid='Max'+mt;
     box.innerHTML=`<div class="plan"><div class="plan-h"><h3>Free</h3></div><p class="plan-from">Try Deal Pro</p>
       <div class="price"><span class="mono">£0</span><span class="per">per month</span></div><div class="bill-note">Free forever</div>
-      <div class="lead">Limited usage</div>${feats(['2 AI deal analyses','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
+      <div class="lead">Limited usage</div>${feats(['3 Deal Finder searches a week','2 AI deal analyses','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
     <div class="plan feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div><p class="plan-from">For everyday sourcing</p>
       <div class="price"><span class="mono">£${ann?33:39}</span><span class="per">per month</span></div><div class="bill-note">${ann?'Billed annually (£396 upfront)':'Billed monthly'}</div>
       <div class="lead">Everything in Free, plus:</div>${feats(['Unlimited deal analyses','More usage','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
@@ -1608,7 +1608,7 @@ $('#plans').addEventListener('click',e=>{const t=e.target.closest('[data-tier]')
   const b=e.target.closest('[data-plan]');if(!b||!PLAN_DEFS[b.dataset.plan])return;const id=b.dataset.plan;
   if(CHECKOUT[id]){window.location.assign(checkoutURL(CHECKOUT[id]));return}
   S.plan=id;save();renderTop();renderPlans();toast(`Switched to ${PLAN_DEFS[S.plan].name}`)});
-$('#xOn').addEventListener('click',()=>{S.extra.on=!S.extra.on;save();renderUsage();toast(S.extra.on?'Extra usage on':'Extra usage off')});
+$('#xOn').addEventListener('click',()=>{if(S.plan==='Free'&&!S.extra.on){toast('Extra usage is available on paid plans.');return}S.extra.on=!S.extra.on;save();renderUsage();toast(S.extra.on?'Extra usage on':'Extra usage off')});
 $('#xCap').addEventListener('input',e=>{S.extra.cap=Math.max(0,+e.target.value||0);save();renderUsage()});
 $('#simSession').addEventListener('click',()=>{S.timeOffset=(+S.timeOffset||0)+SESSION;save();renderUsage();toast('Moved the demo clock on 5 hours')});
 $('#simWeek').addEventListener('click',()=>{S.timeOffset=(+S.timeOffset||0)+WEEK;save();renderUsage();toast('Moved the demo clock on a week')});
@@ -1914,7 +1914,7 @@ function renderHome(){syncFee();
     <div class="pv-nums"><div class="pv-label">Deal Analyser · ${esc(S.deal.name||'Untitled deal')}</div>
       <div class="strip mini">${fig('Upfront cash',gbp(f.up))}${fig('Surplus at 60%',gbp(f.t60),f.t60<0?' neg':'')}${fig('Surplus at 80%',gbp(f.t80),f.t80<0?' neg':'')}${fig('Break-even',isFinite(f.be)?pct(f.be):'Never')}</div></div>`;
   const hp=(n,pr,per,sub,feat)=>`<div class="hplan${feat?' feat':''}"><div class="plan-h"><h3>${n}</h3>${feat?'<span class="tag">Most popular</span>':''}</div><div class="price"><span class="mono">${pr}</span><span class="per">${per}</span></div><div class="sub">${sub}</div></div>`;
-  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 2 AI deal analyses.')+hp('Premium','£39','per month','For everyday sourcing. Unlimited deal analyses. £33/month billed annually.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
+  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 2 AI deal analyses.')+hp('Premium','£39','per month','For everyday sourcing. Unlimited deal analyses. £33/month billed annually.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
 $('#homeTeam').addEventListener('click',()=>{S.plansTab='team';save();go('plans')});
 
 /* ---------- hero: slow liquid field, paused offscreen, static under reduced motion ---------- */
