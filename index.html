@@ -1,0 +1,1894 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Deal Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0B0B0C; --side:#0E0E10; --surface:#131315; --surface-2:#1A1A1D; --hover:#232327; --field:#0F0F11; --zebra:#161618;
+  --line:#2A2A2E; --line-2:#3A3A40;
+  --ink:#F4F4F5; --ink-2:#A1A1AA; --muted:#8A8A93;
+  --brand:#E0142B; --brand-hover:#EE2238; --brand-press:#B30F22; --brand-ink:#FFFFFF; --brand-soft:#2A1216;
+  --accent:#FF4D5E;
+  --good:#5FB98A; --warn:#E0A84A; --bad:#FF8F80;
+  --ring:rgba(224,20,43,.45);
+  --ease:cubic-bezier(.22,1,.36,1);
+  --shadow-sm:0 1px 1px rgba(0,0,0,.4);
+  --shadow-pop:0 12px 40px rgba(0,0,0,.6),0 1px 3px rgba(0,0,0,.5);
+  --sans:"Geist",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{margin:0;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.site-intro{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:#09090a;pointer-events:none;animation:introExit .7s var(--ease) .8s forwards}.site-intro::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 48%,rgba(224,20,43,.14),transparent 32%);opacity:0;animation:introGlow .8s ease-out .1s forwards}.intro-lockup{position:relative;display:flex;align-items:center;gap:13px;opacity:0;transform:translateY(10px) scale(.98);animation:introLockup .6s var(--ease) .08s forwards}.intro-mark{display:block;width:42px;height:42px;filter:drop-shadow(0 12px 18px rgba(224,20,43,.28));flex:none}.intro-wordmark{font-size:21px;font-weight:600;letter-spacing:-.035em}.intro-line{position:absolute;left:50%;bottom:-14px;width:0;height:2px;border-radius:2px;background:var(--brand);transform:translateX(-50%);animation:introLine .55s var(--ease) .24s forwards}@keyframes introLockup{to{opacity:1;transform:none}}@keyframes introLine{to{width:100%}}@keyframes introGlow{to{opacity:1}}@keyframes introExit{to{opacity:0;visibility:hidden;transform:scale(1.015)}}
+button,a,.btn{transition:transform .18s var(--ease),background-color .2s var(--ease),border-color .2s var(--ease),color .2s var(--ease),opacity .2s var(--ease)}button:active,a.btn:active,.tab:active{transform:scale(.975)}
+
+/* ---------- shell ---------- */
+.side{position:fixed;inset:0 auto 0 0;width:232px;display:flex;flex-direction:column;background:var(--side);border-right:1px solid var(--line);padding:14px 10px 12px;z-index:30}
+.brand{display:flex;align-items:center;gap:9px;padding:4px 8px 16px;font-weight:600;font-size:15px;letter-spacing:-.02em;color:var(--ink)}
+.brand svg{flex:none;display:block}
+.nav{display:flex;flex-direction:column;gap:1px}
+.nav-label{font-size:12px;color:var(--muted);padding:14px 10px 4px}
+.tab{position:relative;display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;border:0;border-radius:5px;transition:background .2s var(--ease),color .2s var(--ease);background:none;color:var(--ink-2);font-weight:500;font-size:13.5px;cursor:pointer;text-align:left;white-space:nowrap}
+.tab svg{flex:none;width:16px;height:16px;color:var(--muted)}
+.tab:hover{background:var(--hover);color:var(--ink)}
+.tab[aria-current="page"]{background:var(--surface-2);color:var(--ink)}
+.tab[aria-current="page"]::before{content:"";position:absolute;left:-10px;top:7px;bottom:7px;width:2px;border-radius:0 2px 2px 0;background:var(--brand)}
+.tab[aria-current="page"] svg{color:var(--accent)}
+.ws{margin-top:auto;border-top:1px solid var(--line);padding:14px 8px 2px;display:grid;gap:8px;min-width:0;overflow:hidden}
+.ws-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:8px;min-width:0}
+.ws-name{font-weight:500;font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ws-plan{font-size:12px;color:var(--muted);white-space:nowrap}
+.ws-cred{font-size:12.5px;color:var(--ink-2);display:flex;gap:4px;align-items:baseline}
+.ws-cred .num{color:var(--ink);font-weight:500}
+.ws-cap{color:var(--muted)}
+.meter{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.meter span{display:block;height:100%;background:var(--brand);width:100%;transition:width .32s var(--ease)}
+.ws-note{font-size:11.5px;color:var(--muted);line-height:1.4}
+.main{position:relative;margin-left:232px;min-width:0}
+.content{max-width:1200px;margin:0 auto;padding:22px 32px 28px}
+.public-auth-nav{position:absolute;top:16px;right:32px;z-index:20;display:flex;align-items:center;gap:8px}
+body:not(.signed-out) .public-auth-nav{display:none}
+.app-foot{max-width:1200px;margin:0 auto;padding:14px 32px 28px;font-size:12px;color:var(--muted)}
+.app-foot span{display:block;border-top:1px solid var(--line);padding-top:14px}
+
+@media (max-width:899px){
+  .side{position:sticky;top:0;width:auto;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:0;border-right:0;border-bottom:1px solid var(--line)}
+  .brand{grid-row:1;grid-column:1;padding:12px 16px 8px}
+  .ws{grid-row:1;grid-column:2;margin:0;border:0;padding:12px 16px 8px;display:flex;align-items:baseline;gap:10px}
+  .ws-name,.meter,.ws-note,.ws .btn,.ws-cap,.ws-use{display:none}
+  .ws-pct{display:inline!important}
+  .nav{grid-row:2;grid-column:1/-1;flex-direction:row;gap:2px;overflow-x:auto;padding:0 10px;scrollbar-width:none;min-width:0}
+  .nav::-webkit-scrollbar{display:none}
+  .nav-label{display:none}
+  .tab{height:38px;border-radius:0;padding:0 8px;border-bottom:2px solid transparent;font-size:13px}
+  .tab svg{display:none}
+  .tab:hover{background:none}
+  .tab[aria-current="page"]{background:none;box-shadow:none;border-bottom-color:var(--brand)}
+  .tab[aria-current="page"]::before{display:none}
+  .main{margin-left:0}
+  .content{padding:18px 16px 24px}
+  .public-auth-nav{top:12px;right:16px}
+  .app-foot{padding:8px 16px 24px}
+}
+
+/* ---------- page header ---------- */
+.ph{display:flex;align-items:flex-end;justify-content:space-between;gap:14px 24px;flex-wrap:wrap;padding-bottom:18px;margin-bottom:22px;border-bottom:1px solid var(--line)}
+.ph-main{min-width:0;flex:1 1 420px}
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.crumbs .sep{color:var(--line-2)}
+.crumbs .cur{color:var(--ink-2);overflow-wrap:anywhere}
+.crumb-link{border:0;background:none;padding:0;color:inherit;cursor:pointer;border-radius:3px}
+.crumb-link:hover{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.ph h1{font-size:22px;line-height:1.25;letter-spacing:-.02em;overflow-wrap:anywhere}
+.ph-desc{margin-top:4px;color:var(--ink-2);max-width:72ch}
+.ph-meta{margin-top:4px;color:var(--muted);font-size:13px;overflow-wrap:anywhere}
+.ph-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* ---------- controls ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:32px;padding:0 12px;border:1px solid var(--line-2);background:var(--surface-2);color:var(--ink);border-radius:5px;font-weight:500;font-size:13px;cursor:pointer;white-space:nowrap;box-shadow:var(--shadow-sm);transition:background .2s var(--ease),border-color .2s var(--ease),color .2s var(--ease),transform .2s var(--ease)}
+a.btn{text-decoration:none}
+.btn:hover{background:var(--hover);border-color:var(--muted)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--brand-ink)}
+.btn.primary:hover{background:var(--brand-hover);border-color:var(--brand-hover)}
+.btn.primary:active{background:var(--brand-press);border-color:var(--brand-press)}
+.btn.outline{background:transparent;border-color:rgba(244,244,245,.3);box-shadow:none}
+.btn.outline:hover{background:rgba(244,244,245,.06);border-color:var(--ink)}
+.btn.lg{height:44px;padding:0 20px;font-size:14.5px;border-radius:6px}
+.btn.ghost{background:none;border-color:transparent;box-shadow:none;color:var(--ink-2)}
+.btn.ghost:hover{background:var(--hover);color:var(--ink)}
+.btn.sm{height:28px;padding:0 10px;font-size:12.5px}
+.btn.block{width:100%}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn[data-confirm]{color:var(--bad)}
+.cost{font-family:var(--mono);font-size:11.5px;font-weight:400;opacity:.75;padding-left:8px;border-left:1px solid color-mix(in srgb,currentColor 35%,transparent)}
+label.f{display:grid;gap:5px;min-width:0}
+label.f>span:first-child{font-size:12.5px;font-weight:500;color:var(--ink-2)}
+.inp{width:100%;min-width:0;height:32px;border:1px solid var(--line-2);background:var(--field);border-radius:5px;padding:0 10px;font-size:13.5px;box-shadow:none;transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
+.inp::placeholder{color:var(--muted);opacity:.8}
+.inp:hover{border-color:var(--muted)}
+.inp:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--ring)}
+select.inp{padding-right:28px;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);background-position:calc(100% - 14px) 50%,calc(100% - 10px) 50%;background-size:4px 4px;background-repeat:no-repeat;cursor:pointer}
+textarea.inp{height:auto;min-height:96px;padding:8px 10px;line-height:1.5;resize:vertical;font-size:13px}
+input.num{font-family:var(--mono);font-size:13px;text-align:right}
+input[type=number]{-moz-appearance:textfield}
+input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+.ix{position:relative;display:block}
+.ix .pre,.ix .suf{position:absolute;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:12px;color:var(--muted);pointer-events:none}
+.ix .pre{left:10px}
+.ix .suf{right:10px}
+.ix .inp{padding-left:24px}
+.ix.has-suf .inp{padding-left:10px;padding-right:var(--sp,26px)}
+.check{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--ink-2);cursor:pointer}
+.check input{margin:2px 0 0;width:15px;height:15px;accent-color:var(--brand);flex:none}
+.fields{display:grid;gap:12px}
+.row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+
+/* ---------- layout blocks ---------- */
+.g-side{display:grid;grid-template-columns:minmax(0,340px) minmax(0,1fr);gap:24px;align-items:start}
+.g-side>*{min-width:0}
+@media (max-width:1199px){.g-side{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;min-width:0}
+.fs{padding:16px}
+.fs+.fs{border-top:1px solid var(--line)}
+.fs-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.fs-h h2{font-size:13.5px}
+.fs-d{font-size:12.5px;color:var(--muted);margin:-6px 0 12px}
+.note{font-size:12.5px;color:var(--muted);margin-top:10px}
+.sec{margin-top:28px}
+.sec-h{display:flex;align-items:baseline;justify-content:space-between;gap:2px 16px;flex-wrap:wrap;margin-bottom:10px}
+.sec-h h2{font-size:14.5px}
+.sec-meta{font-size:12.5px;color:var(--muted)}
+.stack{display:grid;gap:8px}
+.stack>*{min-width:0}
+
+/* summary strip */
+#results{container-type:inline-size;min-width:0}
+.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.fig{background:var(--surface);padding:14px 16px;min-width:0}
+.fig-l{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:7px}
+.fig-v{font-family:var(--mono);font-size:22px;font-weight:500;letter-spacing:-.03em;line-height:1.2;margin-top:6px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.fig-s{font-size:12px;color:var(--muted);margin-top:3px}
+.fig-v.neg{color:var(--bad)}
+@container (max-width:560px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:640px){.strip.dd-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* alerts */
+.alerts{display:grid;gap:8px;margin-top:16px}
+.alert{background:var(--surface);border:1px solid var(--line);border-left:2px solid var(--muted);border-radius:0 5px 5px 0;padding:10px 14px;font-size:13px;color:var(--ink-2)}
+.alert b{color:var(--ink);font-weight:600}
+.alert.bad{border-left-color:var(--bad)}
+.alert.warn{border-left-color:var(--warn)}
+.alert.good{border-left-color:var(--good)}
+
+/* tables */
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+tbody tr:last-child td{border-bottom:0}
+thead th{font-size:12px;font-weight:500;color:var(--muted);background:var(--surface-2);vertical-align:bottom}
+td.n{text-align:right;font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums}
+td.l{text-align:left}
+th.gh{text-align:center;color:var(--ink-2)}
+.gs{border-left:1px solid var(--line)}
+tr.total td{font-weight:600;border-top:1px solid var(--line-2)}
+td.neg{color:var(--bad)}
+td.u{vertical-align:top;font-weight:500}
+td.lb{border-bottom:0}
+.base{font-family:var(--sans);font-size:11.5px;color:var(--muted);margin-left:4px}
+
+/* break-even */
+.be-list{background:var(--surface);border:1px solid var(--line);border-radius:6px}
+.be-row{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr) 88px;gap:8px 20px;align-items:center;padding:14px 16px}
+.be-row+.be-row{border-top:1px solid var(--line)}
+.be-unit{display:block;font-weight:500;overflow-wrap:anywhere}
+.be-rate{display:block;font-size:12px;color:var(--muted);font-family:var(--mono)}
+.be-val{text-align:right;font-family:var(--mono);font-size:15px;font-weight:500}
+.track{position:relative;height:30px}
+.track .rail{position:absolute;left:0;right:0;top:9px;height:4px;border-radius:2px;background:var(--line)}
+.track .fill{position:absolute;left:0;top:9px;height:4px;border-radius:2px;background:var(--line-2)}
+.track .tick{position:absolute;top:6px;width:1px;height:10px;background:var(--line-2)}
+.track .tl{position:absolute;top:18px;font-family:var(--mono);font-size:10.5px;color:var(--muted);transform:translateX(-50%)}
+.track .tl.first{transform:none}
+.track .tl.last{transform:translateX(-100%)}
+.track .mk{position:absolute;top:3px;width:2px;height:16px;background:var(--ink);border-radius:1px;transform:translateX(-1px)}
+@media (max-width:640px){
+  .be-row{grid-template-columns:minmax(0,1fr) auto}
+  .be-row .track{grid-column:1/-1;grid-row:2}
+}
+
+/* status dots */
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--muted);flex:none}
+.dot.good{background:var(--good)}
+.dot.warn{background:var(--warn)}
+.dot.bad{background:var(--bad)}
+.dot.none{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line-2)}
+.sel{position:relative;display:block}
+.sel .dot{position:absolute;left:10px;top:50%;margin-top:-3.5px;pointer-events:none}
+.sel .inp{padding-left:25px}
+
+/* due diligence */
+.list{background:var(--surface);border:1px solid var(--line);border-radius:6px;margin-top:20px}
+.dd-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,320px);gap:12px 28px;padding:16px}
+.dd-row+.dd-row{border-top:1px solid var(--line)}
+.dd-h{display:flex;align-items:baseline;gap:10px}
+.dd-i{font-family:var(--mono);font-size:12px;color:var(--muted);min-width:14px}
+.dd-h h3{font-size:14px}
+.dd-d{color:var(--ink-2);font-size:13px;margin:4px 0 0 24px}
+.ai{margin:12px 0 0 24px;border-left:2px solid var(--brand);background:var(--surface-2);padding:9px 12px;font-size:13px;color:var(--ink);border-radius:0 4px 4px 0}
+.ai-h{font-size:12px;font-weight:600;color:var(--accent);margin-bottom:2px}
+.ai-h span{font-weight:400;color:var(--muted);margin-left:6px}
+.dd-side{display:grid;gap:10px;align-content:start}
+.dd-side textarea.inp{min-height:64px}
+@media (max-width:760px){.dd-row{grid-template-columns:minmax(0,1fr)}.dd-d,.ai{margin-left:0}}
+
+/* pack */
+.paper-bar{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.pack{background:#FFFFFF;color:#1A1C21;border:1px solid var(--line);border-radius:3px;box-shadow:0 1px 2px rgba(20,20,30,.05),0 10px 30px rgba(20,20,30,.07);padding:36px 44px 24px;max-width:760px;margin:0 auto;position:relative;overflow:hidden;font-size:12.5px;line-height:1.55}
+.pk-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap;border-bottom:2px solid #C8102E;padding-bottom:9px;margin-bottom:22px;font-size:11px;color:#5E636E}
+.pk-top b{color:#C8102E;font-weight:600;font-size:11.5px}
+.pack h2{font-size:24px;letter-spacing:-.02em;color:#14161A;overflow-wrap:anywhere}
+.pack .ps{color:#5E636E;font-size:12.5px;margin:3px 0 4px}
+.pack h3{font-size:12.5px;color:#0B0B0C;margin:22px 0 8px;padding-bottom:6px;border-bottom:1px solid #E3E5EA}
+.pack p{margin:0 0 8px}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px 24px;margin-top:12px}
+.kv-h{font-weight:600;margin-bottom:4px;color:#14161A}
+.kv dl{margin:0;display:grid;gap:2px}
+.kv dl div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dotted #E3E5EA;padding:2px 0}
+.kv dt{color:#5E636E}
+.kv dd{margin:0;font-family:var(--mono);font-size:11.5px;color:#14161A;white-space:nowrap}
+.pack .tw{border-color:#E3E5EA;background:#FFFFFF;border-radius:2px}
+.pack table{font-size:11.5px;color:#1A1C21}
+.pack th,.pack td{border-color:#E3E5EA;padding:6px 10px}
+.pack thead th{background:#F5F6F8;color:#5E636E;font-size:11px}
+.pack td.n{font-size:11.5px}
+.pack .small{font-size:10.5px;color:#6A6F7A}
+.pack .foot{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:9.5px;color:#5E636E;border-top:1px solid #E3E5EA;margin-top:20px;padding-top:8px;letter-spacing:.02em}
+.pack .st{font-weight:500}
+.pack .st.issue{color:#B42318}.pack .st.partly{color:#A35C06}.pack .st.verified{color:#1E7A4C}.pack .st.none{color:#6A6F7A}
+.pdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:7px;vertical-align:1px}
+.wm{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none;overflow:hidden}
+.wm span{transform:rotate(-24deg);font-family:var(--sans);font-size:92px;font-weight:600;color:rgba(200,16,46,.08);letter-spacing:.08em}
+@media (max-width:640px){.pack{padding:24px 18px 18px}.pack h2{font-size:20px}.wm span{font-size:64px}}
+
+/* send */
+.steps{list-style:none;margin:0 0 24px;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.steps li{background:var(--surface);padding:12px 14px;font-size:12.5px;color:var(--ink-2);min-width:0}
+.step-top{display:flex;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted);margin-bottom:4px}
+.step-top .mono{font-size:11.5px}
+.steps b{display:block;font-size:13.5px;font-weight:600;color:var(--ink);margin-bottom:2px}
+@media (max-width:760px){.steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+pre.notice{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:14px 16px;font-family:var(--mono);font-size:12px;line-height:1.6;margin:0;max-height:480px;overflow:auto}
+
+/* deals list */
+.dl{background:var(--surface);border:1px solid var(--line);border-radius:6px}
+.dl-head,.dl-row{display:grid;grid-template-columns:minmax(0,1fr) 88px 96px 96px 176px 140px;gap:16px;align-items:center;padding:12px 16px}
+.dl-head{padding-block:8px;font-size:12px;color:var(--muted);background:var(--surface-2);border-bottom:1px solid var(--line);border-radius:6px 6px 0 0}
+.dl-row+.dl-row{border-top:1px solid var(--line)}
+.r{text-align:right}
+.dl-name{border:0;background:none;padding:0;font-weight:500;font-size:14px;color:var(--ink);cursor:pointer;text-align:left;border-radius:3px;overflow-wrap:anywhere}
+.dl-name:hover{text-decoration:underline;text-underline-offset:3px}
+.dl-sub{font-size:12.5px;color:var(--muted);margin-top:1px;overflow-wrap:anywhere}
+.dl-f{font-family:var(--mono);font-size:13px;text-align:right;font-variant-numeric:tabular-nums}
+.dl-f.neg{color:var(--bad)}
+.dl-ctl{display:contents}
+.dl-act{display:flex;gap:4px;justify-content:flex-end}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+@media (max-width:1099px){
+  .dl-head{display:none}
+  .dl-row{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  .dl-t{grid-column:1/-1}
+  .dl-f{text-align:left}
+  .dl-f::before{content:attr(data-l);display:block;font-family:var(--sans);font-size:12px;color:var(--muted)}
+  .dl-ctl{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .dl-ctl .sel{flex:1 1 180px}
+  .dl-act{flex:none}
+}
+
+/* pricing */
+.plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.plan{background:var(--surface);padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.plan.feat{box-shadow:inset 0 2px 0 var(--brand)}
+.plan-h{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px}
+.plan-h h3{font-size:14.5px}
+.tag{font-size:12px;color:var(--accent);font-weight:500}
+.price{display:flex;align-items:baseline;gap:6px}
+.price .mono{font-size:28px;font-weight:500;letter-spacing:-.03em}
+.price .per{color:var(--muted);font-size:13px}
+.plan .sub{font-size:12.5px;color:var(--muted);margin-top:-8px}
+.plan ul{list-style:none;margin:0;padding:12px 0 0;border-top:1px solid var(--line);display:grid;gap:7px;font-size:13px;color:var(--ink-2);flex:1}
+.plan li{display:flex;gap:9px;align-items:flex-start}
+.plan li svg{flex:none;margin-top:3px;color:var(--muted)}
+.cur{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2)}
+@media (max-width:860px){.plans{grid-template-columns:minmax(0,1fr)}}
+
+/* find deals */
+.find{display:grid;grid-template-columns:minmax(0,288px) minmax(0,1fr);gap:24px;align-items:start}
+.find>*{min-width:0}
+@media (max-width:1099px){.find{grid-template-columns:minmax(0,1fr)}}
+fieldset.fg{border:0;margin:0;padding:0;min-width:0}
+.fg legend{padding:0;margin-bottom:5px;font-size:12.5px;font-weight:500;color:var(--ink-2)}
+.seg{position:relative;display:flex;gap:2px;padding:2px;border:1px solid var(--line-2);border-radius:5px;background:var(--surface-2)}
+.seg input{position:absolute;opacity:0;width:1px;height:1px;margin:0;pointer-events:none}
+.seg label{flex:1 1 auto;text-align:center;height:26px;line-height:26px;padding:0 6px;border-radius:4px;font-size:12.5px;font-weight:500;color:var(--ink-2);cursor:pointer;white-space:nowrap}
+.seg label:hover{color:var(--ink)}
+.seg input:checked+label{background:var(--hover);color:var(--ink);box-shadow:0 0 0 1px var(--line-2),var(--shadow-sm)}
+.seg input:focus-visible+label{outline:2px solid var(--accent);outline-offset:1px}
+.ix.both .inp{padding-left:24px;padding-right:40px}
+.fpanel[data-mode="buy"] .js-pcm{display:none}
+.fpanel[data-mode="buy"] .ix.both .inp{padding-right:10px}
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
+.fnote{font-size:12px;color:var(--muted);border-left:2px solid var(--line-2);padding-left:8px;margin-top:8px}
+.fempty{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:40px 24px;text-align:center}
+.fempty h2{font-size:14.5px;margin-bottom:4px}
+.fempty p{color:var(--muted);max-width:52ch;margin:0 auto}
+.fprog{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:20px}
+.fprog-t{font-weight:500;margin-bottom:10px}
+.fprog ol{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:8px}
+.fprog li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.fprog li.act,.fprog li.done{color:var(--ink)}
+.fprog li .mono{margin-left:auto;font-size:12px}
+.ftool{display:flex;justify-content:space-between;align-items:flex-end;gap:10px 16px;flex-wrap:wrap;margin-bottom:10px}
+.ftool>*{min-width:0}
+.fsum{font-size:13.5px;color:var(--ink-2)}
+.fsum b{color:var(--ink);font-weight:500}
+.fsub{font-size:12px;color:var(--muted);margin-top:2px}
+#fTsvWrap{margin-bottom:10px}
+#fTsv{min-height:120px;font-size:11.5px;white-space:pre;overflow:auto}
+.sheet{overflow:auto;max-height:min(70vh,640px);border:1px solid var(--line-2);border-radius:4px;background:var(--surface);overscroll-behavior-x:contain}
+.sheet table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%;font-size:12.5px}
+.sheet th,.sheet td{height:30px;padding:0 10px;border-bottom:1px solid var(--line);border-right:1px solid var(--line);text-align:left;white-space:nowrap}
+.sheet thead th{position:sticky;top:0;z-index:2;background:var(--surface-2);border-bottom-color:var(--line-2);color:var(--ink-2);font-size:12px;vertical-align:middle}
+.sheet .rn{position:sticky;left:0;z-index:1;background:var(--surface-2);color:var(--muted);text-align:center;font-family:var(--mono);font-size:11px;min-width:40px;padding:0 6px;border-right-color:var(--line-2)}
+.sheet thead .rn{z-index:3}
+.sheet .ck{width:34px;text-align:center;padding:0}
+.sheet .ck input{width:14px;height:14px;margin:0;vertical-align:middle;accent-color:var(--brand)}
+.sheet .nr{text-align:right}
+.sheet td.mono{font-size:12px}
+.sheet .clip{max-width:170px;overflow:hidden;text-overflow:ellipsis}
+.sheet .clip.wide{max-width:240px}
+.sheet tbody tr:hover td{background:#1C1C20}
+.sheet tbody tr:hover td.rn{background:var(--surface-2)}
+.sheet tbody tr.is-sel td{background:var(--brand-soft)}
+.sheet tbody tr.is-sel td.rn{background:var(--brand-soft);color:var(--accent)}
+.sort{display:flex;align-items:center;gap:4px;width:100%;height:100%;border:0;background:none;padding:0;font:inherit;color:inherit;cursor:pointer;border-radius:3px}
+.nr .sort{justify-content:flex-end}
+.sort:hover{color:var(--ink)}
+.sa{font-family:var(--mono);color:var(--accent);min-width:8px}
+.xlink{color:var(--accent);text-decoration:none;font-weight:500;border-radius:3px;white-space:nowrap}
+.xlink:hover{text-decoration:underline;text-underline-offset:3px}
+.btn.xs{height:24px;padding:0 8px;font-size:12px}
+
+/* deal cards */
+.sign-line{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);margin:-8px 0 18px}
+.sign-line .lk{color:var(--muted)}
+.sign-line b{font-weight:500;color:var(--ink)}
+.sign-line .sep{color:var(--line-2)}
+.linkbtn{border:0;background:none;padding:0;color:var(--accent);font-weight:500;font-size:inherit;cursor:pointer;border-radius:3px}
+.linkbtn:hover{text-decoration:underline;text-underline-offset:3px}
+.segb{display:inline-flex}
+.segb button{border:0;background:none;height:24px;padding:0 10px;border-radius:4px;font-size:12.5px;font-weight:500;color:var(--ink-2);cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.segb button:hover{color:var(--ink)}
+.segb button[aria-pressed="true"]{background:var(--hover);color:var(--ink);box-shadow:0 0 0 1px var(--line-2),var(--shadow-sm)}
+.inp-sm{height:28px;font-size:12.5px;width:auto}
+.car-arrow{width:28px;padding:0}
+@media (max-width:899px){.car-arrow{display:none}}
+.cards{display:grid;grid-auto-flow:column;grid-auto-columns:300px;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:4px 2px 16px;overscroll-behavior-x:contain;scrollbar-width:thin;border-radius:6px}
+.dcard{scroll-snap-align:start;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0;transition:transform .28s var(--ease),box-shadow .28s var(--ease),border-color .28s var(--ease)}
+.dcard:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.5);border-color:var(--line-2)}
+.dcard h3{font-size:14.5px}
+.adv{list-style:none;margin:0;padding:0;display:grid;gap:5px;font-size:13px;color:var(--ink)}
+.adv li{display:grid;grid-template-columns:24px minmax(0,1fr);align-items:baseline;overflow-wrap:anywhere}
+.adv b{font-family:var(--mono);font-weight:500;font-size:12.5px;font-variant-numeric:tabular-nums}
+.adv b.neg{color:var(--bad)}
+.em{font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;font-size:13px;line-height:1}
+.dc-foot{margin-top:auto;display:grid;gap:10px;padding-top:12px;border-top:1px solid var(--line)}
+.dc-note{font-size:11.5px;color:var(--muted);display:grid;gap:3px}
+.dc-lock{display:flex;gap:6px;align-items:center}
+.dc-act{display:flex;gap:8px}
+.dc-act .btn{flex:1}
+/* signing drawer */
+dialog.drawer{margin:0 0 0 auto;padding:0;border:0;border-left:1px solid var(--line);width:min(560px,100%);max-width:100%;height:100%;max-height:100%;background:var(--surface);color:var(--ink);box-shadow:var(--shadow-pop)}
+dialog.drawer[open]{display:flex;flex-direction:column}
+dialog.drawer::backdrop{background:rgba(0,0,0,.62)}
+dialog.drawer[open]{animation:dr-in .32s var(--ease)}
+dialog.drawer[open]::backdrop{animation:fade-in .32s var(--ease)}
+.dr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}
+.dr-head h2{font-size:16px}
+.dr-sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+.dr-body{flex:1;overflow-y:auto;padding:18px 20px 24px;display:grid;gap:20px;align-content:start}
+.dr-foot{display:flex;justify-content:flex-end;align-items:center;gap:8px;padding:12px 20px;border-top:1px solid var(--line);flex-wrap:wrap}
+.dr-foot .hint{margin-right:auto;font-size:12px;color:var(--muted)}
+.terms{margin:0;padding:0 0 0 20px;display:grid;gap:10px;font-size:13px;color:var(--ink-2)}
+.terms li::marker{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.terms b{color:var(--ink);font-weight:600}
+.sg-form{border-top:1px solid var(--line);padding-top:18px}
+.sg-h{font-size:13.5px}
+.sg-done{display:flex;gap:8px;align-items:baseline;font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+.err{display:block;font-size:12px;color:var(--bad);margin-top:3px}
+.err[hidden]{display:none}
+.inp[aria-invalid="true"]{border-color:var(--bad)}
+.sig{height:40px;font-size:17px;font-style:italic;letter-spacing:.01em}
+
+/* information architecture: primary nav, analyser steps */
+.tab-lg{height:auto;align-items:flex-start;padding:8px 10px;white-space:normal}
+.tab-lg svg{margin-top:2px}
+.tab-txt{display:grid;gap:1px;min-width:0}
+.tab-l{font-weight:500;font-size:13.5px}
+.tab-d{font-size:12px;font-weight:400;color:var(--muted);line-height:1.35}
+.nav-div{height:1px;background:var(--line);margin:10px 8px}
+.explain{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:5px;padding:6px 8px 6px 12px;margin-bottom:18px}
+.stepbar{position:relative;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--line);margin:-4px 0 22px}
+.stp{display:flex;align-items:flex-start;gap:10px;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;padding:10px 12px 12px 2px;text-align:left;cursor:pointer;color:var(--ink-2);min-width:0}
+.stp:hover{color:var(--ink)}
+.stp-n{transition:background .28s var(--ease),color .28s var(--ease);flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:11.5px;box-shadow:inset 0 0 0 1px var(--line-2);color:var(--muted);margin-top:1px}
+.stp-x{display:grid;gap:1px;min-width:0}
+.stp-t{font-weight:500;font-size:13.5px}
+.stp-s{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);min-height:18px}
+.stp[aria-current="step"]{color:var(--ink)}
+.stp[aria-current="step"] .stp-n{background:var(--brand);color:var(--brand-ink);box-shadow:none}
+.step-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px 24px;flex-wrap:wrap;margin-bottom:18px}
+.step-h>div:first-child{min-width:0;flex:1 1 380px}
+.step-h h2{font-size:16px}
+.step-h p{margin-top:3px;color:var(--ink-2);max-width:72ch}
+.step-next{display:flex;justify-content:flex-end;margin-top:28px;padding-top:16px;border-top:1px solid var(--line)}
+@media (max-width:899px){
+  .tab-lg{height:38px;align-items:center;padding:0 8px}
+  .tab-d,.nav-div{display:none}
+  .tab-l{font-size:13px}
+}
+@media (max-width:640px){
+  .stepbar{display:flex;overflow-x:auto;scrollbar-width:none}
+  .stepbar::-webkit-scrollbar{display:none}
+  .stp{flex:0 0 auto;padding-right:16px}
+}
+
+/* ---------- black and red: home, unlock flow, motion ---------- */
+tbody tr:nth-child(even) td{background:var(--zebra)}
+.pack tbody tr:nth-child(even) td{background:transparent}
+.brand{border:0;background:none;cursor:pointer;text-align:left;border-radius:5px}
+.dr-kicker{font-size:12px;color:var(--muted);margin-bottom:2px}
+.ul-steps{list-style:none;display:flex;gap:18px;margin:12px 0 0;padding:0;font-size:12.5px;color:var(--muted)}
+.ul-steps li{display:flex;align-items:center;gap:7px;transition:color .28s var(--ease)}
+.ul-steps li .mono{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;box-shadow:inset 0 0 0 1px var(--line-2);transition:background .28s var(--ease),color .28s var(--ease),box-shadow .28s var(--ease)}
+.ul-steps li.on{color:var(--ink)}
+.ul-steps li.on .mono{background:var(--brand);color:#fff;box-shadow:none}
+.ul-steps li.done .mono{background:var(--hover);color:var(--ink);box-shadow:none}
+.dr-stack{display:grid;gap:20px;align-content:start}
+.ord{margin:0;display:grid;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.ord div{display:flex;justify-content:space-between;gap:12px;padding:10px 14px;font-size:13px}
+.ord div+div{border-top:1px solid var(--line)}
+.ord dt{color:var(--ink-2)}
+.ord dd{margin:0;text-align:right;font-family:var(--mono);font-size:12.5px}
+.ord .tot{background:var(--surface-2)}
+.ord .tot dt,.ord .tot dd{color:var(--ink);font-weight:600}
+.order h3{font-size:13.5px;margin-bottom:10px}
+.proc{height:2px;background:var(--line);border-radius:2px;overflow:hidden}
+.proc span{display:block;height:100%;width:0;background:var(--brand);animation:proc .8s var(--ease) forwards}
+@keyframes proc{to{width:100%}}
+.lockc{display:inline-flex;align-items:center;gap:5px;color:var(--muted)}
+.dcard.just-open{animation:unlock .5s var(--ease)}
+@keyframes unlock{from{opacity:.25;transform:translateY(6px)}}
+.em-dot{width:5px;height:5px;border-radius:1px;background:var(--line-2);align-self:center}
+.stp-ind{position:absolute;left:0;bottom:-1px;height:2px;width:0;background:var(--brand);transition:transform .32s var(--ease),width .32s var(--ease);pointer-events:none}
+.enter{animation:vt-in .32s var(--ease) both}
+@keyframes vt-in{from{opacity:0;transform:translateY(8px)}}
+@keyframes vt-out{to{opacity:0}}
+@keyframes fade-in{from{opacity:0}}
+@keyframes dr-in{from{opacity:0;transform:translateX(28px)}}
+.content{view-transition-name:content}
+::view-transition-old(root),::view-transition-new(root){animation:none}
+::view-transition-old(content){animation:vt-out .18s var(--ease) both}
+::view-transition-new(content){animation:vt-in .32s var(--ease) both}
+:root[data-page="home"] .app-foot{display:none}
+
+/* home */
+.hero{position:relative;overflow:hidden;margin:-22px -32px 0;padding:88px 32px 80px;border-bottom:1px solid var(--line);isolation:isolate}
+.hero canvas{position:absolute;inset:0;width:100%;height:100%;z-index:-1;display:block}
+.hero-grid{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:56px;align-items:center}
+.eyebrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2);margin-bottom:22px}
+.eb-dot{width:6px;height:6px;background:var(--brand);border-radius:1px;flex:none}
+.display{font-size:clamp(34px,3.9vw,54px);line-height:1.02;letter-spacing:-.04em;font-weight:600;color:var(--ink);max-width:14ch}
+.lede{margin-top:22px;font-size:16.5px;line-height:1.55;color:var(--ink-2);max-width:52ch}
+.hero-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:32px}
+.hero-foot{margin-top:18px;font-size:12.5px;color:var(--muted)}
+.hero-preview{display:grid;gap:12px;justify-items:start;min-width:0}
+.pv-label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.pv-label .dot{background:var(--brand)}
+.hero-preview .dcard{width:min(340px,100%);box-shadow:0 24px 60px rgba(0,0,0,.55)}
+.pv-nums{width:100%;display:grid;gap:8px}
+.strip.mini .fig{padding:10px 12px}
+.strip.mini .fig-v{font-size:17px;margin-top:3px}
+.strip.mini .fig-s{display:none}
+.hsec{margin-top:88px}
+.hsec-h{display:grid;gap:8px;margin-bottom:28px;max-width:62ch}
+.h2{font-size:clamp(24px,2.6vw,32px);letter-spacing:-.03em;line-height:1.1}
+.hsec-h p{color:var(--ink-2);font-size:15px}
+.prods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.prod{background:var(--surface);padding:28px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.prod h3{font-size:20px;letter-spacing:-.02em}
+.prod-h p{color:var(--muted);margin-top:4px}
+.ticks{list-style:none;margin:0;padding:0;display:grid;gap:10px;color:var(--ink-2);flex:1}
+.ticks li{display:flex;gap:10px;align-items:flex-start}
+.ticks svg{flex:none;margin-top:4px;color:var(--ink)}
+.prod .btn{align-self:flex-start}
+.how{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.how li{border-top:1px solid var(--line-2);padding-top:18px;min-width:0}
+.how-n{font-size:12px;color:var(--accent)}
+.how h3{font-size:16px;margin:10px 0 6px}
+.how p{color:var(--ink-2);font-size:13.5px}
+.hplans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.hplan{background:var(--surface);padding:22px;display:grid;gap:8px;align-content:start;min-width:0}
+.hplan h3{font-size:15px}
+.hplan .price .mono{font-size:30px}
+.hplan .sub{font-size:12.5px;color:var(--muted)}
+.hplan.feat{box-shadow:inset 0 2px 0 var(--brand)}
+.home-foot{margin-top:72px;padding:16px 0 8px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.contact-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(320px,1.2fr);gap:32px;align-items:start}.contact-form{display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:24px}.contact-copy p{color:var(--ink-2);margin-top:10px}.contact-status{font-size:13px;color:var(--muted)}.legal-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}.legal-links a{color:var(--ink-2)}.bot-field{position:absolute;left:-9999px}
+@media(max-width:760px){.contact-grid{grid-template-columns:1fr}}
+.own{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:16px 24px;align-items:end}
+.own-acts{display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:1099px){.hero-grid{grid-template-columns:minmax(0,1fr);gap:40px}.how{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:899px){.hero{margin:-18px -16px 0;padding:48px 16px 48px}}
+@media (max-width:760px){.prods,.hplans{grid-template-columns:minmax(0,1fr)}.own{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:560px){.how{grid-template-columns:minmax(0,1fr)}.strip.mini{grid-template-columns:repeat(2,minmax(0,1fr))}.hsec{margin-top:64px}}
+
+/* plans and usage */
+.ws-use{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:8px;min-width:0;font-size:12.5px;color:var(--ink-2)}
+.ws-use>span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ws-use .linkbtn{justify-self:end}
+.ws-pct{display:none;font-size:12px;color:var(--muted);white-space:nowrap}
+.plan-ctl{display:flex;justify-content:space-between;align-items:center;gap:12px 20px;flex-wrap:wrap;margin-bottom:16px}
+.bill{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-2)}
+.bill .on{color:var(--ink)}
+.bill .save{color:var(--accent);font-size:12px;margin-left:4px}
+.switch{position:relative;flex:none;width:38px;height:22px;border-radius:11px;border:0;padding:0;background:var(--line-2);cursor:pointer;transition:background .26s var(--ease)}
+.switch .knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#F4F4F5;box-shadow:0 1px 2px rgba(0,0,0,.4);transition:transform .26s var(--ease)}
+.switch[aria-checked="true"]{background:var(--brand)}
+.switch[aria-checked="true"] .knob{transform:translateX(16px)}
+.plans.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.plan-from{font-size:12.5px;color:var(--muted);margin-top:-6px}
+.plan .bill-note{font-size:12px;color:var(--muted);margin-top:-8px;min-height:18px}
+.plan .lead{font-size:12.5px;color:var(--ink);font-weight:500;padding-top:12px;border-top:1px solid var(--line)}
+.plan .lead+ul{border-top:0;padding-top:0}
+.tier{display:inline-flex;align-self:flex-start}
+.seats{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;font-size:13px;color:var(--ink-2)}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:5px;overflow:hidden}
+.stepper button{width:30px;height:30px;border:0;background:var(--surface-2);color:var(--ink);cursor:pointer;font-size:15px}
+.stepper button:hover{background:var(--hover)}
+.stepper input{width:54px;height:30px;border:0;border-left:1px solid var(--line-2);border-right:1px solid var(--line-2);background:var(--field);text-align:center;font-family:var(--mono);font-size:13px;color:var(--ink);-moz-appearance:textfield}
+#feeLine{margin:12px 0 0}
+.ubar{display:grid;gap:8px}
+.ubar-h{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:13px;font-weight:500}
+.ubar-h .muted{font-weight:400;font-size:12.5px}
+.ubar-f{font-size:12.5px;color:var(--ink-2);font-family:var(--mono)}
+.meter.lg{height:6px;border-radius:3px}
+.meter.lg span{border-radius:3px}
+.meter span.full{background:var(--bad)}
+.limit-note{background:var(--surface);border:1px solid var(--line-2);border-left:2px solid var(--warn);border-radius:0 6px 6px 0;padding:12px 14px;margin-bottom:16px;display:grid;gap:10px;font-size:13px;animation:vt-in .32s var(--ease)}
+.fs .limit-note{margin:10px 0 0}
+.ln-a{display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:640px){.plans.two{grid-template-columns:minmax(0,1fr)}}
+
+td.t{text-align:right;color:var(--ink-2)}
+.plan ul{align-content:start}
+.plan .btn:disabled{background:var(--surface-2);border-color:var(--line-2);color:var(--ink-2);opacity:1}
+/* free analyses + paywall */
+.ws-free{display:grid;gap:6px}
+#wsFreeBar{background:var(--ink-2)}
+#wsFreeBar.full{background:var(--brand)}
+.ex-tag{display:inline-block;margin-left:8px;font-size:11.5px;color:var(--ink-2);border:1px solid var(--line-2);border-radius:4px;padding:0 6px;line-height:18px;vertical-align:1px}
+.pw-opts{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.pw-opt{background:var(--surface);padding:18px;display:grid;gap:10px}
+.pw-opt.feat{box-shadow:inset 0 2px 0 var(--brand)}
+.pw-opt h3{font-size:15px}
+.pw-opt .price .mono{font-size:26px}
+.pw-note{font-size:12.5px;color:var(--muted);margin-top:-6px}
+.pw-opt .ticks{gap:7px;font-size:13px}
+#payWall{width:min(480px,100%)}
+
+/* toast */
+.toast{position:fixed;right:24px;bottom:24px;max-width:360px;background:#F4F4F5;color:#0B0B0C;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:500;box-shadow:var(--shadow-pop);opacity:0;transform:translateY(10px);transition:opacity .28s var(--ease),transform .28s var(--ease);pointer-events:none;z-index:60}
+.toast.on{opacity:1;transform:none}
+@media (max-width:899px){.toast{left:16px;right:16px;max-width:none;bottom:calc(16px + env(safe-area-inset-bottom,0px))}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}.site-intro{display:none!important}::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}.dcard:hover{transform:none}}
+
+/* real accounts */
+.auth-pending .app{display:none}
+.auth-screen{position:fixed;inset:0;z-index:100;min-height:100vh;display:grid;place-items:center;padding:24px;background:rgba(8,8,9,.88);backdrop-filter:blur(12px)}
+.auth-screen[hidden]{display:none!important}
+.auth-card{width:min(440px,100%);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:32px;box-shadow:var(--shadow-pop)}
+.auth-close{float:right;margin:-12px -12px 8px 12px}
+.auth-brand{display:flex;align-items:center;gap:10px;font-weight:600;margin-bottom:34px}.auth-brand svg{flex:none}
+.auth-card h1{font-size:28px;letter-spacing:-.035em}.auth-card>p{color:var(--muted);margin:8px 0 22px}
+.auth-fields{display:grid;gap:14px}.auth-actions{display:grid;gap:10px;margin-top:18px}.auth-link{border:0;background:none;color:var(--ink-2);padding:4px;font:inherit;cursor:pointer}.auth-link:hover{color:var(--ink)}
+.auth-message{margin-top:14px;padding:10px 12px;border:1px solid var(--line);border-radius:5px;color:var(--ink-2);font-size:13px}.auth-message.bad{color:var(--bad);border-color:rgba(255,143,128,.35)}
+.account-row{display:grid;gap:5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);min-width:0}.account-email{display:block;min-width:0;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tutorial{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);gap:28px;align-items:center}.tutorial-media{overflow:hidden;border:1px solid var(--line);border-radius:9px;background:#050506;box-shadow:var(--shadow-pop)}.tutorial-media video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#050506}.tutorial-copy{display:grid;gap:14px}.tutorial-copy p{color:var(--ink-2)}.tutorial-points{display:grid;gap:9px;padding:0;list-style:none}.tutorial-points li{display:flex;gap:9px;color:var(--ink-2)}.tutorial-points li::before{content:"✓";color:var(--good);font-weight:600}
+.tutorial-nav{color:var(--ink);text-decoration:none;background:var(--brand-soft);border:1px solid rgba(224,20,43,.3);margin:4px 0 8px}.tutorial-nav:hover{background:#351419;color:#fff}.tutorial-nav .play-dot{display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--brand);color:#fff;font-size:9px;flex:none}.tutorial-callout{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:22px;padding:16px 18px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(115deg,#181214 0%,var(--surface) 58%,#171719 100%);box-shadow:var(--shadow-sm);color:var(--ink);text-decoration:none;transition:border-color .2s var(--ease),transform .2s var(--ease),background .2s var(--ease)}.tutorial-callout:hover{border-color:rgba(224,20,43,.65);transform:translateY(-1px);background:linear-gradient(115deg,#211316 0%,var(--surface) 58%,#19191c 100%)}.tutorial-callout-copy{display:flex;align-items:center;gap:14px;min-width:0}.tutorial-callout-icon{position:relative;display:block;width:46px;height:46px;border-radius:12px;background:linear-gradient(145deg,var(--brand),#a80d20);box-shadow:0 8px 20px rgba(224,20,43,.2);flex:none}.tutorial-callout-icon::after{content:"";position:absolute;left:19px;top:15px;border-left:11px solid #fff;border-top:8px solid transparent;border-bottom:8px solid transparent}.tutorial-callout-text{display:block;min-width:0}.tutorial-callout-text strong{display:block;font-size:14.5px;line-height:1.3;letter-spacing:-.01em}.tutorial-callout-text>span{display:block;color:var(--muted);font-size:12.5px;margin-top:4px}.tutorial-callout-action{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:var(--surface-2);color:var(--ink);font-size:12.5px;font-weight:600;white-space:nowrap;flex:none}.tutorial-callout:hover .tutorial-callout-action{border-color:var(--brand);background:var(--brand);color:#fff}.tutorial-callout-action-arrow{font-size:16px;line-height:1}.tutorial:target{scroll-margin-top:24px;animation:tutorialPulse 1.2s ease-out}.tutorial:target .tutorial-media{border-color:var(--brand);box-shadow:0 0 0 4px rgba(224,20,43,.16),var(--shadow-pop)}@keyframes tutorialPulse{0%{transform:translateY(6px);opacity:.7}100%{transform:none;opacity:1}}
+@media(max-width:820px){.tutorial{grid-template-columns:1fr}}
+@media(max-width:560px){.tutorial-callout{align-items:stretch;flex-direction:column;gap:14px}.tutorial-callout-action{justify-content:center;width:100%}}
+
+/* AI-first analyser */
+.ai-simple{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr);gap:18px;margin-bottom:22px}
+.ai-entry,.ai-output{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:22px}.ai-entry h2,.ai-output h2{font-size:18px;margin-bottom:6px}.ai-entry>p,.ai-output>p{color:var(--muted);margin-bottom:16px}
+.ai-entry textarea{min-height:250px;resize:vertical}.ai-entry .btn{margin-top:12px}.ai-output{min-height:360px}.ai-output.empty{display:grid;place-items:center;text-align:center}.ai-output.empty>div{max-width:34ch}.ai-score{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:15px;border-bottom:1px solid var(--line)}.ai-score strong{font-size:30px}.ai-verdict{font-weight:600}.ai-verdict.strong{color:var(--good)}.ai-verdict.weak{color:var(--bad)}
+.ai-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);margin:16px 0}.ai-metric{background:var(--surface);padding:12px}.ai-metric span{display:block;font-size:11px;color:var(--muted);margin-bottom:4px}.ai-section{margin-top:16px}.ai-section h3{font-size:13px;margin-bottom:7px}.ai-section ul{padding-left:18px;color:var(--ink-2);display:grid;gap:5px}.advanced-toggle{margin:4px 0 20px}
+.simple-mode [data-view="analyser"]>.stepbar,.simple-mode [data-view="analyser"]>[data-step-panel]{display:none!important}
+.simple-mode.advanced-mode [data-view="analyser"]>.stepbar{display:grid!important}.simple-mode.advanced-mode [data-view="analyser"]>[data-step-panel]:not([hidden]){display:block!important}
+.simple-mode .own,.simple-mode .own-acts{display:none!important}
+.signed-out .tab[data-v="find"],.signed-out .tab[data-v="analyser"],.signed-out .tab[data-v="deals"],.signed-out .ws{display:none!important}
+@media (max-width:820px){.ai-simple{grid-template-columns:1fr}.ai-metrics{grid-template-columns:1fr}.auth-card{padding:24px}}
+</style>
+</head>
+<body class="auth-pending">
+<div class="site-intro" id="siteIntro" aria-hidden="true"><div class="intro-lockup"><svg class="intro-mark" viewBox="0 0 20 20" aria-hidden="true"><rect width="20" height="20" rx="4" fill="#E0142B"/><path d="M6 5h3.6a5 5 0 0 1 0 10H6z" fill="#fff"/><rect x="6" y="9" width="4" height="2" fill="#E0142B"/></svg><span class="intro-wordmark">Deal Pro</span><span class="intro-line" aria-hidden="true"></span></div></div>
+
+<section class="auth-screen" id="authGate" hidden aria-labelledby="authTitle">
+  <form class="auth-card" id="authForm">
+    <button class="btn ghost sm auth-close" id="authClose" type="button" aria-label="Close account form">Close</button>
+    <div class="auth-brand"><svg width="28" height="28" viewBox="0 0 20 20" aria-hidden="true"><rect width="20" height="20" rx="4" fill="var(--brand)"/><path d="M6 5h3.6a5 5 0 0 1 0 10H6z" fill="var(--brand-ink)"/><rect x="6" y="9" width="4" height="2" fill="var(--brand)"/></svg><span>Deal Pro</span></div>
+    <h1 id="authTitle">Welcome back</h1><p>Your deals, analysis and membership are kept securely in your account.</p>
+    <div class="auth-fields">
+      <label class="f" id="authNameWrap" hidden><span>Your name</span><input class="inp" id="authName" autocomplete="name"></label>
+      <label class="f"><span>Email address</span><input class="inp" id="authEmail" type="email" autocomplete="email" required></label>
+      <label class="f"><span>Password</span><input class="inp" id="authPassword" type="password" minlength="8" autocomplete="current-password" required></label>
+    </div>
+    <div class="auth-actions"><button class="btn primary block" id="authSubmit" type="submit">Sign in</button><button class="auth-link" id="forgotPassword" type="button">Forgot password?</button><button class="auth-link" id="authSwitch" type="button">New to Deal Pro? Create an account</button></div>
+    <div class="auth-message" id="authMessage" role="status" hidden></div>
+  </form>
+</section>
+
+
+<div class="app">
+  <aside class="side">
+    <button class="brand" data-go="home" aria-label="Deal Pro home">
+      <svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><rect width="20" height="20" rx="4" fill="var(--brand)"/><path d="M6 5h3.6a5 5 0 0 1 0 10H6z" fill="var(--brand-ink)"/><rect x="6" y="9" width="4" height="2" fill="var(--brand)"/></svg>
+      <span>Deal Pro</span>
+    </button>
+    <nav class="nav" aria-label="Sections">
+      <button class="tab" data-v="home" aria-current="page"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2.5 7L8 2.5 13.5 7v6.5h-11z"/><path d="M6.5 13.5V10h3v3.5"/></svg>Home</button>
+      <a class="tab tutorial-nav" href="#tutorialTitle"><span class="play-dot" aria-hidden="true">▶</span>Watch tutorial</a>
+      <button class="tab tab-lg" data-v="find"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.25"/><path d="M10.25 10.25l3.25 3.25"/></svg><span class="tab-txt"><span class="tab-l">Deal Finder</span><span class="tab-d">Search and unlock private-landlord deals</span></span></button>
+      <button class="tab tab-lg" data-v="analyser"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 13.5V8.5M8 13.5v-11M13 13.5V6"/></svg><span class="tab-txt"><span class="tab-l">Deal Analyser</span><span class="tab-d">Numbers, due diligence and deal pack</span></span></button>
+      <div class="nav-div" role="presentation"></div>
+      <button class="tab" data-v="deals"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2.25" y="2.75" width="11.5" height="10.5" rx="1.25"/><path d="M2.25 6.25h11.5M5 9.5h6"/></svg>My deals</button>
+      <button class="tab" data-v="plans"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1.75" y="3.75" width="12.5" height="8.5" rx="1.25"/><path d="M1.75 6.75h12.5M4.5 9.75h2"/></svg>Plans</button>
+    </nav>
+    <div class="ws">
+      <div class="ws-head"><span class="ws-name">Your workspace</span><span class="ws-plan" id="planPill">Free plan</span></div>
+      <div class="ws-use"><span id="wsUseTxt">0% of session used</span><button class="linkbtn" data-go="usage">Usage</button></div>
+      <div class="meter" aria-hidden="true"><span id="wsUseBar" style="width:0%"></span></div>
+      <div class="ws-free" id="wsFree" hidden><div class="ws-use"><span id="wsFreeTxt">0 of 2 free analyses used</span></div><div class="meter" aria-hidden="true"><span id="wsFreeBar" style="width:0%"></span></div></div>
+      <span class="ws-pct" id="wsPct">0% used</span>
+      <p class="ws-note">Your work is saved securely to your account.</p>
+      <button class="btn sm block" data-go="plans">Manage plan</button>
+      <a class="btn sm block" id="adminLink" href="/admin.html" hidden>Admin dashboard</a>
+      <div class="account-row"><span class="account-email" id="accountEmail"></span><button class="btn ghost sm block" id="signOut" type="button">Sign out</button></div>
+    </div>
+  </aside>
+
+  <div class="main">
+  <div class="public-auth-nav" aria-label="Account options"><button class="btn ghost sm" id="homeSignIn" type="button">Sign in</button><button class="btn primary sm" id="homeCreateAccount" type="button">Create account</button></div>
+  <main class="content">
+
+  <!-- HOME -->
+  <section data-view="home" class="home">
+    <div class="hero">
+      <canvas id="heroCanvas" aria-hidden="true"></canvas>
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eb-dot" aria-hidden="true"></span>For UK rent-to-rent and serviced accommodation sourcers</p>
+          <h1 class="display">Private-landlord deals, found and analysed.</h1>
+          <p class="lede">Find direct-to-landlord opportunities, unlock the details after signing the agreement, then use AI to turn each deal into clear numbers, risks and next steps.</p>
+          <div class="hero-cta"><button class="btn primary lg" data-go="find">Open Deal Finder</button><button class="btn outline lg" data-go="analyser">Analyse a deal</button><a class="btn ghost lg" href="#tutorialTitle">▶ Watch tutorial</a></div>
+          <p class="hero-foot">Deal details remain protected until the agreement is signed and the separate deal fee is paid.</p>
+        </div>
+        <div class="hero-preview" id="homePreview"></div>
+      </div>
+    </div>
+    <a class="tutorial-callout" href="#tutorialTitle"><span class="tutorial-callout-copy"><span class="tutorial-callout-icon" aria-hidden="true"></span><span class="tutorial-callout-text"><strong>New to Deal Pro? Watch the narrated tutorial</strong><span>Learn the complete workflow in under a minute.</span></span></span><span class="tutorial-callout-action">Watch now <span class="tutorial-callout-action-arrow" aria-hidden="true">→</span></span></a>
+    <section class="hsec" aria-labelledby="hProd">
+      <div class="hsec-h"><h2 class="h2" id="hProd">Two tools, one workflow</h2><p>Find an opportunity, then analyse it in the same secure account.</p></div>
+      <div class="prods">
+        <article class="prod"><div class="prod-h"><h3>Deal Finder</h3><p>Protected private-landlord opportunities</p></div>
+          <ul class="ticks"><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>Filter available deals by listing type and bedrooms.</span></li><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>Review headline figures before deciding whether to unlock.</span></li><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>Sign the deal agreement before proceeding to payment.</span></li></ul>
+          <button class="btn primary" data-go="find">Open Deal Finder</button></article>
+        <article class="prod"><div class="prod-h"><h3>AI Deal Analyser</h3><p>A clear answer without a complicated form</p></div>
+          <ul class="ticks"><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>Paste an advert, email or WhatsApp message.</span></li><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>Receive a plain-English score, verdict, risks and next actions.</span></li><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>The AI clearly identifies missing facts instead of guessing.</span></li></ul>
+          <button class="btn primary" data-go="analyser">Analyse a deal</button></article>
+      </div>
+    </section>
+    <section class="hsec" aria-labelledby="hHow">
+      <div class="hsec-h"><h2 class="h2" id="hHow">How it works</h2></div>
+      <ol class="how">
+        <li><span class="how-n mono">01</span><h3>Search</h3><p>Filter the available private-landlord opportunities.</p></li>
+        <li><span class="how-n mono">02</span><h3>Unlock</h3><p>Choose a deal, sign the agreement and complete payment.</p></li>
+        <li><span class="how-n mono">03</span><h3>Analyse</h3><p>Use AI and the advanced model to check numbers and risks.</p></li>
+        <li><span class="how-n mono">04</span><h3>Pack and send</h3><p>Complete due diligence and prepare the deal pack.</p></li>
+      </ol>
+    </section>
+    <section class="hsec tutorial" aria-labelledby="tutorialTitle">
+      <div class="tutorial-media"><video controls preload="metadata" poster="/assets/deal-pro-tutorial-poster.png?v=3"><source src="/assets/deal-pro-tutorial.mp4?v=3" type="video/mp4">Your browser does not support this tutorial video.</video></div>
+      <div class="tutorial-copy"><p class="eyebrow"><span class="eb-dot" aria-hidden="true"></span>AI-guided tutorial</p><h2 class="h2" id="tutorialTitle">Learn Deal Pro in under a minute</h2><p>Watch the complete workflow before starting your first deal.</p><ul class="tutorial-points"><li>Find and review an opportunity</li><li>Sign the agreement before payment</li><li>Analyse the numbers and risks with AI</li><li>Save the deal and prepare its pack</li></ul><button class="btn primary" data-go="find">Start with Deal Finder</button></div>
+    </section>
+    <section class="hsec" aria-labelledby="hPlans">
+      <div class="hsec-h"><h2 class="h2" id="hPlans">Plans</h2><p>Start free with 2 deal analyses, then subscribe for unlimited analyses and more usage. Unlocking a deal is <span class="js-fee">£500</span>, paid separately.</p></div>
+      <div class="hplans" id="homePlans"></div>
+      <p class="note"><button class="linkbtn" id="homeTeam">Team plans available</button></p>
+    </section>
+    <section class="hsec contact-grid" aria-labelledby="contactTitle"><div class="contact-copy"><p class="eyebrow"><span class="eb-dot"></span>Contact Deal Pro</p><h2 class="h2" id="contactTitle">Have a question?</h2><p>Send an enquiry about Deal Pro, subscriptions or your account. We will use your details only to respond unless you separately choose to receive marketing.</p></div><form class="contact-form" id="contactForm" name="deal-pro-enquiry" method="POST" data-netlify="true" netlify-honeypot="bot-field"><input type="hidden" name="form-name" value="deal-pro-enquiry"><input type="hidden" name="subject" value="New Deal Pro enquiry"><label class="bot-field">Do not complete this field <input name="bot-field"></label><label class="f"><span>Name</span><input class="inp" name="name" autocomplete="name" required></label><label class="f"><span>Email</span><input class="inp" name="email" type="email" autocomplete="email" required></label><label class="f"><span>Enquiry</span><textarea class="inp" name="message" rows="6" required></textarea></label><label class="check"><input type="checkbox" name="marketing" value="yes"><span>I would like to receive Deal Pro marketing emails. This is optional and I can unsubscribe at any time.</span></label><button class="btn primary" type="submit">Send enquiry</button><p class="contact-status" id="contactStatus" role="status">Read how we use your information in our <a href="/privacy.html">Privacy Notice</a>.</p></form></section>
+    <div class="home-foot"><p>AI results are decision-support only. Always verify legal, planning, licensing and financial information independently.</p><nav class="legal-links" aria-label="Legal"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/cookies.html">Cookies</a><a href="mailto:jonahquartey584@gmail.com">Contact</a></nav></div>
+  </section>
+
+  <!-- FIND -->
+  <section data-view="find" hidden>
+    <div class="explain" id="fIntro" hidden><span>Deal Pro helps you understand a property opportunity before you spend time or money on it.</span><button class="btn ghost xs" id="fIntroX">Dismiss</button></div>
+    <header class="ph">
+      <div class="ph-main">
+        <h1>Deal Finder</h1>
+        <p class="ph-desc">Search private-landlord listings on Gumtree, SpareRoom, OpenRent and Rightmove, then analyse any of them in the Deal Analyser.</p>
+        <p class="ph-meta">Included on every plan. Unlock a deal for <span class="js-fee">£500</span> by signing its Deal Introduction Agreement and paying the deal fee.</p>
+        <p class="ph-meta">Browse the currently available opportunities below. Full landlord, address and listing details remain locked until the agreement and payment are complete.</p>
+      </div>
+    </header>
+    <div class="limit-note" id="nFind" role="status" hidden></div>
+    <div class="find">
+      <div class="panel fpanel" id="fPanel" data-mode="rent">
+        <div class="fs">
+          <div class="fs-h"><h2>Filters</h2><button class="btn ghost sm" id="fReset">Reset</button></div>
+          <div class="fields">
+            <fieldset class="fg"><legend>Listing</legend>
+              <div class="seg"><input type="radio" name="fMode" id="fModeRent" value="rent" checked><label for="fModeRent">Rent</label><input type="radio" name="fMode" id="fModeBuy" value="buy"><label for="fModeBuy">Buy</label></div>
+            </fieldset>
+            <fieldset class="fg"><legend>Bedrooms</legend>
+              <div class="seg"><input type="radio" name="fBeds" id="fBedsAny" value="any" checked><label for="fBedsAny">Any</label><input type="radio" name="fBeds" id="fBeds0" value="0"><label for="fBeds0">Studio</label><input type="radio" name="fBeds" id="fBeds1" value="1"><label for="fBeds1">1</label><input type="radio" name="fBeds" id="fBeds2" value="2"><label for="fBeds2">2</label><input type="radio" name="fBeds" id="fBeds3" value="3"><label for="fBeds3">3</label><input type="radio" name="fBeds" id="fBeds4" value="4"><label for="fBeds4">4+</label></div>
+            </fieldset>
+            <div class="row2">
+              <label class="f"><span id="fMinL">Min rent</span><span class="ix both"><span class="pre">£</span><input class="inp num" type="number" id="fMin" min="0" step="50"><span class="suf js-pcm">pcm</span></span></label>
+              <label class="f"><span id="fMaxL">Max rent</span><span class="ix both"><span class="pre">£</span><input class="inp num" type="number" id="fMax" min="0" step="50"><span class="suf js-pcm">pcm</span></span></label>
+            </div>
+            <label class="f"><span>Location</span><input class="inp" id="fLoc" placeholder="e.g. SE1, Bayswater, W2" autocomplete="off"></label>
+            <label class="check"><input type="checkbox" id="fPrivate" checked><span>Private landlords only</span></label>
+            <div class="row2">
+              <label class="f"><span>Furnished</span><select class="inp" id="fFurn"><option value="any">Any</option><option value="furnished">Furnished</option><option value="unfurnished">Unfurnished</option></select></label>
+              <label class="f"><span>Property type</span><select class="inp" id="fType"><option value="any">Any</option><option value="studio">Studio</option><option value="flat">Flat</option><option value="house">House</option></select></label>
+            </div>
+            <p class="fnote" id="fFurnNote" hidden>Furnishing isn't stated on these listings, so they're kept.</p>
+            <fieldset class="fg"><legend>Sites</legend>
+              <div class="checks">
+                <label class="check"><input type="checkbox" id="fSiteGumtree" checked><span>Gumtree</span></label>
+                <label class="check"><input type="checkbox" id="fSiteSpareRoom" checked><span>SpareRoom</span></label>
+                <label class="check"><input type="checkbox" id="fSiteOpenRent" checked><span>OpenRent</span></label>
+                <label class="check"><input type="checkbox" id="fSiteRightmove" checked><span>Rightmove</span></label>
+              </div>
+              <p class="fnote" id="fRmNote">Rightmove lists through agents only; private-landlord homes appear there via OpenRent.</p>
+            </fieldset>
+          </div>
+        </div>
+        <div class="fs"><button class="btn primary block" id="fSearch" title="Uses usage">Search with AI</button></div>
+      </div>
+      <div id="fResults"></div>
+    </div>
+  </section>
+
+  <!-- DEAL ANALYSER -->
+  <section data-view="analyser" hidden>
+    <div class="fempty" id="anEmpty" hidden><h2>No deal loaded</h2><p>Find a private-landlord deal to analyse, or start from a blank deal.</p>
+      <div class="ph-actions" style="justify-content:center;margin-top:14px"><button class="btn primary" data-go="find">Find a deal</button><button class="btn" id="anScratch">Start from scratch</button></div></div>
+    <div id="anMain">
+    <header class="ph">
+      <div class="ph-main">
+        <nav class="crumbs" aria-label="Breadcrumb"><span>Deal Analyser</span><span class="sep">/</span><span class="cur js-dealname">Finsbury Park Studio Pair</span></nav>
+        <h1 id="dealTitle">Finsbury Park Studio Pair</h1>
+        <p class="ph-meta" id="dealMeta"></p>
+      </div>
+      <div class="ph-actions"><button class="btn primary" id="saveDealTop">Save deal</button></div>
+    </header>
+    <div class="ai-simple">
+      <div class="ai-entry">
+        <h2>Analyse a deal with AI</h2>
+        <p>Paste the advert, landlord message or deal details. Include the rent, deposit, area and expected nightly rate when you have them.</p>
+        <label class="f"><span>Deal information</span><textarea class="inp" id="aiDealInput" placeholder="Paste the full property advert or describe the deal here…"></textarea></label>
+        <button class="btn primary block" id="analyseWithAI" type="button">Analyse with AI</button>
+        <p class="note" id="aiDealStatus" role="status">The AI will explain its verdict and clearly show anything it could not verify.</p>
+      </div>
+      <div class="ai-output empty" id="aiDealOutput"><div><h2>Your analysis will appear here</h2><p>One clear verdict, the important numbers, risks and your next actions.</p></div></div>
+    </div>
+    <button class="btn ghost advanced-toggle" id="advancedToggle" type="button" aria-expanded="false">Show advanced controls</button>
+    <nav class="stepbar" aria-label="Analyser steps">
+      <span class="stp-ind" aria-hidden="true"></span>
+      <button class="stp" data-step="numbers"><span class="stp-n">1</span><span class="stp-x"><span class="stp-t">Numbers</span><span class="stp-s" id="stpS-numbers"></span></span></button>
+      <button class="stp" data-step="dd"><span class="stp-n">2</span><span class="stp-x"><span class="stp-t">Due diligence</span><span class="stp-s" id="stpS-dd"></span></span></button>
+      <button class="stp" data-step="pack"><span class="stp-n">3</span><span class="stp-x"><span class="stp-t">Deal pack</span><span class="stp-s" id="stpS-pack"></span></span></button>
+      <button class="stp" data-step="send"><span class="stp-n">4</span><span class="stp-x"><span class="stp-t">Send to sourcer</span><span class="stp-s" id="stpS-send"></span></span></button>
+    </nav>
+
+    <div data-step-panel="numbers">
+      <div class="step-h"><div><h2>Numbers</h2><p>Monthly model per unit at 60%, 80% and 100% occupancy, with break-even, lower-rate sensitivity and the London 90-night check.</p></div></div>
+    <div class="g-side">
+      <div class="panel">
+        <div class="fs">
+          <div class="fs-h"><h2>Deal</h2></div>
+          <div class="fields">
+            <label class="f"><span>Deal name</span><input class="inp" id="dName"></label>
+            <div class="row2">
+              <label class="f"><span>Area</span><input class="inp" id="dArea"></label>
+              <label class="f"><span>Strategy</span><select class="inp" id="dStrat"><option>R2SA</option><option>R2R</option></select></label>
+            </div>
+            <label class="check"><input type="checkbox" id="dLondon"><span>In London (90-night short-let limit applies)</span></label>
+          </div>
+        </div>
+        <div class="fs">
+          <div class="fs-h"><h2>Units</h2><button class="btn sm" id="addUnit">Add unit</button></div>
+          <div id="units"></div>
+        </div>
+        <div class="fs">
+          <div class="fs-h"><h2>Import from an advert</h2></div>
+          <p class="fs-d">Paste a landlord or sourcing advert. Deal Pro pulls out the rent, deposit, nightly rate and area as a new unit.</p>
+          <label class="f"><span class="sr">Advert text</span><textarea class="inp" id="advert" placeholder="Paste advert text here"></textarea></label>
+          <div class="limit-note" id="nImport" role="status" hidden></div>
+          <div class="ph-actions" style="margin-top:10px"><button class="btn sm primary" id="doImport" title="Uses usage">Import unit</button><button class="btn sm ghost" id="sampleAd">Use sample advert</button></div>
+        </div>
+        <div class="fs">
+          <div class="fs-h"><h2>Assumptions</h2></div>
+          <div class="row2">
+            <label class="f"><span>Platform fees</span><span class="ix has-suf"><input class="inp num" type="number" id="aFee" step="0.5"><span class="suf">%</span></span></label>
+            <label class="f"><span>Cleaning per stay</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="aClean"></span></label>
+            <label class="f"><span>Average stay</span><span class="ix has-suf" style="--sp:56px"><input class="inp num" type="number" id="aStay" step="0.5" min="1"><span class="suf">nights</span></span></label>
+            <label class="f"><span>Other costs pcm</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="aOther"></span></label>
+          </div>
+          <p class="note">30-day month. Other costs cover insurance, software, consumables and minor repairs per unit. Rent is treated as bills-included.</p>
+        </div>
+      </div>
+      <div id="results"></div>
+    </div>
+      <div class="step-next"><button class="btn" data-step-go="dd">Next: Due diligence <span aria-hidden="true">→</span></button></div>
+    </div>
+
+    <div data-step-panel="dd" hidden>
+      <div class="step-h"><div><h2>Due diligence</h2><p>Track every check before a deal goes to investors. Run AI research to draft findings from public sources, then confirm each one yourself.</p></div>
+        <div class="ph-actions"><button class="btn primary" id="runAI" title="Uses usage">Run AI research</button></div></div>
+      <div class="limit-note" id="nDD" role="status" hidden></div>
+    <div class="strip dd-strip" id="ddSummary"></div>
+    <div class="list" id="ddList"></div>
+      <div class="step-next"><button class="btn" data-step-go="pack">Next: Deal pack <span aria-hidden="true">→</span></button></div>
+    </div>
+
+    <div data-step-panel="pack" hidden>
+      <div class="step-h"><div><h2>Deal pack</h2><p>A pre-NDA investor summary built from your numbers and due diligence. The exact address and landlord stay hidden until the investor signs your terms.</p></div>
+        <div class="ph-actions"><button class="btn primary" id="genPack" title="Uses usage">Generate final pack</button></div></div>
+      <div class="limit-note" id="nPack" role="status" hidden></div>
+    <div class="g-side">
+      <div class="panel">
+        <div class="fs">
+          <div class="fs-h"><h2>Pack settings</h2></div>
+          <div class="fields">
+            <label class="f"><span>Sourcing business shown on pack</span><input class="inp" id="pBiz" placeholder="e.g. your compliant sourcer's name"></label>
+            <label class="f"><span>Redress scheme and number</span><input class="inp" id="pRedress" placeholder="e.g. PRS 000000"></label>
+            <label class="f"><span>Sourcing fee shown to investor</span><input class="inp" id="pFee" placeholder="e.g. £2,500 per unit"></label>
+            <label class="check"><input type="checkbox" id="pNDA" checked><span>Pre-NDA version (hide exact address)</span></label>
+          </div>
+        </div>
+        <div class="fs">
+          <div class="alert warn">Only send packs through a sourcer who is in a redress scheme, or once you are in one yourself. Keep the numbers labelled as illustrative.</div>
+          <p class="note">In the full version this exports a branded PDF. In the demo, generating removes the preview watermark.</p>
+        </div>
+      </div>
+      <div id="packWrap"></div>
+    </div>
+      <div class="step-next"><button class="btn" data-step-go="send">Next: Send to sourcer <span aria-hidden="true">→</span></button></div>
+    </div>
+
+    <div data-step-panel="send" hidden>
+      <div class="step-h"><div><h2>Send to sourcer</h2><p>Pass a deal to a compliant sourcer under your Deal Introduction Agreement. The Deal Notice registers the deal so your share is protected.</p></div></div>
+    <ol class="steps">
+      <li><div class="step-top"><span>You</span><span class="mono">01</span></div><b>Find the deal</b>Landlord agrees the rent and use.</li>
+      <li><div class="step-top"><span>You</span><span class="mono">02</span></div><b>Send Deal Notice</b>Registered if no reply in 3 working days.</li>
+      <li><div class="step-top"><span>Sourcer</span><span class="mono">03</span></div><b>Sells to investor</b>Under their redress, terms and fee.</li>
+      <li><div class="step-top"><span>Sourcer</span><span class="mono">04</span></div><b>Pays your share</b>Within 7 days of the investor paying them.</li>
+    </ol>
+    <div class="g-side">
+      <div class="panel">
+        <div class="fs">
+          <div class="fs-h"><h2>Sourcer</h2></div>
+          <div class="fields">
+            <label class="f"><span>Sourcer company</span><input class="inp" id="sCo" placeholder="Company name"></label>
+            <label class="f"><span>Sourcer notice email</span><input class="inp" id="sEmail" placeholder="notices@example.co.uk"></label>
+          </div>
+        </div>
+        <div class="fs">
+          <div class="fs-h"><h2>Property and contact</h2></div>
+          <div class="fields">
+            <label class="f"><span>Property address and postcode</span><input class="inp" id="sAddr" placeholder="Full address (not shown on packs)"></label>
+            <div class="row2">
+              <label class="f"><span>Landlord or contact</span><input class="inp" id="sLL"></label>
+              <label class="f"><span>Their role</span><select class="inp" id="sRole"><option>Owner / landlord</option><option>Letting agent</option><option>Managing agent</option></select></label>
+            </div>
+            <div class="row2">
+              <label class="f"><span>Phone</span><input class="inp" id="sPhone"></label>
+              <label class="f"><span>Email</span><input class="inp" id="sLEmail"></label>
+            </div>
+            <label class="f"><span>Use agreed by landlord</span><select class="inp" id="sUse"><option>Serviced accommodation</option><option>Company let</option><option>Rent-to-rent</option></select></label>
+            <label class="f"><span>Documents attached</span><input class="inp" id="sDocs" value="Advert, photos, landlord emails"></label>
+          </div>
+        </div>
+      </div>
+      <div class="min0">
+        <div class="sec-h"><h2>Deal Notice</h2><button class="btn sm primary" id="copyNotice">Copy Deal Notice</button></div>
+        <pre class="notice" id="notice"></pre>
+        <p class="note">Paste this into an email to the sourcer's notice address, subject "Deal Notice under Deal Introduction Agreement". Keep a copy.</p>
+      </div>
+    </div>
+    </div>
+    </div>
+  </section>
+
+  <!-- DEALS -->
+  <section data-view="deals" hidden>
+    <header class="ph">
+      <div class="ph-main">
+        <nav class="crumbs" aria-label="Breadcrumb"><span>Workspace</span><span class="sep">/</span><span class="cur">My deals</span></nav>
+        <h1>My deals</h1>
+        <p class="ph-desc">Deals saved securely to your account.</p>
+      </div>
+      <div class="ph-actions"><button class="btn" id="newDeal">New blank deal</button><button class="btn primary" id="saveDeal">Save current deal</button></div>
+    </header>
+    <div id="dealList"></div>
+    <div class="sec">
+      <div class="sec-h"><h2>Agreements</h2><span class="sec-meta" id="agMeta"></span></div>
+      <div id="agList"></div>
+    </div>
+  </section>
+
+  <!-- PLANS -->
+  <section data-view="plans" hidden>
+    <header class="ph">
+      <div class="ph-main">
+        <nav class="crumbs" aria-label="Breadcrumb"><span>Workspace</span><span class="sep">/</span><span class="cur">Plans</span></nav>
+        <h1>Plans</h1>
+        <p class="ph-desc">Start free and upgrade securely through Stripe when you need more usage.</p>
+      </div>
+    </header>
+    <div class="plan-ctl">
+      <div class="seg segb" role="group" aria-label="Plan type"><button id="ptInd" aria-pressed="true">Individual</button><button id="ptTeam" aria-pressed="false">Team</button></div>
+      <div class="bill"><span id="billM">Monthly</span><button class="switch" id="billSw" role="switch" aria-checked="false" aria-label="Annual billing"><span class="knob"></span></button><span id="billA">Annual <span class="save">save up to 20%</span></span></div>
+    </div>
+    <div class="plans" id="plans"></div>
+    <p class="note" id="feeLine">Unlocking a deal's landlord details is <span class="js-fee">£500</span> per deal on every plan, paid separately.</p>
+
+    <section class="sec" id="usage" aria-labelledby="usageH">
+      <div class="sec-h"><h2 id="usageH">Usage</h2><span class="sec-meta" id="usagePlan"></span></div>
+      <div class="panel">
+        <div class="fs ubar">
+          <div class="ubar-h"><span>Current session</span><span class="muted" id="uSessReset"></span></div>
+          <div class="meter lg" aria-hidden="true"><span id="uSessBar" style="width:0%"></span></div>
+          <div class="ubar-f" id="uSessPct">0% used</div>
+        </div>
+        <div class="fs ubar">
+          <div class="ubar-h"><span>Weekly limit</span><span class="muted" id="uWeekReset"></span></div>
+          <div class="meter lg" aria-hidden="true"><span id="uWeekBar" style="width:0%"></span></div>
+          <div class="ubar-f" id="uWeekPct">0% used</div>
+        </div>
+        <div class="fs">
+          <div class="fs-h"><h2 id="xLbl">Extra usage</h2><button class="switch" id="xOn" role="switch" aria-checked="false" aria-labelledby="xLbl"><span class="knob"></span></button></div>
+          <p class="fs-d">Keep working after you reach a limit. Charged at standard pay-as-you-go rates, up to your monthly cap.</p>
+          <div class="row2"><label class="f"><span>Monthly spend cap</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="xCap" min="0" step="5"></span></label><div></div></div>
+          <div class="ubar" style="margin-top:14px">
+            <div class="ubar-h"><span id="xSpentTxt">£0.00 of £20 used</span><span class="muted" id="xMonth"></span></div>
+            <div class="meter lg" aria-hidden="true"><span id="xBar" style="width:0%"></span></div>
+          </div>
+        </div>
+        <div class="fs own-acts"><button class="btn ghost sm" id="simSession">Simulate 5 hours passing</button><button class="btn ghost sm" id="simWeek">Simulate a week passing</button><button class="btn ghost sm" id="resetUsage">Reset usage (demo)</button><button class="btn ghost sm" id="resetAnalyses">Reset free analyses (demo)</button></div>
+      </div>
+    </section>
+
+    <div class="sec">
+      <div class="sec-h"><h2>What uses usage</h2><span class="sec-meta">Relative weight per action</span></div>
+      <div class="tw"><table>
+        <thead><tr><th>Action</th><th>Usage</th></tr></thead>
+        <tbody>
+          <tr><td>Deal analyses (numbers, sensitivity, break-even, 90-night check)</td><td class="t">2 on Free, unlimited on paid plans</td></tr>
+          <tr><td>AI deal analysis</td><td class="t">Included</td></tr>
+          <tr><td>Import from advert</td><td class="t">Light</td></tr>
+          <tr><td>Final deal pack</td><td class="t">Medium</td></tr>
+          <tr><td>AI due diligence</td><td class="t">Heavy</td></tr>
+          <tr><td>Unlocking a deal</td><td class="t"><span class="js-fee">£500</span> per deal, paid separately</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+    <div class="sec">
+      <div class="sec-h"><h2>Deal Finder pricing</h2><span class="sec-meta">Owner settings (demo)</span></div>
+      <div class="panel">
+        <div class="fs own">
+          <label class="f"><span>Deal fee per unlocked deal</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="ownFee" min="0" step="50"></span></label>
+          <p class="note" style="margin:0">Deal Finder is included on every plan. Each deal a user unlocks costs this fee, paid separately from their plan.</p>
+        </div>
+        <div class="fs own-acts"><button class="btn ghost sm" id="resetUnlocks">Reset unlocks (demo)</button></div>
+      </div>
+    </div>
+  </section>
+  </main>
+  <footer class="app-foot"><span>AI analysis supports your decision-making but does not replace legal, planning, licensing, financial or property advice. Verify all figures and permissions before proceeding.</span></footer>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<dialog class="drawer" id="payWall" aria-labelledby="pwTitle">
+  <div class="dr-head">
+    <div><p class="dr-kicker">Free plan</p><h2 id="pwTitle" tabindex="-1">You've used your 2 free deal analyses</h2><p class="dr-sub">Subscribe to keep analysing deals. Your saved deals stay available.</p></div>
+    <button class="btn ghost sm" id="pwClose">Close</button>
+  </div>
+  <div class="dr-body">
+    <div class="pw-opts">
+      <div class="pw-opt feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div>
+        <div class="price"><span class="mono" id="pwProPrice">£20</span><span class="per">per month</span></div><div class="pw-note" id="pwProNote">or £17/month billed annually</div>
+        <ul class="ticks"><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>Unlimited deal analyses</span></li><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>More usage</span></li><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>AI due diligence and deal packs</span></li></ul>
+        <button class="btn primary block" id="pwPro">Subscribe to Premium</button></div>
+      <div class="pw-opt"><div class="plan-h"><h3>Max</h3></div>
+        <div class="price"><span class="per">From</span><span class="mono">£100</span><span class="per">per month</span></div><div class="pw-note">5x or 20x more usage than Premium, for sourcers who work deals all day.</div>
+        <button class="btn block" id="pwMax">Subscribe to Max 5x</button></div>
+    </div>
+    <p class="note" style="margin:0">Subscriptions are completed securely through Stripe Checkout.</p>
+  </div>
+  <div class="dr-foot"><button class="btn ghost" id="pwNot" type="button">Not now</button><button class="btn" id="pwAll" type="button">See all plans</button></div>
+</dialog>
+<dialog class="drawer" id="signPanel" aria-labelledby="sgTitle">
+  <div class="dr-head">
+    <div>
+      <p class="dr-kicker" id="ulKicker">Unlock deal</p>
+      <h2 id="sgTitle" tabindex="-1">Deal Introduction Agreement</h2>
+      <ol class="ul-steps" aria-label="Unlock steps"><li id="ulInd1" class="on"><span class="mono">1</span>Sign agreement</li><li id="ulInd2"><span class="mono">2</span>Pay</li></ol>
+    </div>
+    <button class="btn ghost sm" id="sgClose">Close</button>
+  </div>
+  <div class="dr-body">
+    <div class="dr-stack" id="ulStep1">
+      <section>
+        <ol class="terms" id="sgTerms"></ol>
+        <p class="note">Business name and redress come from Deal pack settings. The deal fee is set in Plans.</p>
+      </section>
+      <form class="fields sg-form" id="sgForm" novalidate>
+        <h3 class="sg-h">Sign for this deal</h3>
+        <label class="f"><span>Full name</span><input class="inp" id="sgName" data-k="name" autocomplete="name"><span class="err" id="sgErr-name" hidden></span></label>
+        <label class="f"><span>Email</span><input class="inp" type="email" id="sgEmail" data-k="email" autocomplete="email"><span class="err" id="sgErr-email" hidden></span></label>
+        <div class="row2">
+          <label class="f"><span>I'm signing as</span><select class="inp" id="sgAs"><option>Individual</option><option>Company</option></select></label>
+          <label class="f"><span>Company (optional)</span><input class="inp" id="sgCompany" data-k="company" autocomplete="organization"></label>
+        </div>
+        <div><label class="check"><input type="checkbox" id="sgAgree" data-k="agree"><span>I have read and agree to this Deal Introduction Agreement</span></label><span class="err" id="sgErr-agree" hidden></span></div>
+        <div><label class="check"><input type="checkbox" id="sgStart" data-k="start"><span>I ask you to start now and release the details</span></label><span class="err" id="sgErr-start" hidden></span></div>
+        <label class="f"><span>Signature: type your full name</span><input class="inp sig" id="sgSig" data-k="sig" autocomplete="off"><span class="err" id="sgErr-sig" hidden></span></label>
+        <p class="note" style="margin:0">Your details are remembered for next time. Review every agreement carefully and retain a copy for your records.</p>
+      </form>
+    </div>
+    <div class="dr-stack" id="ulStep2" hidden>
+      <section class="order"><h3>Order summary</h3><dl class="ord" id="ulOrder"></dl></section>
+      <p class="sg-done" id="ulSigned"></p>
+      <div class="proc" id="ulProc" hidden><span></span></div>
+      <p class="note" style="margin:0">Payments are completed securely through Stripe.</p>
+    </div>
+  </div>
+  <div class="dr-foot"><span class="hint" id="sgHint" aria-live="polite"></span><button class="btn" id="ulBack" type="button" hidden>Back</button><button class="btn" id="sgCancel" type="button">Cancel</button><button class="btn primary" id="sgSign" type="button" disabled>Continue to payment</button><button class="btn primary" id="payBtn" type="button" hidden>Pay £500</button></div>
+</dialog>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const gbp=x=>{if(!isFinite(x))return '–';const r=Math.round(x+1e-9);return (r<0?'-£':'£')+Math.abs(r).toLocaleString('en-GB')};
+const pct=x=>isFinite(x)?Math.round(x*100)+'%':'–';
+const store={get(k,d){try{const v=localStorage.getItem('dealpro:'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('dealpro:'+k,JSON.stringify(v))}catch(e){}}};
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2400)}
+
+const DD_TEMPLATE=[
+ {k:'terms',t:'Advertised terms',d:'Written offer, rent, deposit, which bills are included (including council tax), usage caps, inventory, availability.'},
+ {k:'consent',t:'Short-let consent',d:'Landlord identity and title checked; signed agreement permitting the use; freeholder, lender and insurer consent.'},
+ {k:'ninety',t:'London letting limit',d:'90 nights a year without planning permission for stays under 90 consecutive nights. Planning position for year-round use.'},
+ {k:'licence',t:'Licensing',d:'Selective / HMO licensing for the ward; whether the licence allows subletting.'},
+ {k:'tax',t:'Council tax and rates',d:'Second-home premium, who pays it, and whether business rates apply.'},
+ {k:'location',t:'Location claims',d:'Stations, zone, walking times and other advert claims checked against the address.'},
+ {k:'safety',t:'Condition and safety',d:'EPC, gas and electrical certificates, fire-risk assessment, alarms, insurance, inventory.'},
+ {k:'rates',t:'Nightly rate evidence',d:'Comparable listings, seasonality, event demand, achieved booking data.'}
+];
+const AI_FINDINGS={
+ terms:{s:'partly',n:'Rents £1,500 and £1,650 incl. bills, one-month deposits. 5-week cap (~£1,731 / ~£1,904) only applies to lets to individuals; a company let usually falls outside. Confirm council tax is inside "bills".'},
+ consent:{s:'none',n:'No written permission for serviced accommodation seen yet. Request a signed agreement and check the lease for short-let restrictions (two units, shared entrance).'},
+ ninety:{s:'issue',n:'Capped at 90 nights, revenue is £14,850 and £16,200 against £18,000 and £19,800 rent: a £6,750 combined shortfall before costs. Year-round use needs planning permission or another lawful basis.'},
+ licence:{s:'partly',n:'Finsbury Park ward is in Islington’s selective licensing scheme (from 20 May 2024 for five years; £800 per property, £725 accredited). N4 also covers parts of Haringey and Hackney: confirm the council from the address.'},
+ tax:{s:'none',n:'Islington charges 200% council tax on second homes from 1 April 2025. If not included in the rent, this becomes an operator cost.'},
+ location:{s:'issue',n:'Finsbury Park station: Zone 2, Victoria and Piccadilly lines plus Great Northern and Thameslink. It is not on the London Overground, so the advert wording needs correcting.'},
+ safety:{s:'none',n:'No certificates or inspection yet. Check sound insulation between the units and escape routes.'},
+ rates:{s:'partly',n:'AirDNA shows London’s whole-market average around $220 (roughly £165) at 63% occupancy (Aug 2025–Aug 2026). £165–£180 for a Zone 2 studio is at or above average: get N4 studio comparables.'}
+};
+const SAMPLE_AD=`Deal 2 - (£1,650 studio)
+📍 Islington, N4 (zone 2) 📍
+🔥 Fully Furnished Studio Flat
+🛏 Studio (open-plan bedroom)
+💸 Rent + Bills £1,650/month (£19,800/year)
+💸 Deposit £1,650
+💰 Nightly Rate £180`;
+
+function sampleDeal(){return{
+  id:'d1',name:'Finsbury Park Studio Pair',area:'Islington, London N4 (Zone 2)',strat:'R2SA',london:true,status:'Checking',
+  units:[{label:'Studio A',rent:1500,dep:1500,rate:165},{label:'Studio B',rent:1650,dep:1650,rate:180}],
+  a:{fee:15,clean:45,stay:3,other:150},
+  dd:DD_TEMPLATE.map(x=>({k:x.k,s:'none',n:''})),ai:false,
+  pack:{biz:'',redress:'',fee:'',nda:true,final:false},
+  send:{co:'',email:'',addr:'',ll:'',role:'Owner / landlord',phone:'',lemail:'',use:'Serviced accommodation',docs:'Advert, photos, landlord emails'}
+}}
+function secondDeal(){const d=sampleDeal();Object.assign(d,{id:'d2',name:'Islington Studio Flats',area:'Islington, London',status:'Issue found',
+  units:[{label:'Studio 1',rent:1700,dep:1700,rate:180},{label:'Studio 2',rent:1700,dep:1569,rate:180},{label:'Studio 3',rent:1700,dep:1700,rate:180}]});return d}
+function freshDeal(){const d=sampleDeal();Object.assign(d,{id:'d'+Date.now(),name:'New deal',area:'',london:false,status:'Checking',units:[{label:'Unit 1',rent:0,dep:0,rate:0}]});return d}
+
+const PLAN_DEFS={Free:{name:'Free',s:6,w:30},Pro:{name:'Premium',s:30,w:300},Max5:{name:'Max 5x',s:150,w:1500},Max20:{name:'Max 20x',s:600,w:6000},
+  TeamStd:{name:'Team Standard',s:40,w:400},TeamPrem:{name:'Team Premium',s:200,w:2000}};
+const CHECKOUT={
+  Pro:'https://buy.stripe.com/bJe28ra6cfxA6YogQo7g407',
+  Max5:'https://buy.stripe.com/9B6aEX7Y4clo1E47fO7g408',
+  Max20:'https://buy.stripe.com/9B6aEX7Y4clo1E47fO7g408',
+  TeamStd:'https://buy.stripe.com/7sYcN52DK5X0gyY57G7g409',
+  TeamPrem:'https://buy.stripe.com/7sYcN52DK5X0gyY57G7g409'
+};
+const COST={search:2,import:1,dd:5,pack:3};// hidden usage units per action; deal numbers are free
+let S=store.get('state',null);
+if(!S||!S.deal){S={plan:'Free',deal:freshDeal(),saved:[]}}
+// fields added for per-deal unlocks; older saved state loads with these defaults
+// migrate older state: credits are replaced by usage limits; old plan names map to the new plans
+{const MAP={Starter:'Free',Team:'TeamStd'};if(S.plan==null)S.plan='Free';if(MAP[S.plan])S.plan=MAP[S.plan];if(!PLAN_DEFS[S.plan])S.plan='Pro';delete S.credits;
+  S.usage=Object.assign({sStart:null,sUsed:0,wStart:null,wUsed:0},S.usage);S.extra=Object.assign({on:false,cap:20,spent:0,month:null},S.extra);
+  if(!(S.timeOffset>=0))S.timeOffset=0;if(S.billing!=='annual')S.billing='monthly';if(!(S.seats>=5))S.seats=5;if(S.plansTab!=='team')S.plansTab='individual';if(S.maxTier!=='20')S.maxTier='5';}
+if(!Array.isArray(S.analysedDealIds))S.analysedDealIds=[];
+if(!Array.isArray(S.unlocked))S.unlocked=[];if(!Array.isArray(S.agreements))S.agreements=[];if(!(S.dealFee>=0))S.dealFee=500;if(!Array.isArray(S.saved))S.saved=[];
+const save=()=>{store.set('state',S);window.dispatchEvent(new CustomEvent('dealpro:state-saved',{detail:S}))};
+/* ---------- usage limits: rolling 5-hour session and 7-day week ---------- */
+const HOUR=3600e3,SESSION=5*HOUR,WEEK=7*24*HOUR,XRATE=0.25;
+const now=()=>Date.now()+(+S.timeOffset||0);
+const limits=()=>PLAN_DEFS[S.plan]||PLAN_DEFS.Free;
+const monthKey=t=>{const d=new Date(t);return d.getFullYear()+'-'+(d.getMonth()+1)};
+const hhmm=t=>new Date(t).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+const wkday=t=>new Date(t).toLocaleString('en-GB',{weekday:'short',hour:'2-digit',minute:'2-digit'}).replace(',','');
+const money=x=>'£'+(Math.round(x*100)/100).toFixed(2);
+function rollWindows(){const t=now(),u=S.usage;
+  if(u.sStart!=null&&t-u.sStart>=SESSION){u.sStart=null;u.sUsed=0}
+  if(u.wStart!=null&&t-u.wStart>=WEEK){u.wStart=null;u.wUsed=0}
+  const mk=monthKey(t);if(S.extra.month!==mk){S.extra.month=mk;S.extra.spent=0}}
+function fmtLeft(ms){const m=Math.max(1,Math.ceil(ms/60000)),hr=Math.floor(m/60),mi=m%60;return hr?`${hr} hr ${mi} min`:`${mi} min`}
+function nextMonth(t){const d=new Date(t);return new Date(d.getFullYear(),d.getMonth()+1,1)}
+const FEAT_NAME={import:'Advert import',dd:'AI due diligence',pack:'Deal packs'};
+function limitNote(where,kind,feat){const el=$(where);const u=S.usage;let msg;
+  if(kind==='feature')msg=`${FEAT_NAME[feat]} ${feat==='pack'?'are':'is'} included with Premium, Max and Team plans.`;
+  else if(kind==='weekly')msg=`You've reached your weekly limit. It resets ${wkday(u.wStart+WEEK)}.`;
+  else if(kind==='cap')msg=`You've reached your extra usage cap for this month. Raise the cap in Usage, or wait until it resets on ${nextMonth(now()).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}.`;
+  else msg=`You've reached your session limit. It resets at ${hhmm(u.sStart+SESSION)}.`;
+  if(el){el.innerHTML=`<div>${msg}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button>${kind!=='feature'&&kind!=='cap'&&!S.extra.on?'<button class="btn sm" data-extra-on>Turn on extra usage</button>':''}${kind==='cap'?'<button class="btn sm" data-go="usage">Open usage</button>':''}<button class="btn ghost sm" data-ln-close>Dismiss</button></div>`;el.hidden=false}
+  toast(msg)}
+function feature(f,where){if(S.plan!=='Free')return true;limitNote(where,'feature',f);return false}
+// returns true if the action may go ahead (within limits, or covered by extra usage under the cap)
+function spend(n,what,where){rollWindows();const L=limits(),u=S.usage;
+  const room=Math.max(0,Math.min(L.s-u.sUsed,L.w-u.wUsed)),over=Math.max(0,n-room);
+  if(over>0){const kind=L.w-u.wUsed<n&&u.wStart!=null&&(L.w-u.wUsed)<=(L.s-u.sUsed)?'weekly':'session';
+    if(!S.extra.on){if(u.sStart==null)u.sStart=now();if(u.wStart==null)u.wStart=now();limitNote(where,kind);save();renderUsage();return false}
+    const cost=over*XRATE;if(S.extra.spent+cost>S.extra.cap+1e-9){limitNote(where,'cap');return false}
+    S.extra.spent+=cost}
+  const t=now();if(u.sStart==null)u.sStart=t;if(u.wStart==null)u.wStart=t;u.sUsed+=n;u.wUsed+=n;
+  const el=where&&$(where);if(el)el.hidden=true;save();renderUsage();return true}
+document.addEventListener('click',e=>{
+  if(e.target.closest('[data-extra-on]')){S.extra.on=true;save();renderUsage();$$('.limit-note').forEach(n=>n.hidden=true);toast('Extra usage is on. Try again.');return}
+  const c=e.target.closest('[data-ln-close]');if(c){const n=c.closest('.limit-note');if(n)n.hidden=true}});
+
+/* ---------- model ---------- */
+const D=30;
+function month(u,occ,rate,a){rate=rate??u.rate;const n=Math.round(D*occ),rev=n*rate,fees=rev*a.fee/100,cl=n/Math.max(a.stay,1)*a.clean;return{n,rev,fees,cl,surplus:rev-fees-cl-u.rent-a.other}}
+function be(u,a,rate){rate=rate??u.rate;const per=rate*(1-a.fee/100)-a.clean/Math.max(a.stay,1);if(per<=0)return Infinity;return (u.rent+a.other)/per/D}
+const OCC=[.6,.8,1];
+
+/* ---------- shell / nav ---------- */
+function renderTop(){$('#planPill').textContent=limits().name+' plan';renderUsage();renderFreeCounter()}
+/* ---------- free plan: 2 lifetime deal analyses ---------- */
+const FREE_ANALYSES=2;
+const isExample=d=>!!d&&d.id==='d1';// the preloaded Finsbury Park example never counts
+const analysesUsed=()=>S.analysedDealIds.length;
+const canAnalyseNew=()=>S.plan!=='Free'||analysesUsed()<FREE_ANALYSES;
+function renderFreeCounter(){const box=$('#wsFree');if(!box)return;const free=S.plan==='Free',n=Math.min(analysesUsed(),FREE_ANALYSES);box.hidden=!free;
+  $('#wsFreeTxt').textContent=`${n} of ${FREE_ANALYSES} free analyses used`;const b=$('#wsFreeBar');b.style.width=(n/FREE_ANALYSES*100)+'%';b.classList.toggle('full',n>=FREE_ANALYSES);
+  if($('#dealMeta')&&S.deal&&S.deal.units)renderMeta()}
+function markAnalysed(id){if(!isExample({id})&&!S.analysedDealIds.includes(id))S.analysedDealIds.push(id);save();renderFreeCounter()}
+// every path that creates a new analysis goes through here; a 3rd one on Free opens the paywall instead
+function startAnalysis(run){if(canAnalyseNew()){run();return true}openPaywall(run);return false}
+function renderUsage(){rollWindows();const L=limits(),u=S.usage,t=now();
+  const sp=Math.min(100,Math.round(u.sUsed/L.s*100)),wp=Math.min(100,Math.round(u.wUsed/L.w*100));
+  const bar=(id,p)=>{const b=$(id);if(b){b.style.width=p+'%';b.classList.toggle('full',p>=100)}};
+  bar('#wsUseBar',sp);$('#wsUseTxt').textContent=`${sp}% of session used`;$('#wsPct').textContent=`${sp}% used`;
+  if(!$('#uSessBar'))return;
+  $('#usagePlan').textContent=`${L.name} plan limits`;
+  bar('#uSessBar',sp);$('#uSessPct').textContent=`${sp}% used`;
+  $('#uSessReset').textContent=u.sStart==null?'Starts when you next use Deal Pro':`Resets in ${fmtLeft(u.sStart+SESSION-t)}`;
+  bar('#uWeekBar',wp);$('#uWeekPct').textContent=`${wp}% used`;
+  $('#uWeekReset').textContent=u.wStart==null?'Starts when you next use Deal Pro':`Resets ${wkday(u.wStart+WEEK)}`;
+  const x=S.extra,sw=$('#xOn');sw.setAttribute('aria-checked',String(!!x.on));
+  const cap=$('#xCap');if(document.activeElement!==cap)cap.value=x.cap;
+  $('#xSpentTxt').textContent=`${money(x.spent)} of £${Math.round(x.cap*100)/100} used`;bar('#xBar',x.cap>0?Math.min(100,Math.round(x.spent/x.cap*100)):0);
+  $('#xMonth').textContent=`Resets ${nextMonth(t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`}
+setInterval(()=>{try{renderUsage()}catch(e){}},30000);
+function syncName(){const n=S.deal.name||'Untitled deal';$('#dealTitle').textContent=n;$$('.js-dealname').forEach(e=>e.textContent=n)}
+const VIEWS={usage:['plans','usage'],home:['home'],find:['find'],analyser:['analyser'],deals:['deals'],plans:['plans'],
+  analyse:['analyser','numbers'],dd:['analyser','dd'],pack:['analyser','pack'],send:['analyser','send'],pricing:['plans']};// old tab names map to the new structure
+const STEPS=['numbers','dd','pack','send'];
+function curStep(){let s='numbers';try{s=sessionStorage.getItem('dealpro:step')||'numbers'}catch(e){}return STEPS.includes(s)?s:'numbers'}
+let curView=null;
+function go(v,step){const m=VIEWS[v]||VIEWS.home;v=m[0];step=step||m[1];const changed=curView!==v;
+  const apply=()=>{curView=v;document.documentElement.dataset.page=v;
+    $$('.tab').forEach(t=>{if(t.dataset.v===v)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current')});
+    $$('[data-view]').forEach(s=>s.hidden=s.dataset.view!==v);
+    if(v==='home')renderHome();if(v==='find')renderFind();if(v==='analyser')openAnalyser(step||curStep());if(v==='deals')renderDeals();if(v==='plans')renderPlans();
+    try{sessionStorage.setItem('dealpro:tab',v)}catch(e){}
+    const nav=$('.nav'),act=$(`.tab[data-v="${v}"]`);if(nav&&act&&nav.scrollWidth>nav.clientWidth)nav.scrollLeft=Math.max(0,act.offsetLeft-nav.offsetLeft-24);
+    if(v==='plans'&&step==='usage'){const us=$('#usage');if(us)setTimeout(()=>us.scrollIntoView({block:'start',behavior:reduced()?'auto':'smooth'}),30)}else window.scrollTo(0,0);heroUpdate();placeInd()};
+  // one smooth cross-fade with a slight rise between views; instant under reduced motion
+  if(changed&&curView&&!reduced()&&document.startViewTransition){try{document.startViewTransition(apply);return}catch(e){}}
+  apply();
+  if(changed&&!reduced()&&!document.startViewTransition){const sec=$(`[data-view="${v}"]`);if(sec){sec.classList.remove('enter');void sec.offsetWidth;sec.classList.add('enter')}}}
+function openAnalyser(step){const has=!!(S.deal&&Array.isArray(S.deal.units));$('#anEmpty').hidden=has;$('#anMain').hidden=!has;if(has)setStep(step)}
+function setStep(s){if(!STEPS.includes(s))s='numbers';
+  $$('[data-step-panel]').forEach(p=>p.hidden=p.dataset.stepPanel!==s);
+  const was=($('.stp[aria-current="step"]')||{}).dataset;
+  $$('.stp').forEach(b=>{if(b.dataset.step===s)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current')});
+  if(was&&was.step!==s&&!reduced()){const pn=$(`[data-step-panel="${s}"]`);pn.classList.remove('enter');void pn.offsetWidth;pn.classList.add('enter')}
+  placeInd();
+  if(s==='dd')renderDD();if(s==='pack')renderPack();if(s==='send')renderNotice();
+  renderStepBar();try{sessionStorage.setItem('dealpro:step',s)}catch(e){}}
+function placeInd(){const ind=$('.stp-ind'),a=$('.stp[aria-current="step"]');if(!ind||!a||!a.offsetWidth)return;ind.style.width=a.offsetWidth+'px';ind.style.transform=`translateX(${a.offsetLeft}px)`}
+addEventListener('resize',placeInd);
+function renderStepBar(){const d=S.deal;if(!d||!$('#stpS-numbers'))return;const U=d.units||[];
+  const n=(d.dd||[]).filter(x=>x&&x.s&&x.s!=='none').length,tot=DD_TEMPLATE.length;
+  const st=(id,dot,txt)=>{$('#stpS-'+id).innerHTML=txt?`<span class="dot ${dot}"></span>${txt}`:''};
+  st('numbers',U.length?'good':'none',U.length?'Done':'Add a unit');
+  st('dd',n===tot?'good':n?'warn':'none',`${n}/${tot} checked`);
+  st('pack',d.pack&&d.pack.final?'good':'none',d.pack&&d.pack.final?'Generated':'Not generated');
+  st('send','','')}
+$$('.stp').forEach(b=>b.addEventListener('click',()=>{setStep(b.dataset.step);const t=$('.stepbar');if(t&&t.getBoundingClientRect().top<0)t.scrollIntoView({block:'start'})}));
+document.addEventListener('click',e=>{const b=e.target.closest('[data-step-go]');if(b){setStep(b.dataset.stepGo);window.scrollTo(0,0)}});
+$$('.tab').forEach(t=>t.addEventListener('click',()=>go(t.dataset.v)));
+document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)go(g.dataset.go)});
+
+/* ---------- analyse ---------- */
+function bindDeal(){const d=S.deal;
+  $('#dName').value=d.name;$('#dArea').value=d.area;$('#dStrat').value=d.strat;$('#dLondon').checked=d.london;
+  $('#aFee').value=d.a.fee;$('#aClean').value=d.a.clean;$('#aStay').value=d.a.stay;$('#aOther').value=d.a.other;renderUnits();renderResults()}
+function renderUnits(){const d=S.deal;
+  $('#units').innerHTML=d.units.map((u,i)=>`<div class="unit" style="${i?'border-top:1px solid var(--line);padding-top:12px;margin-top:12px':''}">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="mono muted" style="font-size:12px;min-width:14px">${i+1}</span>
+    <input class="inp" style="font-weight:500;height:30px" id="u${i}label" data-i="${i}" data-f="label" value="${esc(u.label)}" aria-label="Unit name">
+    ${u.url?`<a class="xlink" style="font-size:12.5px" href="${esc(u.url)}" target="_blank" rel="noopener" aria-label="Open listing for ${esc(u.label)}">Listing ↗</a>`:''}
+    ${d.units.length>1?`<button class="btn ghost sm" data-rm="${i}" aria-label="Remove ${esc(u.label)}">Remove</button>`:''}</div>
+    <div class="row3" style="padding-left:22px">
+      <label class="f"><span>Rent pcm</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="u${i}rent" data-i="${i}" data-f="rent" value="${u.rent}"></span></label>
+      <label class="f"><span>Deposit</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="u${i}dep" data-i="${i}" data-f="dep" value="${u.dep}"></span></label>
+      <label class="f"><span>Nightly rate</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="u${i}rate" data-i="${i}" data-f="rate" value="${u.rate}"></span></label>
+    </div></div>`).join('');
+}
+$('#units').addEventListener('input',e=>{const el=e.target;if(!el.dataset.f)return;const u=S.deal.units[+el.dataset.i];u[el.dataset.f]=el.dataset.f==='label'?el.value:(+el.value||0);tweenNext=true;renderResults();save()});
+$('#units').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;S.deal.units.splice(+b.dataset.rm,1);renderUnits();renderResults();save()});
+$('#addUnit').addEventListener('click',()=>{const n=S.deal.units.length+1;S.deal.units.push({label:'Unit '+n,rent:0,dep:0,rate:0});renderUnits();renderResults();save()});
+[['#dName','name'],['#dArea','area'],['#dStrat','strat']].forEach(([s,k])=>$(s).addEventListener('input',e=>{S.deal[k]=e.target.value;syncName();renderMeta();save()}));
+$('#dLondon').addEventListener('change',e=>{S.deal.london=e.target.checked;tweenNext=true;renderResults();save()});
+[['#aFee','fee'],['#aClean','clean'],['#aStay','stay'],['#aOther','other']].forEach(([s,k])=>$(s).addEventListener('input',e=>{S.deal.a[k]=+e.target.value||0;tweenNext=true;renderResults();save()}));
+
+function renderMeta(){const d=S.deal,n=d.units.length,ix=S.analysedDealIds.indexOf(d.id);
+  $('#dealMeta').textContent=[isExample(d)?'Example':'',d.area,d.strat,n+' unit'+(n>1?'s':''),S.plan==='Free'&&ix>=0?`Free analysis ${ix+1} of ${FREE_ANALYSES}`:''].filter(Boolean).join(' · ')}
+function renderResults(){const d=S.deal,a=d.a,U=d.units;syncName();renderMeta();
+  const hasFigures=U.some(u=>(+u.rent||0)>0||(+u.dep||0)>0||(+u.rate||0)>0);
+  if(!hasFigures){
+    $('#results').innerHTML=`<div class="strip" role="group" aria-label="Deal summary">
+      <div class="fig"><div class="fig-l">Upfront cash</div><div class="fig-v">—</div><div class="fig-s">Add the rent and deposit</div></div>
+      <div class="fig"><div class="fig-l">Surplus at 60%</div><div class="fig-v">—</div><div class="fig-s">Waiting for deal figures</div></div>
+      <div class="fig"><div class="fig-l">Surplus at 80%</div><div class="fig-v">—</div><div class="fig-s">Waiting for deal figures</div></div>
+      <div class="fig"><div class="fig-l">Break-even</div><div class="fig-v">—</div><div class="fig-s">Waiting for deal figures</div></div>
+    </div><div class="alerts"><div class="alert">No deal figures yet. Add the rent, deposit and expected nightly rate to see the analysis.</div></div>`;
+    renderStepBar();return;
+  }
+  const rent=U.reduce((s,u)=>s+u.rent,0),dep=U.reduce((s,u)=>s+u.dep,0);
+  const tot=OCC.map(o=>U.reduce((s,u)=>s+month(u,o,null,a).surplus,0));
+  const revs=OCC.map(o=>U.reduce((s,u)=>s+month(u,o,null,a).rev,0));
+  const bes=U.map(u=>be(u,a));const worstBE=Math.max(...bes);
+  let h=`<div class="strip" role="group" aria-label="Deal summary">
+    <div class="fig"><div class="fig-l">Upfront cash</div><div class="fig-v" id="sumUp" data-v="${rent+dep}">${gbp(rent+dep)}</div><div class="fig-s">Deposits and first month</div></div>
+    <div class="fig"><div class="fig-l">Surplus at 60%</div><div class="fig-v${tot[0]<0?' neg':''}" id="sum60" data-v="${tot[0]}">${gbp(tot[0])}</div><div class="fig-s">Per month, all units</div></div>
+    <div class="fig"><div class="fig-l">Surplus at 80%</div><div class="fig-v${tot[1]<0?' neg':''}" id="sum80" data-v="${tot[1]}">${gbp(tot[1])}</div><div class="fig-s">Per month, all units</div></div>
+    <div class="fig"><div class="fig-l">Break-even</div><div class="fig-v">${isFinite(worstBE)?pct(worstBE):'Never'}</div><div class="fig-s">Occupancy, weakest unit</div></div>
+  </div>`;
+  // alerts
+  const al=[];
+  if(d.london&&d.strat==='R2SA'){const gap=U.reduce((s,u)=>s+90*u.rate-u.rent*12,0);
+    al.push(`<div class="alert ${gap<0?'bad':'warn'}"><b>London 90-night limit.</b> At 90 nights a year the units earn ${gbp(U.reduce((s,u)=>s+90*u.rate,0))} against ${gbp(rent*12)} rent, ${gap<0?'a '+gbp(-gap)+' shortfall':'a '+gbp(gap)+' margin'} before any other costs. Year-round use needs planning permission or another lawful basis.</div>`)}
+  const vatOcc=OCC.find((o,i)=>revs[i]*12>=90000);
+  if(vatOcc!==undefined)al.push(`<div class="alert warn"><b>VAT.</b> Run through one business, revenue reaches ${gbp(revs[OCC.indexOf(vatOcc)]*12)} a year at ${pct(vatOcc)} occupancy, over the £90,000 VAT threshold. VAT at 20% would cut the surplus.</div>`);
+  if(U.some(u=>u.dep>u.rent*12/52*5))al.push(`<div class="alert warn"><b>Deposit above 5 weeks' rent</b> on at least one unit. The cap applies to lets to individuals.</div>`);
+  if(!al.length)al.push(`<div class="alert good">No automatic flags. Due diligence still needs to be completed.</div>`);
+  h+=`<div class="alerts">${al.join('')}</div>`;
+  // per unit table
+  const h1=`<tr><th rowspan="2">Per unit, per month</th>${U.map(u=>`<th colspan="3" class="gh gs">${esc(u.label)}</th>`).join('')}</tr>`;
+  const h2=`<tr>${U.map(()=>OCC.map((o,j)=>`<th class="${j?'':'gs'}">${pct(o)}</th>`).join('')).join('')}</tr>`;
+  const row=(lab,f,cls='')=>`<tr class="${cls}"><td>${lab}</td>${U.map(u=>OCC.map((o,j)=>{const v=f(u,month(u,o,null,a));return `<td class="n${j?'':' gs'}${typeof v==='number'&&v<0?' neg':''}">${typeof v==='number'?gbp(v):v}</td>`}).join('')).join('')}</tr>`;
+  h+=`<section class="sec"><div class="sec-h"><h2>Monthly model</h2><span class="sec-meta">Per unit at 60%, 80% and 100% occupancy</span></div><div class="tw"><table><thead>${h1}${h2}</thead><tbody>
+    ${row('Occupied nights',(u,m)=>String(m.n))}
+    ${row('Booking revenue',(u,m)=>m.rev)}
+    ${row(`Platform fees (${a.fee}%)`,(u,m)=>m.fees)}
+    ${row('Cleaning and linen',(u,m)=>m.cl)}
+    ${row('Rent incl. bills',(u,m)=>u.rent)}
+    ${row('Other costs',(u,m)=>a.other)}
+    ${row('Operating surplus',(u,m)=>m.surplus,'total')}
+  </tbody></table></div>
+  <p class="note">£${a.clean} cleaning per turnover with a ${a.stay}-night average stay. 100% is a theoretical ceiling. Illustrative only, not a forecast.</p></section>`;
+  // sensitivity
+  let sr='';U.forEach((u,ui)=>[u.rate,u.rate-15,u.rate-35].forEach((r,k)=>{const v=OCC.map(o=>month(u,o,r,a).surplus);const b=be(u,a,r);
+    sr+=`<tr>${k===0?`<td rowspan="3" class="u${ui===U.length-1?' lb':''}">${esc(u.label)}</td>`:''}<td class="n">${k===0?'<span class="base">base</span> ':''}£${r}</td>${v.map(x=>`<td class="n${x<0?' neg':''}">${gbp(x)}</td>`).join('')}<td class="n">${isFinite(b)?'~'+pct(b):'Never'}</td></tr>`}));
+  h+=`<section class="sec"><div class="sec-h"><h2>If the nightly rate is lower</h2><span class="sec-meta">Monthly surplus per unit</span></div><div class="tw"><table><thead><tr><th>Unit</th><th>Nightly rate</th><th>60%</th><th>80%</th><th>100%</th><th>Break-even</th></tr></thead><tbody>${sr}</tbody></table></div></section>`;
+  // break-even tracks
+  h+=`<section class="sec"><div class="sec-h"><h2>Break-even occupancy</h2><span class="sec-meta">Covers rent, platform fees, cleaning and other costs</span></div><div class="be-list">${U.map((u,i)=>{const b=bes[i];const x=Math.min(isFinite(b)?b:1,1)*100;
+    return `<div class="be-row"><div><span class="be-unit">${esc(u.label)}</span><span class="be-rate">£${u.rate}/night</span></div>
+    <div class="track" role="img" aria-label="${esc(u.label)} break-even ${isFinite(b)?pct(b):'never'}"><span class="rail"></span><span class="fill" style="width:${x}%"></span>
+      ${[0,60,80,100].map(t=>`<span class="tick" style="left:${t}%${t===100?';transform:translateX(-1px)':''}"></span><span class="tl${t===0?' first':t===100?' last':''}" style="left:${t}%">${t}%</span>`).join('')}
+      <span class="mk" style="left:${x}%"></span></div>
+    <div class="be-val">${isFinite(b)&&b<=1?pct(b):'Above 100%'}</div></div>`}).join('')}</div></section>`;
+  $('#results').innerHTML=h;renderStepBar();
+  // ease the summary figures when the user edits the numbers (not when switching deals)
+  ['sumUp','sum60','sum80'].forEach(id=>{const el=$('#'+id),to=+el.dataset.v,from=FIG_PREV[id];
+    if(tweenNext&&!reduced()&&from!=null&&isFinite(from)&&isFinite(to)&&Math.round(from)!==Math.round(to)){const t0=performance.now(),dur=280;
+      const f=now=>{if(!el.isConnected)return;const q=Math.min(1,(now-t0)/dur),e=1-Math.pow(1-q,3);el.textContent=gbp(from+(to-from)*e);if(q<1)requestAnimationFrame(f);else el.textContent=gbp(to)};el.textContent=gbp(from);requestAnimationFrame(f)}
+    FIG_PREV[id]=to});
+  tweenNext=false;
+}
+let tweenNext=false;const FIG_PREV={};
+
+/* advert import */
+function parseAd(t){const num=re=>{const m=t.match(re);return m?+m[1].replace(/,/g,''):null};
+  const rent=num(/rent[^£\n]*£\s?([\d,]+)/i),dep=num(/deposit[^£\n]*£\s?([\d,]+)/i),rate=num(/nightly\s*rate[^£\n]*£\s?([\d,]+)/i);
+  const area=(t.match(/📍\s*([^📍\n]+?)\s*📍/)||[])[1];const lab=(t.match(/\(\s*£[\d,]+\s*([a-z ]+)\)/i)||[])[1];
+  return{rent,dep,rate,area,label:lab?lab.trim().replace(/^\w/,c=>c.toUpperCase()):null}}
+$('#sampleAd').addEventListener('click',()=>{$('#advert').value=SAMPLE_AD});
+$('#doImport').addEventListener('click',()=>{const t=$('#advert').value.trim();if(!t){toast('Paste an advert first');return}
+  const p=parseAd(t);if(!p.rent){toast('No rent found. Check the advert includes "Rent £…"');return}
+  if(!feature('import','#nImport')||!spend(COST.import,'Advert import','#nImport'))return;
+  S.deal.units.push({label:p.label?`${p.label} ${S.deal.units.length+1}`:'Unit '+(S.deal.units.length+1),rent:p.rent,dep:p.dep??p.rent,rate:p.rate??150});
+  if(p.area&&!S.deal.area)S.deal.area=p.area;renderUnits();renderResults();save();$('#advert').value=''});
+
+/* ---------- due diligence ---------- */
+const SLAB={none:'Not checked',partly:'Partly checked',verified:'Verified',issue:'Issue found'};
+const SDOT={none:'none',partly:'warn',verified:'good',issue:'bad'};
+function renderDD(){const d=S.deal;
+  const c={none:0,partly:0,verified:0,issue:0};d.dd.forEach(x=>c[x.s]++);
+  $('#ddSummary').innerHTML=Object.keys(SLAB).map(k=>`<div class="fig"><div class="fig-l"><span class="dot ${SDOT[k]}"></span>${SLAB[k]}</div><div class="fig-v${k==='issue'&&c[k]?' neg':''}">${c[k]}</div></div>`).join('');
+  $('#ddList').innerHTML=DD_TEMPLATE.map((t,i)=>{const x=d.dd[i]||{s:'none',n:''};
+    return `<div class="dd-row" data-s="${x.s}"><div class="dd-main">
+      <div class="dd-h"><span class="dd-i">${i+1}</span><h3>${t.t}</h3></div>
+      <p class="dd-d">${t.d}</p>
+      ${x.ai?`<div class="ai"><div class="ai-h">AI draft<span>Verify before relying on it</span></div>${esc(x.ai)}</div>`:''}
+    </div><div class="dd-side">
+      <label class="f"><span>Status</span><span class="sel"><span class="dot ${SDOT[x.s]}"></span><select class="inp" id="dds${i}" data-i="${i}" aria-label="Status for ${t.t}">${Object.keys(SLAB).map(k=>`<option value="${k}"${k===x.s?' selected':''}>${SLAB[k]}</option>`).join('')}</select></span></label>
+      <label class="f"><span>Notes and evidence</span><textarea class="inp" id="ddn${i}" data-i="${i}" placeholder="Your notes and evidence">${esc(x.n)}</textarea></label>
+    </div></div>`}).join('');renderStepBar();
+}
+$('#ddList').addEventListener('change',e=>{if(e.target.tagName==='SELECT'){S.deal.dd[+e.target.dataset.i].s=e.target.value;save();renderDD()}});
+$('#ddList').addEventListener('input',e=>{if(e.target.tagName==='TEXTAREA'){S.deal.dd[+e.target.dataset.i].n=e.target.value;save()}});
+$('#runAI').addEventListener('click',()=>{if(!feature('dd','#nDD')||!spend(COST.dd,'AI research','#nDD'))return;const b=$('#runAI');b.disabled=true;b.textContent='Researching…';
+  setTimeout(()=>{const n4=/N4|finsbury/i.test(S.deal.area+' '+S.deal.name);
+    S.deal.dd.forEach(x=>{const f=AI_FINDINGS[x.k];if(n4&&f){x.ai=f.n;if(x.s==='none')x.s=f.s}else{x.ai='No automated public-source finding is available for this address. Verify this check independently.'}});
+    S.deal.ai=true;save();renderDD();b.disabled=false;b.textContent='Run AI research';toast('Findings drafted. Check each one.')},900)});
+
+/* ---------- pack ---------- */
+function bindPack(){const p=S.deal.pack;$('#pBiz').value=p.biz;$('#pRedress').value=p.redress;$('#pFee').value=p.fee;$('#pNDA').checked=p.nda}
+[['#pBiz','biz'],['#pRedress','redress'],['#pFee','fee']].forEach(([s,k])=>$(s).addEventListener('input',e=>{S.deal.pack[k]=e.target.value;save();renderPack()}));
+$('#pNDA').addEventListener('change',e=>{S.deal.pack.nda=e.target.checked;save();renderPack()});
+$('#genPack').addEventListener('click',()=>{if(S.deal.pack.final){toast('Pack already generated');return}if(!feature('pack','#nPack')||!spend(COST.pack,'Deal pack','#nPack'))return;S.deal.pack.final=true;toast('Final pack generated');save();renderPack()});
+function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();
+  $('#genPack').textContent=p.final?'Pack generated':'Generate final pack';
+  const rent=U.reduce((s,u)=>s+u.rent,0),dep=U.reduce((s,u)=>s+u.dep,0);
+  const area=p.nda?(d.area||'').replace(/,?\s*[A-Z]{1,2}\d[\dA-Z]?\s*\d[A-Z]{2}\b/i,''):(d.send.addr||d.area);
+  const kv=(rows)=>`<dl>${rows.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
+  const cols=U.map(u=>`<div><div class="kv-h">${esc(u.label)}</div>${kv([['Rent incl. bills',gbp(u.rent)+'/month'],['Deposit',gbp(u.dep)],['Model rate','£'+u.rate+'/night']])}</div>`).join('')
+    +(U.length>1?`<div><div class="kv-h">All units</div>${kv([['Rent',gbp(rent)+'/month'],['Deposits',gbp(dep)],['Upfront',gbp(rent+dep)]])}</div>`:'');
+  const tr=U.map(u=>`<tr><td>${esc(u.label)} at £${u.rate}</td>${OCC.map(o=>{const v=month(u,o,null,a).surplus;return `<td class="n" style="${v<0?'color:#B42318':''}">${gbp(v)}</td>`}).join('')}<td class="n">~${pct(be(u,a))}</td></tr>`).join('');
+  const ddr=DD_TEMPLATE.map((t,i)=>{const x=d.dd[i];return `<tr><td class="l">${t.t}</td><td class="l st ${x.s}"><span class="pdot"></span>${SLAB[x.s]}</td></tr>`}).join('');
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  $('#packWrap').innerHTML=`<div class="paper-bar"><span class="dot ${p.final?'good':'none'}"></span>${p.final?'Final pack generated':'Preview. Generate the final pack to remove the watermark.'}</div>
+  <article class="pack">${p.final?'':'<div class="wm" aria-hidden="true"><span>PREVIEW</span></div>'}
+    <div class="pk-top"><b>Investment summary</b><span>${p.nda?'Pre-NDA':'Full'} · ${today}</span></div>
+    <h2>${esc(d.name||'Untitled deal')}</h2><div class="ps">${esc(area)} | ${esc(d.strat)} opportunity | ${U.length} unit${U.length>1?'s':''}</div>
+    <h3>The deal</h3><p>A rental business opportunity, not a purchase of the property. Terms are as advertised by the landlord and need written confirmation.</p>
+    <div class="kv">${cols}</div>
+    <h3>Illustrative monthly surplus</h3>
+    <div class="tw"><table><thead><tr><th>Per unit</th><th>60%</th><th>80%</th><th>100%</th><th>Break-even</th></tr></thead><tbody>${tr}</tbody></table></div>
+    <p class="small" style="margin-top:8px">${a.fee}% platform fees, £${a.clean} cleaning per ${a.stay}-night stay, £${a.other}/month other costs, 30-day month. Not a forecast; nightly rates and occupancy are unvalidated.${d.london&&d.strat==='R2SA'?' London short lets are limited to 90 nights a year without planning permission.':''}</p>
+    <h3>Due diligence status</h3>
+    <div class="tw"><table><thead><tr><th>Check</th><th style="text-align:left">Status</th></tr></thead><tbody>${ddr}</tbody></table></div>
+    <h3>Next steps</h3>
+    <p>Sourcing fee: <b>${esc(p.fee||'on request')}</b>. The full address and landlord introduction are released after you sign the terms of business and pay the reservation fee.</p>
+    <p class="small">${p.biz?`Offered by ${esc(p.biz)}`:'Sourcing business not set'}${p.redress?` | Redress: ${esc(p.redress)}`:''}. This summary is not financial, legal or investment advice. Returns depend on performance and are not guaranteed.</p>
+    <div class="foot"><span>${esc((d.name||'').toUpperCase())} | ${p.nda?'PRE-NDA SUMMARY':'FULL SUMMARY'}</span><span>Made with Deal Pro</span></div>
+  </article>`;renderStepBar();
+}
+
+/* ---------- send ---------- */
+const SF=[['#sCo','co'],['#sEmail','email'],['#sAddr','addr'],['#sLL','ll'],['#sRole','role'],['#sPhone','phone'],['#sLEmail','lemail'],['#sUse','use'],['#sDocs','docs']];
+function bindSend(){SF.forEach(([s,k])=>{$(s).value=S.deal.send[k]??''})}
+SF.forEach(([s,k])=>$(s).addEventListener('input',e=>{S.deal.send[k]=e.target.value;save();renderNotice(true)}));
+function noticeText(){const d=S.deal,s=d.send,U=d.units;const ref='DN-'+(d.id||'x').replace(/\W/g,'').toUpperCase().slice(-4).padStart(4,'0');
+  const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  return `To: ${s.co||'[Sourcer company]'} (${s.email||'[notice email]'})
+Subject: Deal Notice under Deal Introduction Agreement
+
+Deal Notice reference: ${ref}
+Date sent: ${today}
+
+Property address and postcode: ${s.addr||'[full address]'}
+Number of units and type: ${U.length} unit${U.length>1?'s':''} (${U.map(u=>u.label).join(', ')})
+Rent and deposit asked:
+${U.map(u=>`  - ${u.label}: ${gbp(u.rent)}/month, deposit ${gbp(u.dep)}`).join('\n')}
+
+Introduced Contact: ${s.ll||'[name]'} (${s.role}), ${s.phone||'[phone]'}, ${s.lemail||'[email]'}
+Use the landlord has agreed to: ${s.use}
+Documents attached: ${s.docs||'-'}
+
+Response needed by: within 3 Business Days of this notice. If no reply is received, this property is a Registered Deal under clause 4.2 of our Deal Introduction Agreement.
+
+Jonah Quartey`}
+function renderNotice(skipBind){if(!skipBind)bindSend();$('#notice').textContent=noticeText()}
+function selectNotice(){const r=document.createRange();r.selectNodeContents($('#notice'));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);toast('Selected. Press Ctrl/Cmd+C to copy')}
+$('#copyNotice').addEventListener('click',()=>{const t=noticeText();
+  try{navigator.clipboard.writeText(t).then(()=>toast('Deal Notice copied')).catch(selectNotice)}catch(e){selectNotice()}});
+
+/* ---------- deals ---------- */
+const DSTAT={'Checking':'warn','Issue found':'bad','Sent to sourcer':'neutral','Completed':'good'};
+function renderDeals(){const L=S.saved;
+  $('#dealList').innerHTML=L.length?`<div class="dl"><div class="dl-head"><span>Deal</span><span class="r">Rent pcm</span><span class="r">Surplus 60%</span><span class="r">Surplus 80%</span><span>Status</span><span></span></div>`+L.map((d,i)=>{const t=OCC.map(o=>d.units.reduce((s,u)=>s+month(u,o,null,d.a).surplus,0));
+    return `<div class="dl-row"><div class="dl-t"><button class="dl-name" data-open="${i}">${esc(d.name)}</button>${isExample(d)?'<span class="ex-tag">Example</span>':''}<div class="dl-sub">${esc(d.area)} · ${esc(d.strat)} · ${d.units.length} unit${d.units.length>1?'s':''}</div></div>
+    <div class="dl-f" data-l="Rent pcm">${gbp(d.units.reduce((s,u)=>s+u.rent,0))}</div>
+    <div class="dl-f${t[0]<0?' neg':''}" data-l="Surplus 60%">${gbp(t[0])}</div>
+    <div class="dl-f${t[1]<0?' neg':''}" data-l="Surplus 80%">${gbp(t[1])}</div>
+    <div class="dl-ctl"><span class="sel"><span class="dot ${DSTAT[d.status]||'neutral'}"></span><select class="inp" id="st${i}" data-st="${i}" aria-label="Status for ${esc(d.name)}">${Object.keys(DSTAT).map(k=>`<option${k===d.status?' selected':''}>${k}</option>`).join('')}</select></span>
+    <div class="dl-act"><button class="btn sm" data-open="${i}">Open</button><button class="btn ghost sm" data-del="${i}">Delete</button></div></div></div>`}).join('')+'</div>'
+  :'<div class="dl"><div class="empty">No saved deals yet. Analyse a deal and save it here.</div></div>';renderAgreements()}
+$('#dealList').addEventListener('click',e=>{const o=e.target.closest('[data-open]'),x=e.target.closest('[data-del]');
+  if(o){S.deal=JSON.parse(JSON.stringify(S.saved[+o.dataset.open]));save();bindDeal();go('analyser','numbers');toast('Deal opened')}
+  if(x){const b=x;if(b.dataset.confirm){S.saved.splice(+b.dataset.del,1);save();renderDeals();toast('Deal deleted')}else{b.dataset.confirm='1';b.textContent='Confirm delete';setTimeout(()=>{if(b.isConnected){delete b.dataset.confirm;b.textContent='Delete'}},3000)}}});
+$('#dealList').addEventListener('change',e=>{const s=e.target.dataset.st;if(s==null)return;S.saved[+s].status=e.target.value;save();renderDeals()});
+function saveCurrent(){const c=JSON.parse(JSON.stringify(S.deal));const i=S.saved.findIndex(d=>d.id===c.id);
+  if(i<0&&S.plan==='Free'&&S.saved.length>=3){toast('The Free plan saves up to 3 deals. Upgrade to save more.');return}if(i>=0)S.saved[i]=c;else S.saved.unshift(c);save();renderDeals();toast('Deal saved')}
+$('#saveDeal').addEventListener('click',saveCurrent);
+$('#saveDealTop').addEventListener('click',saveCurrent);
+function newBlankDeal(){startAnalysis(()=>{const d=freshDeal();S.deal=d;markAnalysed(d.id);save();bindDeal();go('analyser','numbers')})}
+$('#newDeal').addEventListener('click',newBlankDeal);
+$('#anScratch').addEventListener('click',newBlankDeal);
+
+/* ---------- pricing ---------- */
+const CHK='<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg>';
+const feats=a=>`<ul>${a.map(x=>`<li>${CHK}<span>${x}</span></li>`).join('')}</ul>`;
+function planBtn(id,primary){const cur=S.plan===id;return `${cur?'<div class="cur"><span class="dot good"></span>Current plan</div>':''}<button class="btn block${primary?' primary':''}" data-plan="${id}"${cur?' disabled':''}>${cur?'Your plan':'Switch to '+PLAN_DEFS[id].name}</button>`}
+function renderPlans(){const of=$('#ownFee');if(of&&document.activeElement!==of)of.value=dealFee();syncFee();
+  const ann=S.billing==='annual',team=S.plansTab==='team';
+  $('#ptInd').setAttribute('aria-pressed',String(!team));$('#ptTeam').setAttribute('aria-pressed',String(team));
+  $('#billSw').setAttribute('aria-checked',String(ann));$('#billM').classList.toggle('on',!ann);$('#billA').classList.toggle('on',ann);
+  const box=$('#plans');box.classList.toggle('two',team);
+  if(!team){const mt=S.maxTier==='20'?'20':'5',mid='Max'+mt;
+    box.innerHTML=`<div class="plan"><div class="plan-h"><h3>Free</h3></div><p class="plan-from">Try Deal Pro</p>
+      <div class="price"><span class="mono">£0</span><span class="per">per month</span></div><div class="bill-note">Free forever</div>
+      <div class="lead">Limited usage</div>${feats(['2 AI deal analyses','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
+    <div class="plan feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div><p class="plan-from">For everyday sourcing</p>
+      <div class="price"><span class="mono">£${ann?17:20}</span><span class="per">per month</span></div><div class="bill-note">${ann?'Billed annually (£200 upfront)':'Billed monthly'}</div>
+      <div class="lead">Everything in Free, plus:</div>${feats(['Unlimited deal analyses','More usage','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
+    <div class="plan"><div class="plan-h"><h3>Max</h3></div><p class="plan-from">From £100/month · For sourcers who work deals all day</p>
+      <div class="seg segb tier" role="group" aria-label="Max usage tier"><button id="maxT5" data-tier="5" aria-pressed="${mt==='5'}">5x</button><button id="maxT20" data-tier="20" aria-pressed="${mt==='20'}">20x</button></div>
+      <div class="price"><span class="mono">£${mt==='20'?200:100}</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
+      <div class="lead">Everything in Premium, plus:</div>${feats([`${mt}x more usage than Premium per session`,'Higher limits','Early access to new features','Priority at peak times'])}${planBtn(mid)}</div>`}
+  else{const n=S.seats,sd=ann?20:25,pr=ann?100:125;const tot=x=>ann?`${gbp(x*n*12)} a year for ${n} seats`:`${gbp(x*n)} a month for ${n} seats`;
+    box.innerHTML=`<div class="plan"><div class="plan-h"><h3>Standard seat</h3></div><p class="plan-from">For sourcing teams</p>
+      <div class="price"><span class="mono">£${sd}</span><span class="per">per seat / month</span></div><div class="bill-note">${ann?'Billed annually':'Billed monthly'} · ${tot(sd)}</div>
+      <div class="lead">Everything in Premium, plus:</div>${feats(['More usage than Premium','Central billing','Admin controls','Shared deals'])}${planBtn('TeamStd',true)}</div>
+    <div class="plan"><div class="plan-h"><h3>Premium seat</h3></div><p class="plan-from">For the heaviest users on your team</p>
+      <div class="price"><span class="mono">£${pr}</span><span class="per">per seat / month</span></div><div class="bill-note">${ann?'Billed annually':'Billed monthly'} · ${tot(pr)}</div>
+      <div class="lead">Everything in Standard, plus:</div>${feats(['5x more usage than Standard seats'])}${planBtn('TeamPrem')}</div>`}
+  let st=$('#seatsRow');if(team&&!st){box.insertAdjacentHTML('beforebegin','<div class="seats" id="seatsRow"><span>Seats</span><span class="stepper"><button id="seatDec" aria-label="Fewer seats">−</button><input type="number" id="seatN" min="5" max="500" aria-label="Number of seats"><button id="seatInc" aria-label="More seats">+</button></span><span class="muted">Minimum 5 seats</span></div>');st=$('#seatsRow')}
+  if(st){st.hidden=!team;const sn=$('#seatN');if(document.activeElement!==sn)sn.value=S.seats}
+  renderUsage()}
+$('#ptInd').addEventListener('click',()=>{S.plansTab='individual';save();renderPlans()});
+$('#ptTeam').addEventListener('click',()=>{S.plansTab='team';save();renderPlans()});
+$('#billSw').addEventListener('click',()=>{S.billing=S.billing==='annual'?'monthly':'annual';save();renderPlans()});
+document.addEventListener('click',e=>{const b=e.target.closest('#seatDec,#seatInc');if(!b)return;S.seats=Math.max(5,Math.min(500,(S.seats||5)+(b.id==='seatInc'?1:-1)));save();renderPlans()});
+document.addEventListener('input',e=>{if(e.target.id!=='seatN')return;const v=Math.round(+e.target.value);if(v>=5&&v<=500){S.seats=v;save();renderPlans()}});
+$('#plans').addEventListener('click',e=>{const t=e.target.closest('[data-tier]');if(t){S.maxTier=t.dataset.tier;save();renderPlans();const f=$(`[data-tier="${S.maxTier}"]`);if(f)f.focus();return}
+  const b=e.target.closest('[data-plan]');if(!b||!PLAN_DEFS[b.dataset.plan])return;const id=b.dataset.plan;
+  if(CHECKOUT[id]){window.location.assign(checkoutURL(CHECKOUT[id]));return}
+  S.plan=id;save();renderTop();renderPlans();toast(`Switched to ${PLAN_DEFS[S.plan].name}`)});
+$('#xOn').addEventListener('click',()=>{S.extra.on=!S.extra.on;save();renderUsage();toast(S.extra.on?'Extra usage on':'Extra usage off')});
+$('#xCap').addEventListener('input',e=>{S.extra.cap=Math.max(0,+e.target.value||0);save();renderUsage()});
+$('#simSession').addEventListener('click',()=>{S.timeOffset=(+S.timeOffset||0)+SESSION;save();renderUsage();toast('Moved the demo clock on 5 hours')});
+$('#simWeek').addEventListener('click',()=>{S.timeOffset=(+S.timeOffset||0)+WEEK;save();renderUsage();toast('Moved the demo clock on a week')});
+$('#resetUsage').addEventListener('click',()=>{S.usage={sStart:null,sUsed:0,wStart:null,wUsed:0};S.extra.spent=0;save();renderUsage();$$('.limit-note').forEach(n=>n.hidden=true);toast('Usage reset (demo)')});
+
+/* ---------- find deals ---------- */
+// Real listings found on 23 Sep 2026 (OpenRent, SpareRoom, Gumtree). The demo "AI search" filters this saved sample.
+const LISTINGS=[
+{"site":"OpenRent","id":"3022762","landlord":"Landlord 1","type":"1 bed flat","beds":1,"area":"Rupert Street, W1D","postcode":"W1D","price":3450,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3022762","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3042146","landlord":"Landlord 2","type":"1 bed flat","beds":1,"area":"Millbank, SW1P","postcode":"SW1P","price":3600,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3042146","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3046116","landlord":"Landlord 3","type":"2 bed flat","beds":2,"area":"Whitehouse Apartments, SE1","postcode":"SE1","price":4000,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3046116","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3046053","landlord":"Landlord 4","type":"1 bed flat","beds":1,"area":"Fareham St, W1F","postcode":"W1F","price":4250,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3046053","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3049034","landlord":"Landlord 5","type":"1 bed flat","beds":1,"area":"Adam & Eve Court, W1D","postcode":"W1D","price":2500,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3049034","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3044560","landlord":"Landlord 6","type":"2 bed flat","beds":2,"area":"Bedford Avenue, WC1B","postcode":"WC1B","price":2650,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3044560","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3025682","landlord":"Landlord 7","type":"1 bed flat","beds":1,"area":"Cliffords Inn, EC4A","postcode":"EC4A","price":2495,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3025682","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"1444629","landlord":"Landlord 8","type":"1 bed flat","beds":1,"area":"Greencoat Mansions, SW1P","postcode":"SW1P","price":2999,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/1444629","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3026187","landlord":"Landlord 9","type":"2 bed flat","beds":2,"area":"Hill Street, W1J","postcode":"W1J","price":5460,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3026187","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3043796","landlord":"Landlord 10","type":"2 bed flat","beds":2,"area":"Tothill House, SW1P","postcode":"SW1P","price":2850,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3043796","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3047874","landlord":"Landlord 11","type":"2 bed flat","beds":2,"area":"Lambeth High Street, SE1","postcode":"SE1","price":4200,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3047874","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"2928255","landlord":"Landlord 12","type":"Studio flat","beds":0,"area":"Holborn, WC1R","postcode":"WC1R","price":2946,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/2928255","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3045831","landlord":"Landlord 13","type":"1 bed flat","beds":1,"area":"Minton House, SE11","postcode":"SE11","price":2000,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3045831","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3043726","landlord":"Landlord 14","type":"2 bed flat","beds":2,"area":"Holcroft Court, W1W","postcode":"W1W","price":2900,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3043726","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3044446","landlord":"Landlord 15","type":"1 bed flat","beds":1,"area":"Gray's Inn Road, WC1X","postcode":"WC1X","price":1950,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3044446","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3045825","landlord":"Landlord 16","type":"2 bed flat","beds":2,"area":"Patrick Court, SE1","postcode":"SE1","price":2650,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3045825","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3011343","landlord":"Landlord 17","type":"1 bed flat","beds":1,"area":"Hallam St, W1W","postcode":"W1W","price":2475,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3011343","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3044682","landlord":"Landlord 18","type":"2 bed flat","beds":2,"area":"Euston Road, NW1","postcode":"NW1","price":3250,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3044682","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3042174","landlord":"Landlord 2","type":"2 bed flat","beds":2,"area":"Benbow House, SE1","postcode":"SE1","price":4500,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3042174","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"2970833","landlord":"Landlord 19","type":"Studio flat","beds":0,"area":"Cartwright Gardens, WC1H","postcode":"WC1H","price":2015,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/2970833","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"2882712","landlord":"Landlord 19","type":"Studio flat","beds":0,"area":"Cartwright Gardens, WC1H","postcode":"WC1H","price":1971,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/2882712","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3045143","landlord":"Landlord 20","type":"2 bed flat","beds":2,"area":"King's Cross Station, WC1X","postcode":"WC1X","price":4950,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3045143","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3048992","landlord":"Landlord 21","type":"2 bed flat","beds":2,"area":"Hans Crescent, SW1X","postcode":"SW1X","price":7000,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3048992","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3044752","landlord":"Landlord 22","type":"1 bed flat","beds":1,"area":"Skinner Street, EC1R","postcode":"EC1R","price":2100,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3044752","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3049188","landlord":"Landlord 23","type":"2 bed flat","beds":2,"area":"Hyde Park Place, W2","postcode":"W2","price":4100,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3049188","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3046381","landlord":"Landlord 24","type":"Studio flat","beds":0,"area":"Park West Place, W2","postcode":"W2","price":2250,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3046381","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3043328","landlord":"Landlord 25","type":"2 bed flat","beds":2,"area":"Pentonville Road, N1","postcode":"N1","price":3000,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3043328","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3043514","landlord":"Landlord 26","type":"1 bed flat","beds":1,"area":"Lennox Gardens, SW1X","postcode":"SW1X","price":3800,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3043514","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3044804","landlord":"Landlord 27","type":"1 bed flat","beds":1,"area":"Central St, EC1V","postcode":"EC1V","price":2750,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3044804","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3050208","landlord":"Landlord 11","type":"Studio flat","beds":0,"area":"Draycott Avenue, SW3","postcode":"SW3","price":2474,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3050208","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3048080","landlord":"Landlord 28","type":"1 bed flat","beds":1,"area":"Sun St, EC2A","postcode":"EC2A","price":3995,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3048080","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3045096","landlord":"Landlord 29","type":"2 bed flat","beds":2,"area":"Corringham, W2","postcode":"W2","price":2800,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3045096","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"2995199","landlord":"Landlord 30","type":"2 bed flat","beds":2,"area":"Inverness Terrace, W2","postcode":"W2","price":6000,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/2995199","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"2873501","landlord":"Landlord 31","type":"1 bed flat","beds":1,"area":"Queensway, W2","postcode":"W2","price":1950,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/2873501","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3046283","landlord":"Landlord 32","type":"Studio flat","beds":0,"area":"Linden Gardens, W2","postcode":"W2","price":2450,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3046283","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"2171709","landlord":"Landlord 33","type":"1 bed flat","beds":1,"area":"Bourchier St, W1D","postcode":"W1D","price":3200,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/2171709","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"2850987","landlord":"Landlord 34","type":"2 bed flat","beds":2,"area":"Barter St, WC1A","postcode":"WC1A","price":3700,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/2850987","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3020556","landlord":"Landlord 35","type":"1 bed flat","beds":1,"area":"Westminster Bridge Road, SE1","postcode":"SE1","price":4100,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3020556","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"2867010","landlord":"Landlord 18","type":"Studio flat","beds":0,"area":"Hill St, W1J","postcode":"W1J","price":2817,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/2867010","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3048134","landlord":"Landlord 36","type":"1 bed flat","beds":1,"area":"Tothill House, SW1P","postcode":"SW1P","price":2700,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3048134","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"1566859","landlord":"Landlord 36","type":"1 bed flat","beds":1,"area":"Tothill House, SW1P","postcode":"SW1P","price":2500,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/1566859","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3042753","landlord":"Landlord 2","type":"2 bed flat","beds":2,"area":"Lambeth High St, SE1","postcode":"SE1","price":4200,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3042753","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3044941","landlord":"Landlord 37","type":"2 bed flat","beds":2,"area":"Davenport House, SE11","postcode":"SE11","price":2800,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3044941","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3044597","landlord":"Landlord 38","type":"2 bed flat","beds":2,"area":"Black Prince Road, SE1","postcode":"SE1","price":4190,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3044597","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3044997","landlord":"Landlord 39","type":"Studio flat","beds":0,"area":"Warren Court, NW1","postcode":"NW1","price":2400,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3044997","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"2929005","landlord":"Landlord 40","type":"1 bed flat","beds":1,"area":"Gray's Inn Rd, WC1X","postcode":"WC1X","price":2290,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/2929005","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3043973","landlord":"Landlord 41","type":"1 bed flat","beds":1,"area":"Perronet House, SE1","postcode":"SE1","price":2450,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3043973","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3047556","landlord":"Landlord 42","type":"Studio flat","beds":0,"area":"Grays Inn Rd, WC1X","postcode":"WC1X","price":1379,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3047556","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3047298","landlord":"Landlord 43","type":"1 bed flat","beds":1,"area":"Roman House, EC2Y","postcode":"EC2Y","price":2990,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3047298","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3045163","landlord":"Landlord 44","type":"2 bed flat","beds":2,"area":"Wynyatt St, EC1V","postcode":"EC1V","price":2800,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3045163","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3048694","landlord":"Landlord 45","type":"1 bed flat","beds":1,"area":"Park West, W2","postcode":"W2","price":2350,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3048694","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3046828","landlord":"Landlord 46","type":"1 bed flat","beds":1,"area":"Beauchamp Place, SW3","postcode":"SW3","price":2300,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3046828","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3004279","landlord":"Landlord 47","type":"1 bed flat","beds":1,"area":"Claremont Heights, N1","postcode":"N1","price":2500,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3004279","found":"23 Sep 2026"},
+{"site":"OpenRent","id":"3047404","landlord":"Landlord 48","type":"2 bed flat","beds":2,"area":"Gloucester Terrace, W2","postcode":"W2","price":3500,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.openrent.co.uk/3047404","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"18120449","landlord":"Landlord 49","type":"1 bed flat","beds":1,"area":"London W2 (W2)","postcode":"W2","price":3200,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=18120449","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"17774106","landlord":"Landlord 50","type":"Studio flat","beds":0,"area":"London EC1 (EC1)","postcode":"EC1","price":2500,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=17774106","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"18393747","landlord":"Landlord 51","type":"2 bed flat","beds":2,"area":"Clerkenwell (EC1)","postcode":"EC1","price":2800,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=18393747","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"18196512","landlord":"Landlord 52","type":"2 bed flat","beds":2,"area":"Aldgate (E1)","postcode":"E1","price":4800,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=18196512","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"18434914","landlord":"Landlord 53","type":"2 bed flat","beds":2,"area":"King's Cross (WC1)","postcode":"WC1","price":3500,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=18434914","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"18203480","landlord":"Landlord 54","type":"1 bed flat","beds":1,"area":"Elephant and Castle (SE17)","postcode":"SE17","price":2675,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=18203480","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"18432989","landlord":"Landlord 55","type":"Studio flat","beds":0,"area":"St John's Wood (NW8)","postcode":"NW8","price":1300,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=18432989","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"17260569","landlord":"Landlord 56","type":"Studio flat","beds":0,"area":"Spitalfields (E1)","postcode":"E1","price":1995,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=17260569","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"16851649","landlord":"Landlord 57","type":"Studio flat","beds":0,"area":"Bayswater (W2)","postcode":"W2","price":1800,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=16851649","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"17131570","landlord":"Landlord 57","type":"Studio flat","beds":0,"area":"Bayswater (W2)","postcode":"W2","price":2000,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=17131570","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"16851659","landlord":"Landlord 57","type":"Studio flat","beds":0,"area":"Bayswater (W2)","postcode":"W2","price":1950,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=16851659","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"18434771","landlord":"Landlord 58","type":"2 bed flat","beds":2,"area":"Liverpool Street (E1)","postcode":"E1","price":3400,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=18434771","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"17154650","landlord":"Landlord 59","type":"1 bed flat","beds":1,"area":"Queen's Gate (SW7)","postcode":"SW7","price":3000,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=17154650","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"18431197","landlord":"Landlord 60","type":"1 bed flat","beds":1,"area":"London E2 (E2)","postcode":"E2","price":2000,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=18431197","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"17997150","landlord":"Landlord 61","type":"1 bed flat","beds":1,"area":"Earl's Court (SW5)","postcode":"SW5","price":2500,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=17997150","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"18419588","landlord":"Landlord 62","type":"1 bed flat","beds":1,"area":"London W9 (W9)","postcode":"W9","price":2200,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=18419588","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"18084552","landlord":"Landlord 54","type":"1 bed flat","beds":1,"area":"Battersea park (SW11)","postcode":"SW11","price":2325,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=18084552","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"18432745","landlord":"Landlord 63","type":"1 bed flat","beds":1,"area":"Clerkenwell (EC1)","postcode":"EC1","price":4500,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=18432745","found":"23 Sep 2026"},
+{"site":"SpareRoom","id":"18323072","landlord":"Landlord 64","type":"1 bed flat","beds":1,"area":"Bayswater (W2)","postcode":"W2","price":4000,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=18323072","found":"23 Sep 2026"},
+{"site":"Gumtree","id":"1803056154","landlord":"Landlord 65","type":"2 bed flat","beds":2,"area":"Aldgate East, Whitechapel, E1","postcode":"E1","price":2550,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.gumtree.com/p/property-to-rent/x/1803056154","found":"23 Sep 2026"},
+{"site":"Gumtree","id":"1802900646","landlord":"Landlord 66","type":"1 bed flat","beds":1,"area":"Tower Bridge, SE1","postcode":"SE1","price":1650,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.gumtree.com/p/property-to-rent/x/1802900646","found":"23 Sep 2026"},
+{"site":"Gumtree","id":"1802560654","landlord":"Landlord 67","type":"Studio flat","beds":0,"area":"Bayswater, W2","postcode":"W2","price":1525,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.gumtree.com/p/property-to-rent/x/1802560654","found":"23 Sep 2026"},
+{"site":"Gumtree","id":"1802424388","landlord":"Landlord 68","type":"1 bed flat","beds":1,"area":"Holborn, WC1","postcode":"WC1","price":2167,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.gumtree.com/p/property-to-rent/x/1802424388","found":"23 Sep 2026"},
+{"site":"Gumtree","id":"1802233608","landlord":"Landlord 69","type":"2 bed flat","beds":2,"area":"Earls Court, SW5","postcode":"SW5","price":3150,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.gumtree.com/p/property-to-rent/x/1802233608","found":"23 Sep 2026"}
+];
+const SITES=['OpenRent','SpareRoom','Gumtree','Rightmove'];
+const FIND_DEF=()=>({mode:'rent',beds:'any',min:1200,max:5000,loc:'',priv:true,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true}});
+if(!S.find||!S.find.f)S.find={f:FIND_DEF(),searched:false,sort:null};
+S.find.f=Object.assign(FIND_DEF(),S.find.f);S.find.f.sites=Object.assign(FIND_DEF().sites,S.find.f.sites);
+const FS={busy:false,sel:new Set()};
+const reduced=()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){return false}};
+const bedsTxt=b=>b===0?'Studio':String(b);
+const RATE_EST=b=>b===0?150:b===1?170:b===2?220:260;
+function bindFind(){const f=S.find.f;
+  $(f.mode==='buy'?'#fModeBuy':'#fModeRent').checked=true;
+  ($('#fBeds'+(f.beds==='any'?'Any':f.beds))||$('#fBedsAny')).checked=true;
+  $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fFurn').value=f.furn;$('#fType').value=f.type;
+  SITES.forEach(s=>{$('#fSite'+s).checked=!!f.sites[s]});findChrome()}
+function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
+  f.mode=$('#fModeBuy').checked?'buy':'rent';const b=$('input[name="fBeds"]:checked');f.beds=b?b.value:'any';
+  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
+  SITES.forEach(s=>{f.sites[s]=$('#fSite'+s).checked})}
+function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;
+  $('#fMinL').textContent=buy?'Min price':'Min rent';$('#fMaxL').textContent=buy?'Max price':'Max rent';
+  $('#fFurnNote').hidden=f.furn==='any';$('#fRmNote').hidden=!f.sites.Rightmove}
+function locMatch(x,q){q=q.trim().toLowerCase();if(!q)return true;const pc=x.postcode.toLowerCase();
+  // Postcode district (SE1, W2, W1D): match the district, so SE1 does not also match SE11, but W1 matches W1D.
+  if(/^[a-z]{1,2}\d[a-z\d]?$/.test(q))return pc.startsWith(q)&&!/\d/.test(pc.charAt(q.length));
+  return new RegExp('(^|[^a-z0-9])'+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test((x.area+' '+x.postcode).toLowerCase())}
+function findRows(){const f=S.find.f;if(f.mode!=='rent')return [];
+  return LISTINGS.map((x,i)=>Object.assign({k:i},x)).filter(x=>x.mode===f.mode
+    &&(f.beds==='any'||(f.beds==='4'?x.beds>=4:x.beds===+f.beds))
+    &&(f.min===''||x.price>=f.min)&&(f.max===''||x.price<=f.max)
+    &&locMatch(x,f.loc)&&(!f.priv||x.private)
+    &&(f.furn==='any'||x.furnished==='Not stated'||x.furnished.toLowerCase()===f.furn)
+    &&(f.type==='any'||(f.type==='studio'?x.beds===0:f.type==='flat'?x.beds>=1&&/flat/i.test(x.type):/house/i.test(x.type)))
+    &&!!f.sites[x.site])}
+/* ---------- per-deal unlocks ---------- */
+const lid=r=>r.site+':'+r.id;
+const isOpen=r=>Array.isArray(S.unlocked)&&S.unlocked.includes(lid(r));
+const dealFee=()=>Math.max(0,Math.round(+S.dealFee||0));
+// Sorting by hidden fields must not reveal locked rows' details: locked rows sort last on those keys.
+const HIDDEN_KEYS=['site','landlord','area'];
+function sortRows(r){const s=S.find.sort;if(!s)return r;
+  const val=(row,k)=>HIDDEN_KEYS.includes(k)&&!isOpen(row)?'￿':row[k];
+  return r.slice().sort((a,b)=>{const x=val(a,s.k),y=val(b,s.k);const c=typeof x==='number'?x-y:String(x).localeCompare(String(y),'en-GB',{numeric:true,sensitivity:'base'});return (c||a.k-b.k)*s.dir})}
+const LOCK='<svg class="lk" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><rect x="2.25" y="5.25" width="7.5" height="5.5" rx="1"/><path d="M4 5.25V3.75a2 2 0 0 1 4 0v1.5"/></svg>';
+const CHEV=d=>`<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d<0?'M8.5 3.5L5 7l3.5 3.5':'M5.5 3.5L9 7l-3.5 3.5'}"/></svg>`;
+const DEF_A={fee:15,clean:45,stay:3,other:150};
+const bedWord=b=>b===0?'studio':b+' bed';
+const fmtDate=iso=>{try{return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}catch(e){return String(iso)}};
+const CARD_SORTS=[['','Listing order'],['price:1','Rent, low to high'],['price:-1','Rent, high to low'],['beds:1','Fewest bedrooms'],['beds:-1','Most bedrooms'],['postcode:1','Postcode']];
+// Locked cards show postcode district, type and figures only: no street, landlord, source site or link.
+function dealCard(r,i,o={}){const open=!o.preview&&isOpen(r),u={rent:r.price,rate:RATE_EST(r.beds)},occ=OCC.map(x=>month(u,x,null,DEF_A).surplus);
+  const li=(em,txt)=>`<li>${o.plain?'<span class="em-dot" aria-hidden="true"></span>':`<span class="em" aria-hidden="true">${em}</span>`}<span>${txt}</span></li>`;
+  const act=o.preview?`<button class="btn sm" data-go="find">Open in Deal Finder</button>`
+    :open?`<button class="btn sm primary" data-build="${r.k}">Analyse deal</button><a class="btn sm" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a>`
+    :`<button class="btn sm" data-unlock="${r.k}" data-n="${i+1}">${LOCK}Unlock this deal · ${gbp(dealFee())}</button>`;
+  return `<article class="dcard${open?' is-open':''}${FS.justOpened===r.k&&open?' just-open':''}" data-k="${r.k}" aria-label="Deal ${i+1}${open?', unlocked':''}">
+    <h3>Deal ${i+1} (${gbp(r.price)} ${bedWord(r.beds)})</h3>
+    <ul class="adv">${li('📍',`London ${esc(r.postcode)}${o.plain?'':' <span class="em" aria-hidden="true">📍</span>'}`)}${open?li('🏠',esc(r.area)):''}${li('🛏',esc(r.type))}</ul>
+    <ul class="adv">${li('💸',`Rent <b>${gbp(r.price)}</b>/month (${gbp(r.price*12)}/year)`)}${li('💸',`Deposit <b>${gbp(r.price)}</b> <span class="muted">(est.)</span>`)}${li('💰',`Nightly rate <b>£${u.rate}</b> <span class="muted">(est.)</span>`)}</ul>
+    <ul class="adv">${OCC.map((x,j)=>li('💷',`<b class="${occ[j]<0?'neg':''}">${gbp(occ[j])}</b> at ${pct(x)} occupancy`)).join('')}</ul>
+    ${open?`<ul class="adv">${li('👤',esc(r.landlord))}${li('🔗',`Source: ${esc(r.site)}`)}</ul>`:''}
+    <div class="dc-foot"><div class="dc-note"><span>Figures illustrative. Nightly rate estimated.</span>${open?'':`<span class="dc-lock">${LOCK}Landlord, address and link unlock after you sign and pay</span>`}</div>
+      <div class="dc-act">${act}</div></div>
+  </article>`}
+function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fResults');
+  if(!S.find.searched){box.innerHTML=`<div class="fempty"><h2>Search private-landlord listings</h2><p>Set your filters, then run Search with AI. Matching listings appear as deal cards. Unlock any deal by signing its introduction agreement and paying the deal fee, then analyse it in the Deal Analyser.</p></div>`;return}
+  if(S.find.f.mode==='buy'){FS.sel.clear();box.innerHTML=`<div class="fempty"><h2>No homes for sale in this sample</h2><p>The saved sample only contains homes to rent from private landlords. Switch to Rent to see them. The live version also searches sale listings.</p></div>`;return}
+  const view=S.find.view==='sheet'?'sheet':'cards',prevScroll=($('#fCards')||{}).scrollLeft||0;
+  const rows=sortRows(findRows()),keys=new Set(rows.filter(isOpen).map(r=>r.k));[...FS.sel].forEach(k=>{if(!keys.has(k))FS.sel.delete(k)});
+  const pr=rows.map(r=>r.price).sort((a,b)=>a-b),m=pr.length,med=m?(m%2?pr[(m-1)/2]:(pr[m/2-1]+pr[m/2])/2):NaN,nOpen=keys.size;
+  const ll=new Set(rows.map(r=>r.site+'|'+r.landlord)).size,so=S.find.sort,sv=so?`${so.k}:${so.dir}`:'';
+  const sum=`<b class="mono">${m}</b> listing${m===1?'':'s'} · <b class="mono">${ll}</b> landlord${ll===1?'':'s'}${m?` · median <b class="mono">${gbp(med)}</b> pcm`:''} · <b class="mono">${nOpen}</b> unlocked`;
+  const th=(k,lab,cls='')=>{const on=so&&so.k===k;return `<th class="${cls}" aria-sort="${on?(so.dir>0?'ascending':'descending'):'none'}"><button class="sort" data-sort="${k}">${lab}<span class="sa" aria-hidden="true">${on?(so.dir>0?'↑':'↓'):''}</span></button></th>`};
+  const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
+  const acts=view==='cards'
+    ?(m?`<label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${CARD_SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${CARD_SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
+      <button class="btn sm car-arrow" id="fPrev" aria-label="Previous deals">${CHEV(-1)}</button><button class="btn sm car-arrow" id="fNext" aria-label="Next deals">${CHEV(1)}</button>`:'')
+    :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} unlocked for Google Sheets</button>`;
+  const L=`<span class="lockc">${LOCK}Locked</span>`;
+  let body;
+  if(!m)body=`<div class="fempty"><h2>No listings match these filters</h2><p>Try a wider price range, a different location or more sites.</p></div>`;
+  else if(view==='cards')body=`<div class="cards" id="fCards" tabindex="0" role="region" aria-label="Deal cards, scroll sideways">${rows.map((r,i)=>dealCard(r,i)).join('')}</div>`;
+  else body=`<div id="fTsvWrap" hidden><label class="f"><span>Unlocked deals as tab-separated rows. Copy them, then paste into cell A1 of a Google Sheet.</span><textarea class="inp mono" id="fTsv" readonly></textarea></label></div>
+    <div class="sheet" tabindex="0" role="region" aria-label="Search results"><table><thead><tr><th class="rn"><span class="sr">Row</span></th><th class="ck"><input type="checkbox" id="fSelAll" aria-label="Select all unlocked rows"${nOpen?'':' disabled'}></th>
+      ${th('site','Site')}${th('landlord','Landlord')}${th('type','Type')}${th('beds','Beds','nr')}${th('area','Area')}${th('postcode','Postcode')}${th('price','Rent pcm','nr')}<th>Furnished</th><th>Found</th><th>Link</th><th>Action</th></tr></thead>
+      <tbody>${rows.map((r,i)=>{const o=isOpen(r);return `<tr data-k="${r.k}"><td class="rn">${i+1}</td><td class="ck">${o?`<input type="checkbox" id="fsel${r.k}" data-sel="${r.k}" aria-label="Select ${esc(r.type)}, ${esc(r.area)}"${FS.sel.has(r.k)?' checked':''}>`:''}</td>
+        <td>${o?esc(r.site):L}</td><td class="clip"${o?` title="${esc(r.landlord)}"`:''}>${o?esc(r.landlord):L}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td><td class="muted">${esc(r.furnished)}</td><td class="muted">${esc(r.found)}</td>
+        <td>${o?`<a class="xlink" href="${esc(r.url)}" target="_blank" rel="noopener">Open ↗</a>`:L}</td><td>${o?`<button class="btn xs" data-build="${r.k}">Analyse deal</button>`:`<button class="btn xs" data-unlock="${r.k}" data-n="${i+1}">Unlock · ${gbp(dealFee())}</button>`}</td></tr>`}).join('')}</tbody></table></div>`;
+  box.innerHTML=`<div class="ftool"><div><div class="fsum" id="fSummary">${sum}</div>${view==='sheet'?'<div class="fsub">Copy includes unlocked deals only. The live version writes straight to your Google Sheet.</div>':''}</div>
+    <div class="ph-actions">${acts}${toggle}</div></div>${body}`;
+  const c=$('#fCards');if(c){c.style.scrollBehavior='auto';c.scrollLeft=prevScroll;c.style.scrollBehavior='';
+    const upd=()=>{const p=$('#fPrev'),n=$('#fNext');if(p)p.disabled=c.scrollLeft<=2;if(n)n.disabled=c.scrollLeft+c.clientWidth>=c.scrollWidth-2};c.addEventListener('scroll',upd,{passive:true});upd()}
+  FS.justOpened=null;syncSel()}
+function syncSel(){const n=FS.sel.size,b=$('#fBuildSel');if(b){b.disabled=!n;b.textContent=n?`Analyse selected (${n})`:'Analyse selected'}
+  $$('#fResults tr[data-k]').forEach(tr=>tr.classList.toggle('is-sel',FS.sel.has(+tr.dataset.k)));
+  const all=$('#fSelAll');if(all){const cb=$$('#fResults [data-sel]');all.checked=cb.length>0&&cb.every(c=>c.checked);all.indeterminate=!all.checked&&cb.some(c=>c.checked)}}
+function syncFee(){$$('.js-fee').forEach(e=>e.textContent=gbp(dealFee()))}
+function onFind(){readFind();save();renderFind()}
+$('#fPanel').addEventListener('input',onFind);$('#fPanel').addEventListener('change',onFind);
+$('#fReset').addEventListener('click',()=>{S.find.f=FIND_DEF();bindFind();save();renderFind()});
+$('#fSearch').addEventListener('click',()=>{if(FS.busy)return;readFind();const sites=SITES.filter(s=>S.find.f.sites[s]);
+  if(!sites.length){toast('Tick at least one site to search');return}
+  if(!spend(COST.search,'AI search','#nFind'))return;FS.busy=true;const btn=$('#fSearch'),box=$('#fResults');btn.disabled=true;
+  const rows=findRows(),cnt=s=>rows.filter(r=>r.site===s).length;
+  const draw=i=>{box.innerHTML=`<div class="fprog" role="status" aria-live="polite"><div class="fprog-t">${i<sites.length?`Searching ${sites[i]}…`:'Collating results…'}</div>
+    <div class="meter"><span style="width:${Math.round(i/sites.length*100)}%"></span></div>
+    <ol>${sites.map((s,j)=>`<li class="${j<i?'done':j===i?'act':''}"><span class="dot ${j<i?'good':'none'}"></span>${s}<span class="mono muted">${j<i?cnt(s)+' found':j===i?'searching':''}</span></li>`).join('')}</ol></div>`};
+  const finish=()=>{FS.busy=false;btn.disabled=false;S.find.searched=true;save();renderFind()};
+  if(reduced()){finish();return}
+  const step=1200/sites.length;let i=0;draw(0);
+  const tick=()=>{i++;draw(i);setTimeout(i<sites.length?tick:finish,i<sites.length?step:150)};setTimeout(tick,step)});
+function openRows(){return sortRows(findRows()).filter(isOpen)}
+function findTsv(){const c=v=>{const s=String(v??'').replace(/[\t\r\n]+/g,' ');return /^[=+\-@]/.test(s)?"'"+s:s};
+  return [['Site','Landlord','Type','Beds','Area','Postcode','Rent pcm','Furnished','Found','URL'],
+    ...openRows().map(r=>[r.site,r.landlord,r.type,bedsTxt(r.beds),r.area,r.postcode,r.price,r.furnished,r.found,r.url])].map(a=>a.map(c).join('\t')).join('\n')}
+function copyTsv(){const n=openRows().length;if(!n){toast('Unlock a deal first. Only unlocked deals are copied.');return}const t=findTsv(),lab=`${n} unlocked deal${n>1?'s':''}`;
+  const fb=()=>{const w=$('#fTsvWrap'),ta=$('#fTsv');if(!w)return;w.hidden=false;ta.value=t;ta.focus();ta.select();ta.scrollTop=0;ta.scrollLeft=0;toast(`Selected ${lab}. Press Ctrl/Cmd+C, then paste into cell A1 of a Google Sheet.`)};
+  try{navigator.clipboard.writeText(t).then(()=>toast(`Copied ${lab}. Paste into cell A1 of a Google Sheet.`)).catch(fb)}catch(e){fb()}}
+function buildDeal(ls){ls=ls.filter(Boolean).filter(isOpen);if(!ls.length){toast('Unlock the deal first');return}startAnalysis(()=>{const d=sampleDeal(),areas=[...new Set(ls.map(x=>x.area))],short=a=>a.split(',')[0].trim();
+  Object.assign(d,{id:'d'+Date.now(),name:areas.length>1?`${areas[0]} + ${areas.length-1} more`:areas[0],area:areas.join('; '),strat:'R2SA',london:true,status:'Checking',
+    units:ls.map(x=>({label:`${x.type} · ${short(x.area)}`,rent:x.price,dep:x.price,rate:RATE_EST(x.beds),url:x.url}))});
+  S.deal=d;FS.sel.clear();markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
+  toast(`Analysing ${ls.length} listing${ls.length>1?'s':''}. Nightly rate is an estimate, edit it.`)})}
+$('#fResults').addEventListener('click',e=>{
+  const s=e.target.closest('[data-sort]');if(s){const k=s.dataset.sort,c=S.find.sort;S.find.sort=c&&c.k===k?(c.dir>0?{k,dir:-1}:null):{k,dir:1};save();renderFind();const nb=$(`#fResults [data-sort="${k}"]`);if(nb)nb.focus();return}
+  const u=e.target.closest('[data-unlock]');if(u){openUnlock(+u.dataset.unlock,+u.dataset.n||0);return}
+  const b=e.target.closest('[data-build]');if(b){buildDeal([LISTINGS[+b.dataset.build]]);return}
+  if(e.target.closest('#fViewCards')){S.find.view='cards';save();renderFind();$('#fViewCards').focus();return}
+  if(e.target.closest('#fViewSheet')){S.find.view='sheet';save();renderFind();$('#fViewSheet').focus();return}
+  const ar=e.target.closest('#fPrev,#fNext');if(ar){const c=$('#fCards');if(c){const step=312*Math.max(1,Math.floor(c.clientWidth/312));c.scrollBy({left:(ar.id==='fPrev'?-1:1)*step,behavior:reduced()?'auto':'smooth'})}return}
+  if(e.target.closest('#fBuildSel')){buildDeal($$('#fResults [data-sel]').filter(c=>c.checked).map(c=>LISTINGS[+c.dataset.sel]));return}
+  if(e.target.closest('#fCopy'))copyTsv()});
+$('#fResults').addEventListener('change',e=>{const t=e.target;
+  if(t.id==='fSortSel'){const v=t.value;S.find.sort=v?{k:v.split(':')[0],dir:+v.split(':')[1]}:null;save();renderFind();const s=$('#fSortSel');if(s)s.focus();return}
+  if(t.id==='fSelAll'){$$('#fResults [data-sel]').forEach(c=>{c.checked=t.checked;const k=+c.dataset.sel;if(t.checked)FS.sel.add(k);else FS.sel.delete(k)});syncSel();return}
+  if(t.dataset.sel!=null){const k=+t.dataset.sel;if(t.checked)FS.sel.add(k);else FS.sel.delete(k);syncSel()}});
+
+/* ---------- unlock panel: 1 sign agreement, 2 pay ---------- */
+/* ---------- paywall ---------- */
+const pw=$('#payWall');let pwRun=null,pwOpener=null;
+function openPaywall(run){pwRun=run;pwOpener=document.activeElement;const ann=S.billing==='annual';
+  $('#pwProPrice').textContent=ann?'£17':'£20';$('#pwProNote').textContent=ann?'Billed annually (£200 upfront)':'or £17/month billed annually';
+  try{pw.showModal()}catch(e){pw.setAttribute('open','')}const t=$('#pwTitle');if(t)t.focus()}
+function closePaywall(){pwRun=null;try{pw.close()}catch(e){pw.removeAttribute('open')}}
+pw.addEventListener('close',()=>{if(pwOpener&&pwOpener.isConnected)try{pwOpener.focus()}catch(e){}});
+pw.addEventListener('click',e=>{if(e.target===pw)closePaywall()});
+function checkoutURL(base){const u=new URL(base);const uid=document.body.dataset.userId,email=document.body.dataset.userEmail;if(uid)u.searchParams.set('client_reference_id',uid);if(email)u.searchParams.set('prefilled_email',email);return u.toString()}
+function subscribe(id){const url=CHECKOUT[id];if(url){window.location.assign(checkoutURL(url));return}
+  const run=pwRun;S.plan=id;save();renderTop();if(!$('[data-view="plans"]').hidden)renderPlans();pwRun=null;
+  try{pw.close()}catch(e){pw.removeAttribute('open')}if(run)run();toast(`Subscribed to ${PLAN_DEFS[id].name}`)}
+$('#pwPro').addEventListener('click',()=>subscribe('Pro'));$('#pwMax').addEventListener('click',()=>subscribe('Max5'));
+$('#pwNot').addEventListener('click',closePaywall);$('#pwClose').addEventListener('click',closePaywall);
+$('#pwAll').addEventListener('click',()=>{closePaywall();go('plans')});
+$('#resetAnalyses').addEventListener('click',()=>{S.analysedDealIds=[];save();renderFreeCounter();toast('Free analyses reset (demo)')});
+
+const sg=$('#signPanel');let sgOpener=null;const sgTouched=new Set();
+const UL={k:null,n:0,signed:null,busy:false};
+const SGF={name:'#sgName',email:'#sgEmail',agree:'#sgAgree',start:'#sgStart',sig:'#sgSig'};
+function termsHTML(){const p=S.deal.pack||{},biz=esc(p.biz||'[Sourcing business]'),red=esc(p.redress||'[redress no.]'),fee=gbp(dealFee());
+  return `<li><b>Confidentiality.</b> The address, landlord details and listing link are confidential and for your own use or your own investor clients only.</li>
+  <li><b>Non-circumvention.</b> For 24 months you won't contact or deal with the landlord or property except through us. If you do, the deal fee and any sourcing fee earned is payable in full.</li>
+  <li><b>Deal fee.</b> ${fee} for this deal, paid now to release the details. Refunded only if the landlord withdraws before you're introduced.</li>
+  <li><b>Your responsibility.</b> You market the deal to your investors under your own redress scheme, terms and compliance. Figures are illustrative, not financial advice. You do your own due diligence.</li>
+  <li><b>Cancellation.</b> If you're an individual you have 14 days to cancel. You ask us to release the details now, and once they're released the fee is non-refundable except under term 3.</li>
+  <li>Offered by ${biz}, ${red}. Law of England and Wales.</li>`}
+function validateSign(){const g=s=>$(s),v={name:g('#sgName').value.trim(),email:g('#sgEmail').value.trim(),company:g('#sgCompany').value.trim(),as:g('#sgAs').value,agree:g('#sgAgree').checked,start:g('#sgStart').checked,sig:g('#sgSig').value.trim()};
+  const norm=s=>s.replace(/\s+/g,' ').toLowerCase();
+  const er={name:v.name.length<2?'Enter your full name.':'',email:/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v.email)?'':'Enter a valid email address.',
+    agree:v.agree?'':'Tick to agree to the Deal Introduction Agreement.',
+    start:v.start?'':'Tick to ask us to start now and release the details.',sig:!v.sig?'Type your full name to sign.':norm(v.sig)!==norm(v.name)?'Signature must match your full name.':''};
+  Object.keys(er).forEach(k=>{const msg=$('#sgErr-'+k),show=sgTouched.has(k)&&!!er[k];msg.textContent=show?er[k]:'';msg.hidden=!show;$(SGF[k]).setAttribute('aria-invalid',show?'true':'false')});
+  const ok=Object.values(er).every(x=>!x);$('#sgSign').disabled=!ok;$('#sgHint').textContent=ok?'Ready to sign.':'Complete every field to sign.';return ok?v:null}
+function ulStep(s){const r=LISTINGS[UL.k];$('#ulStep1').hidden=s!==1;$('#ulStep2').hidden=s!==2;
+  $('#ulInd1').className=s===1?'on':'done';$('#ulInd2').className=s===2?'on':'';
+  $('#sgTitle').textContent=s===1?'Deal Introduction Agreement':'Pay the deal fee';
+  $('#sgSign').hidden=s!==1;$('#sgHint').hidden=s!==1;$('#payBtn').hidden=s!==2;$('#ulBack').hidden=s!==2;
+  if(s===2){const f=gbp(dealFee());
+    $('#ulOrder').innerHTML=`<div><dt>Deal ${UL.n}</dt><dd>${esc(r.type)} · London ${esc(r.postcode)}</dd></div><div><dt>Deal fee</dt><dd>${f}</dd></div><div class="tot"><dt>Total today</dt><dd>${f}</dd></div>`;
+    $('#ulSigned').innerHTML=`<span class="dot good"></span><span>Agreement signed by <b>${esc(UL.signed.name)}</b>${UL.signed.company?` for ${esc(UL.signed.company)}`:''} on ${fmtDate(UL.signed.date)}.</span>`;
+    const pb=$('#payBtn');pb.disabled=false;pb.textContent=`Pay ${f}`;$('#ulProc').hidden=true}
+  const body=$('.dr-body');if(body)body.scrollTop=0;const pane=$(s===1?'#ulStep1':'#ulStep2');pane.classList.remove('enter');void pane.offsetWidth;pane.classList.add('enter')}
+function openUnlock(k,n){const r=LISTINGS[k];if(!r||isOpen(r))return;sgOpener=document.activeElement;
+  UL.k=k;UL.n=n;UL.signed=null;UL.busy=false;
+  $('#ulKicker').textContent=`Unlock Deal ${n} · ${r.type} · London ${r.postcode}`;$('#sgTerms').innerHTML=termsHTML();
+  const p=S.signer||{};$('#sgName').value=p.name||'';$('#sgEmail').value=p.email||'';$('#sgCompany').value=p.company||'';$('#sgAs').value=p.as==='Company'?'Company':'Individual';
+  $('#sgAgree').checked=false;$('#sgStart').checked=false;$('#sgSig').value='';sgTouched.clear();validateSign();ulStep(1);
+  try{sg.showModal()}catch(e){sg.setAttribute('open','')}
+  const f=$('#sgTitle');if(f)f.focus()}
+function closeSign(){try{sg.close()}catch(e){sg.removeAttribute('open')}}
+sg.addEventListener('close',()=>{if(sgOpener&&sgOpener.isConnected)try{sgOpener.focus()}catch(e){}});
+sg.addEventListener('click',e=>{if(e.target===sg&&!UL.busy)closeSign()});
+sg.addEventListener('cancel',e=>{if(UL.busy)e.preventDefault()});
+$('#sgClose').addEventListener('click',()=>{if(!UL.busy)closeSign()});$('#sgCancel').addEventListener('click',()=>{if(!UL.busy)closeSign()});
+$('#ulBack').addEventListener('click',()=>{if(!UL.busy)ulStep(1)});
+$('#sgForm').addEventListener('input',()=>validateSign());
+$('#sgForm').addEventListener('change',e=>{const k=e.target.dataset.k;if(k&&e.target.type==='checkbox')sgTouched.add(k);validateSign()});
+$('#sgForm').addEventListener('focusout',e=>{const k=e.target.dataset.k;if(k)sgTouched.add(k);validateSign()});
+function doSign(){const v=validateSign();if(!v){Object.keys(SGF).forEach(k=>sgTouched.add(k));validateSign();return}
+  UL.signed={name:v.name,email:v.email,company:v.company,as:v.as,date:new Date().toISOString()};ulStep(2);$('#payBtn').focus()}
+$('#sgSign').addEventListener('click',doSign);
+$('#sgForm').addEventListener('submit',e=>{e.preventDefault();doSign()});
+$('#payBtn').addEventListener('click',()=>{if(UL.busy||!UL.signed)return;
+  const pb=$('#payBtn');pb.disabled=true;pb.textContent='Secure checkout unavailable';$('#ulProc').hidden=false;
+  $('#ulProc').textContent='Your agreement has been completed, but the £500 deal-unlock checkout is not connected yet. No payment has been taken and the protected details remain locked.';
+  toast('No payment taken — secure checkout still needs connecting.')});
+
+/* ---------- my deals: agreements ---------- */
+function renderAgreements(){const A=S.agreements||[],n=(S.unlocked||[]).length;
+  $('#agMeta').textContent=`${n} unlocked deal${n===1?'':'s'}`;
+  $('#agList').innerHTML=A.length?`<div class="tw"><table><thead><tr><th>Signed by</th><th style="text-align:left">Deal</th><th>Date</th><th>Fee</th></tr></thead><tbody>${A.map(a=>`<tr><td>${esc(a.name)}${a.company?` <span class="muted">· ${esc(a.company)}</span>`:''}</td><td class="l">${esc(a.deal)}</td><td class="n">${fmtDate(a.date)}</td><td class="n">${gbp(a.fee)}</td></tr>`).join('')}</tbody></table></div>`
+    :'<div class="dl"><div class="empty">No agreements yet. Unlock a deal in Deal Finder and it appears here.</div></div>'}
+
+/* ---------- plans: owner settings ---------- */
+$('#ownFee').addEventListener('input',e=>{S.dealFee=Math.max(0,Math.round(+e.target.value||0));save();syncFee()});
+$('#resetUnlocks').addEventListener('click',()=>{S.unlocked=[];S.agreements=[];FS.sel.clear();save();toast('Unlocks reset. Every deal is locked again.')});
+
+/* ---------- home ---------- */
+function dealFigs(d){const a=d.a,U=d.units||[];const rent=U.reduce((s,u)=>s+u.rent,0),dep=U.reduce((s,u)=>s+u.dep,0);
+  const tot=OCC.map(o=>U.reduce((s,u)=>s+month(u,o,null,a).surplus,0)),bes=U.map(u=>be(u,a));return{up:rent+dep,t60:tot[0],t80:tot[1],be:bes.length?Math.max(...bes):NaN}}
+function renderHome(){syncFee();
+  let bi=0,bv=-Infinity;LISTINGS.forEach((r,i)=>{const v=month({rent:r.price,rate:RATE_EST(r.beds)},.8,null,DEF_A).surplus;if(v>bv){bv=v;bi=i}});
+  const f=dealFigs(S.deal),hasFigures=(S.deal.units||[]).some(u=>(+u.rent||0)>0||(+u.dep||0)>0||(+u.rate||0)>0),fig=(l,v,cls='')=>`<div class="fig"><div class="fig-l">${l}</div><div class="fig-v${cls}">${hasFigures?v:'—'}</div></div>`;
+  $('#homePreview').innerHTML=`<div class="pv-label"><span class="dot"></span>Deal Finder · opportunity preview</div>
+    ${dealCard(Object.assign({k:bi},LISTINGS[bi]),0,{preview:true,plain:true})}
+    <div class="pv-nums"><div class="pv-label">Deal Analyser · ${esc(S.deal.name||'Untitled deal')}</div>
+      <div class="strip mini">${fig('Upfront cash',gbp(f.up))}${fig('Surplus at 60%',gbp(f.t60),f.t60<0?' neg':'')}${fig('Surplus at 80%',gbp(f.t80),f.t80<0?' neg':'')}${fig('Break-even',isFinite(f.be)?pct(f.be):'Never')}</div></div>`;
+  const hp=(n,pr,per,sub,feat)=>`<div class="hplan${feat?' feat':''}"><div class="plan-h"><h3>${n}</h3>${feat?'<span class="tag">Most popular</span>':''}</div><div class="price"><span class="mono">${pr}</span><span class="per">${per}</span></div><div class="sub">${sub}</div></div>`;
+  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 2 AI deal analyses.')+hp('Premium','£20','per month','For everyday sourcing. Unlimited deal analyses. £17/month billed annually.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
+$('#homeTeam').addEventListener('click',()=>{S.plansTab='team';save();go('plans')});
+
+/* ---------- hero: slow liquid field, paused offscreen, static under reduced motion ---------- */
+const hero={c:$('#heroCanvas'),x:null,raf:0,frames:0,running:false,inView:true,staticDrawn:false,last:0};
+window.__dealProHero=hero;
+function heroSize(){const c=hero.c;if(!c)return;const r=c.getBoundingClientRect();c.width=Math.max(48,Math.round(r.width/6));c.height=Math.max(48,Math.round(r.height/6))}
+function heroDraw(t){const c=hero.c,x=hero.x;if(!c||!x)return;const w=c.width,h=c.height,s=t*0.00006;
+  x.globalCompositeOperation='source-over';x.fillStyle='#0B0B0C';x.fillRect(0,0,w,h);
+  x.globalCompositeOperation='lighter';
+  [[.74,.34,.55,'200,16,46',.30],[.94,.82,.52,'110,6,20',.42],[.48,1.0,.42,'224,20,43',.13]].forEach(([bx,by,br,col,a],i)=>{
+    const cx=w*(bx+.08*Math.sin(s*(1.3+i*.4)+i*2)),cy=h*(by+.1*Math.cos(s*(1.1+i*.3)+i)),r=Math.max(w,h)*br*(1+.08*Math.sin(s*2+i));
+    const g=x.createRadialGradient(cx,cy,0,cx,cy,r);g.addColorStop(0,`rgba(${col},${a})`);g.addColorStop(1,`rgba(${col},0)`);x.fillStyle=g;x.fillRect(0,0,w,h)});
+  for(let j=0;j<3;j++){const base=h*(.58+j*.12),amp=h*(.05+j*.02),k=(2+j)*Math.PI/w,ph=s*(3+j)+j*1.7;x.beginPath();x.moveTo(0,h);
+    for(let px=0;px<=w;px+=3)x.lineTo(px,base+Math.sin(px*k+ph)*amp+Math.sin(px*k*.53-ph*1.3)*amp*.6);
+    x.lineTo(w,h);x.closePath();x.fillStyle=`rgba(140,8,26,${.08-j*.02})`;x.fill()}
+  x.globalCompositeOperation='source-over';
+  const lg=x.createLinearGradient(0,0,w,0);lg.addColorStop(0,'rgba(11,11,12,.9)');lg.addColorStop(.5,'rgba(11,11,12,.5)');lg.addColorStop(1,'rgba(11,11,12,.05)');x.fillStyle=lg;x.fillRect(0,0,w,h)}
+function heroFrame(ts){hero.raf=requestAnimationFrame(heroFrame);if(ts-hero.last<40)return;hero.last=ts;hero.frames++;heroDraw(ts)}
+function heroUpdate(){if(!hero.c)return;const home=$('[data-view="home"]'),want=hero.inView&&!document.hidden&&home&&!home.hidden&&!reduced();
+  if(want&&!hero.running){hero.running=true;hero.raf=requestAnimationFrame(heroFrame)}
+  else if(!want&&hero.running){hero.running=false;cancelAnimationFrame(hero.raf)}
+  if(reduced()&&!hero.staticDrawn&&home&&!home.hidden){heroSize();heroDraw(40000);hero.staticDrawn=true}}
+if(hero.c){try{hero.x=hero.c.getContext('2d')}catch(e){}
+  heroSize();heroDraw(40000);hero.staticDrawn=reduced();
+  try{new IntersectionObserver(es=>{hero.inView=es[es.length-1].isIntersecting;heroUpdate()}).observe(hero.c)}catch(e){hero.inView=true}
+  document.addEventListener('visibilitychange',heroUpdate);
+  addEventListener('resize',()=>{heroSize();heroDraw(hero.last||40000)});
+  try{matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',()=>{hero.staticDrawn=false;heroUpdate()})}catch(e){}}
+
+/* ---------- first-visit explainer ---------- */
+$('#fIntro').hidden=!!store.get('introDismissed',false);
+$('#fIntroX').addEventListener('click',()=>{store.set('introDismissed',true);$('#fIntro').hidden=true});
+
+/* ---------- simple AI analyser ---------- */
+const aiList=(title,items)=>Array.isArray(items)&&items.length?`<div class="ai-section"><h3>${esc(title)}</h3><ul>${items.map(x=>`<li>${esc(String(x))}</li>`).join('')}</ul></div>`:'';
+function renderAIAnalysis(a){
+  const out=$('#aiDealOutput');if(!a){out.className='ai-output empty';out.innerHTML='<div><h2>Your analysis will appear here</h2><p>One clear verdict, the important numbers, risks and your next actions.</p></div>';return}
+  const verdict=String(a.verdict||'Analysis complete'),tone=/strong/i.test(verdict)?'strong':/weak/i.test(verdict)?'weak':'';
+  out.className='ai-output';out.innerHTML=`<div class="ai-score"><div><div class="ai-verdict ${tone}">${esc(verdict)}</div><p>${esc(String(a.summary||''))}</p></div><strong>${Math.max(0,Math.min(100,+a.score||0))}<span class="muted" style="font-size:13px">/100</span></strong></div>
+    <div class="ai-metrics"><div class="ai-metric"><span>Monthly profit</span><b>${esc(String(a.monthly_profit||'Not enough information'))}</b></div><div class="ai-metric"><span>Upfront cash</span><b>${esc(String(a.upfront_cash||'Not enough information'))}</b></div><div class="ai-metric"><span>Break-even</span><b>${esc(String(a.break_even||'Not enough information'))}</b></div></div>
+    ${aiList('Important risks',a.risks)}${aiList('Missing information',a.missing_information)}${aiList('What to do next',a.next_actions)}`}
+renderAIAnalysis(S.deal.aiAnalysis);
+$('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInput').value.trim(),btn=$('#analyseWithAI'),status=$('#aiDealStatus');if(!input){status.textContent='Paste the deal information first.';$('#aiDealInput').focus();return}
+  btn.disabled=true;btn.textContent='Analysing…';status.textContent='The AI is checking the numbers, risks and missing information…';
+  try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({deal:input})});const data=await r.json();if(!r.ok)throw new Error(data.error||'Analysis failed.');S.deal.aiAnalysis=data.analysis;S.deal.sourceText=input;save();renderAIAnalysis(data.analysis);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
+  catch(e){status.textContent=e.message||'The analysis could not be completed. Please try again.'}finally{btn.disabled=false;btn.textContent='Analyse with AI'}});
+$('#advancedToggle').addEventListener('click',e=>{const on=document.body.classList.toggle('advanced-mode');e.currentTarget.setAttribute('aria-expanded',String(on));e.currentTarget.textContent=on?'Hide advanced controls':'Show advanced controls'});
+window.addEventListener('dealpro:save-error',()=>toast('Your latest change could not be saved. Check your connection and try again.'));
+$('#contactForm').addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget,status=$('#contactStatus'),button=form.querySelector('button[type="submit"]');button.disabled=true;status.textContent='Sending your enquiry…';try{const body=new URLSearchParams(new FormData(form));const r=await fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()});if(!r.ok)throw new Error();form.reset();status.textContent='Thank you. Your enquiry has been sent.'}catch(err){status.textContent='Your enquiry could not be sent. Please email jonahquartey584@gmail.com.'}finally{button.disabled=false}});
+
+/* ---------- boot ---------- */
+const siteIntro=$('#siteIntro');if(siteIntro)setTimeout(()=>siteIntro.remove(),1700);
+renderTop();bindDeal();bindFind();syncFee();
+let tab='home';try{tab=sessionStorage.getItem('dealpro:tab')||'home'}catch(e){}
+go(tab);
+})();
+</script>
+<script type="module" src="/assets/auth.js"></script>
+
+</body>
+</html>

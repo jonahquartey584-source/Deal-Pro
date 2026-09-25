@@ -1,0 +1,17 @@
+{
+  "name": "deal-pro",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/auth.js --bundle --format=esm --minify --outfile=assets/auth.js && esbuild src/admin.js --bundle --format=esm --minify --outfile=assets/admin.js"
+  },
+  "dependencies": {
+    "@netlify/blobs": "latest",
+    "@netlify/functions": "latest",
+    "@netlify/identity": "latest",
+    "openai": "latest"
+  },
+  "devDependencies": {
+    "esbuild": "latest"
+  }
+}
