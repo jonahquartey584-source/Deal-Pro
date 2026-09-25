@@ -6,8 +6,21 @@ import type { Config, Context } from "@netlify/functions";
 //
 // The plan is worked out from the amount actually paid, never from anything the
 // browser sent, so nobody can pay for Premium and receive Max. Amounts are in pence;
-// override with STRIPE_PLAN_AMOUNTS, e.g. {"3900":"Pro","39600":"Pro","10000":"Max5"}.
-const DEFAULT_PLAN_AMOUNTS: Record<string, string> = { "3900": "Pro", "39600": "Pro", "10000": "Max5", "20000": "Max20" };
+// override with STRIPE_PLAN_AMOUNTS, e.g. {"3900":"Pro","10000":"Max5"}.
+const DEFAULT_PLAN_AMOUNTS: Record<string, string> = { "3900": "Pro", "10000": "Max5", "20000": "Max20" };
+// Team plans are charged per seat (minimum 5), so the total is a multiple of the seat price.
+// Monthly seat prices, in pence.
+const SEAT_PRICES: Record<string, string> = { "3500": "TeamStd", "11500": "TeamPrem" };
+const MIN_SEATS = 5;
+function planForAmount(amount: number) {
+  const exact = planAmounts()[String(amount)];
+  if (exact) return exact;
+  for (const [seat, plan] of Object.entries(SEAT_PRICES)) {
+    const price = Number(seat);
+    if (amount % price === 0 && amount / price >= MIN_SEATS) return plan;
+  }
+  return undefined;
+}
 const PLANS = ["Pro", "Max5", "Max20", "TeamStd", "TeamPrem"];
 const TOLERANCE_SECONDS = 300;
 
@@ -71,7 +84,7 @@ export default async (request: Request, _context: Context) => {
       return new Response("ok");
     }
     if (obj.payment_status !== "paid" && obj.payment_status !== "no_payment_required") return new Response("ok");
-    const plan = planAmounts()[String(obj.amount_subtotal ?? obj.amount_total)];
+    const plan = planForAmount(Number(obj.amount_subtotal ?? obj.amount_total));
     if (!plan || !PLANS.includes(plan)) {
       console.warn(`No plan matches amount ${obj.amount_subtotal}; set the plan manually`, obj.id, userId);
       return new Response("ok");
