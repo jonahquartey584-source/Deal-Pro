@@ -790,7 +790,7 @@ td.t{text-align:right;color:var(--ink-2)}
     <header class="ph">
       <div class="ph-main">
         <h1>Deal Finder</h1>
-        <p class="ph-desc">Search property listings on Gumtree, SpareRoom, OpenRent and Rightmove, then analyse any of them in the Deal Analyser.</p>
+        <p class="ph-desc">Search property listings on Gumtree, SpareRoom, OpenRent, Rightmove, Zoopla and Facebook Marketplace, plus commercial sites, then analyse any of them in the Deal Analyser.</p>
         <p class="ph-meta">Free on every plan. Every deal shows the full property details and a link to the original listing.</p>
       </div>
     </header>
@@ -814,7 +814,7 @@ td.t{text-align:right;color:var(--ink-2)}
             <label class="check"><input type="checkbox" id="fPrivate" checked><span>Private landlords only</span></label>
             <div class="row2">
               <label class="f"><span>Furnished</span><select class="inp" id="fFurn"><option value="any">Any</option><option value="furnished">Furnished</option><option value="unfurnished">Unfurnished</option></select></label>
-              <label class="f"><span>Property type</span><select class="inp" id="fType"><option value="any">Any</option><option value="studio">Studio</option><option value="flat">Flat</option><option value="house">House</option></select></label>
+              <label class="f"><span>Property type</span><select class="inp" id="fType"><option value="any">Any</option><option value="studio">Studio</option><option value="flat">Flat</option><option value="house">House</option><option value="commercial">Commercial</option></select></label>
             </div>
             <p class="fnote" id="fFurnNote" hidden>Furnishing isn't stated on these listings, so they're kept.</p>
             <fieldset class="fg"><legend>Sites</legend>
@@ -823,6 +823,15 @@ td.t{text-align:right;color:var(--ink-2)}
                 <label class="check"><input type="checkbox" id="fSiteSpareRoom" checked><span>SpareRoom</span></label>
                 <label class="check"><input type="checkbox" id="fSiteOpenRent" checked><span>OpenRent</span></label>
                 <label class="check"><input type="checkbox" id="fSiteRightmove" checked><span>Rightmove</span></label>
+                <label class="check"><input type="checkbox" id="fSiteZoopla" checked><span>Zoopla</span></label>
+                <label class="check"><input type="checkbox" id="fSiteFacebook" checked><span>Facebook Marketplace</span></label>
+              </div>
+              <p class="fnote" style="margin-top:10px">Commercial</p>
+              <div class="checks">
+                <label class="check"><input type="checkbox" id="fSiteRightmoveCommercial"><span>Rightmove Commercial</span></label>
+                <label class="check"><input type="checkbox" id="fSiteRealla"><span>Realla</span></label>
+                <label class="check"><input type="checkbox" id="fSiteNovaLoca"><span>NovaLoca</span></label>
+                <label class="check"><input type="checkbox" id="fSiteLoopNet"><span>LoopNet</span></label>
               </div>
               <p class="fnote" id="fRmNote">Rightmove lists through agents only; private-landlord homes appear there via OpenRent.</p>
             </fieldset>
@@ -1696,8 +1705,9 @@ const LISTINGS=[
 {"site":"Gumtree","id":"1802424388","landlord":"Landlord 68","type":"1 bed flat","beds":1,"area":"Holborn, WC1","postcode":"WC1","price":2167,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.gumtree.com/p/property-to-rent/x/1802424388","found":"23 Sep 2026"},
 {"site":"Gumtree","id":"1802233608","landlord":"Landlord 69","type":"2 bed flat","beds":2,"area":"Earls Court, SW5","postcode":"SW5","price":3150,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.gumtree.com/p/property-to-rent/x/1802233608","found":"23 Sep 2026"}
 ];
-const SITES=['OpenRent','SpareRoom','Gumtree','Rightmove'];
-const FIND_DEF=()=>({mode:'rent',beds:'any',min:1200,max:5000,loc:'',priv:true,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true}});
+const SITES=['OpenRent','SpareRoom','Gumtree','Rightmove','Zoopla','Facebook','RightmoveCommercial','Realla','NovaLoca','LoopNet'];
+const SITE_LABEL=s=>({Facebook:'Facebook Marketplace',RightmoveCommercial:'Rightmove Commercial'})[s]||s;
+const FIND_DEF=()=>({mode:'rent',beds:'any',min:1200,max:5000,loc:'',priv:true,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false}});
 if(!S.find||!S.find.f)S.find={f:FIND_DEF(),searched:false,sort:null};
 S.find.f=Object.assign(FIND_DEF(),S.find.f);S.find.f.sites=Object.assign(FIND_DEF().sites,S.find.f.sites);
 const FS={busy:false,sel:new Set()};
@@ -1726,7 +1736,7 @@ function findRows(){const f=S.find.f;if(f.mode!=='rent')return [];
     &&(f.min===''||x.price>=f.min)&&(f.max===''||x.price<=f.max)
     &&locMatch(x,f.loc)&&(!f.priv||x.private)
     &&(f.furn==='any'||x.furnished==='Not stated'||x.furnished.toLowerCase()===f.furn)
-    &&(f.type==='any'||(f.type==='studio'?x.beds===0:f.type==='flat'?x.beds>=1&&/flat/i.test(x.type):/house/i.test(x.type)))
+    &&(f.type==='any'||(f.type==='studio'?x.beds===0:f.type==='flat'?x.beds>=1&&/flat/i.test(x.type):f.type==='commercial'?/commercial|office|retail|shop|industrial/i.test(x.type):/house/i.test(x.type)))
     &&!!f.sites[x.site])}
 /* ---------- per-deal unlocks ---------- */
 const lid=r=>r.site+':'+r.id;
@@ -1798,9 +1808,9 @@ $('#fSearch').addEventListener('click',()=>{if(FS.busy)return;readFind();const s
   if(!sites.length){toast('Tick at least one site to search');return}
   if(!spend(COST.search,'AI search','#nFind'))return;FS.busy=true;const btn=$('#fSearch'),box=$('#fResults');btn.disabled=true;
   const rows=findRows(),cnt=s=>rows.filter(r=>r.site===s).length;
-  const draw=i=>{box.innerHTML=`<div class="fprog" role="status" aria-live="polite"><div class="fprog-t">${i<sites.length?`Searching ${sites[i]}…`:'Collating results…'}</div>
+  const draw=i=>{box.innerHTML=`<div class="fprog" role="status" aria-live="polite"><div class="fprog-t">${i<sites.length?`Searching ${SITE_LABEL(sites[i])}…`:'Collating results…'}</div>
     <div class="meter"><span style="width:${Math.round(i/sites.length*100)}%"></span></div>
-    <ol>${sites.map((s,j)=>`<li class="${j<i?'done':j===i?'act':''}"><span class="dot ${j<i?'good':'none'}"></span>${s}<span class="mono muted">${j<i?cnt(s)+' found':j===i?'searching':''}</span></li>`).join('')}</ol></div>`};
+    <ol>${sites.map((s,j)=>`<li class="${j<i?'done':j===i?'act':''}"><span class="dot ${j<i?'good':'none'}"></span>${SITE_LABEL(s)}<span class="mono muted">${j<i?cnt(s)+' found':j===i?'searching':''}</span></li>`).join('')}</ol></div>`};
   const finish=()=>{FS.busy=false;btn.disabled=false;S.find.searched=true;save();renderFind()};
   if(reduced()){finish();return}
   const step=1200/sites.length;let i=0;draw(0);
