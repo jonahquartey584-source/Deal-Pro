@@ -1891,31 +1891,40 @@ function onFind(){readFind();save();renderFind()}
 $('#fPanel').addEventListener('input',onFind);$('#fPanel').addEventListener('change',onFind);
 $('#fReset').addEventListener('click',()=>{S.find.f=FIND_DEF();bindFind();save();renderFind()});
 const FIND_MSG=m=>{const n=$('#nFind');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
-async function pollJob(jobId,onTick,onProgress){const t0=Date.now();for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(jobId),{credentials:'same-origin'});const d=await p.json().catch(()=>({}));
+async function pollJob(jobId,onTick,onProgress,maxMs=17*60e3){const t0=Date.now();for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(jobId),{credentials:'same-origin'});const d=await p.json().catch(()=>({}));
   if(!p.ok)throw new Error(d.error||'The AI could not finish. Please try again.');if(d.credits){AIC.info=d.credits;renderAILevels()}
   if(d.progress&&onProgress)onProgress(d.progress);if(d.status==='done')return d.analysis;if(d.status==='error')throw new Error(d.error||'The AI could not finish. Please try again.');
-  if(onTick)onTick(Math.round((Date.now()-t0)/1000));if(Date.now()-t0>17*60e3)throw new Error('The AI is taking too long. Please try again.')}}
+  if(onTick)onTick(Math.round((Date.now()-t0)/1000));if(Date.now()-t0>maxMs)throw new Error('The AI is taking too long. Please try again.')}}
+const SEARCH_TIME={quick:'under a minute',standard:'a few minutes',deep:'10–30 minutes. Expert searches every site round after round, then opens the best listings to check they are still available. You can leave this page and come back'};
+function drawSearch(sites,lv,prog,sec){const P=(prog&&prog.sites)||{},phase=prog&&prog.phase||'search',box=$('#fResults');
+  const done=sites.filter(s=>P[s]&&P[s].status!=='searching').length;
+  const head=phase==='verify'?`Checking the best listings are still available… ${prog.verified||0} checked`:phase==='rank'||phase==='done'?'Ranking the best deals…':`${esc(lv.name)} is searching ${sites.length} site${sites.length>1?'s':''} for live listings…`;
+  box.innerHTML=`<div class="fprog" role="status" aria-live="polite"><div class="fprog-t">${head}${sec?` <span class="muted">${sec<120?sec+'s':Math.round(sec/60)+' min'}</span>`:''}</div>
+    <div class="meter"><span style="width:${phase==='search'?Math.round(done/sites.length*100):100}%"></span></div>
+    <ol>${sites.map(s=>{const st=P[s]||{status:'searching',found:0};const rounds=st.rounds>1?` · round ${Math.min(st.round+(st.status==='searching'?1:0),st.rounds)} of ${st.rounds}`:'';
+      return `<li class="${st.status==='searching'?'act':'done'}"><span class="dot ${st.status==='done'?'good':st.status==='error'?'bad':'none'}"></span>${SITE_LABEL(s)}<span class="mono muted">${st.status==='error'?'unavailable':`${st.found||0} found${rounds}`}</span></li>`}).join('')}</ol>
+    ${prog&&prog.found?`<p class="fnote">${prog.found} unique listings so far.</p>`:''}<p class="fnote">This usually takes ${SEARCH_TIME[lv.id]||'a few minutes'}.</p></div>`}
+async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LEVELS[0],btn=$('#fSearch');
+  FS.busy=true;btn.disabled=true;let last=null;const t0=Date.parse(p.at)||Date.now(),secs=()=>Math.round((Date.now()-t0)/1000);drawSearch(p.sites,lv,null,secs());
+  try{const res=await pollJob(p.id,()=>drawSearch(p.sites,lv,last,secs()),pr=>{last=pr;drawSearch(p.sites,lv,pr,secs())},100*60e3);
+    LIVE=(res.listings||[]).slice(0,500);S.find.live=LIVE;S.find.liveAt=new Date().toISOString();S.find.liveSites=res.sites||{};S.find.searched=true;FS.sel.clear();
+    FS.rank=res.ranking?{status:'done',level:lv,data:res.ranking}:null;
+    const missed=Object.entries(res.sites||{}).filter(([,v])=>v.status==='error').map(([k])=>SITE_LABEL(k));
+    toast(`Found ${LIVE.length} listing${LIVE.length===1?'':'s'} across ${p.sites.length} site${p.sites.length>1?'s':''}.${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
+  catch(e){toast(e.message||'The search failed. Please try again.')}
+  finally{delete S.find.pending;save();FS.busy=false;btn.disabled=false;renderFind()}}
 $('#fSearch').addEventListener('click',async()=>{if(FS.busy)return;readFind();const sites=SITES.filter(s=>S.find.f.sites[s]);
   if(!sites.length){toast('Tick at least one site to search');return}
-  const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0],btn=$('#fSearch'),box=$('#fResults');
-  FS.busy=true;btn.disabled=true;$('#nFind').hidden=true;
-  const draw=(prog,sec)=>{const P=prog||{},done=sites.filter(s=>P[s]&&P[s].status!=='searching').length;
-    box.innerHTML=`<div class="fprog" role="status" aria-live="polite"><div class="fprog-t">${done<sites.length?`${esc(lv.name)} is searching ${sites.length} site${sites.length>1?'s':''} for live listings…`:'Ranking the best deals…'}${sec?` <span class="muted">${sec}s</span>`:''}</div>
-      <div class="meter"><span style="width:${Math.round(done/sites.length*100)}%"></span></div>
-      <ol>${sites.map(s=>{const st=P[s]||{status:'searching'};return `<li class="${st.status==='searching'?'act':'done'}"><span class="dot ${st.status==='done'?'good':st.status==='error'?'bad':'none'}"></span>${SITE_LABEL(s)}<span class="mono muted">${st.status==='searching'?'searching':st.status==='error'?'unavailable':st.found+' found'}</span></li>`}).join('')}</ol>
-      <p class="fnote">Each site is searched separately. This usually takes ${lv.id==='quick'?'under a minute':lv.id==='standard'?'1–2 minutes':'2–4 minutes'}.</p></div>`};
-  draw(null,0);
+  const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0],btn=$('#fSearch');
+  FS.busy=true;btn.disabled=true;$('#nFind').hidden=true;drawSearch(sites,lv,null,0);
   try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'search',level:lv.id,filters:S.find.f,sites})});
     const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(d.error||'The search could not be started.'),{limit:r.status===402});
     if(d.credits){AIC.info=d.credits;renderAILevels()}
-    let last=null;const t0=Date.now();
-    const res=await pollJob(d.jobId,sec=>draw(last,sec),p=>{last=p;draw(p,Math.round((Date.now()-t0)/1000))});
-    LIVE=(res.listings||[]).slice(0,200);S.find.live=LIVE;S.find.liveAt=new Date().toISOString();S.find.liveSites=res.sites||{};S.find.searched=true;FS.sel.clear();
-    FS.rank=res.ranking?{status:'done',level:lv,data:res.ranking}:null;save();
-    const missed=Object.entries(res.sites||{}).filter(([,v])=>v.status==='error').map(([k])=>SITE_LABEL(k));
-    toast(`Found ${LIVE.length} listing${LIVE.length===1?'':'s'} across ${sites.length} site${sites.length>1?'s':''}.${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
-  catch(e){if(e.limit)FIND_MSG(e.message);else toast(e.message||'The search failed. Please try again.')}
-  finally{FS.busy=false;btn.disabled=false;renderFind()}});
+    // Remember the running search so it can be picked up again after leaving the page.
+    S.find.pending={id:d.jobId,level:lv.id,sites,at:new Date().toISOString()};save();
+    FS.busy=false;followSearch(S.find.pending)}
+  catch(e){FS.busy=false;btn.disabled=false;if(e.limit)FIND_MSG(e.message);else toast(e.message||'The search failed. Please try again.');renderFind()}});
+window.addEventListener('dealpro:signed-in',()=>{if(S.find.pending&&!FS.busy)followSearch(S.find.pending)});
 // The AI matches picks by listing id; if it mentions one ("similar to id 4"), show the listing's name instead.
 const rankText=v=>String(v??'').replace(/\b(?:listing\s+)?ids?\s*[:#]?\s*(\d+)\b/gi,(m,n)=>{const r=SRC()[+n];return r?`the ${r.type.toLowerCase()} on ${(r.area||r.title||'').split(',')[0].replace(/\s*\(.*\)$/,'')}`:m});
 function rankHTML(){const R=FS.rank;if(!R)return '';const lv=R.level;
@@ -2091,10 +2100,10 @@ renderAIAnalysis(S.deal.aiAnalysis);
 /* power levels: ids must match LEVELS in netlify/lib/ai.mts */
 const AI_LEVELS=[{id:'quick',name:'Scout',desc:'Fast first look',use:'Uses the least credits',time:'~10 sec'},{id:'standard',name:'Analyst',desc:'Full analysis',use:'Uses more credits',time:'~30 sec'},{id:'deep',name:'Expert',desc:'Stress-tested, thorough',use:'Uses the most credits',time:'1–2 min'}];
 const AIC={info:null,level:(()=>{try{return localStorage.getItem('dealpro:ai-level')||'quick'}catch(e){return 'quick'}})()};
-function levelOpts(name){const i=AIC.info,free=i&&i.free;
+function levelOpts(name){const i=AIC.info,free=!i||i.free;// locked until the server confirms a paid plan
   return AI_LEVELS.map(l=>{const locked=free&&l.id!=='quick';
     return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="${name}" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)}</span><span class="lv-use">${locked?'Paid plans':esc(l.use)}</span></label>`}).join('')}
-function renderAILevels(){const i=AIC.info,free=i&&i.free;if(free&&AIC.level!=='quick')AIC.level='quick';
+function renderAILevels(){const i=AIC.info,free=!i||i.free;if(free&&AIC.level!=='quick')AIC.level='quick';
   $('#aiLevelOpts').innerHTML=levelOpts('aiLevel');$('#fLevelOpts').innerHTML=levelOpts('fLevel');
   const paid=i?(i.plan==='Admin'?'Admin: unlimited credits.':`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}.`):'';
   $('#aiCredits').textContent=!i?'':i.free?`Free plan: ${i.freeLeft} of 2 free analyses left. Upgrade for Analyst and Expert.`:paid;

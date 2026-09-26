@@ -147,12 +147,25 @@ export const SITES: Record<string, { label: string; domains: string[]; what: str
   LoopNet: { label: "LoopNet", domains: ["loopnet.co.uk", "loopnet.com"], what: "UK commercial property to let or buy" },
 };
 
-const SEARCH_LEVEL: Record<LevelId, { perSite: number; context: "low" | "medium" | "high"; effort: Effort }> = {
-  quick: { perSite: 8, context: "low", effort: "low" },
-  standard: { perSite: 15, context: "medium", effort: "low" },
-  deep: { perSite: 25, context: "high", effort: "medium" },
+// How hard each level searches. Expert runs many rounds per site from different angles,
+// then opens the best listings to confirm they're still available.
+const SEARCH_LEVEL: Record<LevelId, { passes: number; perPass: number; context: "low" | "medium" | "high"; effort: Effort; verify: number }> = {
+  quick: { passes: 1, perPass: 8, context: "low", effort: "low", verify: 0 },
+  standard: { passes: 2, perPass: 12, context: "medium", effort: "low", verify: 0 },
+  deep: { passes: 8, perPass: 15, context: "high", effort: "medium", verify: 40 },
 };
 
+// Each round searches from a different angle so later rounds find listings earlier ones missed.
+const ANGLES = [
+  "Start with the most relevant current listings.",
+  "Now look in nearby neighbourhoods, suburbs and towns within about 5 miles.",
+  "Now use different wording: flat, apartment, house, maisonette, 'to let', 'available now', 'long let'.",
+  "Now focus on the lower half of the price range.",
+  "Now focus on the upper half of the price range.",
+  "Now look for the most recently added listings.",
+  "Now look for listings that suit serviced accommodation or rent-to-rent: 'company let', 'professional let', 'furnished', 'bills included', 'landlord open to'.",
+  "Now try neighbouring postcode districts and any areas you haven't covered yet.",
+];
 export type Filters = {
   mode?: string; beds?: string; min?: number | string; max?: number | string; loc?: string;
   priv?: boolean; furn?: string; type?: string;
@@ -161,6 +174,8 @@ export type Filters = {
 export type Listing = {
   site: string; id: string; title: string; type: string; beds: number | null; area: string; postcode: string;
   price: number; mode: "rent" | "buy"; private: boolean | null; furnished: string; url: string; found: string;
+  verified?: "available" | "unavailable" | "unknown";
+  details?: { deposit: string; availableFrom: string; highlights: string[] };
 };
 
 function describe(f: Filters) {
@@ -186,19 +201,12 @@ const hostMatches = (url: string, domains: string[]) => {
 };
 const normalise = (url: string) => { try { const u = new URL(url); u.hash = ""; return u.toString().replace(/\/$/, ""); } catch { return url; } };
 
-async function searchSite(site: string, f: Filters, level: LevelId): Promise<Listing[]> {
-  const conf = SITES[site];
-  const lv = SEARCH_LEVEL[level];
+async function webJson(prompt: string, domains: string[], level: LevelId, context: "low" | "medium" | "high", effort: Effort) {
   const client = new OpenAI();
-  const buy = f.mode === "buy";
-  const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
-Search several times with different wording and nearby areas until you have up to ${lv.perSite} matching individual listings. Only use individual listing pages, never search-results or category pages.
-Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "private_landlord": true | false | null}]}.
-Only include listings you actually found in the search results. Never invent a listing, price or URL. If you find none, return {"listings": []}.`;
   const run = (model: string) => client.responses.create({
     model,
-    reasoning: { effort: lv.effort },
-    tools: [{ type: "web_search", search_context_size: lv.context, filters: { allowed_domains: conf.domains }, user_location: { type: "approximate", country: "GB" } }],
+    reasoning: { effort },
+    tools: [{ type: "web_search", search_context_size: context, filters: { allowed_domains: domains }, user_location: { type: "approximate", country: "GB" } }],
     include: ["web_search_call.action.sources"],
     text: { format: { type: "json_object" } },
     input: prompt,
@@ -211,21 +219,33 @@ Only include listings you actually found in the search results. Never invent a l
     if (status !== 404 && status !== 400) throw error;
     response = await run(FALLBACK_MODEL);
   }
-
-  // URLs the web search really returned for this site.
+  // URLs the web search really returned.
   const seen = new Set<string>();
   for (const item of response.output as Array<Record<string, any>>) {
     if (item.type === "web_search_call") for (const s of item.action?.sources || []) if (s?.url) seen.add(normalise(s.url));
     if (item.type === "message") for (const c of item.content || []) for (const a of c.annotations || []) if (a?.url) seen.add(normalise(a.url));
   }
-  let parsed: { listings?: Array<Record<string, unknown>> } = {};
+  let parsed: Record<string, any> = {};
   try { parsed = JSON.parse(response.output_text || "{}"); } catch {
     const m = (response.output_text || "").match(/\{[\s\S]*\}/);
     if (m) try { parsed = JSON.parse(m[0]); } catch {}
   }
+  return { parsed, seen };
+}
+
+async function searchSite(site: string, f: Filters, level: LevelId, pass: number, exclude: string[]): Promise<Listing[]> {
+  const conf = SITES[site];
+  const lv = SEARCH_LEVEL[level];
+  const buy = f.mode === "buy";
+  const skip = exclude.length ? `\nYou've already found these, so don't return them again:\n${exclude.slice(-80).join("\n")}` : "";
+  const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
+${ANGLES[pass % ANGLES.length]} Search several times with different wording until you have up to ${lv.perPass} matching individual listings. Only use individual listing pages, never search-results or category pages.${skip}
+Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "private_landlord": true | false | null}]}.
+Only include listings you actually found in the search results. Never invent a listing, price or URL. If you find none, return {"listings": []}.`;
+  const { parsed, seen } = await webJson(prompt, conf.domains, level, lv.context, lv.effort);
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   const out: Listing[] = [];
-  for (const x of parsed.listings || []) {
+  for (const x of (parsed.listings || []) as Array<Record<string, unknown>>) {
     const url = String(x.url || "");
     if (!/^https:\/\//.test(url) || !hostMatches(url, conf.domains)) continue;
     // Keep only pages the search returned (when the API reports its sources).
@@ -246,43 +266,125 @@ Only include listings you actually found in the search results. Never invent a l
       found: today,
     });
   }
-  return out.slice(0, lv.perSite);
+  return out;
 }
 
-// Searches every requested site at once, reporting progress per site as each finishes.
-export async function runSearch(input: string, level: LevelId, progress: (p: Record<string, unknown>) => Promise<void>) {
+// Expert only: open listing pages to confirm they're still available and fill in details.
+async function verifyBatch(batch: Listing[], level: LevelId) {
+  const domains = [...new Set(batch.flatMap((l) => SITES[l.site].domains))];
+  const prompt = `Open each of these property listing pages and check them:
+${batch.map((l, i) => `${i + 1}. ${l.url}`).join("\n")}
+For each, confirm whether it is still available (not let agreed, under offer, sold or removed), and read the details.
+Return JSON: {"checks": [{"url": string (exactly as given), "available": true | false | null, "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not]}]}.
+Only report what the pages actually say. Use null or "" when a detail isn't shown.`;
+  const { parsed } = await webJson(prompt, domains, level, "high", "medium");
+  const byUrl = new Map(batch.map((l) => [normalise(l.url), l]));
+  for (const c of (parsed.checks || []) as Array<Record<string, any>>) {
+    const l = byUrl.get(normalise(String(c.url || "")));
+    if (!l) continue;
+    l.verified = c.available === false ? "unavailable" : c.available === true ? "available" : "unknown";
+    const price = Math.round(Number(c.price));
+    if (Number.isFinite(price) && price > 0) l.price = price;
+    if (Number.isFinite(Number(c.beds)) && c.beds !== null) l.beds = Math.round(Number(c.beds));
+    if (typeof c.private_landlord === "boolean") l.private = c.private_landlord;
+    if (c.furnished) l.furnished = String(c.furnished).slice(0, 30);
+    l.details = {
+      deposit: String(c.deposit || "").slice(0, 60),
+      availableFrom: String(c.available_from || "").slice(0, 60),
+      highlights: Array.isArray(c.highlights) ? c.highlights.slice(0, 8).map((h: unknown) => String(h).slice(0, 120)) : [],
+    };
+  }
+}
+
+// A search that can be paused and resumed, so Expert can run far longer than one
+// 15-minute background function: each run works until its deadline, saves this state,
+// and the runner starts another run to continue.
+export type SearchState = {
+  filters: Filters; sites: string[]; phase: "search" | "verify" | "rank" | "done";
+  round: number; verifyAt: number; listings: Listing[];
+  sites_status: Record<string, { status: string; found: number; round?: number; rounds?: number; error?: string }>;
+  ranking?: Record<string, unknown> | null; startedAt: string;
+};
+
+export function newSearch(input: string, level: LevelId): SearchState {
   const { filters = {}, sites = [] } = JSON.parse(input) as { filters?: Filters; sites?: string[] };
   const wanted = sites.filter((s) => s in SITES);
-  const state: Record<string, { status: string; found?: number; error?: string }> = Object.fromEntries(wanted.map((s) => [s, { status: "searching" }]));
-  await progress(state);
-  const min = Number(filters.min) || 0, max = Number(filters.max) || Infinity;
-  const results = await Promise.all(wanted.map(async (site) => {
-    try {
-      const found = (await searchSite(site, filters, level)).filter((l) => l.price >= min && l.price <= max);
-      state[site] = { status: "done", found: found.length };
-      return found;
-    } catch (error) {
-      console.error(`Search failed for ${site}`, error);
-      state[site] = { status: "error", found: 0, error: "Couldn't search this site" };
-      return [];
-    } finally {
-      await progress({ ...state }).catch(() => {});
-    }
-  }));
-  // Merge and drop duplicates (the same listing can appear twice).
-  const byUrl = new Map<string, Listing>();
-  for (const l of results.flat()) if (!byUrl.has(l.id)) byUrl.set(l.id, l);
-  const listings = [...byUrl.values()];
-  if (wanted.length && Object.values(state).every((s) => s.status === "error")) throw new Error("All site searches failed");
+  return {
+    filters, sites: wanted, phase: "search", round: 0, verifyAt: 0, listings: [], startedAt: new Date().toISOString(),
+    sites_status: Object.fromEntries(wanted.map((s) => [s, { status: "searching", found: 0, round: 0, rounds: SEARCH_LEVEL[level].passes }])),
+  };
+}
 
-  let ranking: Record<string, unknown> | null = null;
-  if (listings.length) {
-    try {
-      ranking = await runRank(JSON.stringify({
-        filters,
-        listings: listings.map((l, i) => ({ id: String(i), site: SITES[l.site].label, type: l.type, beds: l.beds, area: l.area, postcode: l.postcode, [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price })),
-      }), level);
-    } catch (error) { console.error("Ranking failed", error); }
+export const searchProgress = (st: SearchState) => ({ phase: st.phase, sites: st.sites_status, found: st.listings.length, verified: st.verifyAt });
+
+export async function stepSearch(st: SearchState, level: LevelId, deadline: number, save: (st: SearchState) => Promise<void>) {
+  const lv = SEARCH_LEVEL[level];
+  const min = Number(st.filters.min) || 0, max = Number(st.filters.max) || Infinity;
+  const known = () => new Set(st.listings.map((l) => l.id));
+  const timeLeft = () => deadline - Date.now();
+
+  // Rounds: every site is searched in parallel, each round from a new angle.
+  while (st.phase === "search") {
+    if (st.round >= lv.passes) { st.phase = lv.verify ? "verify" : "rank"; break; }
+    if (timeLeft() < 4 * 60_000) return st;
+    const round = st.round;
+    await Promise.all(st.sites.map(async (site) => {
+      if (st.sites_status[site]?.status === "error") return;
+      try {
+        const mine = st.listings.filter((l) => l.site === site).map((l) => l.url);
+        const found = (await searchSite(site, st.filters, level, round, mine)).filter((l) => l.price >= min && l.price <= max);
+        const have = known();
+        for (const l of found) if (!have.has(l.id) && st.listings.length < 500) { st.listings.push(l); have.add(l.id); }
+        const count = st.listings.filter((l) => l.site === site).length;
+        st.sites_status[site] = { status: round + 1 >= lv.passes ? "done" : "searching", found: count, round: round + 1, rounds: lv.passes };
+      } catch (error) {
+        console.error(`Search failed for ${site} (round ${round + 1})`, error);
+        const count = st.listings.filter((l) => l.site === site).length;
+        // A failed first round means the site can't be searched; later failures just end that site early.
+        st.sites_status[site] = round === 0 && !count
+          ? { status: "error", found: 0, error: "Couldn't search this site" }
+          : { status: "done", found: count, round: round + 1, rounds: lv.passes };
+      }
+      await save(st).catch(() => {});
+    }));
+    st.round += 1;
+    await save(st);
   }
-  return { listings, sites: state, ranking };
+  if (st.sites.length && st.sites.every((s) => st.sites_status[s]?.status === "error")) throw new Error("All site searches failed");
+
+  // Verify: open the most promising listings (cheapest per bedroom first) in batches.
+  if (st.phase === "verify") {
+    const order = [...st.listings].sort((a, b) => a.price / Math.max(1, a.beds ?? 1) - b.price / Math.max(1, b.beds ?? 1));
+    const targets = order.slice(0, lv.verify);
+    while (st.verifyAt < targets.length) {
+      if (timeLeft() < 4 * 60_000) return st;
+      const batch = targets.slice(st.verifyAt, st.verifyAt + 5);
+      try { await verifyBatch(batch, level); } catch (error) { console.error("Verify failed", error); }
+      st.verifyAt += batch.length;
+      await save(st);
+    }
+    // Drop listings the pages say are gone.
+    st.listings = st.listings.filter((l) => l.verified !== "unavailable");
+    st.phase = "rank";
+    await save(st);
+  }
+
+  if (st.phase === "rank") {
+    if (timeLeft() < 3 * 60_000) return st;
+    if (st.listings.length) {
+      try {
+        st.ranking = await runRank(JSON.stringify({
+          filters: st.filters,
+          listings: st.listings.slice(0, 120).map((l, i) => ({
+            id: String(i), site: SITES[l.site].label, type: l.type, beds: l.beds, area: l.area, postcode: l.postcode,
+            [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price,
+            ...(l.details ? { checked_details: l.details, still_available: l.verified } : {}),
+          })),
+        }), level);
+      } catch (error) { console.error("Ranking failed", error); st.ranking = null; }
+    }
+    st.phase = "done";
+    await save(st);
+  }
+  return st;
 }

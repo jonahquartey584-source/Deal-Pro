@@ -48,8 +48,9 @@ export default async (request: Request, _context: Context) => {
     if (!/^[0-9a-f-]{36}$/.test(jobId)) return json({ error: "Unknown analysis." }, 404);
     const job = await jobs().get(jobId, { type: "json" }) as Record<string, unknown> | null;
     if (!job || job.userId !== user.id) return json({ error: "Unknown analysis." }, 404);
-    // A job that never started or stalled is failed and refunded after 16 minutes.
-    if (job.status !== "done" && job.status !== "error" && Date.now() - Date.parse(String(job.createdAt)) > 16 * 60 * 1000) {
+    // A job with no progress for 16 minutes has stalled: fail it and refund.
+    const lastSeen = Date.parse(String(job.heartbeat || job.createdAt));
+    if (job.status !== "done" && job.status !== "error" && Date.now() - lastSeen > 16 * 60 * 1000) {
       job.error = "The analysis took too long. Your credits have not been used; please try again.";
       await refundJob(jobId, job, String(job.error));
       job.status = "error";
