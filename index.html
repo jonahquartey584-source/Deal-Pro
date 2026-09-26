@@ -630,6 +630,7 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .rank-notes{margin:4px 0;padding-left:18px;font-size:12px;color:var(--ink-2)}.rank-act{display:flex;gap:6px;margin-top:6px}
 /* old browser-side usage meters; real credits are shown next to each AI tool */
 .ws-old-meter,#wsFree{display:none!important}
+.rf-list{margin:0 0 12px;padding-left:18px;display:grid;gap:6px;font-size:13px}
 .cform{margin-bottom:18px}.cform-acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cmsg{font-size:13px;color:var(--ink-2)}.cmsg.bad{color:var(--bad)}
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}.cgrid .dcard{width:auto}
 .ctags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}.ctag{font-size:12px;padding:2px 8px;border:1px solid var(--line);border-radius:999px;color:var(--ink-2)}.ctag.hot{border-color:rgba(224,20,43,.45);color:var(--ink)}
@@ -1164,6 +1165,17 @@ td.t{text-align:right;color:var(--ink-2)}
     </div>
     <div class="plans" id="plans"></div>
 
+    <section class="sec" id="refunds" aria-labelledby="refundsH">
+      <div class="sec-h"><h2 id="refundsH">Refunds</h2></div>
+      <div class="panel"><div class="fs">
+        <p class="note" style="margin:0 0 10px">If Deal Pro isn't right for you, you can ask for a refund within 14 days of paying. We'll refund your latest payment to your card and cancel your subscription, and your account moves to the Free plan. Requests after 14 days are considered case by case. Your statutory rights are not affected.</p>
+        <div id="rfList"></div>
+        <button class="btn" id="rfOpen" type="button">Request a refund</button>
+        <form id="rfForm" hidden><label class="f"><span>Why would you like a refund?</span><textarea class="inp" id="rfReason" rows="3" maxlength="1000" required></textarea></label>
+          <div class="cform-acts" style="margin-top:10px"><button class="btn primary" type="submit" id="rfSend">Send request</button><button class="btn ghost" type="button" id="rfCancel">Cancel</button><span class="cmsg" id="rfMsg" role="status"></span></div></form>
+      </div></div>
+    </section>
+
     <section class="sec" id="usage" aria-labelledby="usageH">
       <div class="sec-h"><h2 id="usageH">Usage</h2><span class="sec-meta" id="usagePlan"></span></div>
       <div class="panel">
@@ -1423,7 +1435,7 @@ function go(v,step){const m=VIEWS[v]||VIEWS.home;v=m[0];step=step||m[1];const ch
   const apply=()=>{curView=v;document.documentElement.dataset.page=v;
     $$('.tab').forEach(t=>{if(t.dataset.v===v)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current')});
     $$('[data-view]').forEach(s=>s.hidden=s.dataset.view!==v);
-    if(v==='home')renderHome();if(v==='find'){renderFind();loadAICredits()}if(v==='analyser'){openAnalyser(step||curStep());loadAICredits()}if(v==='deals')renderDeals();if(v==='community')renderCommunity();if(v==='plans')renderPlans();
+    if(v==='home')renderHome();if(v==='find'){renderFind();loadAICredits()}if(v==='analyser'){openAnalyser(step||curStep());loadAICredits()}if(v==='deals')renderDeals();if(v==='community')renderCommunity();if(v==='plans'){renderPlans();loadRefunds()}
     try{sessionStorage.setItem('dealpro:tab',v)}catch(e){}
     const nav=$('.nav'),act=$(`.tab[data-v="${v}"]`);if(nav&&act&&nav.scrollWidth>nav.clientWidth)nav.scrollLeft=Math.max(0,act.offsetLeft-nav.offsetLeft-24);
     if(v==='plans'&&step==='usage'){const us=$('#usage');if(us)setTimeout(()=>us.scrollIntoView({block:'start',behavior:reduced()?'auto':'smooth'}),30)}else window.scrollTo(0,0);heroUpdate();placeInd()};
@@ -2336,6 +2348,21 @@ document.addEventListener('click',e=>{const a=e.target.closest('a[href="#tutoria
     qp.classList.toggle('is-tucked',hit)};
   const queue=()=>{if(!queued){queued=true;requestAnimationFrame(check)}};
   addEventListener('scroll',queue,{passive:true});addEventListener('resize',queue);new MutationObserver(queue).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class']});setTimeout(queue,1800)}
+
+/* ---------- refunds ---------- */
+const RF_STATUS={pending:'Waiting for review',refunded:'Refunded',approved_manual:'Approved, refund on its way',declined:'Declined'};
+async function loadRefunds(){if(!document.body.dataset.userId){$('#refunds').hidden=true;return}$('#refunds').hidden=false;
+  try{const r=await fetch('/api/refunds',{credentials:'same-origin'});const d=await r.json();if(!r.ok)throw 0;
+    const L=d.requests||[],open=L.some(x=>x.status==='pending');
+    $('#rfList').innerHTML=L.length?`<ul class="rf-list">${L.map(x=>`<li><b>${esc(RF_STATUS[x.status]||x.status)}</b> <span class="muted">· requested ${fmtDate(x.createdAt)}${x.amount?` · ${esc(x.amount)} refunded`:''}</span>${x.note?`<div class="muted">${esc(x.note)}</div>`:''}</li>`).join('')}</ul>`:'';
+    $('#rfOpen').hidden=open||!$('#rfForm').hidden}catch(e){$('#rfList').innerHTML=''}}
+window.addEventListener('dealpro:signed-in',()=>{if(curView==='plans')loadRefunds()});
+$('#rfOpen').addEventListener('click',()=>{$('#rfForm').hidden=false;$('#rfOpen').hidden=true;$('#rfReason').focus()});
+$('#rfCancel').addEventListener('click',()=>{$('#rfForm').hidden=true;$('#rfOpen').hidden=false;$('#rfMsg').textContent=''});
+$('#rfForm').addEventListener('submit',async e=>{e.preventDefault();const m=$('#rfMsg'),b=$('#rfSend');b.disabled=true;m.classList.remove('bad');m.textContent='Sending…';
+  try{const r=await fetch('/api/refunds',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:$('#rfReason').value})});const d=await r.json().catch(()=>({}));
+    if(!r.ok)throw new Error(d.error||'Your request could not be sent.');$('#rfReason').value='';$('#rfForm').hidden=true;m.textContent='';toast("Refund request sent. We'll review it within 2 working days.");loadRefunds()}
+  catch(err){m.classList.add('bad');m.textContent=err.message}finally{b.disabled=false}});
 
 /* ---------- boot ---------- */
 const siteIntro=$('#siteIntro');if(siteIntro)setTimeout(()=>siteIntro.remove(),1700);
