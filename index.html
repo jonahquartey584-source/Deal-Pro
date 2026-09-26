@@ -17,14 +17,14 @@
 <meta property="og:url" content="https://usedealpro.com/">
 <meta property="og:title" content="Deal Pro | Property Deals, Found and Analysed">
 <meta property="og:description" content="Find rent-to-rent and serviced accommodation opportunities, then use AI to turn each deal into clear numbers, risks and next steps.">
-<meta property="og:image" content="https://usedealpro.com/assets/deal-pro-tutorial-poster.png?v=5">
+<meta property="og:image" content="https://usedealpro.com/assets/deal-pro-tutorial-poster.png?v=6">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="720">
 <meta property="og:image:alt" content="Deal Pro: find, assess and organise property opportunities">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Deal Pro | Property Deals, Found and Analysed">
 <meta name="twitter:description" content="Find rent-to-rent and serviced accommodation opportunities, then use AI to turn each deal into clear numbers, risks and next steps.">
-<meta name="twitter:image" content="https://usedealpro.com/assets/deal-pro-tutorial-poster.png?v=5">
+<meta name="twitter:image" content="https://usedealpro.com/assets/deal-pro-tutorial-poster.png?v=6">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -34,7 +34,7 @@
   "applicationCategory": "BusinessApplication",
   "operatingSystem": "Web",
   "description": "Find UK property opportunities and analyse rent-to-rent and serviced accommodation deals with AI: occupancy scenarios, break-even, risks and due diligence.",
-  "image": "https://usedealpro.com/assets/deal-pro-tutorial-poster.png?v=5",
+  "image": "https://usedealpro.com/assets/deal-pro-tutorial-poster.png?v=6",
   "inLanguage": "en-GB",
   "offers": {"@type": "Offer", "price": "0", "priceCurrency": "GBP", "description": "Start free with 2 deal analyses"}
 }
@@ -99,7 +99,7 @@ button,a,.btn{transition:transform .18s var(--ease),background-color .2s var(--e
 .public-auth-nav{position:absolute;top:16px;right:32px;z-index:20;display:flex;align-items:center;gap:8px}
 body:not(.signed-out) .public-auth-nav{display:none}
 .app-foot{max-width:1200px;margin:0 auto;padding:14px 32px 28px;font-size:12px;color:var(--muted)}
-.app-foot span{display:block;border-top:1px solid var(--line);padding-top:14px}
+.app-foot>span{display:block;border-top:1px solid var(--line);padding-top:14px}
 
 @media (max-width:899px){
   .side{position:sticky;top:0;width:auto;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;padding:0;border-right:0;border-bottom:1px solid var(--line)}
@@ -576,7 +576,23 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .hplan .sub{font-size:12.5px;color:var(--muted)}
 .hplan.feat{box-shadow:inset 0 2px 0 var(--brand)}
 .home-foot{margin-top:72px;padding:16px 0 8px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
-.contact-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(320px,1.2fr);gap:32px;align-items:start}.contact-form{display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:24px}.contact-copy p{color:var(--ink-2);margin-top:10px}.contact-status{font-size:13px;color:var(--muted)}.legal-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}.legal-links a{color:var(--ink-2)}.bot-field{position:absolute;left:-9999px}
+.contact-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(320px,1.2fr);gap:32px;align-items:start}.contact-form{display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:24px}.contact-copy p{color:var(--ink-2);margin-top:10px}.contact-status{font-size:13px;color:var(--muted)}/* "Powered by Qp Digital" pill, styled like Netlify's badge in greys with a holographic sheen */
+.qp-badge{--holo:linear-gradient(110deg,#6e7176 0%,#e4e5e7 18%,#7d8085 34%,#f6f6f7 50%,#686b70 66%,#d2d4d7 82%,#6e7176 100%);position:fixed;isolation:isolate;overflow:hidden;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:50;display:inline-flex;align-items:center;gap:10px;height:42px;padding:0 20px 0 9px;border-radius:999px;background:linear-gradient(135deg,#1c1e21,#111214);color:#a9abb0;font-size:14.5px;letter-spacing:.005em;text-decoration:none;box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 6px 18px rgba(0,0,0,.35);transition:transform .25s var(--ease),box-shadow .25s var(--ease),color .25s}
+.qp-badge::after{content:"";position:absolute;inset:0;z-index:2;border-radius:inherit;padding:1px;background:var(--holo);background-size:300% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);opacity:.75;animation:qpHolo 7s linear infinite;pointer-events:none}
+.qp-badge::before{content:"";position:absolute;inset:0;z-index:1;border-radius:inherit;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.13) 46%,rgba(255,255,255,.05) 52%,transparent 62%);background-size:300% 100%;mix-blend-mode:screen;animation:qpHolo 7s linear infinite;pointer-events:none}
+.qp-badge>*{position:relative;z-index:1}
+.qp-badge b{font-weight:700;background:var(--holo);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:qpHolo 7s linear infinite}
+.qp-mark{width:26px;height:26px;border-radius:6px;object-fit:contain;filter:grayscale(1) contrast(1.05) drop-shadow(0 0 5px rgba(220,222,226,.18))}
+.qp-badge:hover{transform:translateY(-1px);color:#c9cbcf;box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 10px 26px rgba(0,0,0,.5)}.qp-badge:hover::after{opacity:1}
+.qp-badge:focus-visible{outline:2px solid #c9cbcf;outline-offset:3px}
+@keyframes qpHolo{from{background-position:0 0}to{background-position:-300% 0}}
+@media (prefers-reduced-motion:reduce){.qp-badge::before,.qp-badge::after,.qp-badge b{animation:none}}
+/* keeps page endings clear of the badge; the badge steps aside while a toast shows */
+.app-foot,.home-foot{padding-bottom:72px!important}
+.toast.on~.qp-badge{opacity:0;pointer-events:none}.qp-badge>span{max-width:220px;white-space:nowrap;overflow:hidden;transition:max-width .3s var(--ease),opacity .2s}.qp-badge.is-tucked:not(:hover):not(:focus-visible){gap:0;padding:0 8px}.qp-badge.is-tucked:not(:hover):not(:focus-visible)>span{max-width:0;opacity:0}.qp-badge{transition:transform .25s var(--ease),box-shadow .25s var(--ease),color .25s,opacity .2s}
+@media (max-width:600px){.qp-badge{right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));height:36px;gap:8px;padding:0 14px 0 6px;font-size:13px}.qp-badge .qp-by{display:none}.qp-mark{width:24px;height:24px}}
+@media print{.qp-badge{display:none}}
+.legal-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}.legal-links a{color:var(--ink-2)}.bot-field{position:absolute;left:-9999px}
 @media(max-width:760px){.contact-grid{grid-template-columns:1fr}}
 .own{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:16px 24px;align-items:end}
 .own-acts{display:flex;gap:8px;flex-wrap:wrap}
@@ -617,6 +633,34 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .cform{margin-bottom:18px}.cform-acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cmsg{font-size:13px;color:var(--ink-2)}.cmsg.bad{color:var(--bad)}
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}.cgrid .dcard{width:auto}
 .ctags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}.ctag{font-size:12px;padding:2px 8px;border:1px solid var(--line);border-radius:999px;color:var(--ink-2)}.ctag.hot{border-color:rgba(224,20,43,.45);color:var(--ink)}
+.chat{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:18px;align-items:start}
+.chat-rooms{display:grid;gap:2px;position:sticky;top:16px}
+.chat-room{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;border:0;border-radius:6px;background:none;color:var(--ink-2);font:inherit;font-size:13.5px;text-align:left;cursor:pointer}
+.chat-room svg{flex:none;color:#E8B33C}.chat-room:hover{background:var(--hover);color:var(--ink)}.chat-room[aria-current="true"]{background:var(--hover);color:var(--ink);box-shadow:inset 2px 0 0 var(--brand)}
+.chat-main{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;height:min(640px,calc(100vh - 200px));min-height:380px;padding:0;overflow:hidden}
+.chat-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 16px;border-bottom:1px solid var(--line)}.chat-h h2{font-size:15px}.chat-h .muted{font-size:12px}
+.chat-log{overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px}
+.chat-log .fempty{margin:auto 0;border:0;background:none}
+.msg{display:grid;gap:3px;max-width:78%}.msg.mine{align-self:flex-end}
+.msg-h{display:flex;gap:8px;align-items:baseline;font-size:11.5px;color:var(--muted)}.msg-h b{color:var(--ink);font-weight:600;font-size:12.5px}
+.msg-t{background:var(--surface-2);border:1px solid var(--line);border-radius:4px 10px 10px 10px;padding:8px 11px;font-size:13.5px;white-space:pre-line;overflow-wrap:anywhere}
+.msg.mine .msg-h{justify-content:flex-end}.msg.mine .msg-t{background:rgba(224,20,43,.12);border-color:rgba(224,20,43,.35);border-radius:10px 4px 10px 10px}
+.msg-del{border:0;background:none;padding:0;color:var(--muted);font:inherit;font-size:11.5px;cursor:pointer}.msg-del:hover{color:var(--bad)}
+.chat-acts{display:flex;gap:8px}
+.ctut{margin:0 0 18px}.ctut>summary{list-style:none;cursor:pointer;margin-top:0}.ctut>summary::-webkit-details-marker{display:none}
+.ctut .ctut-close,.ctut[open] .ctut-open{display:none}.ctut[open] .ctut-close{display:inline}.ctut-media{margin-top:12px;max-width:960px}
+.cpaste{display:grid;gap:10px;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid var(--line)}.cpaste textarea{min-height:92px;resize:vertical}
+.cpaste-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cform .inp.filled{border-color:rgba(95,185,138,.7);box-shadow:0 0 0 3px rgba(95,185,138,.14);transition:border-color .6s,box-shadow .6s}
+.msg-deal{display:grid;gap:6px;margin-top:2px;padding:10px 12px;border:1px solid var(--line-2);border-left:2px solid var(--brand);border-radius:6px;background:var(--surface)}
+.msg-deal .md-k{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}.msg-deal b{font-size:14px}.msg-deal .md-s{font-size:12.5px;color:var(--ink-2)}.msg-deal .ctags{margin:0}.msg-deal .btn{justify-self:start}
+.msg-t:empty{display:none}
+.chat-form{display:flex;gap:10px;align-items:flex-end;padding:12px 16px;border-top:1px solid var(--line)}.chat-form textarea{flex:1;min-height:42px;max-height:160px;resize:vertical}
+.chat-err{margin:0;padding:0 16px;font-size:12.5px;color:var(--bad)}.chat-err:empty{display:none}.chat-err:not(:empty){padding-bottom:12px}
+@media (max-width:760px){.chat-form{flex-wrap:wrap}.chat-acts{width:100%}.chat-acts .btn{flex:1}.chat{grid-template-columns:minmax(0,1fr)}.chat-rooms{position:static;display:flex;overflow-x:auto;gap:6px;padding-bottom:4px}.chat-room{width:auto;white-space:nowrap;border:1px solid var(--line)}.msg{max-width:92%}}
+.creplies{display:grid;gap:10px;padding-top:12px;border-top:1px solid var(--line)}.creplies .msg{max-width:100%}.creplies .msg-t{font-size:13px}
+.creply-form{display:grid;gap:8px}.creply-form textarea{min-height:60px;resize:vertical}.creply-form .btn{justify-self:end}
+.creplies .muted{font-size:12.5px}
 .cdesc{font-size:13px;color:var(--ink-2);white-space:pre-line;margin:0 0 10px;overflow-wrap:anywhere}.cmeta{font-size:12px;color:var(--ink-2)}
 
 .ubar{display:grid;gap:8px}
@@ -667,7 +711,7 @@ td.t{text-align:right;color:var(--ink-2)}
 .auth-message{margin-top:14px;padding:10px 12px;border:1px solid var(--line);border-radius:5px;color:var(--ink-2);font-size:13px}.auth-message.bad{color:var(--bad);border-color:rgba(255,143,128,.35)}
 .account-row{display:grid;gap:5px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);min-width:0}.account-email{display:block;min-width:0;font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tutorial{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);gap:28px;align-items:center}.tutorial-media{overflow:hidden;border:1px solid var(--line);border-radius:9px;background:#050506;box-shadow:var(--shadow-pop)}.tutorial-media video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#050506}.tutorial-copy{display:grid;gap:14px}.tutorial-copy p{color:var(--ink-2)}.tutorial-points{display:grid;gap:9px;padding:0;list-style:none}.tutorial-points li{display:flex;gap:9px;color:var(--ink-2)}.tutorial-points li::before{content:"✓";color:var(--good);font-weight:600}
-.tutorial-nav{color:var(--ink);text-decoration:none;background:var(--brand-soft);border:1px solid rgba(224,20,43,.3);margin:4px 0 8px}.tutorial-nav:hover{background:#351419;color:#fff}.tutorial-nav .play-dot{display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--brand);color:#fff;font-size:9px;flex:none}.tutorial-callout{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:22px;padding:16px 18px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(115deg,#181214 0%,var(--surface) 58%,#171719 100%);box-shadow:var(--shadow-sm);color:var(--ink);text-decoration:none;transition:border-color .2s var(--ease),transform .2s var(--ease),background .2s var(--ease)}.tutorial-callout:hover{border-color:rgba(224,20,43,.65);transform:translateY(-1px);background:linear-gradient(115deg,#211316 0%,var(--surface) 58%,#19191c 100%)}.tutorial-callout-copy{display:flex;align-items:center;gap:14px;min-width:0}.tutorial-callout-icon{position:relative;display:block;width:46px;height:46px;border-radius:12px;background:linear-gradient(145deg,var(--brand),#a80d20);box-shadow:0 8px 20px rgba(224,20,43,.2);flex:none}.tutorial-callout-icon::after{content:"";position:absolute;left:19px;top:15px;border-left:11px solid #fff;border-top:8px solid transparent;border-bottom:8px solid transparent}.tutorial-callout-text{display:block;min-width:0}.tutorial-callout-text strong{display:block;font-size:14.5px;line-height:1.3;letter-spacing:-.01em}.tutorial-callout-text>span{display:block;color:var(--muted);font-size:12.5px;margin-top:4px}.tutorial-callout-action{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:var(--surface-2);color:var(--ink);font-size:12.5px;font-weight:600;white-space:nowrap;flex:none}.tutorial-callout:hover .tutorial-callout-action{border-color:var(--brand);background:var(--brand);color:#fff}.tutorial-callout-action-arrow{font-size:16px;line-height:1}.tutorial:target{scroll-margin-top:24px;animation:tutorialPulse 1.2s ease-out}.tutorial:target .tutorial-media{border-color:var(--brand);box-shadow:0 0 0 4px rgba(224,20,43,.16),var(--shadow-pop)}@keyframes tutorialPulse{0%{transform:translateY(6px);opacity:.7}100%{transform:none;opacity:1}}
+.tutorial-nav{color:var(--ink);text-decoration:none;background:var(--brand-soft);border:1px solid rgba(224,20,43,.3);margin:4px 0 8px}.tutorial-nav:hover{background:#351419;color:#fff}.tutorial-nav .play-dot{display:grid;place-items:center;width:17px;height:17px;border-radius:50%;background:var(--brand);color:#fff;font-size:9px;flex:none}.tutorial-callout{display:flex;align-items:center;justify-content:space-between;gap:24px;margin-top:22px;padding:16px 18px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(115deg,#181214 0%,var(--surface) 58%,#171719 100%);box-shadow:var(--shadow-sm);color:var(--ink);text-decoration:none;transition:border-color .2s var(--ease),transform .2s var(--ease),background .2s var(--ease)}.tutorial-callout:hover{border-color:rgba(224,20,43,.65);transform:translateY(-1px);background:linear-gradient(115deg,#211316 0%,var(--surface) 58%,#19191c 100%)}.tutorial-callout-copy{display:flex;align-items:center;gap:14px;min-width:0}.tutorial-callout-icon{position:relative;display:block;width:46px;height:46px;border-radius:12px;background:linear-gradient(145deg,var(--brand),#a80d20);box-shadow:0 8px 20px rgba(224,20,43,.2);flex:none}.tutorial-callout-icon::after{content:"";position:absolute;left:19px;top:15px;border-left:11px solid #fff;border-top:8px solid transparent;border-bottom:8px solid transparent}.tutorial-callout-text{display:block;min-width:0}.tutorial-callout-text strong{display:block;font-size:14.5px;line-height:1.3;letter-spacing:-.01em}.tutorial-callout-text>span{display:block;color:var(--muted);font-size:12.5px;margin-top:4px}.tutorial-callout-action{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border:1px solid var(--line-2);border-radius:6px;background:var(--surface-2);color:var(--ink);font-size:12.5px;font-weight:600;white-space:nowrap;flex:none}.tutorial-callout:hover .tutorial-callout-action{border-color:var(--brand);background:var(--brand);color:#fff}.tutorial-callout-action-arrow{font-size:16px;line-height:1}.tutorial.is-flash{animation:tutorialPulse 1.2s ease-out}.tutorial.is-flash .tutorial-media{border-color:var(--brand);box-shadow:0 0 0 4px rgba(224,20,43,.16),var(--shadow-pop)}@keyframes tutorialPulse{0%{transform:translateY(6px);opacity:.7}100%{transform:none;opacity:1}}
 @media(max-width:820px){.tutorial{grid-template-columns:1fr}}
 @media(max-width:560px){.tutorial-callout{align-items:stretch;flex-direction:column;gap:14px}.tutorial-callout-action{justify-content:center;width:100%}}
 
@@ -752,13 +796,13 @@ td.t{text-align:right;color:var(--ink-2)}
           <p class="eyebrow"><span class="eb-dot" aria-hidden="true"></span>For UK rent-to-rent and serviced accommodation sourcers</p>
           <h1 class="display">Property deals, found and analysed.</h1>
           <p class="lede">Find rent-to-rent and serviced accommodation opportunities with the full details and a link to each listing, then use AI to turn each deal into clear numbers, risks and next steps.</p>
-          <div class="hero-cta"><button class="btn primary lg" data-go="find">Open Deal Finder</button><button class="btn outline lg" data-go="analyser">Analyse a deal</button><a class="btn ghost lg" href="#tutorialTitle">▶ Watch tutorial</a></div>
+          <div class="hero-cta"><button class="btn primary lg" data-go="find">Open Deal Finder</button><button class="btn outline lg" data-go="analyser">Analyse a deal</button><a class="btn ghost lg" href="#tutorial">▶ Watch tutorial</a></div>
           <p class="hero-foot">Every deal is free to view. Post and find ready-contacted deals in the Deal Community.</p>
         </div>
         <div class="hero-preview" id="homePreview"></div>
       </div>
     </div>
-    <a class="tutorial-callout" href="#tutorialTitle"><span class="tutorial-callout-copy"><span class="tutorial-callout-icon" aria-hidden="true"></span><span class="tutorial-callout-text"><strong>New to Deal Pro? Watch the narrated tutorial</strong><span>Learn the complete workflow in under a minute.</span></span></span><span class="tutorial-callout-action">Watch now <span class="tutorial-callout-action-arrow" aria-hidden="true">→</span></span></a>
+    <a class="tutorial-callout" href="#tutorial"><span class="tutorial-callout-copy"><span class="tutorial-callout-icon" aria-hidden="true"></span><span class="tutorial-callout-text"><strong>New to Deal Pro? Watch the narrated tutorial</strong><span>Learn the complete workflow in under a minute.</span></span></span><span class="tutorial-callout-action">Watch now <span class="tutorial-callout-action-arrow" aria-hidden="true">→</span></span></a>
     <section class="hsec" aria-labelledby="hProd">
       <div class="hsec-h"><h2 class="h2" id="hProd">Two tools, one workflow</h2><p>Find an opportunity, then analyse it in the same secure account.</p></div>
       <div class="prods">
@@ -783,8 +827,8 @@ td.t{text-align:right;color:var(--ink-2)}
         <li><span class="how-n mono">04</span><h3>Pack and send</h3><p>Complete due diligence and prepare the deal pack.</p></li>
       </ol>
     </section>
-    <section class="hsec tutorial" aria-labelledby="tutorialTitle">
-      <div class="tutorial-media"><video controls preload="metadata" poster="/assets/deal-pro-tutorial-poster.png?v=5"><source src="/assets/deal-pro-tutorial.mp4?v=3" type="video/mp4">Your browser does not support this tutorial video.</video></div>
+    <section class="hsec tutorial" id="tutorial" aria-labelledby="tutorialTitle">
+      <div class="tutorial-media"><video controls preload="metadata" poster="/assets/deal-pro-tutorial-poster.png?v=6"><source src="/assets/deal-pro-tutorial.mp4?v=6" type="video/mp4">Your browser does not support this tutorial video.</video></div>
       <div class="tutorial-copy"><p class="eyebrow"><span class="eb-dot" aria-hidden="true"></span>AI-guided tutorial</p><h2 class="h2" id="tutorialTitle">Learn Deal Pro in under a minute</h2><p>Watch the complete workflow before starting your first deal.</p><ul class="tutorial-points"><li>Find and review an opportunity</li><li>Open the listing and check the details</li><li>Analyse the numbers and risks with AI</li><li>Save the deal and prepare its pack</li></ul><button class="btn primary" data-go="find">Start with Deal Finder</button></div>
     </section>
     <section class="hsec" aria-labelledby="hPlans">
@@ -1027,18 +1071,27 @@ td.t{text-align:right;color:var(--ink-2)}
     <header class="ph">
       <div class="ph-main">
         <h1>Deal Community</h1>
-        <p class="ph-desc">Deals where the landlord or agent has already been contacted, posted by other members. Contact the poster directly.</p>
+        <p class="ph-desc">Deals where the landlord or agent has already been contacted, posted by other members. Reply to a deal, or talk to members in your region.</p>
       </div>
-      <div class="ph-actions"><button class="btn primary" id="cPostToggle" aria-expanded="false" aria-controls="cForm">Post a deal</button></div>
+      <div class="ph-actions"><div class="seg segb" role="group" aria-label="Community view"><button id="cTabDeals" type="button" aria-pressed="true">Deals</button><button id="cTabChat" type="button" aria-pressed="false">Region chat</button></div><button class="btn primary" id="cPostToggle" aria-expanded="false" aria-controls="cForm">Post a deal</button></div>
     </header>
+    <details class="ctut" id="cTut">
+      <summary class="tutorial-callout"><span class="tutorial-callout-copy"><span class="tutorial-callout-icon" aria-hidden="true"></span><span class="tutorial-callout-text"><strong>New to the Deal Community? Watch how it works</strong><span>Posting deals, replies, region chat and the things not to do, in about 90 seconds.</span></span></span><span class="tutorial-callout-action"><span class="ctut-open">Watch now</span><span class="ctut-close">Hide video</span></span></summary>
+      <div class="tutorial-media ctut-media"><video controls preload="none" poster="/assets/deal-community-tutorial-poster.png?v=1"><source src="/assets/deal-community-tutorial.mp4?v=1" type="video/mp4">Your browser does not support this tutorial video.</video></div>
+    </details>
     <form class="panel cform" id="cForm" hidden novalidate>
       <div class="fs"><div class="fs-h"><h2>Post a deal</h2></div>
+        <div class="cpaste">
+          <label class="f"><span>Paste your deal <span class="muted">(optional)</span></span><textarea class="inp" id="cPaste" rows="4" maxlength="6000" placeholder="Paste an advert, a WhatsApp message or your deal notes, and we'll fill in the form for you."></textarea></label>
+          <div class="cpaste-acts"><button class="btn sm" type="button" id="cFill">Fill in the form</button><button class="btn sm ghost" type="button" id="cAnalyse">Analyse with AI</button><span class="cmsg" id="cPasteMsg" role="status"></span></div>
+        </div>
         <div class="fields">
           <label class="f"><span>Title</span><input class="inp" name="title" maxlength="120" placeholder="e.g. 2 bed flat, landlord open to R2SA" required></label>
           <div class="row2">
             <label class="f"><span>Town or area</span><input class="inp" name="location" maxlength="80" placeholder="e.g. Manchester" required></label>
             <label class="f"><span>Postcode district <span class="muted">(optional)</span></span><input class="inp" name="postcode" maxlength="10" placeholder="e.g. M1"></label>
           </div>
+          <label class="f"><span>Region</span><select class="inp js-regions" name="region" required><option value="">Choose…</option></select></label>
           <div class="row2">
             <label class="f"><span>Strategy</span><select class="inp" name="strategy" required><option value="">Choose…</option><option value="R2SA">R2SA</option><option value="R2R">R2R</option><option value="BTL">BTL</option><option value="HMO">HMO</option><option value="BRRR">BRRR</option><option value="Lease option">Lease option</option><option value="Flip">Flip</option><option value="Other">Other</option></select></label>
             <label class="f"><span>Property type</span><select class="inp" name="propertyType" required><option value="">Choose…</option><option value="Flat">Flat</option><option value="House">House</option><option value="Studio">Studio</option><option value="HMO">HMO</option><option value="Commercial">Commercial</option><option value="Other">Other</option></select></label>
@@ -1064,11 +1117,13 @@ td.t{text-align:right;color:var(--ink-2)}
       </div>
       <div class="fs cform-acts"><button class="btn primary" type="submit" id="cSubmit">Post deal</button><button class="btn ghost" type="button" id="cCancel">Cancel</button><span class="cmsg" id="cMsg" role="status"></span></div>
     </form>
+    <div id="cDealsPane">
     <div class="find">
       <div class="panel fpanel" id="cFilters">
         <div class="fs">
           <div class="fs-h"><h2>Filters</h2><button class="btn ghost sm" id="cReset" type="button">Reset</button></div>
           <div class="fields">
+            <label class="f"><span>Region</span><select class="inp js-regions" id="cfRegion"><option value="any">Any</option></select></label>
             <label class="f"><span>Location</span><input class="inp" id="cfLoc" placeholder="Town, area or postcode" autocomplete="off"></label>
             <label class="f"><span>Price is</span><select class="inp" id="cfPriceType"><option value="any">Any</option><option value="pcm">Rent per month</option><option value="purchase">Purchase price</option></select></label>
             <div class="row2">
@@ -1081,6 +1136,16 @@ td.t{text-align:right;color:var(--ink-2)}
         </div>
       </div>
       <div id="cResults"><div class="fempty"><h2>Loading deals…</h2></div></div>
+    </div>
+    </div>
+    <div class="chat" id="cChatPane" hidden>
+      <nav class="chat-rooms" id="chRooms" aria-label="Regions"></nav>
+      <div class="panel chat-main">
+        <div class="chat-h"><h2 id="chTitle">London</h2><span class="muted">Visible to signed-in Deal Pro members</span></div>
+        <div class="chat-log" id="chLog" role="log" aria-live="polite" tabindex="0"></div>
+        <form class="chat-form" id="chForm"><label class="sr" for="chText">Message</label><textarea class="inp" id="chText" rows="2" maxlength="1000" placeholder="Message members in this region…"></textarea><div class="chat-acts"><button class="btn" type="button" id="chPost">Post a deal</button><button class="btn primary" type="submit" id="chSend">Send</button></div></form>
+        <p class="chat-err" id="chErr" role="status"></p>
+      </div>
     </div>
   </section>
 
@@ -1144,6 +1209,7 @@ td.t{text-align:right;color:var(--ink-2)}
   </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<a class="qp-badge" href="https://qp-digital.co.uk" target="_blank" rel="noopener" aria-label="Powered by Qp Digital (opens in a new tab)"><img class="qp-mark" src="/assets/qp-digital-logo.png" alt="" width="26" height="26"><span><span class="qp-by">Powered by </span><b>Qp Digital</b></span></a>
 <dialog class="drawer" id="payWall" aria-labelledby="pwTitle">
   <div class="dr-head">
     <div><p class="dr-kicker">Free plan</p><h2 id="pwTitle" tabindex="-1">You've used your 2 free deal analyses</h2><p class="dr-sub">Subscribe to keep analysing deals. Your saved deals stay available.</p></div>
@@ -1850,16 +1916,18 @@ $('#fSearch').addEventListener('click',async()=>{if(FS.busy)return;readFind();co
     toast(`Found ${LIVE.length} listing${LIVE.length===1?'':'s'} across ${sites.length} site${sites.length>1?'s':''}.${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
   catch(e){if(e.limit)FIND_MSG(e.message);else toast(e.message||'The search failed. Please try again.')}
   finally{FS.busy=false;btn.disabled=false;renderFind()}});
+// The AI matches picks by listing id; if it mentions one ("similar to id 4"), show the listing's name instead.
+const rankText=v=>String(v??'').replace(/\b(?:listing\s+)?ids?\s*[:#]?\s*(\d+)\b/gi,(m,n)=>{const r=SRC()[+n];return r?`the ${r.type.toLowerCase()} on ${(r.area||r.title||'').split(',')[0].replace(/\s*\(.*\)$/,'')}`:m});
 function rankHTML(){const R=FS.rank;if(!R)return '';const lv=R.level;
   if(R.status==='loading')return `<div class="rank lv-${lv.id}" role="status"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b id="fRankT">${esc(lv.name)} is ranking these deals…</b></div><p class="muted">Results are below. The AI's top picks will appear here.</p></div>`;
   if(R.status==='error')return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>AI ranking unavailable</b></div><p class="muted">${esc(R.error)}</p></div>`;
   const a=R.data||{},picks=Array.isArray(a.picks)?a.picks:[];
-  const li=p=>{const r=SRC()[+p.id];if(!r)return '';const notes=Array.isArray(p.notes)&&p.notes.length?`<ul class="rank-notes">${p.notes.map(n=>`<li>${esc(String(n))}</li>`).join('')}</ul>`:'';
+  const li=p=>{const r=SRC()[+p.id];if(!r)return '';const notes=Array.isArray(p.notes)&&p.notes.length?`<ul class="rank-notes">${p.notes.map(n=>`<li>${esc(rankText(n))}</li>`).join('')}</ul>`:'';
     return `<li><div class="rank-top"><b>${esc(r.type)} · ${esc(r.area)}</b><span class="mono">${gbp(r.price)}${r.mode==='buy'?'':' pcm'}</span><span class="muted">${esc(SITE_LABEL(r.site))}</span><span class="rank-score">${Math.max(0,Math.min(100,+p.score||0))}/100 · ${esc(String(p.verdict||''))}</span></div>
-      <p>${esc(String(p.reason||''))}${p.monthly_profit_80?` <span class="muted">Est. at 80%: ${esc(String(p.monthly_profit_80))}</span>`:''}</p>${notes}
+      <p>${esc(rankText(p.reason))}${p.monthly_profit_80?` <span class="muted">Est. at 80%: ${esc(String(p.monthly_profit_80))}</span>`:''}</p>${notes}
       <div class="rank-act"><button class="btn xs primary" data-build="${+p.id}">Analyse deal</button><a class="btn xs" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a></div></li>`};
-  return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>${esc(lv.name)}'s top picks</b></div>${a.summary?`<p>${esc(String(a.summary))}</p>`:''}
-    <ol class="rank-list">${picks.map(li).join('')}</ol>${Array.isArray(a.watch_outs)&&a.watch_outs.length?`<p class="muted">Watch out: ${a.watch_outs.map(w=>esc(String(w))).join(' · ')}</p>`:''}</div>`}
+  return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>${esc(lv.name)}'s top picks</b></div>${a.summary?`<p>${esc(rankText(a.summary))}</p>`:''}
+    <ol class="rank-list">${picks.map(li).join('')}</ol>${Array.isArray(a.watch_outs)&&a.watch_outs.length?`<p class="muted">Watch out: ${a.watch_outs.map(w=>esc(rankText(w))).join(' · ')}</p>`:''}</div>`}
 function openRows(){return sortRows(findRows()).filter(isOpen)}
 function findTsv(){const c=v=>{const s=String(v??'').replace(/[\t\r\n]+/g,' ');return /^[=+\-@]/.test(s)?"'"+s:s};
   return [['Site','Listing','Type','Beds','Area','Postcode',S.find.f.mode==='buy'?'Price':'Rent pcm','Furnished','Found','URL'],
@@ -1867,11 +1935,21 @@ function findTsv(){const c=v=>{const s=String(v??'').replace(/[\t\r\n]+/g,' ');r
 function copyTsv(){const n=openRows().length;if(!n){toast('No deals to copy.');return}const t=findTsv(),lab=`${n} deal${n>1?'s':''}`;
   const fb=()=>{const w=$('#fTsvWrap'),ta=$('#fTsv');if(!w)return;w.hidden=false;ta.value=t;ta.focus();ta.select();ta.scrollTop=0;ta.scrollLeft=0;toast(`Selected ${lab}. Press Ctrl/Cmd+C, then paste into cell A1 of a Google Sheet.`)};
   try{navigator.clipboard.writeText(t).then(()=>toast(`Copied ${lab}. Paste into cell A1 of a Google Sheet.`)).catch(fb)}catch(e){fb()}}
+// Start a new deal from pasted or posted text and run the AI analysis on it straight away.
+function analyseText(text,name){text=String(text||'').trim();if(!text){toast('Paste the deal details first.');return}
+  startAnalysis(()=>{const d=freshDeal();d.name=String(name||'').trim().slice(0,80)||'Pasted deal';S.deal=d;markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
+    $('#aiDealInput').value=text;renderAIAnalysis(null);$('#analyseWithAI').click()})}
 function buildDeal(ls){ls=ls.filter(Boolean).filter(isOpen);if(!ls.length)return;startAnalysis(()=>{const d=sampleDeal(),areas=[...new Set(ls.map(x=>x.area))],short=a=>a.split(',')[0].trim();
   Object.assign(d,{id:'d'+Date.now(),name:areas.length>1?`${areas[0]} + ${areas.length-1} more`:areas[0],area:areas.join('; '),strat:'R2SA',london:true,status:'Checking',
     units:ls.map(x=>({label:`${x.type} · ${short(x.area)}`,rent:x.price,dep:x.price,rate:RATE_EST(x.beds),url:x.url}))});
   S.deal=d;FS.sel.clear();markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
-  toast(`Analysing ${ls.length} listing${ls.length>1?'s':''}. Nightly rate is an estimate, edit it.`)})}
+  // Fill in the deal for the AI and start the analysis straight away.
+  $('#aiDealInput').value=listingBrief(ls);renderAIAnalysis(null);$('#analyseWithAI').click();
+  toast(`Analysing ${ls.length} listing${ls.length>1?'s':''}. The nightly rate is an estimate.`)})}
+function listingBrief(ls){const one=x=>[`${x.type} in ${x.area}${x.postcode&&!x.area.includes(x.postcode)?` (${x.postcode})`:''}, listed on ${x.site}`,
+    `Rent ${gbp(x.price)} a month`,`Deposit about ${gbp(x.price)} (estimated, not stated in the listing)`,`Nightly rate about ${gbp(RATE_EST(x.beds))} (estimated for a ${bedsTxt(x.beds).toLowerCase()==='studio'?'studio':x.beds+' bed'})`,
+    `Furnished: ${x.furnished}`,`Listing: ${x.url}`].join('\n');
+  return `Rent-to-serviced-accommodation (R2SA) deal found with Deal Finder.\n\n`+(ls.length>1?ls.map((x,i)=>`Unit ${i+1}: ${one(x)}`).join('\n\n'):one(ls[0]))}
 $('#fResults').addEventListener('click',e=>{
   const s=e.target.closest('[data-sort]');if(s){const k=s.dataset.sort,c=S.find.sort;S.find.sort=c&&c.k===k?(c.dir>0?{k,dir:-1}:null):{k,dir:1};save();renderFind();const nb=$(`#fResults [data-sort="${k}"]`);if(nb)nb.focus();return}
   const u=e.target.closest('[data-unlock]');if(u){openUnlock(+u.dataset.unlock,+u.dataset.n||0);return}
@@ -2043,28 +2121,50 @@ $('#contactForm').addEventListener('submit',async e=>{e.preventDefault();const f
 
 /* ---------- deal community ---------- */
 const CM={posts:null,loading:false,error:''};
-const CF_DEF=()=>({loc:'',priceType:'any',min:'',max:'',type:'any',strat:'any'});
+// Keep in sync with REGIONS in netlify/functions/community.mts.
+const REGIONS=['London','Midlands','North East','North West','South East','South West','Yorkshire and Humber','Other'];
+const roomId=r=>r.toLowerCase().replace(/[^a-z]+/g,'-');
+$$('.js-regions').forEach(sel=>sel.insertAdjacentHTML('beforeend',REGIONS.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('')));
+const CF_DEF=()=>({region:'any',loc:'',priceType:'any',min:'',max:'',type:'any',strat:'any'});
 let CF=CF_DEF();
-async function cApi(opts={}){const r=await fetch('/api/community',{credentials:'same-origin',headers:{'Content-Type':'application/json'},...opts});
+async function cApi({url='',...opts}={}){const r=await fetch('/api/community'+url,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...opts});
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Something went wrong. Please try again.');return d}
 async function loadCommunity(){if(CM.loading)return;CM.loading=true;CM.error='';
   try{CM.posts=(await cApi()).posts||[]}catch(e){CM.error=e.message}finally{CM.loading=false}renderCommunityList()}
 function renderCommunity(){const f=$('#cForm');const em=document.body.dataset.userEmail||'';
   if(f&&!f.elements.contactEmail.value)f.elements.contactEmail.value=em;const nm=($('.ws-name')||{}).textContent||'';if(f&&!f.elements.contactName.value&&nm&&nm!==em)f.elements.contactName.value=nm;
-  if(CM.posts)renderCommunityList();loadCommunity()}
+  if(CM.posts)renderCommunityList();loadCommunity();if(CH.on)openRoom(CH.room)}
 function cRows(){const q=CF.loc.trim().toLowerCase(),n=v=>v===''?null:+v;const mn=n(CF.min),mx=n(CF.max);
   return (CM.posts||[]).filter(p=>(!q||(p.location+' '+p.postcode+' '+p.title).toLowerCase().includes(q))
-    &&(CF.priceType==='any'||p.priceType===CF.priceType)&&(mn==null||p.price>=mn)&&(mx==null||p.price<=mx)
+    &&(CF.region==='any'||p.region===CF.region)&&(CF.priceType==='any'||p.priceType===CF.priceType)&&(mn==null||p.price>=mn)&&(mx==null||p.price<=mx)
     &&(CF.type==='any'||p.propertyType===CF.type)&&(CF.strat==='any'||p.strategy===CF.strat))}
 function cCard(p){const price=p.priceType==='purchase'?`${gbp(p.price)} purchase`:`${gbp(p.price)}/month`;
   const subj=encodeURIComponent('Deal Pro: '+p.title);
   return `<article class="dcard" data-cid="${esc(p.id)}"><h3>${esc(p.title)}</h3>
-    <div class="ctags"><span class="ctag hot">${esc(p.strategy)}</span><span class="ctag">${esc(p.propertyType)}</span>${p.beds!=null?`<span class="ctag">${p.beds===0?'Studio':p.beds+' bed'}</span>`:''}<span class="ctag">${esc(p.contacted)} contacted</span></div>
+    <div class="ctags">${p.region?`<span class="ctag">${esc(p.region)}</span>`:''}<span class="ctag hot">${esc(p.strategy)}</span><span class="ctag">${esc(p.propertyType)}</span>${p.beds!=null?`<span class="ctag">${p.beds===0?'Studio':p.beds+' bed'}</span>`:''}<span class="ctag">${esc(p.contacted)} contacted</span></div>
     <ul class="adv"><li><span class="em-dot" aria-hidden="true"></span><span>${esc(p.location)}${p.postcode?' '+esc(p.postcode):''}</span></li><li><span class="em-dot" aria-hidden="true"></span><span><b>${price}</b></span></li>${p.status?`<li><span class="em-dot" aria-hidden="true"></span><span>${esc(p.status)}</span></li>`:''}</ul>
     ${p.description?`<p class="cdesc">${esc(p.description)}</p>`:''}
     <div class="dc-foot"><div class="dc-note"><span class="cmeta">Posted by ${esc(p.contactName||'a member')} on ${fmtDate(p.createdAt)}${p.mine?' · your deal':''}</span></div>
-      <div class="dc-act"><a class="btn sm primary" href="mailto:${esc(p.contactEmail)}?subject=${subj}">Email</a>${p.contactPhone?`<a class="btn sm" href="tel:${esc(p.contactPhone.replace(/[^+\d]/g,''))}">${esc(p.contactPhone)}</a>`:''}${p.listingUrl?`<a class="btn sm" href="${esc(p.listingUrl)}" target="_blank" rel="noopener nofollow">Listing ↗</a>`:''}${p.canDelete?`<button class="btn sm ghost" data-cdel="${esc(p.id)}">Delete</button>`:''}</div></div>
+      <div class="dc-act"><a class="btn sm primary" href="mailto:${esc(p.contactEmail)}?subject=${subj}">Email</a><button class="btn sm" type="button" data-canalyse="${esc(p.id)}">Analyse</button>${p.contactPhone?`<a class="btn sm" href="tel:${esc(p.contactPhone.replace(/[^+\d]/g,''))}">${esc(p.contactPhone)}</a>`:''}${p.listingUrl?`<a class="btn sm" href="${esc(p.listingUrl)}" target="_blank" rel="noopener nofollow">Listing ↗</a>`:''}${p.canDelete?`<button class="btn sm ghost" data-cdel="${esc(p.id)}">Delete</button>`:''}</div>
+      <button class="btn sm ghost block" data-creplies="${esc(p.id)}" aria-expanded="${CR.open.has(p.id)}">${CR.open.has(p.id)?'Hide replies':replyLabel(p.replyCount)}</button></div>
+    ${CR.open.has(p.id)?`<div class="creplies">${repliesHTML(p.id)}</div>`:''}
   </article>`}
+/* ---------- replies on deals ---------- */
+const CR={open:new Set(),data:{},error:{}};
+const replyLabel=n=>n?`Replies (${n})`:'Reply';
+const when=t=>new Date(t).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+function noteHTML(n,del){const d=n.deal;
+  const card=d?`<div class="msg-deal"><span class="md-k">Posted a deal</span><b>${esc(d.title)}</b><span class="md-s">${esc(d.location)}${d.postcode?' '+esc(d.postcode):''} · ${d.priceType==='purchase'?`${gbp(d.price)} purchase`:`${gbp(d.price)}/month`}</span>
+    <div class="ctags"><span class="ctag hot">${esc(d.strategy)}</span><span class="ctag">${esc(d.propertyType)}</span>${d.beds!=null?`<span class="ctag">${d.beds===0?'Studio':d.beds+' bed'}</span>`:''}</div><button class="btn xs primary" type="button" data-viewdeal="${esc(d.id)}">View deal</button></div>`:'';
+  return `<div class="msg${n.mine?' mine':''}"><div class="msg-h"><b>${esc(n.mine?'You':n.authorName)}</b><span>${esc(when(n.createdAt))}</span>${n.canDelete?`<button class="msg-del" type="button" ${del}="${esc(n.id)}">Delete</button>`:''}</div><div class="msg-t">${esc(n.text)}</div>${card}</div>`}
+function repliesHTML(id){const list=CR.data[id];
+  const body=CR.error[id]?`<p class="muted">${esc(CR.error[id])}</p>`:!list?'<p class="muted">Loading replies…</p>':list.length?list.map(n=>noteHTML(n,'data-rdel')).join(''):'<p class="muted">No replies yet. Ask a question or share what you know about this deal.</p>';
+  return `${body}<form class="creply-form" data-rform="${esc(id)}"><label class="sr" for="cr-${esc(id)}">Your reply</label><textarea class="inp" id="cr-${esc(id)}" maxlength="1000" placeholder="Write a reply…"></textarea><button class="btn sm primary" type="submit">Reply</button></form>`}
+function redrawReplies(id){const card=$(`#cResults .dcard[data-cid="${CSS.escape(id)}"]`);const box=card&&card.querySelector('.creplies');if(!box)return;
+  const ta=box.querySelector('textarea'),draft=ta?ta.value:'',focused=document.activeElement===ta;box.innerHTML=repliesHTML(id);
+  const nt=box.querySelector('textarea');nt.value=draft;if(focused)nt.focus()}
+async function loadReplies(id){delete CR.error[id];try{CR.data[id]=(await cApi({url:'?replies='+encodeURIComponent(id)})).replies||[];
+  const p=(CM.posts||[]).find(x=>x.id===id);if(p)p.replyCount=CR.data[id].length}catch(e){CR.error[id]=e.message}redrawReplies(id)}
 function renderCommunityList(){const box=$('#cResults');if(!box)return;
   if(CM.error&&!CM.posts){box.innerHTML=`<div class="fempty"><h2>Couldn't load deals</h2><p>${esc(CM.error)}</p><button class="btn sm" id="cRetry">Try again</button></div>`;return}
   if(!CM.posts){box.innerHTML='<div class="fempty"><h2>Loading deals…</h2></div>';return}
@@ -2072,23 +2172,161 @@ function renderCommunityList(){const box=$('#cResults');if(!box)return;
   if(!all){box.innerHTML='<div class="fempty"><h2>No deals posted yet</h2><p>Be the first: post a deal where you have already contacted the landlord or agent.</p></div>';return}
   box.innerHTML=`<div class="ftool"><div class="fsum"><b class="mono">${rows.length}</b> of <b class="mono">${all}</b> deal${all===1?'':'s'}</div></div>`+
     (rows.length?`<div class="cgrid">${rows.map(cCard).join('')}</div>`:'<div class="fempty"><h2>No deals match these filters</h2><p>Try a wider price range, another location or a different strategy.</p></div>')}
-function readCF(){CF={loc:$('#cfLoc').value,priceType:$('#cfPriceType').value,min:$('#cfMin').value,max:$('#cfMax').value,type:$('#cfType').value,strat:$('#cfStrat').value};renderCommunityList()}
+function readCF(){CF={region:$('#cfRegion').value,loc:$('#cfLoc').value,priceType:$('#cfPriceType').value,min:$('#cfMin').value,max:$('#cfMax').value,type:$('#cfType').value,strat:$('#cfStrat').value};renderCommunityList()}
 $('#cFilters').addEventListener('input',readCF);$('#cFilters').addEventListener('change',readCF);
-$('#cReset').addEventListener('click',()=>{CF=CF_DEF();$('#cfLoc').value='';$('#cfPriceType').value='any';$('#cfMin').value='';$('#cfMax').value='';$('#cfType').value='any';$('#cfStrat').value='any';renderCommunityList()});
+$('#cReset').addEventListener('click',()=>{CF=CF_DEF();$('#cfRegion').value='any';$('#cfLoc').value='';$('#cfPriceType').value='any';$('#cfMin').value='';$('#cfMax').value='';$('#cfType').value='any';$('#cfStrat').value='any';renderCommunityList()});
 function cFormShow(on){const f=$('#cForm'),t=$('#cPostToggle');f.hidden=!on;t.setAttribute('aria-expanded',String(on));t.textContent=on?'Close form':'Post a deal';
-  const m=$('#cMsg');m.textContent='';m.classList.remove('bad');if(on)f.elements.title.focus()}
+  const m=$('#cMsg');m.textContent='';m.classList.remove('bad');
+  // Opened from the region chat: start with that region, and share the deal in its room.
+  if(on&&CH.on){const r=REGIONS.find(x=>roomId(x)===CH.room);if(r)f.elements.region.value=r;$('#cSubmit').textContent='Post deal to chat'}else $('#cSubmit').textContent='Post deal';
+  if(on){f.elements.title.focus({preventScroll:true});f.scrollIntoView({block:'start',behavior:reduced()?'auto':'smooth'})}}
 $('#cPostToggle').addEventListener('click',()=>cFormShow($('#cForm').hidden));
 $('#cCancel').addEventListener('click',()=>cFormShow(false));
 $('#cForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget,btn=$('#cSubmit'),m=$('#cMsg');
-  const body=Object.fromEntries(new FormData(f).entries());btn.disabled=true;m.classList.remove('bad');m.textContent='Posting…';
+  const body=Object.fromEntries(new FormData(f).entries());if(CH.on)body.announce=true;btn.disabled=true;m.classList.remove('bad');m.textContent='Posting…';
   try{const d=await cApi({method:'POST',body:JSON.stringify(body)});CM.posts=[d.post,...(CM.posts||[])];
-    ['title','location','postcode','price','beds','status','description','listingUrl'].forEach(k=>{f.elements[k].value=''});f.elements.strategy.value='';f.elements.propertyType.value='';
-    cFormShow(false);renderCommunityList();toast('Your deal is posted.')}
+    ['title','location','postcode','price','beds','status','description','listingUrl'].forEach(k=>{f.elements[k].value=''});f.elements.strategy.value='';f.elements.propertyType.value='';f.elements.region.value='';$('#cPaste').value='';$('#cPasteMsg').textContent='';
+    cFormShow(false);renderCommunityList();
+    if(d.message&&d.room){CH.msgs[d.room]=[...(CH.msgs[d.room]||[]),d.message];if(CH.on){if(d.room===CH.room){CH.jump=true;renderChat()}else openRoom(d.room)}
+      toast(`Your deal is posted and shared in the ${REGIONS.find(x=>roomId(x)===d.room)||''} chat.`)}else toast('Your deal is posted.')}
   catch(err){m.classList.add('bad');m.textContent=err.message}finally{btn.disabled=false}});
 $('#cResults').addEventListener('click',async e=>{if(e.target.closest('#cRetry')){loadCommunity();return}
+  const rt=e.target.closest('[data-creplies]');if(rt){const id=rt.dataset.creplies;if(CR.open.has(id))CR.open.delete(id);else{CR.open.add(id);loadReplies(id)}renderCommunityList();
+    if(CR.open.has(id)){const ta=$(`#cr-${CSS.escape(id)}`);if(ta)ta.focus({preventScroll:true})}return}
+  const rd=e.target.closest('[data-rdel]');if(rd){const id=rd.closest('.dcard').dataset.cid;if(!confirm('Delete this reply?'))return;rd.disabled=true;
+    try{await cApi({method:'DELETE',body:JSON.stringify({kind:'reply',postId:id,id:rd.dataset.rdel})});CR.data[id]=(CR.data[id]||[]).filter(n=>n.id!==rd.dataset.rdel);
+      const p=(CM.posts||[]).find(x=>x.id===id);if(p)p.replyCount=CR.data[id].length;redrawReplies(id);renderCommunityList()}catch(err){rd.disabled=false;toast(err.message)}return}
   const d=e.target.closest('[data-cdel]');if(!d)return;if(!confirm('Delete this deal from the Deal Community?'))return;d.disabled=true;
   try{await cApi({method:'DELETE',body:JSON.stringify({id:d.dataset.cdel})});CM.posts=CM.posts.filter(p=>p.id!==d.dataset.cdel);renderCommunityList();toast('Deal deleted.')}
   catch(err){d.disabled=false;toast(err.message)}});
+
+$('#cResults').addEventListener('submit',async e=>{const f=e.target.closest('[data-rform]');if(!f)return;e.preventDefault();const id=f.dataset.rform,ta=f.querySelector('textarea'),btn=f.querySelector('button'),text=ta.value.trim();
+  if(!text){ta.focus();return}btn.disabled=true;
+  try{const d=await cApi({method:'POST',body:JSON.stringify({kind:'reply',postId:id,text})});CR.data[id]=[...(CR.data[id]||[]),d.reply];ta.value='';
+    const p=(CM.posts||[]).find(x=>x.id===id);if(p)p.replyCount=CR.data[id].length;redrawReplies(id)}
+  catch(err){toast(err.message)}finally{btn.disabled=false}});
+$('#cResults').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&e.target.closest('[data-rform] textarea')){e.preventDefault();e.target.form.requestSubmit()}});
+
+/* ---------- paste a deal into the post form ---------- */
+const PC_REGION=[['London',/^(E|EC|N|NW|SE|SW|W|WC|BR|CR|DA|EN|HA|IG|KT|RM|SM|TW|UB)$/],['North East',/^(NE|SR|DH|DL|TS)$/],
+  ['North West',/^(M|L|WA|WN|BL|BB|CH|CW|FY|LA|OL|PR|SK|CA)$/],['Yorkshire and Humber',/^(LS|BD|HD|HG|HU|HX|S|WF|YO|DN)$/],
+  ['Midlands',/^(B|CV|DE|DY|LE|NG|NN|ST|WS|WV|WR|HR|TF|LN)$/],['South West',/^(BA|BH|BS|DT|EX|GL|PL|SN|SP|TA|TQ|TR)$/],
+  ['South East',/^(BN|CT|GU|ME|MK|OX|PO|RG|RH|SL|SO|TN|HP|LU|AL|SG|CM|CO|SS|WD)$/]];
+const CITY_REGION=[['London',/\blondon\b/],['North West',/\b(manchester|liverpool|salford|stockport|bolton|preston|blackpool|chester|warrington|wigan|oldham)\b/],
+  ['North East',/\b(newcastle|sunderland|durham|middlesbrough|gateshead)\b/],['Yorkshire and Humber',/\b(leeds|sheffield|bradford|york|hull|huddersfield|wakefield|doncaster|harrogate)\b/],
+  ['Midlands',/\b(birmingham|coventry|nottingham|leicester|derby|wolverhampton|stoke|northampton|walsall|worcester|lincoln)\b/],
+  ['South West',/\b(bristol|bath|exeter|plymouth|bournemouth|swindon|gloucester|cheltenham|torquay)\b/],
+  ['South East',/\b(brighton|oxford|reading|southampton|portsmouth|milton keynes|canterbury|guildford|crawley|luton|watford|slough)\b/]];
+function parseDeal(raw){const t=String(raw||''),lo=t.toLowerCase(),out={};
+  const clean=l=>l.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/^[\s\-*•·#>]+/,'').replace(/\s+/g,' ').trim();
+  const lines=t.split(/\n/).map(clean).filter(Boolean);
+  // money: skip deposits, nightly rates and fees; rent if it says per month, purchase if it says price/asking or is large
+  const money=[...t.matchAll(/£\s?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(k|m)?\b/gi)].map(m=>{let v=parseFloat(m[1].replace(/,/g,''));if(/k/i.test(m[2]||''))v*=1e3;if(/m/i.test(m[2]||''))v*=1e6;
+    const before=lo.slice(Math.max(0,m.index-28),m.index).split(/[,.;\n]/).pop(),after=lo.slice(m.index+m[0].length,m.index+m[0].length+22);return{v,before,after}})
+    .filter(x=>x.v>0&&!/deposit|bond|nightly|per night|a night|fee|cleaning|bills? only|council tax|holding/.test(x.before)&&!/^\s*(per night|a night|\/night|pn\b|nightly|deposit|fee)/.test(x.after));
+  const isPcm=x=>/^\s*(pcm|per month|a month|\/month|\/mo\b|p\/?m\b|monthly|per calendar month)/.test(x.after)||/rent|pcm|per month/.test(x.before);
+  const isBuy=x=>/price|asking|purchase|guide|offers|for sale|sale|valuation|value|oieo|oiro/.test(x.before)||/^\s*(oieo|oiro|guide|asking)/.test(x.after);
+  const pick=money.find(isPcm)||money.find(isBuy)||money[0];
+  if(pick){out.price=Math.round(pick.v);out.priceType=isPcm(pick)?'pcm':isBuy(pick)||pick.v>=20000?'purchase':'pcm'}
+  const bed=lo.match(/(\d+)\s*(?:-\s*)?(?:bed(?:room)?s?|br)\b/);if(/\bstudio\b/.test(lo))out.beds=0;else if(bed)out.beds=+bed[1];
+  out.propertyType=/\bhmo\b/.test(lo)?'HMO':/\bstudio\b/.test(lo)?'Studio':/\b(commercial|office|retail|shop|warehouse|industrial|unit)\b/.test(lo)&&!/\b(flat|house|apartment)\b/.test(lo)?'Commercial'
+    :/\b(house|terrace[d]?|semi|detached|bungalow|cottage|townhouse)\b/.test(lo)?'House':/\b(flat|apartment|maisonette|penthouse)\b/.test(lo)?'Flat':'';
+  out.strategy=/\b(r2sa|sa|serviced accommodation|short[- ]?lets?|airbnb)\b/.test(lo)?'R2SA':/\b(r2r|rent[- ]to[- ]rent)\b/.test(lo)?'R2R':/\bbrrr\b/.test(lo)?'BRRR'
+    :/\blease option\b/.test(lo)?'Lease option':/\b(flip|refurb and sell)\b/.test(lo)?'Flip':/\bhmo\b/.test(lo)?'HMO':/\b(btl|buy[- ]to[- ]let)\b/.test(lo)?'BTL':'';
+  const pc=t.toUpperCase().match(/\b([A-Z]{1,2}\d[A-Z\d]?)(?:\s*\d[A-Z]{2})?\b/);if(pc)out.postcode=pc[1];
+  // location: a line marked with a pin or Location/Area/Address, else the town before the postcode
+  const locLine=(t.split(/\n/).find(l=>/📍/.test(l))||'')||(t.match(/^\s*(?:location|area|address|town)\s*[:\-]\s*(.+)$/im)||[])[1]||'';
+  let loc=clean(String(locLine)).replace(/\((?:zone|z)\s*\d[^)]*\)/ig,'').replace(/^(location|area|address|town)\s*[:\-]\s*/i,'');
+  if(out.postcode)loc=loc.replace(new RegExp('\\b'+out.postcode+'\\b.*$','i'),'');loc=loc.replace(/[,\s]+$/,'').trim();
+  if(!loc&&out.postcode){const m=t.match(new RegExp("([A-Z][a-zA-Z']+(?:\\s+[A-Z][a-zA-Z']+){0,2})[,\\s]+"+out.postcode+"\\b"));if(m&&!/^(HMO|BTL|R2SA|R2R|BRRR|SA)$/.test(m[1]))loc=m[1]}
+  if(!loc){const c=[...CITY_REGION.flatMap(([,re])=>[re])].map(re=>(lo.match(re)||[])[0]).find(Boolean);if(c)loc=c.replace(/\b\w/g,x=>x.toUpperCase())}
+  if(loc)out.location=loc.slice(0,80);
+  const area=out.postcode&&out.postcode.match(/^[A-Z]+/)[0];out.region=(area&&(PC_REGION.find(([,re])=>re.test(area))||[])[0])||(CITY_REGION.find(([,re])=>re.test(lo))||[])[0]||'';
+  const url=t.match(/https?:\/\/\S+/);if(url)out.listingUrl=url[0].replace(/[)\].,]+$/,'');
+  if(/\bagent\b|letting agency|estate agent/.test(lo))out.contacted='Agent';else if(/\blandlord\b|owner/.test(lo))out.contacted='Landlord';
+  // title: the first line that reads like a headline, else built from the details
+  const head=lines.find(l=>l.length>=6&&!/^https?:/i.test(l)&&!/^(rent|deposit|nightly|price|location|area|address)\b/i.test(l)&&!/^deal\s*\d/i.test(l)&&l!==clean(String(locLine)));
+  const built=[out.beds===0?'Studio':out.beds?out.beds+' bed '+(out.propertyType==='HMO'?'HMO':(out.propertyType||'property').toLowerCase()):out.propertyType,out.location?'in '+out.location:''].filter(Boolean).join(' ');
+  out.title=(head&&(head.length<=60||!built)?head:built||head||'').slice(0,120);
+  out.description=t.trim().slice(0,2000);return out}
+function fillFromPaste(auto){const f=$('#cForm'),msg=$('#cPasteMsg'),text=$('#cPaste').value;if(!text.trim()){if(!auto){msg.textContent='Paste your deal first.';$('#cPaste').focus()}return}
+  const d=parseDeal(text),set=[];
+  const put=(name,val)=>{if(val===''||val==null)return;const el=f.elements[name];if(!el)return;
+    if(el.tagName==='SELECT'&&![...el.options].some(o=>o.value===String(val)))return;el.value=String(val);set.push(el)};
+  put('title',d.title);put('location',d.location);put('postcode',d.postcode);put('region',d.region);put('strategy',d.strategy);put('propertyType',d.propertyType);
+  put('price',d.price);put('priceType',d.priceType);put('beds',d.beds);put('contacted',d.contacted);put('listingUrl',d.listingUrl);
+  if(!f.elements.description.value.trim())put('description',d.description);
+  set.forEach(el=>{el.classList.remove('filled');void el.offsetWidth;el.classList.add('filled');setTimeout(()=>el.classList.remove('filled'),2200)});
+  const missing=['title','location','region','strategy','propertyType','price'].filter(n=>!f.elements[n].value).map(n=>({title:'title',location:'town or area',region:'region',strategy:'strategy',propertyType:'property type',price:'price'})[n]);
+  msg.classList.toggle('bad',!!missing.length);
+  msg.textContent=set.length?`Filled in ${set.length} field${set.length>1?'s':''}. ${missing.length?`Still needed: ${missing.join(', ')}.`:'Check them, then post.'}`:"Couldn't pick out the details. Fill in the form below."}
+$('#cFill').addEventListener('click',()=>fillFromPaste(false));
+$('#cPaste').addEventListener('paste',()=>setTimeout(()=>fillFromPaste(true),0));
+$('#cAnalyse').addEventListener('click',()=>{const f=$('#cForm'),text=$('#cPaste').value.trim()||postText(Object.fromEntries(new FormData(f).entries()));
+  if(!text.replace(/\s|:/g,'').length){$('#cPasteMsg').textContent='Paste your deal or fill in the form first.';return}analyseText(text,f.elements.title.value||parseDeal(text).title)});
+// A community deal as text the AI can analyse.
+function postText(p){const price=+p.price?(p.priceType==='purchase'?`Purchase price ${gbp(+p.price)}`:`Rent ${gbp(+p.price)} a month`):'';
+  return [p.title,[p.location,p.postcode].filter(Boolean).join(' ')&&`Location: ${[p.location,p.postcode].filter(Boolean).join(' ')}`,p.region&&`Region: ${p.region}`,
+    p.strategy&&`Strategy: ${p.strategy}`,p.propertyType&&`Property type: ${p.propertyType}`,p.beds!==''&&p.beds!=null&&`Bedrooms: ${+p.beds===0?'Studio':p.beds}`,price,
+    p.contacted&&`${p.contacted} already contacted`,p.status&&`Status: ${p.status}`,p.description&&p.description.trim()!==String(p.title).trim()&&p.description,p.listingUrl&&`Listing: ${p.listingUrl}`].filter(Boolean).join('\n')}
+$('#cResults').addEventListener('click',e=>{const a=e.target.closest('[data-canalyse]');if(!a)return;const p=(CM.posts||[]).find(x=>x.id===a.dataset.canalyse);if(p)analyseText(postText(p),p.title)});
+
+/* ---------- region chat ---------- */
+const CH={on:false,room:roomId(REGIONS[0]),msgs:{},timer:null,loading:false};
+const FOLDER='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M1.75 4.25c0-.55.45-1 1-1h3.1l1.4 1.5h6c.55 0 1 .45 1 1v6.5c0 .55-.45 1-1 1H2.75c-.55 0-1-.45-1-1z"/></svg>';
+$('#chRooms').innerHTML=REGIONS.map(r=>`<button class="chat-room" type="button" data-room="${roomId(r)}">${FOLDER}<span>${esc(r)}</span></button>`).join('');
+function cTab(chat){CH.on=chat;$('#cTabDeals').setAttribute('aria-pressed',String(!chat));$('#cTabChat').setAttribute('aria-pressed',String(chat));
+  $('#cDealsPane').hidden=chat;$('#cChatPane').hidden=!chat;cFormShow(false);
+  if(chat)openRoom(CH.room);else stopChat()}
+function renderChat(){const room=CH.room,list=CH.msgs[room],log=$('#chLog');const atEnd=log.scrollHeight-log.scrollTop-log.clientHeight<40;
+  $('#chTitle').textContent=REGIONS.find(r=>roomId(r)===room)||'';
+  $$('#chRooms [data-room]').forEach(b=>b.setAttribute('aria-current',String(b.dataset.room===room)));
+  log.innerHTML=!list?'<div class="fempty"><h2>Loading messages…</h2></div>':list.length?list.map(n=>noteHTML(n,'data-mdel')).join('')
+    :`<div class="fempty"><h2>No messages yet</h2><p>Start the conversation with members in ${esc($('#chTitle').textContent)}.</p></div>`;
+  if(atEnd||!list||CH.jump){log.scrollTop=log.scrollHeight;CH.jump=false}}
+async function loadRoom(room){if(CH.loading)return;CH.loading=true;
+  try{const m=(await cApi({url:'?room='+encodeURIComponent(room)})).messages||[];CH.msgs[room]=m;$('#chErr').textContent=''}catch(e){$('#chErr').textContent=e.message;if(!CH.msgs[room])CH.msgs[room]=[]}
+  finally{CH.loading=false}if(room===CH.room)renderChat()}
+function stopChat(){clearInterval(CH.timer);CH.timer=null}
+function openRoom(room){CH.room=room;CH.jump=true;$('#chErr').textContent='';renderChat();loadRoom(room);stopChat();
+  // Check for new messages while the chat is open and the tab is visible.
+  CH.timer=setInterval(()=>{if(!CH.on||curView!=='community'){stopChat();return}if(!document.hidden)loadRoom(CH.room)},15000)}
+$('#cTabDeals').addEventListener('click',()=>cTab(false));
+$('#cTabChat').addEventListener('click',()=>cTab(true));
+// Community tutorial: plays when opened, pauses when hidden.
+$('#cTut').addEventListener('toggle',e=>{const v=e.currentTarget.querySelector('video');if(e.currentTarget.open){try{v.play().catch(()=>{})}catch(err){}}else v.pause()});
+$('#chPost').addEventListener('click',()=>cFormShow(true));
+// "View deal" on a deal shared in the chat: show it in the Deals list with its replies open.
+async function viewDeal(id){cTab(false);$('#cReset').click();
+  if(!(CM.posts||[]).some(p=>p.id===id))await loadCommunity();
+  if(!(CM.posts||[]).some(p=>p.id===id)){toast('That deal has been removed.');return}
+  if(!CR.open.has(id)){CR.open.add(id);loadReplies(id)}renderCommunityList();
+  const card=$(`#cResults .dcard[data-cid="${CSS.escape(id)}"]`);if(card){card.scrollIntoView({block:'center',behavior:reduced()?'auto':'smooth'});card.classList.remove('just-open');void card.offsetWidth;card.classList.add('just-open')}}
+$('#chRooms').addEventListener('click',e=>{const b=e.target.closest('[data-room]');if(b&&b.dataset.room!==CH.room)openRoom(b.dataset.room)});
+$('#chForm').addEventListener('submit',async e=>{e.preventDefault();const ta=$('#chText'),btn=$('#chSend'),text=ta.value.trim(),room=CH.room;if(!text){ta.focus();return}
+  btn.disabled=true;$('#chErr').textContent='';
+  try{const d=await cApi({method:'POST',body:JSON.stringify({kind:'message',room,text})});CH.msgs[room]=[...(CH.msgs[room]||[]),d.message];ta.value='';CH.jump=true;if(room===CH.room)renderChat()}
+  catch(err){$('#chErr').textContent=err.message}finally{btn.disabled=false;ta.focus()}});
+$('#chText').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('#chForm').requestSubmit()}});
+$('#chLog').addEventListener('click',async e=>{const v=e.target.closest('[data-viewdeal]');if(v){viewDeal(v.dataset.viewdeal);return}
+  const b=e.target.closest('[data-mdel]');if(!b||!confirm('Delete this message?'))return;const room=CH.room;b.disabled=true;
+  try{await cApi({method:'DELETE',body:JSON.stringify({kind:'message',room,id:b.dataset.mdel})});CH.msgs[room]=(CH.msgs[room]||[]).filter(n=>n.id!==b.dataset.mdel);renderChat()}
+  catch(err){b.disabled=false;toast(err.message)}});
+
+/* ---------- tutorial links: centre the video on screen and start it ---------- */
+document.addEventListener('click',e=>{const a=e.target.closest('a[href="#tutorial"]');if(!a)return;const sec=$('#tutorial'),media=sec&&sec.querySelector('.tutorial-media');if(!media)return;
+  e.preventDefault();media.scrollIntoView({block:'center',behavior:reduced()?'auto':'smooth'});
+  sec.classList.remove('is-flash');void sec.offsetWidth;sec.classList.add('is-flash');
+  const v=media.querySelector('video');if(v){try{v.play().catch(()=>{})}catch(err){}}});
+
+/* ---------- Qp Digital badge: tuck down to the logo when it would cover a button or link ---------- */
+{const qp=$('.qp-badge');let full=0,queued=false;
+  const check=()=>{queued=false;if(!qp)return;const r=qp.getBoundingClientRect();if(!qp.classList.contains('is-tucked'))full=r.width;
+    const L=r.right-(full||r.width),hit=[.1,.3,.5,.7,.9].some(fx=>[.2,.5,.8].some(fy=>document.elementsFromPoint(L+(r.right-L)*fx,r.top+r.height*fy)
+      .some(el=>!qp.contains(el)&&el.matches('a,button,input,select,textarea,label,video,[role="button"]'))));
+    qp.classList.toggle('is-tucked',hit)};
+  const queue=()=>{if(!queued){queued=true;requestAnimationFrame(check)}};
+  addEventListener('scroll',queue,{passive:true});addEventListener('resize',queue);new MutationObserver(queue).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class']});setTimeout(queue,1800)}
 
 /* ---------- boot ---------- */
 const siteIntro=$('#siteIntro');if(siteIntro)setTimeout(()=>siteIntro.remove(),1700);
