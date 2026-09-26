@@ -17,7 +17,7 @@ export const LEVELS: Record<LevelId, { credits: number; model: string; effort: E
 const FALLBACK_MODEL = "gpt-5-mini";
 
 // Weekly credits on paid plans, shared by deal analyses and Deal Finder searches at every level.
-export const WEEKLY_CREDITS: Record<string, number> = { Pro: 60, Max5: 300, Max20: 1200, TeamStd: 60, TeamPrem: 300 };
+export const WEEKLY_CREDITS: Record<string, number> = { Pro: 60, Max5: 300, Max20: 1200 };
 
 export const accounts = () => getStore({ name: "deal-premium-accounts", consistency: "strong" });
 export const jobs = () => getStore({ name: "deal-analysis-jobs", consistency: "strong" });

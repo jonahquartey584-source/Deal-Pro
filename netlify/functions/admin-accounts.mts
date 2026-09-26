@@ -31,7 +31,7 @@ export default async (request: Request, _context: Context) => {
   if (request.method === "PATCH") {
     const state = await store.get(key, { type: "json" }) as Record<string, unknown> | null;
     if (!state) return json({ error: "Account data was not found." }, 404);
-    if (body.plan && ["Free", "Pro", "Max5", "Max20", "TeamStd", "TeamPrem"].includes(body.plan)) state.plan = body.plan;
+    if (body.plan && ["Free", "Pro", "Max5", "Max20"].includes(body.plan)) state.plan = body.plan;
     if (typeof body.enabled === "boolean") state.accountEnabled = body.enabled;
     const oldMeta = (await store.getMetadata(key))?.metadata;
     await store.setJSON(key, state, { metadata: { ...(oldMeta || {}), updatedAt: new Date().toISOString() } });

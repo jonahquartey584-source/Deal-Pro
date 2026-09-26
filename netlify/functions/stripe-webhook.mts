@@ -8,20 +8,10 @@ import type { Config, Context } from "@netlify/functions";
 // browser sent, so nobody can pay for Premium and receive Max. Amounts are in pence;
 // override with STRIPE_PLAN_AMOUNTS, e.g. {"3900":"Pro","10000":"Max5"}.
 const DEFAULT_PLAN_AMOUNTS: Record<string, string> = { "3900": "Pro", "10000": "Max5", "20000": "Max20" };
-// Team plans are charged per seat (minimum 5), so the total is a multiple of the seat price.
-// Monthly seat prices, in pence.
-const SEAT_PRICES: Record<string, string> = { "3500": "TeamStd", "11500": "TeamPrem" };
-const MIN_SEATS = 5;
 function planForAmount(amount: number) {
-  const exact = planAmounts()[String(amount)];
-  if (exact) return exact;
-  for (const [seat, plan] of Object.entries(SEAT_PRICES)) {
-    const price = Number(seat);
-    if (amount % price === 0 && amount / price >= MIN_SEATS) return plan;
-  }
-  return undefined;
+  return planAmounts()[String(amount)];
 }
-const PLANS = ["Pro", "Max5", "Max20", "TeamStd", "TeamPrem"];
+const PLANS = ["Pro", "Max5", "Max20"];
 const TOLERANCE_SECONDS = 300;
 
 const accounts = () => getStore({ name: "deal-premium-accounts", consistency: "strong" });

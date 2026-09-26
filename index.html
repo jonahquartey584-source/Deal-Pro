@@ -835,7 +835,6 @@ td.t{text-align:right;color:var(--ink-2)}
     <section class="hsec" aria-labelledby="hPlans">
       <div class="hsec-h"><h2 class="h2" id="hPlans">Plans</h2><p>Start free with 2 deal analyses, then subscribe for unlimited analyses and more usage.</p></div>
       <div class="hplans" id="homePlans"></div>
-      <p class="note"><button class="linkbtn" id="homeTeam">Team plans available</button></p>
     </section>
     <section class="hsec contact-grid" aria-labelledby="contactTitle"><div class="contact-copy"><p class="eyebrow"><span class="eb-dot"></span>Contact Deal Pro</p><h2 class="h2" id="contactTitle">Have a question?</h2><p>Send an enquiry about Deal Pro, subscriptions or your account. We will use your details only to respond unless you separately choose to receive marketing.</p></div><form class="contact-form" id="contactForm" name="deal-pro-enquiry" method="POST" data-netlify="true" netlify-honeypot="bot-field"><input type="hidden" name="form-name" value="deal-pro-enquiry"><input type="hidden" name="subject" value="New Deal Pro enquiry"><label class="bot-field">Do not complete this field <input name="bot-field"></label><label class="f"><span>Name</span><input class="inp" name="name" autocomplete="name" required></label><label class="f"><span>Email</span><input class="inp" name="email" type="email" autocomplete="email" required></label><label class="f"><span>Enquiry</span><textarea class="inp" name="message" rows="6" required></textarea></label><label class="check"><input type="checkbox" name="marketing" value="yes"><span>I would like to receive Deal Pro marketing emails. This is optional and I can unsubscribe at any time.</span></label><button class="btn primary" type="submit">Send enquiry</button><p class="contact-status" id="contactStatus" role="status">Read how we use your information in our <a href="/privacy.html">Privacy Notice</a>.</p></form></section>
     <div class="home-foot"><p>AI results are decision-support only. Always verify legal, planning, licensing and financial information independently.</p><nav class="legal-links" aria-label="Legal"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/cookies.html">Cookies</a><a href="mailto:jonahquartey584@gmail.com">Contact</a></nav></div>
@@ -1160,7 +1159,7 @@ td.t{text-align:right;color:var(--ink-2)}
       </div>
     </header>
     <div class="plan-ctl">
-      <div class="seg segb" role="group" aria-label="Plan type"><button id="ptInd" aria-pressed="true">Individual</button><button id="ptTeam" aria-pressed="false">Team</button></div>
+      <div class="seg segb" role="group" aria-label="Plan type" hidden><button id="ptInd" aria-pressed="true">Individual</button><button id="ptTeam" aria-pressed="false">Team</button></div>
       <div class="bill" hidden><span id="billM">Monthly</span><button class="switch" id="billSw" role="switch" aria-checked="false" aria-label="Annual billing"><span class="knob"></span></button><span id="billA">Annual <span class="save">save up to 20%</span></span></div>
     </div>
     <div class="plans" id="plans"></div>
@@ -1329,8 +1328,7 @@ function secondDeal(){const d=sampleDeal();Object.assign(d,{id:'d2',name:'Isling
   units:[{label:'Studio 1',rent:1700,dep:1700,rate:180},{label:'Studio 2',rent:1700,dep:1569,rate:180},{label:'Studio 3',rent:1700,dep:1700,rate:180}]});return d}
 function freshDeal(){const d=sampleDeal();Object.assign(d,{id:'d'+Date.now(),name:'New deal',area:'',london:false,status:'Checking',units:[{label:'Unit 1',rent:0,dep:0,rate:0}]});return d}
 
-const PLAN_DEFS={Free:{name:'Free',s:6,w:6},Pro:{name:'Premium',s:30,w:300},Max5:{name:'Max 5x',s:150,w:1500},Max20:{name:'Max 20x',s:600,w:6000},
-  TeamStd:{name:'Team Standard',s:40,w:400},TeamPrem:{name:'Team Premium',s:200,w:2000}};
+const PLAN_DEFS={Free:{name:'Free',s:6,w:6},Pro:{name:'Premium',s:30,w:300},Max5:{name:'Max 5x',s:150,w:1500},Max20:{name:'Max 20x',s:600,w:6000}};
 // Stripe payment links. A plan with no link here can't be bought online yet, so its
 // button asks the customer to get in touch instead of opening the wrong checkout.
 const CHECKOUT={
@@ -1349,9 +1347,9 @@ let S=store.get('state',null);
 if(!S||!S.deal){S={plan:'Free',deal:freshDeal(),saved:[]}}
 // fields added for per-deal unlocks; older saved state loads with these defaults
 // migrate older state: credits are replaced by usage limits; old plan names map to the new plans
-{const MAP={Starter:'Free',Team:'TeamStd'};if(S.plan==null)S.plan='Free';if(MAP[S.plan])S.plan=MAP[S.plan];if(!PLAN_DEFS[S.plan])S.plan='Pro';delete S.credits;
+{const MAP={Starter:'Free',Team:'Free',TeamStd:'Free',TeamPrem:'Free'};if(S.plan==null)S.plan='Free';if(MAP[S.plan])S.plan=MAP[S.plan];if(!PLAN_DEFS[S.plan])S.plan='Pro';delete S.credits;
   S.usage=Object.assign({sStart:null,sUsed:0,wStart:null,wUsed:0},S.usage);S.extra=Object.assign({on:false,cap:20,spent:0,month:null},S.extra);
-  if(!(S.timeOffset>=0))S.timeOffset=0;S.billing='monthly';/* monthly billing only */if(!(S.seats>=5))S.seats=5;if(S.plansTab!=='team')S.plansTab='individual';if(S.maxTier!=='20')S.maxTier='5';}
+  if(!(S.timeOffset>=0))S.timeOffset=0;S.billing='monthly';/* monthly billing only */if(!(S.seats>=5))S.seats=5;S.plansTab='individual';/* team plans removed */if(S.maxTier!=='20')S.maxTier='5';}
 if(!Array.isArray(S.analysedDealIds))S.analysedDealIds=[];
 if(!Array.isArray(S.unlocked))S.unlocked=[];if(!Array.isArray(S.agreements))S.agreements=[];if(!(S.dealFee>=0))S.dealFee=500;if(!Array.isArray(S.saved))S.saved=[];
 const save=()=>{store.set('state',S);window.dispatchEvent(new CustomEvent('dealpro:state-saved',{detail:S}))};
@@ -1371,7 +1369,7 @@ function fmtLeft(ms){const m=Math.max(1,Math.ceil(ms/60000)),hr=Math.floor(m/60)
 function nextMonth(t){const d=new Date(t);return new Date(d.getFullYear(),d.getMonth()+1,1)}
 const FEAT_NAME={import:'Advert import',dd:'AI due diligence',pack:'Deal packs'};
 function limitNote(where,kind,feat){const el=$(where);const u=S.usage;let msg;
-  if(kind==='feature')msg=`${FEAT_NAME[feat]} ${feat==='pack'?'are':'is'} included with Premium, Max and Team plans.`;
+  if(kind==='feature')msg=`${FEAT_NAME[feat]} ${feat==='pack'?'are':'is'} included with Premium and Max plans.`;
   else if(kind==='weekly')msg=`You've reached your weekly limit. It resets ${wkday(u.wStart+WEEK)}.`;
   else if(kind==='cap')msg=`You've reached your extra usage cap for this month. Raise the cap in Usage, or wait until it resets on ${nextMonth(now()).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}.`;
   else msg=`You've reached your session limit. It resets at ${hhmm(u.sStart+SESSION)}.`;
@@ -1696,18 +1694,9 @@ function renderPlans(){
       <div class="seg segb tier" role="group" aria-label="Max usage tier"><button id="maxT5" data-tier="5" aria-pressed="${mt==='5'}">5x</button><button id="maxT20" data-tier="20" aria-pressed="${mt==='20'}">20x</button></div>
       <div class="price"><span class="mono">£${mt==='20'?200:100}</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
       <div class="lead">Everything in Premium, plus:</div>${feats([`${mt}x more usage than Premium per session`,`${mt==='20'?1200:300} AI credits a week`,'Higher limits','Early access to new features','Priority at peak times'])}${planBtn(mid)}</div>`}
-  else{const n=S.seats,sd=35,pr=115;const tot=x=>ann?`${gbp(x*n*12)} a year for ${n} seats`:`${gbp(x*n)} a month for ${n} seats`;
-    box.innerHTML=`<div class="plan"><div class="plan-h"><h3>Standard seat</h3></div><p class="plan-from">For sourcing teams</p>
-      <div class="price"><span class="mono">£${sd}</span><span class="per">per seat / month</span></div><div class="bill-note">${ann?'Billed annually':'Billed monthly'} · ${tot(sd)}</div>
-      <div class="lead">Everything in Premium, plus:</div>${feats(['More usage than Premium','60 AI credits a week per seat','Central billing','Admin controls','Shared deals'])}${planBtn('TeamStd',true)}</div>
-    <div class="plan"><div class="plan-h"><h3>Premium seat</h3></div><p class="plan-from">For the heaviest users on your team</p>
-      <div class="price"><span class="mono">£${pr}</span><span class="per">per seat / month</span></div><div class="bill-note">${ann?'Billed annually':'Billed monthly'} · ${tot(pr)}</div>
-      <div class="lead">Everything in Standard, plus:</div>${feats(['5x more usage than Standard seats','300 AI credits a week per seat'])}${planBtn('TeamPrem')}</div>`}
-  let st=$('#seatsRow');if(team&&!st){box.insertAdjacentHTML('beforebegin','<div class="seats" id="seatsRow"><span>Seats</span><span class="stepper"><button id="seatDec" aria-label="Fewer seats">−</button><input type="number" id="seatN" min="5" max="500" aria-label="Number of seats"><button id="seatInc" aria-label="More seats">+</button></span><span class="muted">Minimum 5 seats</span></div>');st=$('#seatsRow')}
-  if(st){st.hidden=!team;const sn=$('#seatN');if(document.activeElement!==sn)sn.value=S.seats}
   renderUsage()}
 $('#ptInd').addEventListener('click',()=>{S.plansTab='individual';save();renderPlans()});
-$('#ptTeam').addEventListener('click',()=>{S.plansTab='team';save();renderPlans()});
+
 $('#billSw').addEventListener('click',()=>{S.billing=S.billing==='annual'?'monthly':'annual';save();renderPlans()});
 document.addEventListener('click',e=>{const b=e.target.closest('#seatDec,#seatInc');if(!b)return;S.seats=Math.max(5,Math.min(500,(S.seats||5)+(b.id==='seatInc'?1:-1)));save();renderPlans()});
 document.addEventListener('input',e=>{if(e.target.id!=='seatN')return;const v=Math.round(+e.target.value);if(v>=5&&v<=500){S.seats=v;save();renderPlans()}});
@@ -2067,7 +2056,7 @@ function renderHome(){syncFee();
       <div class="strip mini">${fig('Upfront cash',gbp(f.up))}${fig('Surplus at 60%',gbp(f.t60),f.t60<0?' neg':'')}${fig('Surplus at 80%',gbp(f.t80),f.t80<0?' neg':'')}${fig('Break-even',isFinite(f.be)?pct(f.be):'Never')}</div></div>`;
   const hp=(n,pr,per,sub,feat)=>`<div class="hplan${feat?' feat':''}"><div class="plan-h"><h3>${n}</h3>${feat?'<span class="tag">Most popular</span>':''}</div><div class="price"><span class="mono">${pr}</span><span class="per">${per}</span></div><div class="sub">${sub}</div></div>`;
   $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 2 AI deal analyses.')+hp('Premium','£39','per month','For everyday sourcing. AI searches and analyses at every power level, billed monthly.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
-$('#homeTeam').addEventListener('click',()=>{S.plansTab='team';save();go('plans')});
+
 
 /* ---------- hero: slow liquid field, paused offscreen, static under reduced motion ---------- */
 const hero={c:$('#heroCanvas'),x:null,raf:0,frames:0,running:false,inView:true,staticDrawn:false,last:0};
