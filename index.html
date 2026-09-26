@@ -646,9 +646,13 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .msg-t{background:var(--surface-2);border:1px solid var(--line);border-radius:4px 10px 10px 10px;padding:8px 11px;font-size:13.5px;white-space:pre-line;overflow-wrap:anywhere}
 .msg.mine .msg-h{justify-content:flex-end}.msg.mine .msg-t{background:rgba(224,20,43,.12);border-color:rgba(224,20,43,.35);border-radius:10px 4px 10px 10px}
 .msg-del{border:0;background:none;padding:0;color:var(--muted);font:inherit;font-size:11.5px;cursor:pointer}.msg-del:hover{color:var(--bad)}
+.chat-acts{display:flex;gap:8px}
+.msg-deal{display:grid;gap:6px;margin-top:2px;padding:10px 12px;border:1px solid var(--line-2);border-left:2px solid var(--brand);border-radius:6px;background:var(--surface)}
+.msg-deal .md-k{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}.msg-deal b{font-size:14px}.msg-deal .md-s{font-size:12.5px;color:var(--ink-2)}.msg-deal .ctags{margin:0}.msg-deal .btn{justify-self:start}
+.msg-t:empty{display:none}
 .chat-form{display:flex;gap:10px;align-items:flex-end;padding:12px 16px;border-top:1px solid var(--line)}.chat-form textarea{flex:1;min-height:42px;max-height:160px;resize:vertical}
 .chat-err{margin:0;padding:0 16px;font-size:12.5px;color:var(--bad)}.chat-err:empty{display:none}.chat-err:not(:empty){padding-bottom:12px}
-@media (max-width:760px){.chat{grid-template-columns:minmax(0,1fr)}.chat-rooms{position:static;display:flex;overflow-x:auto;gap:6px;padding-bottom:4px}.chat-room{width:auto;white-space:nowrap;border:1px solid var(--line)}.msg{max-width:92%}}
+@media (max-width:760px){.chat-form{flex-wrap:wrap}.chat-acts{width:100%}.chat-acts .btn{flex:1}.chat{grid-template-columns:minmax(0,1fr)}.chat-rooms{position:static;display:flex;overflow-x:auto;gap:6px;padding-bottom:4px}.chat-room{width:auto;white-space:nowrap;border:1px solid var(--line)}.msg{max-width:92%}}
 .creplies{display:grid;gap:10px;padding-top:12px;border-top:1px solid var(--line)}.creplies .msg{max-width:100%}.creplies .msg-t{font-size:13px}
 .creply-form{display:grid;gap:8px}.creply-form textarea{min-height:60px;resize:vertical}.creply-form .btn{justify-self:end}
 .creplies .muted{font-size:12.5px}
@@ -1066,7 +1070,6 @@ td.t{text-align:right;color:var(--ink-2)}
       </div>
       <div class="ph-actions"><div class="seg segb" role="group" aria-label="Community view"><button id="cTabDeals" type="button" aria-pressed="true">Deals</button><button id="cTabChat" type="button" aria-pressed="false">Region chat</button></div><button class="btn primary" id="cPostToggle" aria-expanded="false" aria-controls="cForm">Post a deal</button></div>
     </header>
-    <div id="cDealsPane">
     <form class="panel cform" id="cForm" hidden novalidate>
       <div class="fs"><div class="fs-h"><h2>Post a deal</h2></div>
         <div class="fields">
@@ -1101,6 +1104,7 @@ td.t{text-align:right;color:var(--ink-2)}
       </div>
       <div class="fs cform-acts"><button class="btn primary" type="submit" id="cSubmit">Post deal</button><button class="btn ghost" type="button" id="cCancel">Cancel</button><span class="cmsg" id="cMsg" role="status"></span></div>
     </form>
+    <div id="cDealsPane">
     <div class="find">
       <div class="panel fpanel" id="cFilters">
         <div class="fs">
@@ -1126,7 +1130,7 @@ td.t{text-align:right;color:var(--ink-2)}
       <div class="panel chat-main">
         <div class="chat-h"><h2 id="chTitle">London</h2><span class="muted">Visible to signed-in Deal Pro members</span></div>
         <div class="chat-log" id="chLog" role="log" aria-live="polite" tabindex="0"></div>
-        <form class="chat-form" id="chForm"><label class="sr" for="chText">Message</label><textarea class="inp" id="chText" rows="2" maxlength="1000" placeholder="Message members in this region…"></textarea><button class="btn primary" type="submit" id="chSend">Send</button></form>
+        <form class="chat-form" id="chForm"><label class="sr" for="chText">Message</label><textarea class="inp" id="chText" rows="2" maxlength="1000" placeholder="Message members in this region…"></textarea><div class="chat-acts"><button class="btn" type="button" id="chPost">Post a deal</button><button class="btn primary" type="submit" id="chSend">Send</button></div></form>
         <p class="chat-err" id="chErr" role="status"></p>
       </div>
     </div>
@@ -2132,7 +2136,10 @@ function cCard(p){const price=p.priceType==='purchase'?`${gbp(p.price)} purchase
 const CR={open:new Set(),data:{},error:{}};
 const replyLabel=n=>n?`Replies (${n})`:'Reply';
 const when=t=>new Date(t).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-function noteHTML(n,del){return `<div class="msg${n.mine?' mine':''}"><div class="msg-h"><b>${esc(n.mine?'You':n.authorName)}</b><span>${esc(when(n.createdAt))}</span>${n.canDelete?`<button class="msg-del" type="button" ${del}="${esc(n.id)}">Delete</button>`:''}</div><div class="msg-t">${esc(n.text)}</div></div>`}
+function noteHTML(n,del){const d=n.deal;
+  const card=d?`<div class="msg-deal"><span class="md-k">Posted a deal</span><b>${esc(d.title)}</b><span class="md-s">${esc(d.location)}${d.postcode?' '+esc(d.postcode):''} · ${d.priceType==='purchase'?`${gbp(d.price)} purchase`:`${gbp(d.price)}/month`}</span>
+    <div class="ctags"><span class="ctag hot">${esc(d.strategy)}</span><span class="ctag">${esc(d.propertyType)}</span>${d.beds!=null?`<span class="ctag">${d.beds===0?'Studio':d.beds+' bed'}</span>`:''}</div><button class="btn xs primary" type="button" data-viewdeal="${esc(d.id)}">View deal</button></div>`:'';
+  return `<div class="msg${n.mine?' mine':''}"><div class="msg-h"><b>${esc(n.mine?'You':n.authorName)}</b><span>${esc(when(n.createdAt))}</span>${n.canDelete?`<button class="msg-del" type="button" ${del}="${esc(n.id)}">Delete</button>`:''}</div><div class="msg-t">${esc(n.text)}</div>${card}</div>`}
 function repliesHTML(id){const list=CR.data[id];
   const body=CR.error[id]?`<p class="muted">${esc(CR.error[id])}</p>`:!list?'<p class="muted">Loading replies…</p>':list.length?list.map(n=>noteHTML(n,'data-rdel')).join(''):'<p class="muted">No replies yet. Ask a question or share what you know about this deal.</p>';
   return `${body}<form class="creply-form" data-rform="${esc(id)}"><label class="sr" for="cr-${esc(id)}">Your reply</label><textarea class="inp" id="cr-${esc(id)}" maxlength="1000" placeholder="Write a reply…"></textarea><button class="btn sm primary" type="submit">Reply</button></form>`}
@@ -2152,14 +2159,19 @@ function readCF(){CF={region:$('#cfRegion').value,loc:$('#cfLoc').value,priceTyp
 $('#cFilters').addEventListener('input',readCF);$('#cFilters').addEventListener('change',readCF);
 $('#cReset').addEventListener('click',()=>{CF=CF_DEF();$('#cfRegion').value='any';$('#cfLoc').value='';$('#cfPriceType').value='any';$('#cfMin').value='';$('#cfMax').value='';$('#cfType').value='any';$('#cfStrat').value='any';renderCommunityList()});
 function cFormShow(on){const f=$('#cForm'),t=$('#cPostToggle');f.hidden=!on;t.setAttribute('aria-expanded',String(on));t.textContent=on?'Close form':'Post a deal';
-  const m=$('#cMsg');m.textContent='';m.classList.remove('bad');if(on)f.elements.title.focus()}
+  const m=$('#cMsg');m.textContent='';m.classList.remove('bad');
+  // Opened from the region chat: start with that region, and share the deal in its room.
+  if(on&&CH.on){const r=REGIONS.find(x=>roomId(x)===CH.room);if(r)f.elements.region.value=r;$('#cSubmit').textContent='Post deal to chat'}else $('#cSubmit').textContent='Post deal';
+  if(on){f.elements.title.focus({preventScroll:true});f.scrollIntoView({block:'start',behavior:reduced()?'auto':'smooth'})}}
 $('#cPostToggle').addEventListener('click',()=>cFormShow($('#cForm').hidden));
 $('#cCancel').addEventListener('click',()=>cFormShow(false));
 $('#cForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget,btn=$('#cSubmit'),m=$('#cMsg');
-  const body=Object.fromEntries(new FormData(f).entries());btn.disabled=true;m.classList.remove('bad');m.textContent='Posting…';
+  const body=Object.fromEntries(new FormData(f).entries());if(CH.on)body.announce=true;btn.disabled=true;m.classList.remove('bad');m.textContent='Posting…';
   try{const d=await cApi({method:'POST',body:JSON.stringify(body)});CM.posts=[d.post,...(CM.posts||[])];
     ['title','location','postcode','price','beds','status','description','listingUrl'].forEach(k=>{f.elements[k].value=''});f.elements.strategy.value='';f.elements.propertyType.value='';f.elements.region.value='';
-    cFormShow(false);renderCommunityList();toast('Your deal is posted.')}
+    cFormShow(false);renderCommunityList();
+    if(d.message&&d.room){CH.msgs[d.room]=[...(CH.msgs[d.room]||[]),d.message];if(CH.on){if(d.room===CH.room){CH.jump=true;renderChat()}else openRoom(d.room)}
+      toast(`Your deal is posted and shared in the ${REGIONS.find(x=>roomId(x)===d.room)||''} chat.`)}else toast('Your deal is posted.')}
   catch(err){m.classList.add('bad');m.textContent=err.message}finally{btn.disabled=false}});
 $('#cResults').addEventListener('click',async e=>{if(e.target.closest('#cRetry')){loadCommunity();return}
   const rt=e.target.closest('[data-creplies]');if(rt){const id=rt.dataset.creplies;if(CR.open.has(id))CR.open.delete(id);else{CR.open.add(id);loadReplies(id)}renderCommunityList();
@@ -2183,7 +2195,7 @@ const CH={on:false,room:roomId(REGIONS[0]),msgs:{},timer:null,loading:false};
 const FOLDER='<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M1.75 4.25c0-.55.45-1 1-1h3.1l1.4 1.5h6c.55 0 1 .45 1 1v6.5c0 .55-.45 1-1 1H2.75c-.55 0-1-.45-1-1z"/></svg>';
 $('#chRooms').innerHTML=REGIONS.map(r=>`<button class="chat-room" type="button" data-room="${roomId(r)}">${FOLDER}<span>${esc(r)}</span></button>`).join('');
 function cTab(chat){CH.on=chat;$('#cTabDeals').setAttribute('aria-pressed',String(!chat));$('#cTabChat').setAttribute('aria-pressed',String(chat));
-  $('#cDealsPane').hidden=chat;$('#cChatPane').hidden=!chat;$('#cPostToggle').hidden=chat;if(chat)cFormShow(false);
+  $('#cDealsPane').hidden=chat;$('#cChatPane').hidden=!chat;cFormShow(false);
   if(chat)openRoom(CH.room);else stopChat()}
 function renderChat(){const room=CH.room,list=CH.msgs[room],log=$('#chLog');const atEnd=log.scrollHeight-log.scrollTop-log.clientHeight<40;
   $('#chTitle').textContent=REGIONS.find(r=>roomId(r)===room)||'';
@@ -2200,13 +2212,21 @@ function openRoom(room){CH.room=room;CH.jump=true;$('#chErr').textContent='';ren
   CH.timer=setInterval(()=>{if(!CH.on||curView!=='community'){stopChat();return}if(!document.hidden)loadRoom(CH.room)},15000)}
 $('#cTabDeals').addEventListener('click',()=>cTab(false));
 $('#cTabChat').addEventListener('click',()=>cTab(true));
+$('#chPost').addEventListener('click',()=>cFormShow(true));
+// "View deal" on a deal shared in the chat: show it in the Deals list with its replies open.
+async function viewDeal(id){cTab(false);$('#cReset').click();
+  if(!(CM.posts||[]).some(p=>p.id===id))await loadCommunity();
+  if(!(CM.posts||[]).some(p=>p.id===id)){toast('That deal has been removed.');return}
+  if(!CR.open.has(id)){CR.open.add(id);loadReplies(id)}renderCommunityList();
+  const card=$(`#cResults .dcard[data-cid="${CSS.escape(id)}"]`);if(card){card.scrollIntoView({block:'center',behavior:reduced()?'auto':'smooth'});card.classList.remove('just-open');void card.offsetWidth;card.classList.add('just-open')}}
 $('#chRooms').addEventListener('click',e=>{const b=e.target.closest('[data-room]');if(b&&b.dataset.room!==CH.room)openRoom(b.dataset.room)});
 $('#chForm').addEventListener('submit',async e=>{e.preventDefault();const ta=$('#chText'),btn=$('#chSend'),text=ta.value.trim(),room=CH.room;if(!text){ta.focus();return}
   btn.disabled=true;$('#chErr').textContent='';
   try{const d=await cApi({method:'POST',body:JSON.stringify({kind:'message',room,text})});CH.msgs[room]=[...(CH.msgs[room]||[]),d.message];ta.value='';CH.jump=true;if(room===CH.room)renderChat()}
   catch(err){$('#chErr').textContent=err.message}finally{btn.disabled=false;ta.focus()}});
 $('#chText').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();$('#chForm').requestSubmit()}});
-$('#chLog').addEventListener('click',async e=>{const b=e.target.closest('[data-mdel]');if(!b||!confirm('Delete this message?'))return;const room=CH.room;b.disabled=true;
+$('#chLog').addEventListener('click',async e=>{const v=e.target.closest('[data-viewdeal]');if(v){viewDeal(v.dataset.viewdeal);return}
+  const b=e.target.closest('[data-mdel]');if(!b||!confirm('Delete this message?'))return;const room=CH.room;b.disabled=true;
   try{await cApi({method:'DELETE',body:JSON.stringify({kind:'message',room,id:b.dataset.mdel})});CH.msgs[room]=(CH.msgs[room]||[]).filter(n=>n.id!==b.dataset.mdel);renderChat()}
   catch(err){b.disabled=false;toast(err.message)}});
 

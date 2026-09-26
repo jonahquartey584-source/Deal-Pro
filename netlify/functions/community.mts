@@ -30,7 +30,9 @@ type Post = {
 };
 
 // A chat message in a region room, or a reply on a deal.
-type Note = { id: string; authorId: string; authorName: string; createdAt: string; text: string };
+// A chat message can carry a deal that was posted from the region chat.
+type DealCard = Pick<Post, "id" | "title" | "location" | "postcode" | "price" | "priceType" | "strategy" | "propertyType" | "beds">;
+type Note = { id: string; authorId: string; authorName: string; createdAt: string; text: string; deal?: DealCard };
 
 const text = (value: unknown, max: number) => String(value ?? "").replace(/\s+/g, " ").trim().slice(0, max);
 
@@ -101,6 +103,8 @@ async function tooManyWrites(store: Store, userId: string) {
 export default async (request: Request, _context: Context) => {
   const user = await getUser();
   if (!user) return json({ error: "Please sign in to use the Deal Community." }, 401);
+  const u = user as { name?: string; email?: string };
+  const authorName = text(u.name, 80) || text(u.email?.split("@")[0], 80) || "Member";
   const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
   const store = getStore({ name: "deal-community", consistency: "strong" });
 
@@ -153,8 +157,6 @@ export default async (request: Request, _context: Context) => {
         prefix = `replies/${postId}/`;
       }
       if (!isAdmin && await tooManyWrites(store, user.id)) return json({ error: "You've sent a lot of messages in the last hour. Please try again later." }, 429);
-      const u = user as { name?: string; email?: string };
-      const authorName = text(u.name, 80) || text(u.email?.split("@")[0], 80) || "Member";
       const { id, createdAt } = newId();
       const note: Note = { id, authorId: user.id, authorName, createdAt, text: message };
       await store.setJSON(prefix + id, note);
@@ -174,7 +176,17 @@ export default async (request: Request, _context: Context) => {
     const { id, createdAt } = newId();
     const record: Post = { id, authorId: user.id, createdAt, ...post };
     await store.setJSON(`posts/${id}`, record, { metadata: { authorId: user.id } });
-    return json({ post: { ...post, id, createdAt, replyCount: 0, mine: true, canDelete: true } }, 201);
+    // Posted from the region chat: also share it in that region's room.
+    let message;
+    if (body.announce === true) {
+      const deal: DealCard = { id, title: post.title, location: post.location, postcode: post.postcode, price: post.price, priceType: post.priceType, strategy: post.strategy, propertyType: post.propertyType, beds: post.beds };
+      const m = newId();
+      const note: Note = { id: m.id, authorId: user.id, authorName, createdAt: m.createdAt, text: noteText(body.announceText), deal };
+      await store.setJSON(`messages/${slug(post.region)}/${m.id}`, note);
+      const { authorId, ...shown } = note;
+      message = { ...shown, mine: true, canDelete: true };
+    }
+    return json({ post: { ...post, id, createdAt, replyCount: 0, mine: true, canDelete: true }, message, room: slug(post.region) }, 201);
   }
 
   if (request.method === "DELETE") {
