@@ -1730,6 +1730,8 @@ const FIND_DEF=()=>({mode:'rent',beds:'any',min:1200,max:5000,loc:'',priv:false,
 if(!S.find||!S.find.f)S.find={f:FIND_DEF(),searched:false,sort:null};
 S.find.f=Object.assign(FIND_DEF(),S.find.f);S.find.f.sites=Object.assign(FIND_DEF().sites,S.find.f.sites);
 const FS={busy:false,sel:new Set()};
+// Live search results (saved to the account). The LISTINGS sample above only feeds the home page preview.
+let LIVE=Array.isArray(S.find.live)?S.find.live:null;const SRC=()=>LIVE||[];
 const reduced=()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){return false}};
 const bedsTxt=b=>b===0?'Studio':String(b);
 const RATE_EST=b=>b===0?150:b===1?170:b===2?220:260;
@@ -1749,11 +1751,11 @@ function locMatch(x,q){q=q.trim().toLowerCase();if(!q)return true;const pc=x.pos
   // Postcode district (SE1, W2, W1D): match the district, so SE1 does not also match SE11, but W1 matches W1D.
   if(/^[a-z]{1,2}\d[a-z\d]?$/.test(q))return pc.startsWith(q)&&!/\d/.test(pc.charAt(q.length));
   return new RegExp('(^|[^a-z0-9])'+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test((x.area+' '+x.postcode).toLowerCase())}
-function findRows(){const f=S.find.f;if(f.mode!=='rent')return [];
-  return LISTINGS.map((x,i)=>Object.assign({k:i},x)).filter(x=>x.mode===f.mode
+function findRows(){const f=S.find.f;
+  return SRC().map((x,i)=>Object.assign({k:i},x)).filter(x=>x.mode===f.mode
     &&(f.beds==='any'||(f.beds==='4'?x.beds>=4:x.beds===+f.beds))
     &&(f.min===''||x.price>=f.min)&&(f.max===''||x.price<=f.max)
-    &&locMatch(x,f.loc)&&(!f.priv||x.private)
+    &&(LIVE||locMatch(x,f.loc))&&(!f.priv||x.private!==false)
     &&(f.furn==='any'||x.furnished==='Not stated'||x.furnished.toLowerCase()===f.furn)
     &&(f.type==='any'||(f.type==='studio'?x.beds===0:f.type==='flat'?x.beds>=1&&/flat/i.test(x.type):f.type==='commercial'?/commercial|office|retail|shop|industrial/i.test(x.type):/house/i.test(x.type)))
     &&!!f.sites[x.site])}
@@ -1780,21 +1782,20 @@ function dealCard(r,i,o={}){const open=!o.preview&&isOpen(r),u={rent:r.price,rat
     :`<button class="btn sm" data-unlock="${r.k}" data-n="${i+1}">${LOCK}Unlock this deal · ${gbp(dealFee())}</button>`;
   return `<article class="dcard${open?' is-open':''}${FS.justOpened===r.k&&open?' just-open':''}" data-k="${r.k}" aria-label="Deal ${i+1}">
     <h3>Deal ${i+1} (${gbp(r.price)} ${bedWord(r.beds)})</h3>
-    <ul class="adv">${li('📍',`London ${esc(r.postcode)}${o.plain?'':' <span class="em" aria-hidden="true">📍</span>'}`)}${open?li('🏠',esc(r.area)):''}${li('🛏',esc(r.type))}</ul>
+    <ul class="adv">${li('📍',`${esc(o.preview?'London '+r.postcode:[r.postcode,(r.area||'').split(',').pop().trim()].filter(Boolean).join(', '))}${o.plain?'':' <span class="em" aria-hidden="true">📍</span>'}`)}${open?li('🏠',esc(r.area)):''}${li('🛏',esc(r.type))}</ul>
     <ul class="adv">${li('💸',`Rent <b>${gbp(r.price)}</b>/month (${gbp(r.price*12)}/year)`)}${li('💸',`Deposit <b>${gbp(r.price)}</b> <span class="muted">(est.)</span>`)}${li('💰',`Nightly rate <b>£${u.rate}</b> <span class="muted">(est.)</span>`)}</ul>
     <ul class="adv">${OCC.map((x,j)=>li('💷',`<b class="${occ[j]<0?'neg':''}">${gbp(occ[j])}</b> at ${pct(x)} occupancy`)).join('')}</ul>
-    ${open?`<ul class="adv">${li('👤',esc(r.landlord))}${li('🔗',`Source: ${esc(r.site)}`)}</ul>`:''}
+    ${open?`<ul class="adv">${r.title?li('📝',esc(r.title)):''}${li('🔗',`Source: ${esc(SITE_LABEL(r.site))}`)}</ul>`:''}
     <div class="dc-foot"><div class="dc-note"><span>Figures illustrative. Nightly rate estimated.</span></div>
       <div class="dc-act">${act}</div></div>
   </article>`}
 function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fResults');
-  if(!S.find.searched){box.innerHTML=`<div class="fempty"><h2>Search property listings</h2><p>Set your filters, then run Search with AI. Matching listings appear in a sheet with their full details and a link to each listing. Copy them into Google Sheets or analyse any of them in the Deal Analyser.</p></div>`;return}
-  if(S.find.f.mode==='buy'){FS.sel.clear();box.innerHTML=`<div class="fempty"><h2>No homes for sale in this sample</h2><p>The saved sample only contains homes to rent from private landlords. Switch to Rent to see them. The live version also searches sale listings.</p></div>`;return}
+  if(!LIVE){box.innerHTML=`<div class="fempty"><h2>Search live property listings</h2><p>Set your filters, tick the sites and choose a power level, then run Search with AI. Deal Pro searches every ticked site for current listings, shows them in a sheet with a link to each one, and picks out the best deals. Copy them into Google Sheets or analyse any of them in the Deal Analyser.</p></div>`;return}
   const view=S.find.view==='cards'?'cards':'sheet',prevScroll=($('#fCards')||{}).scrollLeft||0;
   const rows=sortRows(findRows()),keys=new Set(rows.filter(isOpen).map(r=>r.k));[...FS.sel].forEach(k=>{if(!keys.has(k))FS.sel.delete(k)});
   const pr=rows.map(r=>r.price).sort((a,b)=>a-b),m=pr.length,med=m?(m%2?pr[(m-1)/2]:(pr[m/2-1]+pr[m/2])/2):NaN,nOpen=keys.size;
-  const ll=new Set(rows.map(r=>r.site+'|'+r.landlord)).size,so=S.find.sort,sv=so?`${so.k}:${so.dir}`:'';
-  const sum=`<b class="mono">${m}</b> listing${m===1?'':'s'} · <b class="mono">${ll}</b> landlord${ll===1?'':'s'}${m?` · median <b class="mono">${gbp(med)}</b> pcm`:''}`;
+  const ll=new Set(rows.map(r=>r.site)).size,buy=S.find.f.mode==='buy',so=S.find.sort,sv=so?`${so.k}:${so.dir}`:'';
+  const sum=`<b class="mono">${m}</b> listing${m===1?'':'s'} from <b class="mono">${ll}</b> site${ll===1?'':'s'}${m?` · median <b class="mono">${gbp(med)}</b>${buy?'':' pcm'}`:''}${S.find.liveAt?` · searched ${fmtDate(S.find.liveAt)}`:''}`;
   const th=(k,lab,cls='')=>{const on=so&&so.k===k;return `<th class="${cls}" aria-sort="${on?(so.dir>0?'ascending':'descending'):'none'}"><button class="sort" data-sort="${k}">${lab}<span class="sa" aria-hidden="true">${on?(so.dir>0?'↑':'↓'):''}</span></button></th>`};
   const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
   const acts=view==='cards'
@@ -1807,9 +1808,9 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   else if(view==='cards')body=`<div class="cards" id="fCards" tabindex="0" role="region" aria-label="Deal cards, scroll sideways">${rows.map((r,i)=>dealCard(r,i)).join('')}</div>`;
   else body=`<div id="fTsvWrap" hidden><label class="f"><span>Deals as tab-separated rows. Copy them, then paste into cell A1 of a Google Sheet.</span><textarea class="inp mono" id="fTsv" readonly></textarea></label></div>
     <div class="sheet" tabindex="0" role="region" aria-label="Search results"><table><thead><tr><th class="rn"><span class="sr">Row</span></th><th class="ck"><input type="checkbox" id="fSelAll" aria-label="Select all rows"${nOpen?'':' disabled'}></th>
-      ${th('site','Site')}${th('landlord','Landlord')}${th('type','Type')}${th('beds','Beds','nr')}${th('area','Area')}${th('postcode','Postcode')}${th('price','Rent pcm','nr')}<th>Furnished</th><th>Found</th><th>Link</th><th>Action</th></tr></thead>
+      ${th('site','Site')}${th('title','Listing')}${th('type','Type')}${th('beds','Beds','nr')}${th('area','Area')}${th('postcode','Postcode')}${th('price',S.find.f.mode==='buy'?'Price':'Rent pcm','nr')}<th>Furnished</th><th>Found</th><th>Link</th><th>Action</th></tr></thead>
       <tbody>${rows.map((r,i)=>{const o=isOpen(r);return `<tr data-k="${r.k}"><td class="rn">${i+1}</td><td class="ck">${o?`<input type="checkbox" id="fsel${r.k}" data-sel="${r.k}" aria-label="Select ${esc(r.type)}, ${esc(r.area)}"${FS.sel.has(r.k)?' checked':''}>`:''}</td>
-        <td>${o?esc(r.site):L}</td><td class="clip"${o?` title="${esc(r.landlord)}"`:''}>${o?esc(r.landlord):L}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td><td class="muted">${esc(r.furnished)}</td><td class="muted">${esc(r.found)}</td>
+        <td>${esc(SITE_LABEL(r.site))}</td><td class="clip" title="${esc(r.title||'')}">${esc(r.title||'')}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td><td class="muted">${esc(r.furnished)}</td><td class="muted">${esc(r.found)}</td>
         <td>${o?`<a class="xlink" href="${esc(r.url)}" target="_blank" rel="noopener">Open ↗</a>`:L}</td><td>${o?`<button class="btn xs" data-build="${r.k}">Analyse deal</button>`:`<button class="btn xs" data-unlock="${r.k}" data-n="${i+1}">Unlock · ${gbp(dealFee())}</button>`}</td></tr>`}).join('')}</tbody></table></div>`;
   box.innerHTML=rankHTML()+`<div class="ftool"><div><div class="fsum" id="fSummary">${sum}</div>${view==='sheet'?'<div class="fsub">Copy, then paste into cell A1 of a Google Sheet.</div>':''}</div>
     <div class="ph-actions">${acts}${toggle}</div></div>${body}`;
@@ -1824,46 +1825,45 @@ function onFind(){readFind();save();renderFind()}
 $('#fPanel').addEventListener('input',onFind);$('#fPanel').addEventListener('change',onFind);
 $('#fReset').addEventListener('click',()=>{S.find.f=FIND_DEF();bindFind();save();renderFind()});
 const FIND_MSG=m=>{const n=$('#nFind');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
-async function pollJob(jobId,onTick){const t0=Date.now();for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(jobId),{credentials:'same-origin'});const d=await p.json().catch(()=>({}));
+async function pollJob(jobId,onTick,onProgress){const t0=Date.now();for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(jobId),{credentials:'same-origin'});const d=await p.json().catch(()=>({}));
   if(!p.ok)throw new Error(d.error||'The AI could not finish. Please try again.');if(d.credits){AIC.info=d.credits;renderAILevels()}
-  if(d.status==='done')return d.analysis;if(d.status==='error')throw new Error(d.error||'The AI could not finish. Please try again.');
+  if(d.progress&&onProgress)onProgress(d.progress);if(d.status==='done')return d.analysis;if(d.status==='error')throw new Error(d.error||'The AI could not finish. Please try again.');
   if(onTick)onTick(Math.round((Date.now()-t0)/1000));if(Date.now()-t0>17*60e3)throw new Error('The AI is taking too long. Please try again.')}}
 $('#fSearch').addEventListener('click',async()=>{if(FS.busy)return;readFind();const sites=SITES.filter(s=>S.find.f.sites[s]);
   if(!sites.length){toast('Tick at least one site to search');return}
-  const rows=findRows(),lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0],btn=$('#fSearch'),box=$('#fResults');
+  const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0],btn=$('#fSearch'),box=$('#fResults');
   FS.busy=true;btn.disabled=true;$('#nFind').hidden=true;
-  // Start the AI ranking first: the server checks the plan and credits before anything runs.
-  let jobId=null;
-  if(rows.length){try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({kind:'rank',level:lv.id,filters:S.find.f,listings:rows.map(x=>({id:String(x.k),site:x.site,type:x.type,beds:x.beds,area:x.area,postcode:x.postcode,rent_pcm:x.price,nightly_rate_est:RATE_EST(x.beds),furnished:x.furnished}))})});
-    const d=await r.json().catch(()=>({}));if(!r.ok){FS.busy=false;btn.disabled=false;FIND_MSG(d.error||'The search could not be started.');return}
-    jobId=d.jobId;if(d.credits){AIC.info=d.credits;renderAILevels()}}
-  catch(e){FS.busy=false;btn.disabled=false;FIND_MSG('The search could not be started. Check your connection and try again.');return}}
-  FS.rank=jobId?{status:'loading',level:lv}:null;
-  const cnt=s=>rows.filter(r=>r.site===s).length;
-  const draw=i=>{box.innerHTML=`<div class="fprog" role="status" aria-live="polite"><div class="fprog-t">${i<sites.length?`Searching ${SITE_LABEL(sites[i])}…`:'Collating results…'}</div>
-    <div class="meter"><span style="width:${Math.round(i/sites.length*100)}%"></span></div>
-    <ol>${sites.map((s,j)=>`<li class="${j<i?'done':j===i?'act':''}"><span class="dot ${j<i?'good':'none'}"></span>${SITE_LABEL(s)}<span class="mono muted">${j<i?cnt(s)+' found':j===i?'searching':''}</span></li>`).join('')}</ol></div>`};
-  const finish=()=>{FS.busy=false;btn.disabled=false;S.find.searched=true;save();renderFind();
-    if(jobId)pollJob(jobId,sec=>{const t=$('#fRankT');if(t)t.textContent=`${lv.name} is ranking these deals… ${sec}s`})
-      .then(a=>{FS.rank={status:'done',level:lv,data:a};renderFind()}).catch(e=>{FS.rank={status:'error',level:lv,error:e.message};renderFind()})};
-  if(reduced()){finish();return}
-  const step=1200/sites.length;let i=0;draw(0);
-  const tick=()=>{i++;draw(i);setTimeout(i<sites.length?tick:finish,i<sites.length?step:150)};setTimeout(tick,step)});
+  const draw=(prog,sec)=>{const P=prog||{},done=sites.filter(s=>P[s]&&P[s].status!=='searching').length;
+    box.innerHTML=`<div class="fprog" role="status" aria-live="polite"><div class="fprog-t">${done<sites.length?`${esc(lv.name)} is searching ${sites.length} site${sites.length>1?'s':''} for live listings…`:'Ranking the best deals…'}${sec?` <span class="muted">${sec}s</span>`:''}</div>
+      <div class="meter"><span style="width:${Math.round(done/sites.length*100)}%"></span></div>
+      <ol>${sites.map(s=>{const st=P[s]||{status:'searching'};return `<li class="${st.status==='searching'?'act':'done'}"><span class="dot ${st.status==='done'?'good':st.status==='error'?'bad':'none'}"></span>${SITE_LABEL(s)}<span class="mono muted">${st.status==='searching'?'searching':st.status==='error'?'unavailable':st.found+' found'}</span></li>`}).join('')}</ol>
+      <p class="fnote">Each site is searched separately. This usually takes ${lv.id==='quick'?'under a minute':lv.id==='standard'?'1–2 minutes':'2–4 minutes'}.</p></div>`};
+  draw(null,0);
+  try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'search',level:lv.id,filters:S.find.f,sites})});
+    const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(d.error||'The search could not be started.'),{limit:r.status===402});
+    if(d.credits){AIC.info=d.credits;renderAILevels()}
+    let last=null;const t0=Date.now();
+    const res=await pollJob(d.jobId,sec=>draw(last,sec),p=>{last=p;draw(p,Math.round((Date.now()-t0)/1000))});
+    LIVE=(res.listings||[]).slice(0,200);S.find.live=LIVE;S.find.liveAt=new Date().toISOString();S.find.liveSites=res.sites||{};S.find.searched=true;FS.sel.clear();
+    FS.rank=res.ranking?{status:'done',level:lv,data:res.ranking}:null;save();
+    const missed=Object.entries(res.sites||{}).filter(([,v])=>v.status==='error').map(([k])=>SITE_LABEL(k));
+    toast(`Found ${LIVE.length} listing${LIVE.length===1?'':'s'} across ${sites.length} site${sites.length>1?'s':''}.${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
+  catch(e){if(e.limit)FIND_MSG(e.message);else toast(e.message||'The search failed. Please try again.')}
+  finally{FS.busy=false;btn.disabled=false;renderFind()}});
 function rankHTML(){const R=FS.rank;if(!R)return '';const lv=R.level;
   if(R.status==='loading')return `<div class="rank lv-${lv.id}" role="status"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b id="fRankT">${esc(lv.name)} is ranking these deals…</b></div><p class="muted">Results are below. The AI's top picks will appear here.</p></div>`;
   if(R.status==='error')return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>AI ranking unavailable</b></div><p class="muted">${esc(R.error)}</p></div>`;
   const a=R.data||{},picks=Array.isArray(a.picks)?a.picks:[];
-  const li=p=>{const r=LISTINGS[+p.id];if(!r)return '';const notes=Array.isArray(p.notes)&&p.notes.length?`<ul class="rank-notes">${p.notes.map(n=>`<li>${esc(String(n))}</li>`).join('')}</ul>`:'';
-    return `<li><div class="rank-top"><b>${esc(r.type)} · ${esc(r.area)}</b><span class="mono">${gbp(r.price)} pcm</span><span class="rank-score">${Math.max(0,Math.min(100,+p.score||0))}/100 · ${esc(String(p.verdict||''))}</span></div>
+  const li=p=>{const r=SRC()[+p.id];if(!r)return '';const notes=Array.isArray(p.notes)&&p.notes.length?`<ul class="rank-notes">${p.notes.map(n=>`<li>${esc(String(n))}</li>`).join('')}</ul>`:'';
+    return `<li><div class="rank-top"><b>${esc(r.type)} · ${esc(r.area)}</b><span class="mono">${gbp(r.price)}${r.mode==='buy'?'':' pcm'}</span><span class="muted">${esc(SITE_LABEL(r.site))}</span><span class="rank-score">${Math.max(0,Math.min(100,+p.score||0))}/100 · ${esc(String(p.verdict||''))}</span></div>
       <p>${esc(String(p.reason||''))}${p.monthly_profit_80?` <span class="muted">Est. at 80%: ${esc(String(p.monthly_profit_80))}</span>`:''}</p>${notes}
-      <div class="rank-act"><button class="btn xs primary" data-build="${r.k}">Analyse deal</button><a class="btn xs" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a></div></li>`};
+      <div class="rank-act"><button class="btn xs primary" data-build="${+p.id}">Analyse deal</button><a class="btn xs" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a></div></li>`};
   return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>${esc(lv.name)}'s top picks</b></div>${a.summary?`<p>${esc(String(a.summary))}</p>`:''}
     <ol class="rank-list">${picks.map(li).join('')}</ol>${Array.isArray(a.watch_outs)&&a.watch_outs.length?`<p class="muted">Watch out: ${a.watch_outs.map(w=>esc(String(w))).join(' · ')}</p>`:''}</div>`}
 function openRows(){return sortRows(findRows()).filter(isOpen)}
 function findTsv(){const c=v=>{const s=String(v??'').replace(/[\t\r\n]+/g,' ');return /^[=+\-@]/.test(s)?"'"+s:s};
-  return [['Site','Landlord','Type','Beds','Area','Postcode','Rent pcm','Furnished','Found','URL'],
-    ...openRows().map(r=>[r.site,r.landlord,r.type,bedsTxt(r.beds),r.area,r.postcode,r.price,r.furnished,r.found,r.url])].map(a=>a.map(c).join('\t')).join('\n')}
+  return [['Site','Listing','Type','Beds','Area','Postcode',S.find.f.mode==='buy'?'Price':'Rent pcm','Furnished','Found','URL'],
+    ...openRows().map(r=>[SITE_LABEL(r.site),r.title||'',r.type,bedsTxt(r.beds),r.area,r.postcode,r.price,r.furnished,r.found,r.url])].map(a=>a.map(c).join('\t')).join('\n')}
 function copyTsv(){const n=openRows().length;if(!n){toast('No deals to copy.');return}const t=findTsv(),lab=`${n} deal${n>1?'s':''}`;
   const fb=()=>{const w=$('#fTsvWrap'),ta=$('#fTsv');if(!w)return;w.hidden=false;ta.value=t;ta.focus();ta.select();ta.scrollTop=0;ta.scrollLeft=0;toast(`Selected ${lab}. Press Ctrl/Cmd+C, then paste into cell A1 of a Google Sheet.`)};
   try{navigator.clipboard.writeText(t).then(()=>toast(`Copied ${lab}. Paste into cell A1 of a Google Sheet.`)).catch(fb)}catch(e){fb()}}
@@ -1875,11 +1875,11 @@ function buildDeal(ls){ls=ls.filter(Boolean).filter(isOpen);if(!ls.length)return
 $('#fResults').addEventListener('click',e=>{
   const s=e.target.closest('[data-sort]');if(s){const k=s.dataset.sort,c=S.find.sort;S.find.sort=c&&c.k===k?(c.dir>0?{k,dir:-1}:null):{k,dir:1};save();renderFind();const nb=$(`#fResults [data-sort="${k}"]`);if(nb)nb.focus();return}
   const u=e.target.closest('[data-unlock]');if(u){openUnlock(+u.dataset.unlock,+u.dataset.n||0);return}
-  const b=e.target.closest('[data-build]');if(b){buildDeal([LISTINGS[+b.dataset.build]]);return}
+  const b=e.target.closest('[data-build]');if(b){buildDeal([SRC()[+b.dataset.build]]);return}
   if(e.target.closest('#fViewCards')){S.find.view='cards';save();renderFind();$('#fViewCards').focus();return}
   if(e.target.closest('#fViewSheet')){S.find.view='sheet';save();renderFind();$('#fViewSheet').focus();return}
   const ar=e.target.closest('#fPrev,#fNext');if(ar){const c=$('#fCards');if(c){const step=312*Math.max(1,Math.floor(c.clientWidth/312));c.scrollBy({left:(ar.id==='fPrev'?-1:1)*step,behavior:reduced()?'auto':'smooth'})}return}
-  if(e.target.closest('#fBuildSel')){buildDeal($$('#fResults [data-sel]').filter(c=>c.checked).map(c=>LISTINGS[+c.dataset.sel]));return}
+  if(e.target.closest('#fBuildSel')){buildDeal($$('#fResults [data-sel]').filter(c=>c.checked).map(c=>SRC()[+c.dataset.sel]));return}
   if(e.target.closest('#fCopy'))copyTsv()});
 $('#fResults').addEventListener('change',e=>{const t=e.target;
   if(t.id==='fSortSel'){const v=t.value;S.find.sort=v?{k:v.split(':')[0],dir:+v.split(':')[1]}:null;save();renderFind();const s=$('#fSortSel');if(s)s.focus();return}

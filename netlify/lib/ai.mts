@@ -113,9 +113,9 @@ async function complete(system: string, user: string, level: LevelId) {
 export const runAnalysis = (deal: string, level: LevelId) =>
   complete(`${BASE_PROMPT}\n\n${LEVEL_PROMPT[level]}`, deal, level);
 
-const RANK_PROMPT = `You are Deal Pro's UK property deal sourcer. You are given Deal Finder search results as JSON (each has an id, type, beds, area, postcode, monthly rent and an estimated nightly rate) plus the user's search filters. Rank them by how good they are as rent-to-rent / serviced accommodation opportunities.
+const RANK_PROMPT = `You are Deal Pro's UK property deal sourcer. You are given Deal Finder search results as JSON (each has an id, site, type, beds, area, postcode and either a monthly rent or an asking price) plus the user's search filters. Rank them by how good they are as property deals for the user's strategy: rent-to-rent / serviced accommodation for rentals; buy-to-let, HMO, BRRR or serviced accommodation for purchases. Estimate a realistic nightly rate or rent for the location where needed and say it is an estimate.
 
-Judge each on: likely monthly profit at 80% occupancy (revenue = 24 nights x nightly rate, minus 15% platform fees, £45 cleaning per 3-night stay, rent and about £150 other costs), break-even occupancy, rent level against the area, demand for short stays in that location, and compliance risk (the London 90-night short-let limit applies to every London property unless planning permission is obtained; HMO and Article 4 where relevant). Treat nightly rates as estimates and say so. Never invent facts about a specific listing.
+Judge each on: for rentals, likely monthly profit at 80% occupancy (revenue = 24 nights x nightly rate, minus 15% platform fees, £45 cleaning per 3-night stay, rent and about £150 other costs), break-even occupancy, for purchases, gross yield and cash flow; price or rent level against the area, demand for short stays in that location, and compliance risk (the London 90-night short-let limit applies to every London property unless planning permission is obtained; HMO and Article 4 where relevant). Treat nightly rates as estimates and say so. Never invent facts about a specific listing.
 
 Return valid JSON with exactly these keys:
 summary (plain English, max 60 words, what the best options have in common),
@@ -129,3 +129,160 @@ const RANK_LEVEL: Record<LevelId, string> = {
 };
 
 export const runRank = (payload: string, level: LevelId) => complete(`${RANK_PROMPT}\n\n${RANK_LEVEL[level]}`, payload, level);
+
+// ---------- live Deal Finder search ----------
+// Each ticked site is searched separately with OpenAI's web search, restricted to that
+// site's domain. Only listing URLs that the search actually returned are kept, so the AI
+// can't invent listings.
+export const SITES: Record<string, { label: string; domains: string[]; what: string }> = {
+  OpenRent: { label: "OpenRent", domains: ["openrent.co.uk"], what: "property to rent, mostly from private landlords" },
+  SpareRoom: { label: "SpareRoom", domains: ["spareroom.co.uk"], what: "whole properties and rooms to rent" },
+  Gumtree: { label: "Gumtree", domains: ["gumtree.com"], what: "property to rent or buy" },
+  Rightmove: { label: "Rightmove", domains: ["rightmove.co.uk"], what: "residential property to rent or buy" },
+  Zoopla: { label: "Zoopla", domains: ["zoopla.co.uk"], what: "residential property to rent or buy" },
+  Facebook: { label: "Facebook Marketplace", domains: ["facebook.com"], what: "Facebook Marketplace property listings" },
+  RightmoveCommercial: { label: "Rightmove Commercial", domains: ["rightmove.co.uk"], what: "commercial property to let or buy (rightmove.co.uk/commercial-property)" },
+  Realla: { label: "Realla", domains: ["realla.co"], what: "commercial property to let or buy" },
+  NovaLoca: { label: "NovaLoca", domains: ["novaloca.com"], what: "commercial property, offices and shops to let or buy" },
+  LoopNet: { label: "LoopNet", domains: ["loopnet.co.uk", "loopnet.com"], what: "UK commercial property to let or buy" },
+};
+
+const SEARCH_LEVEL: Record<LevelId, { perSite: number; context: "low" | "medium" | "high"; effort: Effort }> = {
+  quick: { perSite: 8, context: "low", effort: "low" },
+  standard: { perSite: 15, context: "medium", effort: "low" },
+  deep: { perSite: 25, context: "high", effort: "medium" },
+};
+
+export type Filters = {
+  mode?: string; beds?: string; min?: number | string; max?: number | string; loc?: string;
+  priv?: boolean; furn?: string; type?: string;
+};
+
+export type Listing = {
+  site: string; id: string; title: string; type: string; beds: number | null; area: string; postcode: string;
+  price: number; mode: "rent" | "buy"; private: boolean | null; furnished: string; url: string; found: string;
+};
+
+function describe(f: Filters) {
+  const buy = f.mode === "buy";
+  const parts = [
+    buy ? "for sale" : "to rent",
+    f.loc?.trim() ? `in or near ${f.loc.trim()}, UK` : "anywhere in the UK",
+    f.beds && f.beds !== "any" ? (f.beds === "0" ? "studios" : f.beds === "4" ? "4 or more bedrooms" : `${f.beds} bedrooms`) : "",
+    f.type && f.type !== "any" ? `property type: ${f.type}` : "",
+    f.min !== "" && f.min != null ? `from £${f.min}${buy ? "" : " per month"}` : "",
+    f.max !== "" && f.max != null ? `up to £${f.max}${buy ? "" : " per month"}` : "",
+    f.furn && f.furn !== "any" ? f.furn : "",
+    f.priv ? "private landlords only (no agents)" : "",
+  ];
+  return parts.filter(Boolean).join(", ");
+}
+
+const hostMatches = (url: string, domains: string[]) => {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return domains.some((d) => host === d || host.endsWith(`.${d}`));
+  } catch { return false; }
+};
+const normalise = (url: string) => { try { const u = new URL(url); u.hash = ""; return u.toString().replace(/\/$/, ""); } catch { return url; } };
+
+async function searchSite(site: string, f: Filters, level: LevelId): Promise<Listing[]> {
+  const conf = SITES[site];
+  const lv = SEARCH_LEVEL[level];
+  const client = new OpenAI();
+  const buy = f.mode === "buy";
+  const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
+Search several times with different wording and nearby areas until you have up to ${lv.perSite} matching individual listings. Only use individual listing pages, never search-results or category pages.
+Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "private_landlord": true | false | null}]}.
+Only include listings you actually found in the search results. Never invent a listing, price or URL. If you find none, return {"listings": []}.`;
+  const run = (model: string) => client.responses.create({
+    model,
+    reasoning: { effort: lv.effort },
+    tools: [{ type: "web_search", search_context_size: lv.context, filters: { allowed_domains: conf.domains }, user_location: { type: "approximate", country: "GB" } }],
+    include: ["web_search_call.action.sources"],
+    text: { format: { type: "json_object" } },
+    input: prompt,
+  });
+  let response;
+  try {
+    response = await run(LEVELS[level].model);
+  } catch (error) {
+    const status = (error as { status?: number }).status;
+    if (status !== 404 && status !== 400) throw error;
+    response = await run(FALLBACK_MODEL);
+  }
+
+  // URLs the web search really returned for this site.
+  const seen = new Set<string>();
+  for (const item of response.output as Array<Record<string, any>>) {
+    if (item.type === "web_search_call") for (const s of item.action?.sources || []) if (s?.url) seen.add(normalise(s.url));
+    if (item.type === "message") for (const c of item.content || []) for (const a of c.annotations || []) if (a?.url) seen.add(normalise(a.url));
+  }
+  let parsed: { listings?: Array<Record<string, unknown>> } = {};
+  try { parsed = JSON.parse(response.output_text || "{}"); } catch {
+    const m = (response.output_text || "").match(/\{[\s\S]*\}/);
+    if (m) try { parsed = JSON.parse(m[0]); } catch {}
+  }
+  const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  const out: Listing[] = [];
+  for (const x of parsed.listings || []) {
+    const url = String(x.url || "");
+    if (!/^https:\/\//.test(url) || !hostMatches(url, conf.domains)) continue;
+    // Keep only pages the search returned (when the API reports its sources).
+    if (seen.size && !seen.has(normalise(url))) continue;
+    const price = Math.round(Number(x.price));
+    if (!Number.isFinite(price) || price <= 0) continue;
+    const beds = x.beds === null || x.beds === undefined || x.beds === "" ? null : Math.max(0, Math.round(Number(x.beds)));
+    out.push({
+      site, id: normalise(url), url,
+      title: String(x.title || "").slice(0, 140),
+      type: String(x.type || (beds === 0 ? "Studio" : beds ? `${beds} bed property` : "Property")).slice(0, 60),
+      beds: Number.isFinite(beds as number) ? beds : null,
+      area: String(x.area || "").slice(0, 120),
+      postcode: String(x.postcode || "").toUpperCase().slice(0, 8),
+      price, mode: buy ? "buy" : "rent",
+      private: typeof x.private_landlord === "boolean" ? x.private_landlord : null,
+      furnished: ["Furnished", "Unfurnished", "Part furnished"].includes(String(x.furnished)) ? String(x.furnished) : "Not stated",
+      found: today,
+    });
+  }
+  return out.slice(0, lv.perSite);
+}
+
+// Searches every requested site at once, reporting progress per site as each finishes.
+export async function runSearch(input: string, level: LevelId, progress: (p: Record<string, unknown>) => Promise<void>) {
+  const { filters = {}, sites = [] } = JSON.parse(input) as { filters?: Filters; sites?: string[] };
+  const wanted = sites.filter((s) => s in SITES);
+  const state: Record<string, { status: string; found?: number; error?: string }> = Object.fromEntries(wanted.map((s) => [s, { status: "searching" }]));
+  await progress(state);
+  const min = Number(filters.min) || 0, max = Number(filters.max) || Infinity;
+  const results = await Promise.all(wanted.map(async (site) => {
+    try {
+      const found = (await searchSite(site, filters, level)).filter((l) => l.price >= min && l.price <= max);
+      state[site] = { status: "done", found: found.length };
+      return found;
+    } catch (error) {
+      console.error(`Search failed for ${site}`, error);
+      state[site] = { status: "error", found: 0, error: "Couldn't search this site" };
+      return [];
+    } finally {
+      await progress({ ...state }).catch(() => {});
+    }
+  }));
+  // Merge and drop duplicates (the same listing can appear twice).
+  const byUrl = new Map<string, Listing>();
+  for (const l of results.flat()) if (!byUrl.has(l.id)) byUrl.set(l.id, l);
+  const listings = [...byUrl.values()];
+  if (wanted.length && Object.values(state).every((s) => s.status === "error")) throw new Error("All site searches failed");
+
+  let ranking: Record<string, unknown> | null = null;
+  if (listings.length) {
+    try {
+      ranking = await runRank(JSON.stringify({
+        filters,
+        listings: listings.map((l, i) => ({ id: String(i), site: SITES[l.site].label, type: l.type, beds: l.beds, area: l.area, postcode: l.postcode, [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price })),
+      }), level);
+    } catch (error) { console.error("Ranking failed", error); }
+  }
+  return { listings, sites: state, ranking };
+}

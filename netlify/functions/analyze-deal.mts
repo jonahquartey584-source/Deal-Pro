@@ -1,6 +1,6 @@
 import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
-import { accounts, jobs, currentWeek, currentSearchWeek, refundJob, ADMIN_EMAIL, FREE_ANALYSES, FREE_SEARCHES_PER_WEEK, LEVELS, WEEK_MS, WEEKLY_CREDITS, type LevelId, type Reserved, type Usage } from "../lib/ai.mts";
+import { accounts, jobs, currentWeek, currentSearchWeek, refundJob, ADMIN_EMAIL, FREE_ANALYSES, FREE_SEARCHES_PER_WEEK, LEVELS, WEEK_MS, WEEKLY_CREDITS, SITES, type LevelId, type Reserved, type Usage } from "../lib/ai.mts";
 
 const json = (data: unknown, status = 200) => Response.json(data, {
   status,
@@ -59,6 +59,7 @@ export default async (request: Request, _context: Context) => {
     return json({
       status: job.status,
       analysis: job.status === "done" ? job.analysis : undefined,
+      progress: job.progress,
       error: job.error,
       credits: creditSummary(isAdmin, plan, (await store.get(`users/${user.id}/ai-usage`, { type: "json" }) as Usage | null) || {}),
     });
@@ -67,14 +68,20 @@ export default async (request: Request, _context: Context) => {
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
 
   // kind "analyse": one deal from the AI Deal Analyser. kind "rank": Deal Finder results to rank.
-  const body = await request.json().catch(() => null) as { kind?: string; deal?: string; level?: string; listings?: unknown; filters?: unknown } | null;
-  const kind = body?.kind === "rank" ? "rank" : "analyse";
+  // kind "search": live Deal Finder search of the ticked sites, then ranking.
+  const body = await request.json().catch(() => null) as { kind?: string; deal?: string; level?: string; listings?: unknown; filters?: unknown; sites?: unknown } | null;
+  const kind = body?.kind === "search" ? "search" : body?.kind === "rank" ? "rank" : "analyse";
   const level = (body?.level && body.level in LEVELS ? body.level : "quick") as LevelId;
   let input: string;
   if (kind === "analyse") {
     input = body?.deal?.trim() || "";
     if (!input) return json({ error: "Paste the property advert or deal details first." }, 400);
     if (input.length > 30_000) return json({ error: "Deal details must be under 30,000 characters." }, 413);
+  } else if (kind === "search") {
+    const sites = Array.isArray(body?.sites) ? body.sites.filter((x): x is string => typeof x === "string" && x in SITES) : [];
+    if (!sites.length) return json({ error: "Tick at least one site to search." }, 400);
+    input = JSON.stringify({ filters: body?.filters ?? {}, sites });
+    if (input.length > 5_000) return json({ error: "The search filters are too long." }, 413);
   } else {
     const listings = Array.isArray(body?.listings) ? body.listings.slice(0, 80) : [];
     if (!listings.length) return json({ error: "There are no results to rank." }, 400);
