@@ -647,6 +647,9 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .msg.mine .msg-h{justify-content:flex-end}.msg.mine .msg-t{background:rgba(224,20,43,.12);border-color:rgba(224,20,43,.35);border-radius:10px 4px 10px 10px}
 .msg-del{border:0;background:none;padding:0;color:var(--muted);font:inherit;font-size:11.5px;cursor:pointer}.msg-del:hover{color:var(--bad)}
 .chat-acts{display:flex;gap:8px}
+.cpaste{display:grid;gap:10px;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid var(--line)}.cpaste textarea{min-height:92px;resize:vertical}
+.cpaste-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.cform .inp.filled{border-color:rgba(95,185,138,.7);box-shadow:0 0 0 3px rgba(95,185,138,.14);transition:border-color .6s,box-shadow .6s}
 .msg-deal{display:grid;gap:6px;margin-top:2px;padding:10px 12px;border:1px solid var(--line-2);border-left:2px solid var(--brand);border-radius:6px;background:var(--surface)}
 .msg-deal .md-k{font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}.msg-deal b{font-size:14px}.msg-deal .md-s{font-size:12.5px;color:var(--ink-2)}.msg-deal .ctags{margin:0}.msg-deal .btn{justify-self:start}
 .msg-t:empty{display:none}
@@ -1072,6 +1075,10 @@ td.t{text-align:right;color:var(--ink-2)}
     </header>
     <form class="panel cform" id="cForm" hidden novalidate>
       <div class="fs"><div class="fs-h"><h2>Post a deal</h2></div>
+        <div class="cpaste">
+          <label class="f"><span>Paste your deal <span class="muted">(optional)</span></span><textarea class="inp" id="cPaste" rows="4" maxlength="6000" placeholder="Paste an advert, a WhatsApp message or your deal notes, and we'll fill in the form for you."></textarea></label>
+          <div class="cpaste-acts"><button class="btn sm" type="button" id="cFill">Fill in the form</button><button class="btn sm ghost" type="button" id="cAnalyse">Analyse with AI</button><span class="cmsg" id="cPasteMsg" role="status"></span></div>
+        </div>
         <div class="fields">
           <label class="f"><span>Title</span><input class="inp" name="title" maxlength="120" placeholder="e.g. 2 bed flat, landlord open to R2SA" required></label>
           <div class="row2">
@@ -1922,6 +1929,10 @@ function findTsv(){const c=v=>{const s=String(v??'').replace(/[\t\r\n]+/g,' ');r
 function copyTsv(){const n=openRows().length;if(!n){toast('No deals to copy.');return}const t=findTsv(),lab=`${n} deal${n>1?'s':''}`;
   const fb=()=>{const w=$('#fTsvWrap'),ta=$('#fTsv');if(!w)return;w.hidden=false;ta.value=t;ta.focus();ta.select();ta.scrollTop=0;ta.scrollLeft=0;toast(`Selected ${lab}. Press Ctrl/Cmd+C, then paste into cell A1 of a Google Sheet.`)};
   try{navigator.clipboard.writeText(t).then(()=>toast(`Copied ${lab}. Paste into cell A1 of a Google Sheet.`)).catch(fb)}catch(e){fb()}}
+// Start a new deal from pasted or posted text and run the AI analysis on it straight away.
+function analyseText(text,name){text=String(text||'').trim();if(!text){toast('Paste the deal details first.');return}
+  startAnalysis(()=>{const d=freshDeal();d.name=String(name||'').trim().slice(0,80)||'Pasted deal';S.deal=d;markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
+    $('#aiDealInput').value=text;renderAIAnalysis(null);$('#analyseWithAI').click()})}
 function buildDeal(ls){ls=ls.filter(Boolean).filter(isOpen);if(!ls.length)return;startAnalysis(()=>{const d=sampleDeal(),areas=[...new Set(ls.map(x=>x.area))],short=a=>a.split(',')[0].trim();
   Object.assign(d,{id:'d'+Date.now(),name:areas.length>1?`${areas[0]} + ${areas.length-1} more`:areas[0],area:areas.join('; '),strat:'R2SA',london:true,status:'Checking',
     units:ls.map(x=>({label:`${x.type} · ${short(x.area)}`,rent:x.price,dep:x.price,rate:RATE_EST(x.beds),url:x.url}))});
@@ -2128,7 +2139,7 @@ function cCard(p){const price=p.priceType==='purchase'?`${gbp(p.price)} purchase
     <ul class="adv"><li><span class="em-dot" aria-hidden="true"></span><span>${esc(p.location)}${p.postcode?' '+esc(p.postcode):''}</span></li><li><span class="em-dot" aria-hidden="true"></span><span><b>${price}</b></span></li>${p.status?`<li><span class="em-dot" aria-hidden="true"></span><span>${esc(p.status)}</span></li>`:''}</ul>
     ${p.description?`<p class="cdesc">${esc(p.description)}</p>`:''}
     <div class="dc-foot"><div class="dc-note"><span class="cmeta">Posted by ${esc(p.contactName||'a member')} on ${fmtDate(p.createdAt)}${p.mine?' · your deal':''}</span></div>
-      <div class="dc-act"><a class="btn sm primary" href="mailto:${esc(p.contactEmail)}?subject=${subj}">Email</a>${p.contactPhone?`<a class="btn sm" href="tel:${esc(p.contactPhone.replace(/[^+\d]/g,''))}">${esc(p.contactPhone)}</a>`:''}${p.listingUrl?`<a class="btn sm" href="${esc(p.listingUrl)}" target="_blank" rel="noopener nofollow">Listing ↗</a>`:''}${p.canDelete?`<button class="btn sm ghost" data-cdel="${esc(p.id)}">Delete</button>`:''}</div>
+      <div class="dc-act"><a class="btn sm primary" href="mailto:${esc(p.contactEmail)}?subject=${subj}">Email</a><button class="btn sm" type="button" data-canalyse="${esc(p.id)}">Analyse</button>${p.contactPhone?`<a class="btn sm" href="tel:${esc(p.contactPhone.replace(/[^+\d]/g,''))}">${esc(p.contactPhone)}</a>`:''}${p.listingUrl?`<a class="btn sm" href="${esc(p.listingUrl)}" target="_blank" rel="noopener nofollow">Listing ↗</a>`:''}${p.canDelete?`<button class="btn sm ghost" data-cdel="${esc(p.id)}">Delete</button>`:''}</div>
       <button class="btn sm ghost block" data-creplies="${esc(p.id)}" aria-expanded="${CR.open.has(p.id)}">${CR.open.has(p.id)?'Hide replies':replyLabel(p.replyCount)}</button></div>
     ${CR.open.has(p.id)?`<div class="creplies">${repliesHTML(p.id)}</div>`:''}
   </article>`}
@@ -2168,7 +2179,7 @@ $('#cCancel').addEventListener('click',()=>cFormShow(false));
 $('#cForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget,btn=$('#cSubmit'),m=$('#cMsg');
   const body=Object.fromEntries(new FormData(f).entries());if(CH.on)body.announce=true;btn.disabled=true;m.classList.remove('bad');m.textContent='Posting…';
   try{const d=await cApi({method:'POST',body:JSON.stringify(body)});CM.posts=[d.post,...(CM.posts||[])];
-    ['title','location','postcode','price','beds','status','description','listingUrl'].forEach(k=>{f.elements[k].value=''});f.elements.strategy.value='';f.elements.propertyType.value='';f.elements.region.value='';
+    ['title','location','postcode','price','beds','status','description','listingUrl'].forEach(k=>{f.elements[k].value=''});f.elements.strategy.value='';f.elements.propertyType.value='';f.elements.region.value='';$('#cPaste').value='';$('#cPasteMsg').textContent='';
     cFormShow(false);renderCommunityList();
     if(d.message&&d.room){CH.msgs[d.room]=[...(CH.msgs[d.room]||[]),d.message];if(CH.on){if(d.room===CH.room){CH.jump=true;renderChat()}else openRoom(d.room)}
       toast(`Your deal is posted and shared in the ${REGIONS.find(x=>roomId(x)===d.room)||''} chat.`)}else toast('Your deal is posted.')}
@@ -2189,6 +2200,70 @@ $('#cResults').addEventListener('submit',async e=>{const f=e.target.closest('[da
     const p=(CM.posts||[]).find(x=>x.id===id);if(p)p.replyCount=CR.data[id].length;redrawReplies(id)}
   catch(err){toast(err.message)}finally{btn.disabled=false}});
 $('#cResults').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)&&e.target.closest('[data-rform] textarea')){e.preventDefault();e.target.form.requestSubmit()}});
+
+/* ---------- paste a deal into the post form ---------- */
+const PC_REGION=[['London',/^(E|EC|N|NW|SE|SW|W|WC|BR|CR|DA|EN|HA|IG|KT|RM|SM|TW|UB)$/],['North East',/^(NE|SR|DH|DL|TS)$/],
+  ['North West',/^(M|L|WA|WN|BL|BB|CH|CW|FY|LA|OL|PR|SK|CA)$/],['Yorkshire and Humber',/^(LS|BD|HD|HG|HU|HX|S|WF|YO|DN)$/],
+  ['Midlands',/^(B|CV|DE|DY|LE|NG|NN|ST|WS|WV|WR|HR|TF|LN)$/],['South West',/^(BA|BH|BS|DT|EX|GL|PL|SN|SP|TA|TQ|TR)$/],
+  ['South East',/^(BN|CT|GU|ME|MK|OX|PO|RG|RH|SL|SO|TN|HP|LU|AL|SG|CM|CO|SS|WD)$/]];
+const CITY_REGION=[['London',/\blondon\b/],['North West',/\b(manchester|liverpool|salford|stockport|bolton|preston|blackpool|chester|warrington|wigan|oldham)\b/],
+  ['North East',/\b(newcastle|sunderland|durham|middlesbrough|gateshead)\b/],['Yorkshire and Humber',/\b(leeds|sheffield|bradford|york|hull|huddersfield|wakefield|doncaster|harrogate)\b/],
+  ['Midlands',/\b(birmingham|coventry|nottingham|leicester|derby|wolverhampton|stoke|northampton|walsall|worcester|lincoln)\b/],
+  ['South West',/\b(bristol|bath|exeter|plymouth|bournemouth|swindon|gloucester|cheltenham|torquay)\b/],
+  ['South East',/\b(brighton|oxford|reading|southampton|portsmouth|milton keynes|canterbury|guildford|crawley|luton|watford|slough)\b/]];
+function parseDeal(raw){const t=String(raw||''),lo=t.toLowerCase(),out={};
+  const clean=l=>l.replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu,'').replace(/^[\s\-*•·#>]+/,'').replace(/\s+/g,' ').trim();
+  const lines=t.split(/\n/).map(clean).filter(Boolean);
+  // money: skip deposits, nightly rates and fees; rent if it says per month, purchase if it says price/asking or is large
+  const money=[...t.matchAll(/£\s?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(k|m)?\b/gi)].map(m=>{let v=parseFloat(m[1].replace(/,/g,''));if(/k/i.test(m[2]||''))v*=1e3;if(/m/i.test(m[2]||''))v*=1e6;
+    const before=lo.slice(Math.max(0,m.index-28),m.index).split(/[,.;\n]/).pop(),after=lo.slice(m.index+m[0].length,m.index+m[0].length+22);return{v,before,after}})
+    .filter(x=>x.v>0&&!/deposit|bond|nightly|per night|a night|fee|cleaning|bills? only|council tax|holding/.test(x.before)&&!/^\s*(per night|a night|\/night|pn\b|nightly|deposit|fee)/.test(x.after));
+  const isPcm=x=>/^\s*(pcm|per month|a month|\/month|\/mo\b|p\/?m\b|monthly|per calendar month)/.test(x.after)||/rent|pcm|per month/.test(x.before);
+  const isBuy=x=>/price|asking|purchase|guide|offers|for sale|sale|valuation|value|oieo|oiro/.test(x.before)||/^\s*(oieo|oiro|guide|asking)/.test(x.after);
+  const pick=money.find(isPcm)||money.find(isBuy)||money[0];
+  if(pick){out.price=Math.round(pick.v);out.priceType=isPcm(pick)?'pcm':isBuy(pick)||pick.v>=20000?'purchase':'pcm'}
+  const bed=lo.match(/(\d+)\s*(?:-\s*)?(?:bed(?:room)?s?|br)\b/);if(/\bstudio\b/.test(lo))out.beds=0;else if(bed)out.beds=+bed[1];
+  out.propertyType=/\bhmo\b/.test(lo)?'HMO':/\bstudio\b/.test(lo)?'Studio':/\b(commercial|office|retail|shop|warehouse|industrial|unit)\b/.test(lo)&&!/\b(flat|house|apartment)\b/.test(lo)?'Commercial'
+    :/\b(house|terrace[d]?|semi|detached|bungalow|cottage|townhouse)\b/.test(lo)?'House':/\b(flat|apartment|maisonette|penthouse)\b/.test(lo)?'Flat':'';
+  out.strategy=/\b(r2sa|sa|serviced accommodation|short[- ]?lets?|airbnb)\b/.test(lo)?'R2SA':/\b(r2r|rent[- ]to[- ]rent)\b/.test(lo)?'R2R':/\bbrrr\b/.test(lo)?'BRRR'
+    :/\blease option\b/.test(lo)?'Lease option':/\b(flip|refurb and sell)\b/.test(lo)?'Flip':/\bhmo\b/.test(lo)?'HMO':/\b(btl|buy[- ]to[- ]let)\b/.test(lo)?'BTL':'';
+  const pc=t.toUpperCase().match(/\b([A-Z]{1,2}\d[A-Z\d]?)(?:\s*\d[A-Z]{2})?\b/);if(pc)out.postcode=pc[1];
+  // location: a line marked with a pin or Location/Area/Address, else the town before the postcode
+  const locLine=(t.split(/\n/).find(l=>/📍/.test(l))||'')||(t.match(/^\s*(?:location|area|address|town)\s*[:\-]\s*(.+)$/im)||[])[1]||'';
+  let loc=clean(String(locLine)).replace(/\((?:zone|z)\s*\d[^)]*\)/ig,'').replace(/^(location|area|address|town)\s*[:\-]\s*/i,'');
+  if(out.postcode)loc=loc.replace(new RegExp('\\b'+out.postcode+'\\b.*$','i'),'');loc=loc.replace(/[,\s]+$/,'').trim();
+  if(!loc&&out.postcode){const m=t.match(new RegExp("([A-Z][a-zA-Z']+(?:\\s+[A-Z][a-zA-Z']+){0,2})[,\\s]+"+out.postcode+"\\b"));if(m&&!/^(HMO|BTL|R2SA|R2R|BRRR|SA)$/.test(m[1]))loc=m[1]}
+  if(!loc){const c=[...CITY_REGION.flatMap(([,re])=>[re])].map(re=>(lo.match(re)||[])[0]).find(Boolean);if(c)loc=c.replace(/\b\w/g,x=>x.toUpperCase())}
+  if(loc)out.location=loc.slice(0,80);
+  const area=out.postcode&&out.postcode.match(/^[A-Z]+/)[0];out.region=(area&&(PC_REGION.find(([,re])=>re.test(area))||[])[0])||(CITY_REGION.find(([,re])=>re.test(lo))||[])[0]||'';
+  const url=t.match(/https?:\/\/\S+/);if(url)out.listingUrl=url[0].replace(/[)\].,]+$/,'');
+  if(/\bagent\b|letting agency|estate agent/.test(lo))out.contacted='Agent';else if(/\blandlord\b|owner/.test(lo))out.contacted='Landlord';
+  // title: the first line that reads like a headline, else built from the details
+  const head=lines.find(l=>l.length>=6&&!/^https?:/i.test(l)&&!/^(rent|deposit|nightly|price|location|area|address)\b/i.test(l)&&!/^deal\s*\d/i.test(l)&&l!==clean(String(locLine)));
+  const built=[out.beds===0?'Studio':out.beds?out.beds+' bed '+(out.propertyType==='HMO'?'HMO':(out.propertyType||'property').toLowerCase()):out.propertyType,out.location?'in '+out.location:''].filter(Boolean).join(' ');
+  out.title=(head&&(head.length<=60||!built)?head:built||head||'').slice(0,120);
+  out.description=t.trim().slice(0,2000);return out}
+function fillFromPaste(auto){const f=$('#cForm'),msg=$('#cPasteMsg'),text=$('#cPaste').value;if(!text.trim()){if(!auto){msg.textContent='Paste your deal first.';$('#cPaste').focus()}return}
+  const d=parseDeal(text),set=[];
+  const put=(name,val)=>{if(val===''||val==null)return;const el=f.elements[name];if(!el)return;
+    if(el.tagName==='SELECT'&&![...el.options].some(o=>o.value===String(val)))return;el.value=String(val);set.push(el)};
+  put('title',d.title);put('location',d.location);put('postcode',d.postcode);put('region',d.region);put('strategy',d.strategy);put('propertyType',d.propertyType);
+  put('price',d.price);put('priceType',d.priceType);put('beds',d.beds);put('contacted',d.contacted);put('listingUrl',d.listingUrl);
+  if(!f.elements.description.value.trim())put('description',d.description);
+  set.forEach(el=>{el.classList.remove('filled');void el.offsetWidth;el.classList.add('filled');setTimeout(()=>el.classList.remove('filled'),2200)});
+  const missing=['title','location','region','strategy','propertyType','price'].filter(n=>!f.elements[n].value).map(n=>({title:'title',location:'town or area',region:'region',strategy:'strategy',propertyType:'property type',price:'price'})[n]);
+  msg.classList.toggle('bad',!!missing.length);
+  msg.textContent=set.length?`Filled in ${set.length} field${set.length>1?'s':''}. ${missing.length?`Still needed: ${missing.join(', ')}.`:'Check them, then post.'}`:"Couldn't pick out the details. Fill in the form below."}
+$('#cFill').addEventListener('click',()=>fillFromPaste(false));
+$('#cPaste').addEventListener('paste',()=>setTimeout(()=>fillFromPaste(true),0));
+$('#cAnalyse').addEventListener('click',()=>{const f=$('#cForm'),text=$('#cPaste').value.trim()||postText(Object.fromEntries(new FormData(f).entries()));
+  if(!text.replace(/\s|:/g,'').length){$('#cPasteMsg').textContent='Paste your deal or fill in the form first.';return}analyseText(text,f.elements.title.value||parseDeal(text).title)});
+// A community deal as text the AI can analyse.
+function postText(p){const price=+p.price?(p.priceType==='purchase'?`Purchase price ${gbp(+p.price)}`:`Rent ${gbp(+p.price)} a month`):'';
+  return [p.title,[p.location,p.postcode].filter(Boolean).join(' ')&&`Location: ${[p.location,p.postcode].filter(Boolean).join(' ')}`,p.region&&`Region: ${p.region}`,
+    p.strategy&&`Strategy: ${p.strategy}`,p.propertyType&&`Property type: ${p.propertyType}`,p.beds!==''&&p.beds!=null&&`Bedrooms: ${+p.beds===0?'Studio':p.beds}`,price,
+    p.contacted&&`${p.contacted} already contacted`,p.status&&`Status: ${p.status}`,p.description&&p.description.trim()!==String(p.title).trim()&&p.description,p.listingUrl&&`Listing: ${p.listingUrl}`].filter(Boolean).join('\n')}
+$('#cResults').addEventListener('click',e=>{const a=e.target.closest('[data-canalyse]');if(!a)return;const p=(CM.posts||[]).find(x=>x.id===a.dataset.canalyse);if(p)analyseText(postText(p),p.title)});
 
 /* ---------- region chat ---------- */
 const CH={on:false,room:roomId(REGIONS[0]),msgs:{},timer:null,loading:false};
