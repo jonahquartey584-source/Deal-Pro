@@ -647,6 +647,8 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .msg.mine .msg-h{justify-content:flex-end}.msg.mine .msg-t{background:rgba(224,20,43,.12);border-color:rgba(224,20,43,.35);border-radius:10px 4px 10px 10px}
 .msg-del{border:0;background:none;padding:0;color:var(--muted);font:inherit;font-size:11.5px;cursor:pointer}.msg-del:hover{color:var(--bad)}
 .chat-acts{display:flex;gap:8px}
+.ctut{margin:0 0 18px}.ctut>summary{list-style:none;cursor:pointer;margin-top:0}.ctut>summary::-webkit-details-marker{display:none}
+.ctut .ctut-close,.ctut[open] .ctut-open{display:none}.ctut[open] .ctut-close{display:inline}.ctut-media{margin-top:12px;max-width:960px}
 .cpaste{display:grid;gap:10px;padding-bottom:16px;margin-bottom:16px;border-bottom:1px solid var(--line)}.cpaste textarea{min-height:92px;resize:vertical}
 .cpaste-acts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .cform .inp.filled{border-color:rgba(95,185,138,.7);box-shadow:0 0 0 3px rgba(95,185,138,.14);transition:border-color .6s,box-shadow .6s}
@@ -1073,6 +1075,10 @@ td.t{text-align:right;color:var(--ink-2)}
       </div>
       <div class="ph-actions"><div class="seg segb" role="group" aria-label="Community view"><button id="cTabDeals" type="button" aria-pressed="true">Deals</button><button id="cTabChat" type="button" aria-pressed="false">Region chat</button></div><button class="btn primary" id="cPostToggle" aria-expanded="false" aria-controls="cForm">Post a deal</button></div>
     </header>
+    <details class="ctut" id="cTut">
+      <summary class="tutorial-callout"><span class="tutorial-callout-copy"><span class="tutorial-callout-icon" aria-hidden="true"></span><span class="tutorial-callout-text"><strong>New to the Deal Community? Watch how it works</strong><span>Posting deals, replies, region chat and the things not to do, in about 90 seconds.</span></span></span><span class="tutorial-callout-action"><span class="ctut-open">Watch now</span><span class="ctut-close">Hide video</span></span></summary>
+      <div class="tutorial-media ctut-media"><video controls preload="none" poster="/assets/deal-community-tutorial-poster.png?v=1"><source src="/assets/deal-community-tutorial.mp4?v=1" type="video/mp4">Your browser does not support this tutorial video.</video></div>
+    </details>
     <form class="panel cform" id="cForm" hidden novalidate>
       <div class="fs"><div class="fs-h"><h2>Post a deal</h2></div>
         <div class="cpaste">
@@ -2287,6 +2293,8 @@ function openRoom(room){CH.room=room;CH.jump=true;$('#chErr').textContent='';ren
   CH.timer=setInterval(()=>{if(!CH.on||curView!=='community'){stopChat();return}if(!document.hidden)loadRoom(CH.room)},15000)}
 $('#cTabDeals').addEventListener('click',()=>cTab(false));
 $('#cTabChat').addEventListener('click',()=>cTab(true));
+// Community tutorial: plays when opened, pauses when hidden.
+$('#cTut').addEventListener('toggle',e=>{const v=e.currentTarget.querySelector('video');if(e.currentTarget.open){try{v.play().catch(()=>{})}catch(err){}}else v.pause()});
 $('#chPost').addEventListener('click',()=>cFormShow(true));
 // "View deal" on a deal shared in the chat: show it in the Deals list with its replies open.
 async function viewDeal(id){cTab(false);$('#cReset').click();
