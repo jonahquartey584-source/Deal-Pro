@@ -577,7 +577,7 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .hplan.feat{box-shadow:inset 0 2px 0 var(--brand)}
 .home-foot{margin-top:72px;padding:16px 0 8px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
 .contact-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(320px,1.2fr);gap:32px;align-items:start}.contact-form{display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:24px}.contact-copy p{color:var(--ink-2);margin-top:10px}.contact-status{font-size:13px;color:var(--muted)}/* "Powered by Qp Digital" pill, styled like Netlify's badge in greys with a holographic sheen */
-.qp-badge{--holo:linear-gradient(110deg,#6e7176 0%,#e4e5e7 18%,#7d8085 34%,#f6f6f7 50%,#686b70 66%,#d2d4d7 82%,#6e7176 100%);position:relative;isolation:isolate;overflow:hidden;display:inline-flex;align-items:center;gap:10px;height:42px;margin-top:14px;padding:0 20px 0 9px;border-radius:999px;background:linear-gradient(135deg,#1c1e21,#111214);color:#a9abb0;font-size:14.5px;letter-spacing:.005em;text-decoration:none;box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 6px 18px rgba(0,0,0,.35);transition:transform .25s var(--ease),box-shadow .25s var(--ease),color .25s}
+.qp-badge{--holo:linear-gradient(110deg,#6e7176 0%,#e4e5e7 18%,#7d8085 34%,#f6f6f7 50%,#686b70 66%,#d2d4d7 82%,#6e7176 100%);position:fixed;isolation:isolate;overflow:hidden;right:20px;bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:50;display:inline-flex;align-items:center;gap:10px;height:42px;padding:0 20px 0 9px;border-radius:999px;background:linear-gradient(135deg,#1c1e21,#111214);color:#a9abb0;font-size:14.5px;letter-spacing:.005em;text-decoration:none;box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 6px 18px rgba(0,0,0,.35);transition:transform .25s var(--ease),box-shadow .25s var(--ease),color .25s}
 .qp-badge::after{content:"";position:absolute;inset:0;z-index:2;border-radius:inherit;padding:1px;background:var(--holo);background-size:300% 100%;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);opacity:.75;animation:qpHolo 7s linear infinite;pointer-events:none}
 .qp-badge::before{content:"";position:absolute;inset:0;z-index:1;border-radius:inherit;background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.13) 46%,rgba(255,255,255,.05) 52%,transparent 62%);background-size:300% 100%;mix-blend-mode:screen;animation:qpHolo 7s linear infinite;pointer-events:none}
 .qp-badge>*{position:relative;z-index:1}
@@ -587,7 +587,11 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .qp-badge:focus-visible{outline:2px solid #c9cbcf;outline-offset:3px}
 @keyframes qpHolo{from{background-position:0 0}to{background-position:-300% 0}}
 @media (prefers-reduced-motion:reduce){.qp-badge::before,.qp-badge::after,.qp-badge b{animation:none}}
-.app-foot .qp-badge{margin-top:12px}
+/* keeps page endings clear of the badge; the badge steps aside while a toast shows */
+.app-foot,.home-foot{padding-bottom:72px!important}
+.toast.on~.qp-badge{opacity:0;pointer-events:none}.qp-badge>span{max-width:220px;white-space:nowrap;overflow:hidden;transition:max-width .3s var(--ease),opacity .2s}.qp-badge.is-tucked:not(:hover):not(:focus-visible){gap:0;padding:0 8px}.qp-badge.is-tucked:not(:hover):not(:focus-visible)>span{max-width:0;opacity:0}.qp-badge{transition:transform .25s var(--ease),box-shadow .25s var(--ease),color .25s,opacity .2s}
+@media (max-width:600px){.qp-badge{right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));height:36px;gap:8px;padding:0 14px 0 6px;font-size:13px}.qp-badge .qp-by{display:none}.qp-mark{width:24px;height:24px}}
+@media print{.qp-badge{display:none}}
 .legal-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}.legal-links a{color:var(--ink-2)}.bot-field{position:absolute;left:-9999px}
 @media(max-width:760px){.contact-grid{grid-template-columns:1fr}}
 .own{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:16px 24px;align-items:end}
@@ -824,7 +828,7 @@ td.t{text-align:right;color:var(--ink-2)}
       <p class="note"><button class="linkbtn" id="homeTeam">Team plans available</button></p>
     </section>
     <section class="hsec contact-grid" aria-labelledby="contactTitle"><div class="contact-copy"><p class="eyebrow"><span class="eb-dot"></span>Contact Deal Pro</p><h2 class="h2" id="contactTitle">Have a question?</h2><p>Send an enquiry about Deal Pro, subscriptions or your account. We will use your details only to respond unless you separately choose to receive marketing.</p></div><form class="contact-form" id="contactForm" name="deal-pro-enquiry" method="POST" data-netlify="true" netlify-honeypot="bot-field"><input type="hidden" name="form-name" value="deal-pro-enquiry"><input type="hidden" name="subject" value="New Deal Pro enquiry"><label class="bot-field">Do not complete this field <input name="bot-field"></label><label class="f"><span>Name</span><input class="inp" name="name" autocomplete="name" required></label><label class="f"><span>Email</span><input class="inp" name="email" type="email" autocomplete="email" required></label><label class="f"><span>Enquiry</span><textarea class="inp" name="message" rows="6" required></textarea></label><label class="check"><input type="checkbox" name="marketing" value="yes"><span>I would like to receive Deal Pro marketing emails. This is optional and I can unsubscribe at any time.</span></label><button class="btn primary" type="submit">Send enquiry</button><p class="contact-status" id="contactStatus" role="status">Read how we use your information in our <a href="/privacy.html">Privacy Notice</a>.</p></form></section>
-    <div class="home-foot"><p>AI results are decision-support only. Always verify legal, planning, licensing and financial information independently.</p><nav class="legal-links" aria-label="Legal"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/cookies.html">Cookies</a><a href="mailto:jonahquartey584@gmail.com">Contact</a></nav><a class="qp-badge" href="https://qp-digital.co.uk" target="_blank" rel="noopener" aria-label="Powered by Qp Digital (opens in a new tab)"><img class="qp-mark" src="/assets/qp-digital-logo.png" alt="" width="26" height="26"><span>Powered by <b>Qp Digital</b></span></a></div>
+    <div class="home-foot"><p>AI results are decision-support only. Always verify legal, planning, licensing and financial information independently.</p><nav class="legal-links" aria-label="Legal"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/cookies.html">Cookies</a><a href="mailto:jonahquartey584@gmail.com">Contact</a></nav></div>
   </section>
 
   <!-- FIND -->
@@ -1184,10 +1188,11 @@ td.t{text-align:right;color:var(--ink-2)}
     </div>
   </section>
   </main>
-  <footer class="app-foot"><span>AI analysis supports your decision-making but does not replace legal, planning, licensing, financial or property advice. Verify all figures and permissions before proceeding.</span><a class="qp-badge" href="https://qp-digital.co.uk" target="_blank" rel="noopener" aria-label="Powered by Qp Digital (opens in a new tab)"><img class="qp-mark" src="/assets/qp-digital-logo.png" alt="" width="26" height="26"><span>Powered by <b>Qp Digital</b></span></a></footer>
+  <footer class="app-foot"><span>AI analysis supports your decision-making but does not replace legal, planning, licensing, financial or property advice. Verify all figures and permissions before proceeding.</span></footer>
   </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<a class="qp-badge" href="https://qp-digital.co.uk" target="_blank" rel="noopener" aria-label="Powered by Qp Digital (opens in a new tab)"><img class="qp-mark" src="/assets/qp-digital-logo.png" alt="" width="26" height="26"><span><span class="qp-by">Powered by </span><b>Qp Digital</b></span></a>
 <dialog class="drawer" id="payWall" aria-labelledby="pwTitle">
   <div class="dr-head">
     <div><p class="dr-kicker">Free plan</p><h2 id="pwTitle" tabindex="-1">You've used your 2 free deal analyses</h2><p class="dr-sub">Subscribe to keep analysing deals. Your saved deals stay available.</p></div>
@@ -2210,6 +2215,15 @@ document.addEventListener('click',e=>{const a=e.target.closest('a[href="#tutoria
   e.preventDefault();media.scrollIntoView({block:'center',behavior:reduced()?'auto':'smooth'});
   sec.classList.remove('is-flash');void sec.offsetWidth;sec.classList.add('is-flash');
   const v=media.querySelector('video');if(v){try{v.play().catch(()=>{})}catch(err){}}});
+
+/* ---------- Qp Digital badge: tuck down to the logo when it would cover a button or link ---------- */
+{const qp=$('.qp-badge');let full=0,queued=false;
+  const check=()=>{queued=false;if(!qp)return;const r=qp.getBoundingClientRect();if(!qp.classList.contains('is-tucked'))full=r.width;
+    const L=r.right-(full||r.width),hit=[.1,.3,.5,.7,.9].some(fx=>[.2,.5,.8].some(fy=>document.elementsFromPoint(L+(r.right-L)*fx,r.top+r.height*fy)
+      .some(el=>!qp.contains(el)&&el.matches('a,button,input,select,textarea,label,video,[role="button"]'))));
+    qp.classList.toggle('is-tucked',hit)};
+  const queue=()=>{if(!queued){queued=true;requestAnimationFrame(check)}};
+  addEventListener('scroll',queue,{passive:true});addEventListener('resize',queue);new MutationObserver(queue).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class']});setTimeout(queue,1800)}
 
 /* ---------- boot ---------- */
 const siteIntro=$('#siteIntro');if(siteIntro)setTimeout(()=>siteIntro.remove(),1700);
