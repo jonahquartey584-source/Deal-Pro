@@ -576,7 +576,8 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .hplan .sub{font-size:12.5px;color:var(--muted)}
 .hplan.feat{box-shadow:inset 0 2px 0 var(--brand)}
 .home-foot{margin-top:72px;padding:16px 0 8px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted)}
-.contact-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(320px,1.2fr);gap:32px;align-items:start}.contact-form{display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:24px}.contact-copy p{color:var(--ink-2);margin-top:10px}.contact-status{font-size:13px;color:var(--muted)}.legal-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}.legal-links a{color:var(--ink-2)}.bot-field{position:absolute;left:-9999px}
+.contact-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(320px,1.2fr);gap:32px;align-items:start}.contact-form{display:grid;gap:14px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:24px}.contact-copy p{color:var(--ink-2);margin-top:10px}.contact-status{font-size:13px;color:var(--muted)}.powered{margin:12px 0 0;font-size:12px;color:var(--muted)}.powered a{color:var(--ink);font-weight:600;text-decoration:none;border-bottom:1px solid var(--line-2)}.powered a:hover{color:#fff;border-color:var(--brand)}
+.legal-links{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px}.legal-links a{color:var(--ink-2)}.bot-field{position:absolute;left:-9999px}
 @media(max-width:760px){.contact-grid{grid-template-columns:1fr}}
 .own{display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr);gap:16px 24px;align-items:end}
 .own-acts{display:flex;gap:8px;flex-wrap:wrap}
@@ -812,7 +813,7 @@ td.t{text-align:right;color:var(--ink-2)}
       <p class="note"><button class="linkbtn" id="homeTeam">Team plans available</button></p>
     </section>
     <section class="hsec contact-grid" aria-labelledby="contactTitle"><div class="contact-copy"><p class="eyebrow"><span class="eb-dot"></span>Contact Deal Pro</p><h2 class="h2" id="contactTitle">Have a question?</h2><p>Send an enquiry about Deal Pro, subscriptions or your account. We will use your details only to respond unless you separately choose to receive marketing.</p></div><form class="contact-form" id="contactForm" name="deal-pro-enquiry" method="POST" data-netlify="true" netlify-honeypot="bot-field"><input type="hidden" name="form-name" value="deal-pro-enquiry"><input type="hidden" name="subject" value="New Deal Pro enquiry"><label class="bot-field">Do not complete this field <input name="bot-field"></label><label class="f"><span>Name</span><input class="inp" name="name" autocomplete="name" required></label><label class="f"><span>Email</span><input class="inp" name="email" type="email" autocomplete="email" required></label><label class="f"><span>Enquiry</span><textarea class="inp" name="message" rows="6" required></textarea></label><label class="check"><input type="checkbox" name="marketing" value="yes"><span>I would like to receive Deal Pro marketing emails. This is optional and I can unsubscribe at any time.</span></label><button class="btn primary" type="submit">Send enquiry</button><p class="contact-status" id="contactStatus" role="status">Read how we use your information in our <a href="/privacy.html">Privacy Notice</a>.</p></form></section>
-    <div class="home-foot"><p>AI results are decision-support only. Always verify legal, planning, licensing and financial information independently.</p><nav class="legal-links" aria-label="Legal"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/cookies.html">Cookies</a><a href="mailto:jonahquartey584@gmail.com">Contact</a></nav></div>
+    <div class="home-foot"><p>AI results are decision-support only. Always verify legal, planning, licensing and financial information independently.</p><nav class="legal-links" aria-label="Legal"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/cookies.html">Cookies</a><a href="mailto:jonahquartey584@gmail.com">Contact</a></nav><p class="powered">Powered by <a href="https://qp-digital.co.uk" target="_blank" rel="noopener">Qp Digital</a></p></div>
   </section>
 
   <!-- FIND -->
@@ -1172,7 +1173,7 @@ td.t{text-align:right;color:var(--ink-2)}
     </div>
   </section>
   </main>
-  <footer class="app-foot"><span>AI analysis supports your decision-making but does not replace legal, planning, licensing, financial or property advice. Verify all figures and permissions before proceeding.</span></footer>
+  <footer class="app-foot"><span>AI analysis supports your decision-making but does not replace legal, planning, licensing, financial or property advice. Verify all figures and permissions before proceeding.</span><p class="powered">Powered by <a href="https://qp-digital.co.uk" target="_blank" rel="noopener">Qp Digital</a></p></footer>
   </div>
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
