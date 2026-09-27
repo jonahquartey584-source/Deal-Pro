@@ -185,7 +185,7 @@ const ANGLES = [
   "Now try neighbouring postcode districts and any areas you haven't covered yet.",
 ];
 export type Filters = {
-  mode?: string; beds?: string; min?: number | string; max?: number | string; loc?: string;
+  mode?: string; beds?: string | string[]; min?: number | string; max?: number | string; loc?: string;
   priv?: boolean; furn?: string; type?: string;
 };
 
@@ -196,12 +196,23 @@ export type Listing = {
   details?: { deposit: string; availableFrom: string; highlights: string[] };
 };
 
+// Bedrooms can be one size or several (for example studio to 2 beds); "4" means 4 or more.
+function bedsText(beds: Filters["beds"]) {
+  const list = (Array.isArray(beds) ? beds : beds && beds !== "any" ? [beds] : []).map(String).filter((v) => /^[0-4]$/.test(v));
+  if (!list.length) return "";
+  const name = (v: string) => (v === "0" ? "studio" : v === "4" ? "4 or more bedrooms" : v === "1" ? "1 bedroom" : `${v} bedrooms`);
+  const nums = [...new Set(list)].map(Number).sort((a, b) => a - b);
+  const range = nums.length > 1 && nums.every((n, i) => i === 0 || n === nums[i - 1] + 1);
+  const words = range ? `${name(String(nums[0]))} to ${name(String(nums[nums.length - 1]))}` : nums.map((n) => name(String(n))).join(" or ");
+  return `bedrooms: ${words}`;
+}
+
 function describe(f: Filters) {
   const buy = f.mode === "buy";
   const parts = [
     buy ? "for sale" : "to rent",
     f.loc?.trim() ? `in or near ${f.loc.trim()}, UK` : "anywhere in the UK",
-    f.beds && f.beds !== "any" ? (f.beds === "0" ? "studios" : f.beds === "4" ? "4 or more bedrooms" : `${f.beds} bedrooms`) : "",
+    bedsText(f.beds),
     f.type && f.type !== "any" ? `property type: ${f.type}` : "",
     f.min !== "" && f.min != null ? `from £${f.min}${buy ? "" : " per month"}` : "",
     f.max !== "" && f.max != null ? `up to £${f.max}${buy ? "" : " per month"}` : "",
