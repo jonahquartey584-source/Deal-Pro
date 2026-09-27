@@ -66,13 +66,13 @@ Landlord open to company lets`;
 // The Islington studio from the advert above, so the Numbers step matches the AI's figures.
 const STATE = premiumState({ name: "Islington N4 studio", area: "Islington, London N4", london: true, units: [{ label: "Studio", rent: 1650, dep: 1650, rate: 180 }] });
 
-const { page, until, move, click, moveClick, type, scroll, finish } = await start({
+const { page, until, move, click, moveClick, type, scroll, finish, now } = await start({
   state: STATE,
   api: (url, method, body) => {
     if (url.pathname === "/api/community") return [200, { posts: POSTS }];
     if (url.pathname === "/api/refunds") return [200, { requests: [] }];
     if (url.pathname === "/api/analyze-deal") {
-      if (method === "POST") { if (body.kind === "search") searchPolls = 0; return [202, { jobId: body.kind, credits: CREDITS }]; }
+      if (method === "POST") { if (body.kind === "search") searchStart = now(); return [202, { jobId: body.kind, credits: CREDITS }]; }
       const job = url.searchParams.get("job");
       if (job === "search") return [200, searchPoll()];
       if (job) return [200, { status: "done", analysis: ANALYSIS, credits: CREDITS }];
@@ -82,18 +82,20 @@ const { page, until, move, click, moveClick, type, scroll, finish } = await star
   },
 });
 
-// Expert search: each poll (every 2 s) moves the sites on a round, then checks listings, then finishes.
-let searchPolls = 0;
+// Expert search, driven by the video clock: sites move through their rounds, then the
+// best listings are checked, and results arrive just as the "Your results" narration starts.
+let searchStart = 0;
+const SEARCH_DONE = 142.4, VERIFY_FROM = 136.5;
 function searchPoll() {
-  const n = ++searchPolls, ROUNDS = 8;
+  const t = now(), ROUNDS = 8, k = Math.min(1, (t - searchStart) / (VERIFY_FROM - searchStart));
   const sites = Object.fromEntries(SEARCH_SITES.map((site, i) => {
-    const round = Math.min(ROUNDS, Math.max(0, Math.floor((n - (i % 3) * 0.4) * 0.8)));
-    const found = SEARCH_SITES.indexOf(site) < 3 ? Math.min(LIVE.filter((l) => l.site === site).length + 6, round * 2 + i) : Math.min(round * 2 + i, 12);
+    const round = Math.min(ROUNDS, Math.floor(k * ROUNDS + (i % 3) * 0.3));
+    const found = i < 3 ? Math.min(LIVE.filter((l) => l.site === site).length + 6, round * 2 + i) : Math.min(round * 2 + i, 12);
     return [site, { status: round >= ROUNDS ? "done" : "searching", found, round, rounds: ROUNDS }];
   }));
   const total = Object.values(sites).reduce((a, x) => a + x.found, 0);
-  if (n <= 10) return { status: "running", credits: CREDITS, progress: { phase: "search", sites, found: total } };
-  if (n <= 13) return { status: "running", credits: CREDITS, progress: { phase: "verify", sites, found: total, verified: (n - 10) * 10 } };
+  if (t < VERIFY_FROM) return { status: "running", credits: CREDITS, progress: { phase: "search", sites, found: total } };
+  if (t < SEARCH_DONE) return { status: "running", credits: CREDITS, progress: { phase: "verify", sites, found: total, verified: Math.round((t - VERIFY_FROM) * 6) } };
   return { status: "done", credits: CREDITS, analysis: { listings: LIVE, sites: Object.fromEntries(SEARCH_SITES.map((x) => [x, { status: "done", found: LIVE.filter((l) => l.site === x).length }])), ranking: RANK } };
 }
 
