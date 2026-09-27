@@ -81,7 +81,8 @@ missing_information (array of short strings),
 next_actions (array of short strings).`;
 
 const LEVEL_PROMPT: Record<LevelId, string> = {
-  quick: "Give a fast first look: the headline numbers, the verdict and the three most important risks. Keep lists short.",
+  // Scout is a quick, useful first look; Analyst and Expert go much further.
+  quick: `Give a fast first look only. Work out the realistic monthly profit, upfront cash and break-even, give the verdict, and name the three most important risks. Keep every list to at most 3 short items. For occupancy_scenarios give only the 80% case. Keep the summary under 50 words.`,
   standard: "Give a full analysis: work through the numbers carefully, cover all material risks and give clear next steps.",
   deep: `Give a thorough, investment-committee-grade analysis. Double-check every calculation. Stress-test the deal: nightly rate 20% lower, occupancy 15 points lower, costs 10% higher, and a one-month void; say whether it still works. Consider local demand, seasonality, competition, exit options and the worst realistic case. Also include the key "stress_tests" (array of {"scenario": string, "monthly_profit": string, "still_works": boolean}).`,
 };
@@ -139,7 +140,7 @@ picks (array, best first, of {"id": string, "score": integer 0-100, "verdict": "
 watch_outs (array of short strings that apply across these results).`;
 
 const RANK_LEVEL: Record<LevelId, string> = {
-  quick: "Return only the 5 best picks, with a one-sentence reason each.",
+  quick: "Return only the 3 best picks, with a one-sentence reason each. Give at most 2 watch_outs.",
   standard: "Return the 10 best picks, with a two-sentence reason each covering the numbers and the main risk.",
   deep: `Return the 10 best picks. For each, give a thorough reason covering the numbers, local demand, the biggest risk and whether it survives a 20% lower nightly rate. Also add "notes" to each pick (array of short strings: compliance points and what to check with the landlord).`,
 };
@@ -166,7 +167,8 @@ export const SITES: Record<string, { label: string; domains: string[]; what: str
 // How hard each level searches. Expert runs many rounds per site from different angles,
 // then opens the best listings to confirm they're still available.
 const SEARCH_LEVEL: Record<LevelId, { passes: number; perPass: number; context: "low" | "medium" | "high"; effort: Effort; verify: number }> = {
-  quick: { passes: 1, perPass: 8, context: "low", effort: "low", verify: 0 },
+  // Scout: one quick look per site. Analyst: two rounds per site from different angles. Expert: eight rounds plus checks.
+  quick: { passes: 1, perPass: 5, context: "low", effort: "low", verify: 0 },
   standard: { passes: 2, perPass: 12, context: "medium", effort: "low", verify: 0 },
   deep: { passes: 8, perPass: 15, context: "high", effort: "medium", verify: 40 },
 };
@@ -259,7 +261,7 @@ async function searchSite(site: string, f: Filters, level: LevelId, pass: number
   const buy = f.mode === "buy";
   const skip = exclude.length ? `\nYou've already found these, so don't return them again:\n${exclude.slice(-80).join("\n")}` : "";
   const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
-${ANGLES[pass % ANGLES.length]} Search several times with different wording until you have up to ${lv.perPass} matching individual listings. Only use individual listing pages, never search-results or category pages.${skip}
+${ANGLES[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only use individual listing pages, never search-results or category pages.${skip}
 Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "private_landlord": true | false | null}]}.
 Only include listings you actually found in the search results. Never invent a listing, price or URL. If you find none, return {"listings": []}.`;
   const { parsed, seen } = await webJson(prompt, conf.domains, level, lv.context, lv.effort);
@@ -397,7 +399,7 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
       try {
         st.ranking = await runRank(JSON.stringify({
           filters: st.filters,
-          listings: st.listings.slice(0, 120).map((l, i) => ({
+          listings: st.listings.slice(0, level === "quick" ? 40 : 120).map((l, i) => ({
             id: String(i), site: SITES[l.site].label, type: l.type, beds: l.beds, area: l.area, postcode: l.postcode,
             [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price,
             ...(l.details ? { checked_details: l.details, still_available: l.verified } : {}),
@@ -423,7 +425,7 @@ For each check, report what you actually found for this specific property and ar
 Status: "issue" if you found a problem or a risk that needs resolving, "partly" if you found useful evidence but the user still needs to confirm something, "none" if you found nothing relevant. Never mark a check as verified: only the user can do that.`;
 const DD_FORMAT = `Return JSON: {"findings": [{"k": string (the check key), "status": "partly" | "issue" | "none", "finding": string (max 90 words, plain English), "sources": [{"title": string, "url": string}]}]}. Include every check key given, once.`;
 const DD_LEVEL: Record<LevelId, { context: "low" | "medium" | "high"; note: string }> = {
-  quick: { context: "low", note: "Give a quick first pass: the most useful fact for each check." },
+  quick: { context: "low", note: "Give a quick first pass: one short, useful fact for each check (max 40 words) and at most one source each." },
   standard: { context: "medium", note: "Research each check properly and cite the most relevant sources." },
   deep: { context: "high", note: "Research exhaustively: search several sources, cross-check figures, quote current fees, dates and scheme boundaries, and cite every source you rely on." },
 };

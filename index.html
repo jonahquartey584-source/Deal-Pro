@@ -280,6 +280,7 @@ td.lb{border-bottom:0}
 .ev-a{display:flex;gap:6px;flex-wrap:wrap}.ev-lf{display:grid;gap:6px}
 .dd-row.drop{outline:2px dashed var(--brand);outline-offset:-4px}
 .ai-src{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:3px;font-size:12.5px}.ai-src a{color:var(--ink);text-decoration:underline}
+.scout-more{display:flex;align-items:center;justify-content:space-between;gap:10px 16px;flex-wrap:wrap;margin-top:14px;padding:12px 14px;border:1px dashed var(--line);border-radius:8px;background:var(--surface-2);font-size:13px}.scout-more p{margin:0;flex:1 1 320px;color:var(--ink-2)}.scout-more b{color:var(--ink)}
 .ai-src .linkbtn{margin-left:6px;font-size:12px}
 @media (max-width:760px){.dd-row{grid-template-columns:minmax(0,1fr)}.dd-d,.ai{margin-left:0}}
 
@@ -997,7 +998,7 @@ td.t{text-align:right;color:var(--ink-2)}
       <div class="step-h"><div><h2>Due diligence</h2><p>Track every check before a deal goes to investors. Run AI research to draft findings from public sources with links, attach your own evidence, then confirm each check yourself.</p></div>
         <div class="ph-actions"><button class="btn primary" id="runAI" title="Uses credits">Run AI research</button></div></div>
       <div class="limit-note" id="nDD" role="status" hidden></div>
-      <fieldset class="ai-levels"><legend>Research power level</legend><div class="ai-level-opts" id="ddLevelOpts"></div><p class="ai-credits" id="ddStatus" role="status" aria-live="polite"></p></fieldset>
+      <fieldset class="ai-levels"><legend>Research power level</legend><div class="ai-level-opts" id="ddLevelOpts"></div><p class="ai-credits" id="ddStatus" role="status" aria-live="polite"></p></fieldset><div id="ddMore"></div>
     <div class="strip dd-strip" id="ddSummary"></div>
     <div class="list" id="ddList"></div>
       <div class="step-next"><button class="btn" data-step-go="pack">Next: Deal pack <span aria-hidden="true">→</span></button></div>
@@ -1601,6 +1602,7 @@ function renderDD(){const d=S.deal;
   d.dd.forEach(x=>{if(!Array.isArray(x.ev))x.ev=[]});
   const c={none:0,partly:0,verified:0,issue:0};d.dd.forEach(x=>c[x.s]++);
   $('#ddSummary').innerHTML=Object.keys(SLAB).map(k=>`<div class="fig"><div class="fig-l"><span class="dot ${SDOT[k]}"></span>${SLAB[k]}</div><div class="fig-v${k==='issue'&&c[k]?' neg':''}">${c[k]}</div></div>`).join('');
+  $('#ddMore').innerHTML=d.ai&&d.aiLevel==='quick'?scoutMore('dd'):'';
   $('#ddList').innerHTML=DD_TEMPLATE.map((t,i)=>{const x=d.dd[i]||{s:'none',n:'',ev:[]};const have=new Set(x.ev.filter(e=>e.kind==='link').map(e=>e.url));
     const src=(x.aiSrc||[]).filter(u=>safeUrl(u.url));
     return `<div class="dd-row" data-s="${x.s}" data-i="${i}"><div class="dd-main">
@@ -1656,12 +1658,12 @@ $('#ddList').addEventListener('input',e=>{if(e.target.tagName==='TEXTAREA'){S.de
 function ddDealText(d){const u=d.units.map(x=>`${x.label}: rent ${gbp(x.rent)}/month, deposit ${gbp(x.dep)}${x.rate?`, nightly rate £${x.rate}`:''}`).join('; ');
   return [`Deal: ${d.name||'Untitled'}`,`Location: ${d.send&&d.send.addr||d.area||'not given'}`,`Strategy: ${d.strat}${d.london?' (London)':''}`,`Units: ${u}`,d.sourceText?`Advert or notes:\n${d.sourceText.slice(0,6000)}`:''].filter(Boolean).join('\n')}
 function applyResearch(dealId,res){const apply=d=>{if(!d||d.id!==dealId)return;(res.findings||[]).forEach(f=>{const x=d.dd.find(y=>y.k===f.k);if(!x)return;
-    x.ai=f.finding;x.aiSrc=f.sources||[];if(x.s==='none'&&(f.status==='partly'||f.status==='issue'))x.s=f.status});d.ai=true;d.aiAt=res.researchedAt};
+    x.ai=f.finding;x.aiSrc=f.sources||[];if(x.s==='none'&&(f.status==='partly'||f.status==='issue'))x.s=f.status});d.ai=true;d.aiAt=res.researchedAt;d.aiLevel=res.level};
   apply(S.deal);S.saved.forEach(apply);save()}
 async function followResearch(job){const b=$('#runAI'),st=$('#ddStatus'),lv=AI_LEVELS.find(l=>l.id===job.level)||AI_LEVELS[0];
   b.disabled=true;b.textContent='Researching…';st.textContent=`${lv.name} is researching each check…`;
   try{const res=await pollJob(job.id,sec=>{st.textContent=`${lv.name} is researching each check… ${sec<120?sec+'s':Math.round(sec/60)+' min'}`});
-    S.ddJob=null;applyResearch(job.dealId,res);if(S.deal.id===job.dealId)renderDD();st.textContent='Findings drafted with their sources. Check each one, then add your evidence.';toast('Research complete')}
+    S.ddJob=null;applyResearch(job.dealId,Object.assign({},res,{level:job.level}));if(S.deal.id===job.dealId)renderDD();st.textContent='Findings drafted with their sources. Check each one, then add your evidence.';toast('Research complete')}
   catch(e){S.ddJob=null;save();st.textContent=e.message||'The research could not be completed.';toast(st.textContent)}
   finally{b.disabled=false;b.textContent='Run AI research'}}
 $('#runAI').addEventListener('click',async()=>{if(!feature('dd','#nDD'))return;const d=S.deal,st=$('#ddStatus'),b=$('#runAI');
@@ -2012,6 +2014,13 @@ $('#fSearch').addEventListener('click',async()=>{if(FS.busy)return;readFind();co
 window.addEventListener('dealpro:signed-in',()=>{if(S.find.pending&&!FS.busy)followSearch(S.find.pending)});
 // The AI matches picks by listing id; if it mentions one ("similar to id 4"), show the listing's name instead.
 const rankText=v=>String(v??'').replace(/\b(?:listing\s+)?ids?\s*[:#]?\s*(\d+)\b/gi,(m,n)=>{const r=SRC()[+n];return r?`the ${r.type.toLowerCase()} on ${(r.area||r.title||'').split(',')[0].replace(/\s*\(.*\)$/,'')}`:m});
+/* Scout is a good quick look; this shows what the deeper levels add */
+const SCOUT_MORE={
+  search:'Scout did one quick search per site and picked the top 3. Analyst searches every site twice from different angles and ranks the top 10. Expert searches round after round, then checks the best listings are still available.',
+  analyse:'Scout gives a quick first look. Analyst works through every cost, assumption and risk. Expert also stress-tests the deal with a lower nightly rate, lower occupancy, higher costs and an empty month.',
+  dd:'Scout gives one quick fact per check. Analyst researches each check properly with more sources, and Expert researches every check separately in depth.'};
+function scoutMore(kind){let free=true;try{free=!AIC.info||AIC.info.free}catch(e){}/* AIC is set up later in the script */
+  return `<div class="scout-more"><p><b>Want more?</b> ${SCOUT_MORE[kind]}</p>${free?'<button class="btn sm primary" type="button" data-go="plans">Upgrade for Analyst and Expert</button>':'<span class="muted">Choose Analyst or Expert and run it again.</span>'}</div>`}
 function rankHTML(){const R=FS.rank;if(!R)return '';const lv=R.level;
   if(R.status==='loading')return `<div class="rank lv-${lv.id}" role="status"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b id="fRankT">${esc(lv.name)} is ranking these deals…</b></div><p class="muted">Results are below. The AI's top picks will appear here.</p></div>`;
   if(R.status==='error')return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>AI ranking unavailable</b></div><p class="muted">${esc(R.error)}</p></div>`;
@@ -2021,7 +2030,7 @@ function rankHTML(){const R=FS.rank;if(!R)return '';const lv=R.level;
       <p>${esc(rankText(p.reason))}${p.monthly_profit_80?` <span class="muted">Est. at 80%: ${esc(String(p.monthly_profit_80))}</span>`:''}</p>${notes}
       <div class="rank-act"><button class="btn xs primary" data-build="${+p.id}">Analyse deal</button><a class="btn xs" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a></div></li>`};
   return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>${esc(lv.name)}'s top picks</b></div>${a.summary?`<p>${esc(rankText(a.summary))}</p>`:''}
-    <ol class="rank-list">${picks.map(li).join('')}</ol>${Array.isArray(a.watch_outs)&&a.watch_outs.length?`<p class="muted">Watch out: ${a.watch_outs.map(w=>esc(rankText(w))).join(' · ')}</p>`:''}</div>`}
+    <ol class="rank-list">${picks.map(li).join('')}</ol>${Array.isArray(a.watch_outs)&&a.watch_outs.length?`<p class="muted">Watch out: ${a.watch_outs.map(w=>esc(rankText(w))).join(' · ')}</p>`:''}${lv.id==='quick'?scoutMore('search'):''}</div>`}
 function openRows(){return sortRows(findRows()).filter(isOpen)}
 function findTsv(){const c=v=>{const s=String(v??'').replace(/[\t\r\n]+/g,' ');return /^[=+\-@]/.test(s)?"'"+s:s};
   return [['Site','Listing','Type','Beds','Area','Postcode',S.find.f.mode==='buy'?'Price':'Rent pcm','Furnished','Found','URL'],
@@ -2180,10 +2189,10 @@ function renderAIAnalysis(a){
   const verdict=String(a.verdict||'Analysis complete'),tone=/strong/i.test(verdict)?'strong':/weak/i.test(verdict)?'weak':'';
   out.className='ai-output';out.innerHTML=`<div class="ai-score"><div><div class="ai-verdict ${tone}">${esc(verdict)}</div><p>${esc(String(a.summary||''))}</p></div><strong>${Math.max(0,Math.min(100,+a.score||0))}<span class="muted" style="font-size:13px">/100</span></strong></div>
     <div class="ai-metrics"><div class="ai-metric"><span>Monthly profit</span><b>${esc(String(a.monthly_profit||'Not enough information'))}</b></div><div class="ai-metric"><span>Upfront cash</span><b>${esc(String(a.upfront_cash||'Not enough information'))}</b></div><div class="ai-metric"><span>Break-even</span><b>${esc(String(a.break_even||'Not enough information'))}</b></div></div>
-    ${Array.isArray(a.occupancy_scenarios)&&a.occupancy_scenarios.length?aiList('Occupancy scenarios',a.occupancy_scenarios.map(o=>`${o.occupancy}: ${o.monthly_profit}`)):''}${Array.isArray(a.stress_tests)&&a.stress_tests.length?aiList('Stress tests',a.stress_tests.map(t=>`${t.scenario}: ${t.monthly_profit}${t.still_works===false?' (fails)':t.still_works?' (still works)':''}`)):''}${aiList('Important risks',a.risks)}${aiList('Assumptions',a.assumptions)}${aiList('Missing information',a.missing_information)}${aiList('What to do next',a.next_actions)}`}
+    ${Array.isArray(a.occupancy_scenarios)&&a.occupancy_scenarios.length?aiList('Occupancy scenarios',a.occupancy_scenarios.map(o=>`${o.occupancy}: ${o.monthly_profit}`)):''}${Array.isArray(a.stress_tests)&&a.stress_tests.length?aiList('Stress tests',a.stress_tests.map(t=>`${t.scenario}: ${t.monthly_profit}${t.still_works===false?' (fails)':t.still_works?' (still works)':''}`)):''}${aiList('Important risks',a.risks)}${aiList('Assumptions',a.assumptions)}${aiList('Missing information',a.missing_information)}${aiList('What to do next',a.next_actions)}${a._level==='quick'?scoutMore('analyse'):''}`}
 renderAIAnalysis(S.deal.aiAnalysis);
 /* power levels: ids must match LEVELS in netlify/lib/ai.mts */
-const AI_LEVELS=[{id:'quick',name:'Scout',desc:'Fast first look',use:'Uses the least credits',time:'~10 sec'},{id:'standard',name:'Analyst',desc:'Full analysis',use:'Uses more credits',time:'~30 sec'},{id:'deep',name:'Expert',desc:'Stress-tested, thorough',use:'Uses the most credits',time:'1–2 min'}];
+const AI_LEVELS=[{id:'quick',name:'Scout',desc:'Quick first look',use:'Uses the least credits',time:'~10 sec'},{id:'standard',name:'Analyst',desc:'Full, detailed analysis',use:'Uses more credits',time:'~30 sec'},{id:'deep',name:'Expert',desc:'Stress-tested, thorough',use:'Uses the most credits',time:'1–2 min'}];
 const AIC={info:null,level:(()=>{try{return localStorage.getItem('dealpro:ai-level')||'quick'}catch(e){return 'quick'}})()};
 function levelOpts(name){const i=AIC.info,free=!i||i.free;// locked until the server confirms a paid plan
   return AI_LEVELS.map(l=>{const locked=free&&l.id!=='quick';
@@ -2207,7 +2216,7 @@ $('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInp
       if(!p.ok)throw new Error(data.error||'Analysis failed.');if(data.credits){AIC.info=data.credits;renderAILevels()}
       if(data.status==='done')break;if(data.status==='error')throw new Error(data.error||'Analysis failed.');
       status.textContent=`${lv.name} analysis in progress… ${Math.round((Date.now()-t0)/1000)}s`;if(Date.now()-t0>17*60e3)throw new Error('The analysis is taking too long. Please try again.')}
-    S.deal.aiAnalysis=data.analysis;S.deal.sourceText=input;save();renderAIAnalysis(data.analysis);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
+    S.deal.aiAnalysis=Object.assign({},data.analysis,{_level:lv.id});S.deal.sourceText=input;save();renderAIAnalysis(S.deal.aiAnalysis);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
   catch(e){status.textContent=e.message||'The analysis could not be completed. Please try again.'}finally{btn.disabled=false;btn.textContent='Analyse with AI'}});
 $('#advancedToggle').addEventListener('click',e=>{const on=document.body.classList.toggle('advanced-mode');e.currentTarget.setAttribute('aria-expanded',String(on));e.currentTarget.textContent=on?'Hide advanced controls':'Show advanced controls'});
 window.addEventListener('dealpro:save-error',()=>toast('Your latest change could not be saved. Check your connection and try again.'));
