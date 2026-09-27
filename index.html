@@ -631,6 +631,15 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 /* old browser-side usage meters; real credits are shown next to each AI tool */
 .ws-old-meter,#wsFree{display:none!important}
 .rf-list{margin:0 0 12px;padding-left:18px;display:grid;gap:6px;font-size:13px}
+.chap{position:relative;padding:10px 12px 12px;background:#0b0b0c;border-top:1px solid var(--line)}
+.chap-now{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--ink-2);margin-bottom:8px}.chap-now b{color:var(--ink);font-weight:600}
+.chap-bar{display:flex;gap:3px;height:14px;align-items:center;cursor:pointer}.chap-seg{position:relative;height:4px;flex:1 1 0;background:rgba(255,255,255,.2);border-radius:2px;transition:height .12s}
+.chap-seg:hover,.chap-seg:focus-visible{height:8px;outline:none}.chap-fill{position:absolute;inset:0 auto 0 0;width:0;background:var(--brand);border-radius:2px}
+.chap-tip{position:absolute;bottom:34px;transform:translateX(-50%);background:rgba(20,20,22,.95);color:#fff;font-size:12px;padding:5px 9px;border-radius:12px;white-space:nowrap;pointer-events:none;border:1px solid var(--line)}
+.chap-tip b{font-variant-numeric:tabular-nums;margin-right:6px;font-weight:600}
+.chap-list{list-style:none;margin:14px 0 18px;padding:0;display:grid;gap:2px;counter-reset:none}.chap-list button{display:flex;gap:12px;width:100%;text-align:left;background:none;border:0;color:var(--ink-2);font:inherit;font-size:14px;padding:6px 8px;border-radius:6px;cursor:pointer}
+.chap-list button:hover{background:var(--surface);color:var(--ink)}.chap-list button.on{color:var(--ink);background:var(--surface)}.chap-list .t{font-family:var(--mono,ui-monospace),monospace;color:var(--brand);min-width:38px}
+.cpost-note{font-size:12px;color:var(--ink-2);margin-left:10px}
 .cform{margin-bottom:18px}.cform-acts{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.cmsg{font-size:13px;color:var(--ink-2)}.cmsg.bad{color:var(--bad)}
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}.cgrid .dcard{width:auto}
 .ctags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}.ctag{font-size:12px;padding:2px 8px;border:1px solid var(--line);border-radius:999px;color:var(--ink-2)}.ctag.hot{border-color:rgba(224,20,43,.45);color:var(--ink)}
@@ -829,8 +838,8 @@ td.t{text-align:right;color:var(--ink-2)}
       </ol>
     </section>
     <section class="hsec tutorial" id="tutorial" aria-labelledby="tutorialTitle">
-      <div class="tutorial-media"><video controls preload="metadata" poster="/assets/deal-pro-tutorial-poster.png?v=6"><source src="/assets/deal-pro-tutorial.mp4?v=6" type="video/mp4">Your browser does not support this tutorial video.</video></div>
-      <div class="tutorial-copy"><p class="eyebrow"><span class="eb-dot" aria-hidden="true"></span>AI-guided tutorial</p><h2 class="h2" id="tutorialTitle">Learn Deal Pro in under a minute</h2><p>Watch the complete workflow before starting your first deal.</p><ul class="tutorial-points"><li>Find and review an opportunity</li><li>Open the listing and check the details</li><li>Analyse the numbers and risks with AI</li><li>Save the deal and prepare its pack</li></ul><button class="btn primary" data-go="find">Start with Deal Finder</button></div>
+      <div class="tutorial-media"><video controls preload="metadata" poster="/assets/deal-pro-tutorial-poster.png?v=7"><source src="/assets/deal-pro-tutorial.mp4?v=7" type="video/mp4">Your browser does not support this tutorial video.</video><div class="chap" data-chapters="[{&quot;t&quot;: 0, &quot;title&quot;: &quot;Welcome&quot;}, {&quot;t&quot;: 21.5, &quot;title&quot;: &quot;Signing in&quot;}, {&quot;t&quot;: 43.8, &quot;title&quot;: &quot;Power levels&quot;}, {&quot;t&quot;: 78.3, &quot;title&quot;: &quot;Filters and sites&quot;}, {&quot;t&quot;: 112.4, &quot;title&quot;: &quot;Searching with AI&quot;}, {&quot;t&quot;: 143.1, &quot;title&quot;: &quot;Results and AI picks&quot;}, {&quot;t&quot;: 189.8, &quot;title&quot;: &quot;Analysing a deal&quot;}, {&quot;t&quot;: 236.1, &quot;title&quot;: &quot;Due diligence and deal packs&quot;}, {&quot;t&quot;: 255.8, &quot;title&quot;: &quot;Deal Community&quot;}, {&quot;t&quot;: 271.8, &quot;title&quot;: &quot;Plans, credits and refunds&quot;}, {&quot;t&quot;: 302.6, &quot;title&quot;: &quot;Final reminder&quot;}]"></div></div>
+      <div class="tutorial-copy"><p class="eyebrow"><span class="eb-dot" aria-hidden="true"></span>AI-guided tutorial</p><h2 class="h2" id="tutorialTitle">Learn Deal Pro</h2><p>Watch the complete workflow, or jump straight to the part you need.</p><ol class="chap-list" id="tutorialChapters"></ol><button class="btn primary" data-go="find">Start with Deal Finder</button></div>
     </section>
     <section class="hsec" aria-labelledby="hPlans">
       <div class="hsec-h"><h2 class="h2" id="hPlans">Plans</h2><p>Start free with 2 deal analyses, then subscribe for unlimited analyses and more usage.</p></div>
@@ -1073,7 +1082,7 @@ td.t{text-align:right;color:var(--ink-2)}
         <h1>Deal Community</h1>
         <p class="ph-desc">Deals where the landlord or agent has already been contacted, posted by other members. Reply to a deal, or talk to members in your region.</p>
       </div>
-      <div class="ph-actions"><div class="seg segb" role="group" aria-label="Community view"><button id="cTabDeals" type="button" aria-pressed="true">Deals</button><button id="cTabChat" type="button" aria-pressed="false">Region chat</button></div><button class="btn primary" id="cPostToggle" aria-expanded="false" aria-controls="cForm">Post a deal</button></div>
+      <div class="ph-actions"><div class="seg segb" role="group" aria-label="Community view"><button id="cTabDeals" type="button" aria-pressed="true">Deals</button><button id="cTabChat" type="button" aria-pressed="false">Region chat</button></div><button class="btn primary" id="cPostToggle" aria-expanded="false" aria-controls="cForm">Post a deal</button><span class="cpost-note" id="cPostNote"></span></div>
     </header>
     <details class="ctut" id="cTut">
       <summary class="tutorial-callout"><span class="tutorial-callout-copy"><span class="tutorial-callout-icon" aria-hidden="true"></span><span class="tutorial-callout-text"><strong>New to the Deal Community? Watch how it works</strong><span>Posting deals, replies, region chat and the things not to do, in about 90 seconds.</span></span></span><span class="tutorial-callout-action"><span class="ctut-open">Watch now</span><span class="ctut-close">Hide video</span></span></summary>
@@ -1686,14 +1695,14 @@ function renderPlans(){
   if(!team){const mt=S.maxTier==='20'?'20':'5',mid='Max'+mt;
     box.innerHTML=`<div class="plan"><div class="plan-h"><h3>Free</h3></div><p class="plan-from">Try Deal Pro</p>
       <div class="price"><span class="mono">£0</span><span class="per">per month</span></div><div class="bill-note">Free forever</div>
-      <div class="lead">Limited usage</div>${feats(['3 Deal Finder searches a week','2 Scout AI deal analyses','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
+      <div class="lead">Limited usage</div>${feats(['3 Deal Finder searches a week','2 Scout AI deal analyses','Browse the Deal Community, reply and chat','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
     <div class="plan feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div><p class="plan-from">For everyday sourcing</p>
       <div class="price"><span class="mono">£${ann?33:39}</span><span class="per">per month</span></div><div class="bill-note">${ann?'Billed annually (£396 upfront)':'Billed monthly'}</div>
-      <div class="lead">Everything in Free, plus:</div>${feats(['60 AI credits a week for searches and analyses','More usage','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
+      <div class="lead">Everything in Free, plus:</div>${feats(['60 AI credits a week for searches and analyses','Post 10 deals a month in the Deal Community','More usage','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
     <div class="plan"><div class="plan-h"><h3>Max</h3></div><p class="plan-from">From £100/month · For sourcers who work deals all day</p>
       <div class="seg segb tier" role="group" aria-label="Max usage tier"><button id="maxT5" data-tier="5" aria-pressed="${mt==='5'}">5x</button><button id="maxT20" data-tier="20" aria-pressed="${mt==='20'}">20x</button></div>
       <div class="price"><span class="mono">£${mt==='20'?200:100}</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
-      <div class="lead">Everything in Premium, plus:</div>${feats([`${mt}x more usage than Premium per session`,`${mt==='20'?1200:300} AI credits a week`,'Higher limits','Early access to new features','Priority at peak times'])}${planBtn(mid)}</div>`}
+      <div class="lead">Everything in Premium, plus:</div>${feats([`${mt}x more usage than Premium per session`,`${mt==='20'?1200:300} AI credits a week`,'Unlimited Deal Community posts','Higher limits','Early access to new features','Priority at peak times'])}${planBtn(mid)}</div>`}
   renderUsage()}
 $('#ptInd').addEventListener('click',()=>{S.plansTab='individual';save();renderPlans()});
 
@@ -2140,7 +2149,12 @@ let CF=CF_DEF();
 async function cApi({url='',...opts}={}){const r=await fetch('/api/community'+url,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...opts});
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Something went wrong. Please try again.');return d}
 async function loadCommunity(){if(CM.loading)return;CM.loading=true;CM.error='';
-  try{CM.posts=(await cApi()).posts||[]}catch(e){CM.error=e.message}finally{CM.loading=false}renderCommunityList()}
+  try{const d=await cApi();CM.posts=d.posts||[];CM.posting=d.posting||null;renderPostNote()}catch(e){CM.error=e.message}finally{CM.loading=false}renderCommunityList()}
+// Posting deals needs Premium (a monthly allowance) or Max (unlimited); Free can browse, reply and chat.
+function renderPostNote(){const p=CM.posting,n=$('#cPostNote');if(!n)return;n.textContent=!p?'':p.left==null?'':p.allowed?`${p.left} of ${p.limit} posts left this month`:p.limit?'Monthly posts used':'Premium feature'}
+function postingBlocked(){const p=CM.posting;if(!p||p.allowed)return false;
+  const n=$('#nCommunity')||(()=>{const d=document.createElement('div');d.className='limit-note';d.id='nCommunity';d.setAttribute('role','status');$('#cForm').before(d);return d})();
+  n.innerHTML=`<div>${p.limit?`You've posted your ${p.limit} deals for this month. Upgrade to Max for unlimited posts.`:'Posting deals needs Deal Pro Premium or Max. You can still browse deals, reply and use the region chat for free.'}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false;return true}
 function renderCommunity(){const f=$('#cForm');const em=document.body.dataset.userEmail||'';
   if(f&&!f.elements.contactEmail.value)f.elements.contactEmail.value=em;const nm=($('.ws-name')||{}).textContent||'';if(f&&!f.elements.contactName.value&&nm&&nm!==em)f.elements.contactName.value=nm;
   if(CM.posts)renderCommunityList();loadCommunity();if(CH.on)openRoom(CH.room)}
@@ -2190,11 +2204,11 @@ function cFormShow(on){const f=$('#cForm'),t=$('#cPostToggle');f.hidden=!on;t.se
   // Opened from the region chat: start with that region, and share the deal in its room.
   if(on&&CH.on){const r=REGIONS.find(x=>roomId(x)===CH.room);if(r)f.elements.region.value=r;$('#cSubmit').textContent='Post deal to chat'}else $('#cSubmit').textContent='Post deal';
   if(on){f.elements.title.focus({preventScroll:true});f.scrollIntoView({block:'start',behavior:reduced()?'auto':'smooth'})}}
-$('#cPostToggle').addEventListener('click',()=>cFormShow($('#cForm').hidden));
+$('#cPostToggle').addEventListener('click',()=>{if($('#cForm').hidden&&postingBlocked())return;cFormShow($('#cForm').hidden)});
 $('#cCancel').addEventListener('click',()=>cFormShow(false));
 $('#cForm').addEventListener('submit',async e=>{e.preventDefault();const f=e.currentTarget,btn=$('#cSubmit'),m=$('#cMsg');
   const body=Object.fromEntries(new FormData(f).entries());if(CH.on)body.announce=true;btn.disabled=true;m.classList.remove('bad');m.textContent='Posting…';
-  try{const d=await cApi({method:'POST',body:JSON.stringify(body)});CM.posts=[d.post,...(CM.posts||[])];
+  try{const d=await cApi({method:'POST',body:JSON.stringify(body)});CM.posts=[d.post,...(CM.posts||[])];if(d.posting){CM.posting=d.posting;renderPostNote()}
     ['title','location','postcode','price','beds','status','description','listingUrl'].forEach(k=>{f.elements[k].value=''});f.elements.strategy.value='';f.elements.propertyType.value='';f.elements.region.value='';$('#cPaste').value='';$('#cPasteMsg').textContent='';
     cFormShow(false);renderCommunityList();
     if(d.message&&d.room){CH.msgs[d.room]=[...(CH.msgs[d.room]||[]),d.message];if(CH.on){if(d.room===CH.room){CH.jump=true;renderChat()}else openRoom(d.room)}
@@ -2305,7 +2319,7 @@ $('#cTabDeals').addEventListener('click',()=>cTab(false));
 $('#cTabChat').addEventListener('click',()=>cTab(true));
 // Community tutorial: plays when opened, pauses when hidden.
 $('#cTut').addEventListener('toggle',e=>{const v=e.currentTarget.querySelector('video');if(e.currentTarget.open){try{v.play().catch(()=>{})}catch(err){}}else v.pause()});
-$('#chPost').addEventListener('click',()=>cFormShow(true));
+$('#chPost').addEventListener('click',()=>{if(postingBlocked())return;cFormShow(true)});
 // "View deal" on a deal shared in the chat: show it in the Deals list with its replies open.
 async function viewDeal(id){cTab(false);$('#cReset').click();
   if(!(CM.posts||[]).some(p=>p.id===id))await loadCommunity();
@@ -2352,6 +2366,33 @@ $('#rfForm').addEventListener('submit',async e=>{e.preventDefault();const m=$('#
   try{const r=await fetch('/api/refunds',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:$('#rfReason').value})});const d=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(d.error||'Your request could not be sent.');$('#rfReason').value='';$('#rfForm').hidden=true;m.textContent='';toast("Refund request sent. We'll review it within 2 working days.");loadRefunds()}
   catch(err){m.classList.add('bad');m.textContent=err.message}finally{b.disabled=false}});
+
+/* ---------- video chapters (YouTube-style) ---------- */
+const mmss=t=>`${Math.floor(t/60)}:${String(Math.floor(t%60)).padStart(2,'0')}`;
+$$('.tutorial-media .chap').forEach(box=>{const video=box.parentElement.querySelector('video');let CH=[];try{CH=JSON.parse(box.dataset.chapters)}catch(e){}
+  if(!video||!CH.length)return;const list=box.closest('.tutorial')?.querySelector('.chap-list');
+  const dur=()=>isFinite(video.duration)&&video.duration>0?video.duration:CH[CH.length-1].t+30;
+  const end=i=>i+1<CH.length?CH[i+1].t:dur();
+  box.innerHTML=`<div class="chap-now"><span>Chapter: <b class="chap-title">${esc(CH[0].title)}</b></span><span class="chap-time mono">0:00</span></div><div class="chap-bar" role="group" aria-label="Chapters">${CH.map((c,i)=>`<button type="button" class="chap-seg" data-i="${i}" aria-label="${mmss(c.t)} ${esc(c.title)}"><span class="chap-fill"></span></button>`).join('')}</div><div class="chap-tip" hidden></div>`;
+  if(list)list.innerHTML=CH.map((c,i)=>`<li><button type="button" data-i="${i}"><span class="t">${mmss(c.t)}</span><span>${esc(c.title)}</span></button></li>`).join('');
+  const segs=[...box.querySelectorAll('.chap-seg')],tip=box.querySelector('.chap-tip');
+  const size=()=>segs.forEach((s,i)=>{s.style.flexGrow=String(Math.max(1,end(i)-CH[i].t))});
+  const seek=i=>{video.currentTime=CH[i].t+0.01;video.play().catch(()=>{})};
+  const sync=()=>{const t=video.currentTime;let cur=0;CH.forEach((c,i)=>{if(t>=c.t)cur=i});
+    segs.forEach((s,i)=>{const f=Math.max(0,Math.min(1,(t-CH[i].t)/Math.max(0.1,end(i)-CH[i].t)));s.firstChild.style.width=(f*100)+'%'});
+    box.querySelector('.chap-title').textContent=CH[cur].title;box.querySelector('.chap-time').textContent=`${mmss(t)} / ${mmss(dur())}`;
+    if(list)list.querySelectorAll('button').forEach((b,i)=>b.classList.toggle('on',i===cur))};
+  box.addEventListener('click',e=>{const s=e.target.closest('.chap-seg');if(!s)return;const i=+s.dataset.i,r=s.getBoundingClientRect();
+    video.currentTime=CH[i].t+(end(i)-CH[i].t)*Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));video.play().catch(()=>{})});
+  box.addEventListener('mousemove',e=>{const s=e.target.closest('.chap-seg');if(!s){tip.hidden=true;return}const i=+s.dataset.i,r=s.getBoundingClientRect(),br=box.getBoundingClientRect();
+    const t=CH[i].t+(end(i)-CH[i].t)*Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+    tip.innerHTML=`<b>${mmss(t)}</b>${esc(CH[i].title)}`;tip.hidden=false;tip.style.left=Math.max(70,Math.min(br.width-70,e.clientX-br.left))+'px'});
+  box.addEventListener('mouseleave',()=>{tip.hidden=true});
+  if(list)list.addEventListener('click',e=>{const b=e.target.closest('button[data-i]');if(b){seek(+b.dataset.i);box.closest('.tutorial').scrollIntoView({block:'start',behavior:reduced()?'auto':'smooth'})}});
+  // Only show chapters when the video actually runs that long (an older, shorter video hides them).
+  const fits=()=>{const ok=isFinite(video.duration)&&video.duration>=CH[CH.length-1].t;box.hidden=!ok;if(list)list.hidden=!ok;return ok};
+  box.hidden=true;if(list)list.hidden=true;
+  video.addEventListener('loadedmetadata',()=>{if(fits()){size();sync()}});video.addEventListener('timeupdate',()=>{if(!box.hidden)sync()});if(video.readyState>=1&&fits()){size();sync()}});
 
 /* ---------- boot ---------- */
 const siteIntro=$('#siteIntro');if(siteIntro)setTimeout(()=>siteIntro.remove(),1700);

@@ -7,6 +7,11 @@ const STRATEGIES = ["R2SA", "R2R", "BTL", "HMO", "BRRR", "Lease option", "Flip",
 const PROPERTY_TYPES = ["Flat", "House", "Studio", "HMO", "Commercial", "Other"];
 const CONTACTED = ["Landlord", "Agent"];
 const MAX_POSTS_PER_USER = 20;
+// Posting deals needs a paid plan: Premium can post a set number a month, Max is unlimited.
+// Everyone signed in can browse, reply and use the region chat.
+const MONTHLY_POSTS: Record<string, number> = { Pro: 10 };
+const UNLIMITED_PLANS = new Set(["Max5", "Max20"]);
+const monthKey = () => new Date().toISOString().slice(0, 7);
 // Regions for deals and the region chat rooms. Keep in sync with REGIONS in index.html.
 const REGIONS = ["London", "Midlands", "North East", "North West", "South East", "South West", "Yorkshire and Humber", "Other"];
 const slug = (region: string) => region.toLowerCase().replace(/[^a-z]+/g, "-");
@@ -107,6 +112,16 @@ export default async (request: Request, _context: Context) => {
   const authorName = text(u.name, 80) || text(u.email?.split("@")[0], 80) || "Member";
   const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
   const store = getStore({ name: "deal-community", consistency: "strong" });
+  const accountState = async () => (await getStore({ name: "deal-premium-accounts", consistency: "strong" })
+    .get(`users/${user.id}/state`, { type: "json" })) as Record<string, unknown> | null;
+  // What this member may post this month.
+  const posting = async (state: Record<string, unknown> | null) => {
+    const plan = isAdmin ? "Admin" : String(state?.plan || "Free");
+    const used = Number(await store.get(`postcount/${user.id}/${monthKey()}`)) || 0;
+    if (isAdmin || UNLIMITED_PLANS.has(plan)) return { plan, allowed: true, limit: null as number | null, used, left: null as number | null };
+    const limit = MONTHLY_POSTS[plan] ?? 0;
+    return { plan, allowed: limit > 0 && used < limit, limit, used, left: Math.max(0, limit - used) };
+  };
 
   if (request.method === "GET") {
     const url = new URL(request.url);
@@ -131,17 +146,14 @@ export default async (request: Request, _context: Context) => {
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
       .slice(0, 500)
       .map(({ authorId, ...post }) => ({ ...post, replyCount: replyCounts.get(post.id) || 0, mine: authorId === user.id, canDelete: authorId === user.id || isAdmin }));
-    return json({ posts });
+    return json({ posts, posting: await posting(await accountState()) });
   }
 
   if (request.method === "POST") {
     const body = await request.json().catch(() => null) as Record<string, unknown> | null;
     if (!body) return json({ error: "Deal details are required." }, 400);
-    if (!isAdmin) {
-      const accounts = getStore({ name: "deal-premium-accounts", consistency: "strong" });
-      const state = await accounts.get(`users/${user.id}/state`, { type: "json" }) as Record<string, unknown> | null;
-      if (state?.accountEnabled === false) return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
-    }
+    const state = isAdmin ? null : await accountState();
+    if (!isAdmin && state?.accountEnabled === false) return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
 
     if (body.kind === "message" || body.kind === "reply") {
       const message = noteText(body.text);
@@ -165,6 +177,12 @@ export default async (request: Request, _context: Context) => {
       return json({ [body.kind]: { ...shown, mine: true, canDelete: true } }, 201);
     }
 
+    const allowance = await posting(state);
+    if (!allowance.allowed) {
+      return json(allowance.limit
+        ? { error: `You've posted your ${allowance.limit} deals for this month. Upgrade to Max for unlimited posts.`, posting: allowance }
+        : { error: "Posting deals needs Deal Pro Premium or Max. You can still browse deals, reply and use the region chat.", posting: allowance }, 402);
+    }
     if (!isAdmin) {
       const { blobs } = await store.list({ prefix: `posts/` });
       const own = (await Promise.all(blobs.map((b) => store.getMetadata(b.key))))
@@ -176,17 +194,19 @@ export default async (request: Request, _context: Context) => {
     const { id, createdAt } = newId();
     const record: Post = { id, authorId: user.id, createdAt, ...post };
     await store.setJSON(`posts/${id}`, record, { metadata: { authorId: user.id } });
+    // Count it against this month's allowance (deleting a post doesn't give it back).
+    await store.set(`postcount/${user.id}/${monthKey()}`, String(allowance.used + 1));
     // Posted from the region chat: also share it in that region's room.
     let message;
     if (body.announce === true) {
       const deal: DealCard = { id, title: post.title, location: post.location, postcode: post.postcode, price: post.price, priceType: post.priceType, strategy: post.strategy, propertyType: post.propertyType, beds: post.beds };
       const m = newId();
       const note: Note = { id: m.id, authorId: user.id, authorName, createdAt: m.createdAt, text: noteText(body.announceText), deal };
-      await store.setJSON(`messages/${slug(post.region)}/${m.id}`, note);
+      await store.setJSON(`messages/${slug(post.region ?? "")}/${m.id}`, note);
       const { authorId, ...shown } = note;
       message = { ...shown, mine: true, canDelete: true };
     }
-    return json({ post: { ...post, id, createdAt, replyCount: 0, mine: true, canDelete: true }, message, room: slug(post.region) }, 201);
+    return json({ post: { ...post, id, createdAt, replyCount: 0, mine: true, canDelete: true }, message, room: slug(post.region ?? ""), posting: await posting(state) }, 201);
   }
 
   if (request.method === "DELETE") {
