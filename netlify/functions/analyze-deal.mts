@@ -72,14 +72,23 @@ export default async (request: Request, _context: Context) => {
 
   // kind "analyse": one deal from the AI Deal Analyser. kind "rank": Deal Finder results to rank.
   // kind "search": live Deal Finder search of the ticked sites, then ranking.
-  const body = await request.json().catch(() => null) as { kind?: string; deal?: string; level?: string; listings?: unknown; filters?: unknown; sites?: unknown } | null;
-  const kind = body?.kind === "search" ? "search" : body?.kind === "rank" ? "rank" : "analyse";
+  // kind "dd": web research for the due diligence checks of one deal.
+  const body = await request.json().catch(() => null) as { kind?: string; deal?: string; level?: string; listings?: unknown; filters?: unknown; sites?: unknown; checks?: unknown } | null;
+  const kind = body?.kind === "search" ? "search" : body?.kind === "rank" ? "rank" : body?.kind === "dd" ? "dd" : "analyse";
   const level = (body?.level && body.level in LEVELS ? body.level : "quick") as LevelId;
   let input: string;
   if (kind === "analyse") {
     input = body?.deal?.trim() || "";
     if (!input) return json({ error: "Paste the property advert or deal details first." }, 400);
     if (input.length > 30_000) return json({ error: "Deal details must be under 30,000 characters." }, 413);
+  } else if (kind === "dd") {
+    const deal = body?.deal?.trim() || "";
+    const checks = Array.isArray(body?.checks) ? body.checks.slice(0, 20).filter((c): c is { k: string; t: string; d: string } =>
+      !!c && typeof c === "object" && ["k", "t", "d"].every((f) => typeof (c as Record<string, unknown>)[f] === "string")) : [];
+    if (!deal) return json({ error: "Add the deal's address or area and details first." }, 400);
+    if (!checks.length) return json({ error: "There are no checks to research." }, 400);
+    input = JSON.stringify({ deal, checks: checks.map((c) => ({ k: c.k.slice(0, 40), t: c.t.slice(0, 120), d: c.d.slice(0, 400) })) });
+    if (input.length > 20_000) return json({ error: "The deal details are too long to research." }, 413);
   } else if (kind === "search") {
     const sites = Array.isArray(body?.sites) ? body.sites.filter((x): x is string => typeof x === "string" && x in SITES) : [];
     if (!sites.length) return json({ error: "Tick at least one site to search." }, 400);
@@ -100,6 +109,7 @@ export default async (request: Request, _context: Context) => {
   const next: Usage = { ...usage };
   const reserved: Reserved = {};
   if (!isAdmin && plan === "Free") {
+    if (kind === "dd") return json({ error: "Upgrade to run AI due diligence research." }, 402);
     if (level !== "quick") return json({ error: "Upgrade to use Analyst and Expert." }, 402);
     if (kind === "analyse") {
       if ((Number(usage.count) || 0) >= FREE_ANALYSES) {

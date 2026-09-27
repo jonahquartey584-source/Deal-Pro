@@ -272,6 +272,15 @@ td.lb{border-bottom:0}
 .ai-h span{font-weight:400;color:var(--muted);margin-left:6px}
 .dd-side{display:grid;gap:10px;align-content:start}
 .dd-side textarea.inp{min-height:64px}
+.ev{display:grid;gap:6px}.ev-l{font-size:12.5px;color:var(--ink-2)}.ev-m{font-size:11.5px;color:var(--muted)}.ev-empty{font-size:12px;color:var(--muted);margin:0}
+.ev-list{list-style:none;margin:0;padding:0;display:grid;gap:4px}.ev-it{display:flex;align-items:center;gap:8px;min-width:0;font-size:12.5px;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+.ev-it a{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}.ev-it.up{opacity:.7}
+.ev-th{width:28px;height:28px;object-fit:cover;border-radius:4px;flex:none}.ev-ic{width:28px;height:28px;display:grid;place-items:center;flex:none;font:600 9px var(--mono);color:var(--ink-2);background:var(--surface-2);border-radius:4px}
+.ev-x{border:0;background:none;color:var(--muted);font-size:16px;line-height:1;cursor:pointer;padding:2px 4px}.ev-x:hover{color:var(--ink)}
+.ev-a{display:flex;gap:6px;flex-wrap:wrap}.ev-lf{display:grid;gap:6px}
+.dd-row.drop{outline:2px dashed var(--brand);outline-offset:-4px}
+.ai-src{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:3px;font-size:12.5px}.ai-src a{color:var(--ink);text-decoration:underline}
+.ai-src .linkbtn{margin-left:6px;font-size:12px}
 @media (max-width:760px){.dd-row{grid-template-columns:minmax(0,1fr)}.dd-d,.ai{margin-left:0}}
 
 /* pack */
@@ -985,9 +994,10 @@ td.t{text-align:right;color:var(--ink-2)}
     </div>
 
     <div data-step-panel="dd" hidden>
-      <div class="step-h"><div><h2>Due diligence</h2><p>Track every check before a deal goes to investors. Run AI research to draft findings from public sources, then confirm each one yourself.</p></div>
-        <div class="ph-actions"><button class="btn primary" id="runAI" title="Uses usage">Run AI research</button></div></div>
+      <div class="step-h"><div><h2>Due diligence</h2><p>Track every check before a deal goes to investors. Run AI research to draft findings from public sources with links, attach your own evidence, then confirm each check yourself.</p></div>
+        <div class="ph-actions"><button class="btn primary" id="runAI" title="Uses credits">Run AI research</button></div></div>
       <div class="limit-note" id="nDD" role="status" hidden></div>
+      <fieldset class="ai-levels"><legend>Research power level</legend><div class="ai-level-opts" id="ddLevelOpts"></div><p class="ai-credits" id="ddStatus" role="status" aria-live="polite"></p></fieldset>
     <div class="strip dd-strip" id="ddSummary"></div>
     <div class="list" id="ddList"></div>
       <div class="step-next"><button class="btn" data-step-go="pack">Next: Deal pack <span aria-hidden="true">→</span></button></div>
@@ -1307,16 +1317,6 @@ const DD_TEMPLATE=[
  {k:'safety',t:'Condition and safety',d:'EPC, gas and electrical certificates, fire-risk assessment, alarms, insurance, inventory.'},
  {k:'rates',t:'Nightly rate evidence',d:'Comparable listings, seasonality, event demand, achieved booking data.'}
 ];
-const AI_FINDINGS={
- terms:{s:'partly',n:'Rents £1,500 and £1,650 incl. bills, one-month deposits. 5-week cap (~£1,731 / ~£1,904) only applies to lets to individuals; a company let usually falls outside. Confirm council tax is inside "bills".'},
- consent:{s:'none',n:'No written permission for serviced accommodation seen yet. Request a signed agreement and check the lease for short-let restrictions (two units, shared entrance).'},
- ninety:{s:'issue',n:'Capped at 90 nights, revenue is £14,850 and £16,200 against £18,000 and £19,800 rent: a £6,750 combined shortfall before costs. Year-round use needs planning permission or another lawful basis.'},
- licence:{s:'partly',n:'Finsbury Park ward is in Islington’s selective licensing scheme (from 20 May 2024 for five years; £800 per property, £725 accredited). N4 also covers parts of Haringey and Hackney: confirm the council from the address.'},
- tax:{s:'none',n:'Islington charges 200% council tax on second homes from 1 April 2025. If not included in the rent, this becomes an operator cost.'},
- location:{s:'issue',n:'Finsbury Park station: Zone 2, Victoria and Piccadilly lines plus Great Northern and Thameslink. It is not on the London Overground, so the advert wording needs correcting.'},
- safety:{s:'none',n:'No certificates or inspection yet. Check sound insulation between the units and escape routes.'},
- rates:{s:'partly',n:'AirDNA shows London’s whole-market average around $220 (roughly £165) at 63% occupancy (Aug 2025–Aug 2026). £165–£180 for a Zone 2 studio is at or above average: get N4 studio comparables.'}
-};
 const SAMPLE_AD=`Deal 2 - (£1,650 studio)
 📍 Islington, N4 (zone 2) 📍
 🔥 Fully Furnished Studio Flat
@@ -1586,25 +1586,92 @@ $('#doImport').addEventListener('click',()=>{const t=$('#advert').value.trim();i
 /* ---------- due diligence ---------- */
 const SLAB={none:'Not checked',partly:'Partly checked',verified:'Verified',issue:'Issue found'};
 const SDOT={none:'none',partly:'warn',verified:'good',issue:'bad'};
+/* evidence: files are stored privately via /api/evidence; links and AI sources are kept on the deal */
+const EV_ACCEPT='image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.eml,.heic';
+const EV_MAX=4*1024*1024;
+const kb=n=>n>=1048576?(n/1048576).toFixed(1)+' MB':Math.max(1,Math.round(n/1024))+' KB';
+const hostOf=u=>{try{return new URL(u).hostname.replace(/^www\./,'')}catch(e){return u}};
+const safeUrl=u=>/^https?:\/\//i.test(u||'')?u:'';
+function evItem(e,i,j){
+  if(e.kind==='link')return `<li class="ev-it"><span class="ev-ic" aria-hidden="true">↗</span><a href="${esc(safeUrl(e.url))}" target="_blank" rel="noopener noreferrer">${esc(e.name||hostOf(e.url))}</a><span class="ev-m">${esc(hostOf(e.url))}</span><button class="ev-x" data-ev-del="${i}:${j}" aria-label="Remove ${esc(e.name||'link')}">×</button></li>`;
+  if(e.up)return `<li class="ev-it up"><span class="ev-ic" aria-hidden="true">…</span><span>${esc(e.name)}</span><span class="ev-m">Uploading…</span></li>`;
+  const src='/api/evidence?id='+encodeURIComponent(e.id),img=/^image\/(jpeg|png|webp|gif)$/.test(e.type);
+  return `<li class="ev-it">${img?`<img class="ev-th" src="${src}" alt="" loading="lazy">`:`<span class="ev-ic" aria-hidden="true">${esc((e.name.split('.').pop()||'file').slice(0,4).toUpperCase())}</span>`}<a href="${src}" target="_blank" rel="noopener">${esc(e.name)}</a><span class="ev-m">${kb(e.size||0)}</span><button class="ev-x" data-ev-del="${i}:${j}" aria-label="Remove ${esc(e.name)}">×</button></li>`}
 function renderDD(){const d=S.deal;
+  d.dd.forEach(x=>{if(!Array.isArray(x.ev))x.ev=[]});
   const c={none:0,partly:0,verified:0,issue:0};d.dd.forEach(x=>c[x.s]++);
   $('#ddSummary').innerHTML=Object.keys(SLAB).map(k=>`<div class="fig"><div class="fig-l"><span class="dot ${SDOT[k]}"></span>${SLAB[k]}</div><div class="fig-v${k==='issue'&&c[k]?' neg':''}">${c[k]}</div></div>`).join('');
-  $('#ddList').innerHTML=DD_TEMPLATE.map((t,i)=>{const x=d.dd[i]||{s:'none',n:''};
-    return `<div class="dd-row" data-s="${x.s}"><div class="dd-main">
+  $('#ddList').innerHTML=DD_TEMPLATE.map((t,i)=>{const x=d.dd[i]||{s:'none',n:'',ev:[]};const have=new Set(x.ev.filter(e=>e.kind==='link').map(e=>e.url));
+    const src=(x.aiSrc||[]).filter(u=>safeUrl(u.url));
+    return `<div class="dd-row" data-s="${x.s}" data-i="${i}"><div class="dd-main">
       <div class="dd-h"><span class="dd-i">${i+1}</span><h3>${t.t}</h3></div>
       <p class="dd-d">${t.d}</p>
-      ${x.ai?`<div class="ai"><div class="ai-h">AI draft<span>Verify before relying on it</span></div>${esc(x.ai)}</div>`:''}
+      ${x.ai?`<div class="ai"><div class="ai-h">AI draft<span>Verify before relying on it</span></div>${esc(x.ai)}
+        ${src.length?`<ul class="ai-src">${src.map(u=>`<li><a href="${esc(u.url)}" target="_blank" rel="noopener noreferrer">${esc(u.title||hostOf(u.url))}</a> <span class="ev-m">${esc(hostOf(u.url))}</span>${have.has(u.url)?'<span class="ev-m">· added</span>':`<button class="linkbtn" data-ev-src="${i}" data-url="${esc(u.url)}" data-title="${esc(u.title||'')}">Add as evidence</button>`}</li>`).join('')}</ul>`:''}</div>`:''}
     </div><div class="dd-side">
       <label class="f"><span>Status</span><span class="sel"><span class="dot ${SDOT[x.s]}"></span><select class="inp" id="dds${i}" data-i="${i}" aria-label="Status for ${t.t}">${Object.keys(SLAB).map(k=>`<option value="${k}"${k===x.s?' selected':''}>${SLAB[k]}</option>`).join('')}</select></span></label>
-      <label class="f"><span>Notes and evidence</span><textarea class="inp" id="ddn${i}" data-i="${i}" placeholder="Your notes and evidence">${esc(x.n)}</textarea></label>
+      <label class="f"><span>Notes</span><textarea class="inp" id="ddn${i}" data-i="${i}" placeholder="What you checked, who confirmed it and when">${esc(x.n)}</textarea></label>
+      <div class="ev"><div class="ev-l">Evidence${x.ev.length?` <span class="ev-m">${x.ev.length}</span>`:''}</div>
+        ${x.ev.length?`<ul class="ev-list">${x.ev.map((e,j)=>evItem(e,i,j)).join('')}</ul>`:'<p class="ev-empty">Attach documents, photos or emails, or drop files here.</p>'}
+        <div class="ev-a"><button class="btn sm" type="button" data-ev-file="${i}">Attach file</button><button class="btn sm" type="button" data-ev-link="${i}">Add link</button></div>
+        <form class="ev-lf" data-ev-form="${i}" hidden><input class="inp" type="url" required placeholder="https://" aria-label="Evidence link for ${t.t}"><input class="inp" type="text" maxlength="120" placeholder="Label (optional)" aria-label="Label"><button class="btn sm primary" type="submit">Add</button></form>
+      </div>
     </div></div>`}).join('');renderStepBar();
 }
+function ddEvidenceAdded(i){const x=S.deal.dd[i];if(x.s==='none')x.s='partly'}
+function syncSavedDeal(){const i=S.saved.findIndex(d=>d.id===S.deal.id);if(i>=0)S.saved[i]=JSON.parse(JSON.stringify(S.deal))}
+async function shrinkImage(f){if(!/^image\/(jpeg|png|webp)$/.test(f.type)||f.size<1.5*1024*1024)return f;
+  try{const bmp=await createImageBitmap(f),k=Math.min(1,2400/Math.max(bmp.width,bmp.height));const c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);
+    c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);const b=await new Promise(r=>c.toBlob(r,'image/jpeg',.85));
+    return b&&b.size<f.size?new File([b],f.name.replace(/\.\w+$/,'')+'.jpg',{type:'image/jpeg'}):f}catch(e){return f}}
+async function uploadEvidence(i,files){const dealId=S.deal.id;
+  for(const raw of files){const f=await shrinkImage(raw);
+    if(f.size>EV_MAX){toast(`${raw.name} is over 4 MB. Compress it or split it, then try again.`);continue}
+    const ph={up:true,name:f.name};S.deal.dd[i].ev.push(ph);renderDD();
+    try{const fd=new FormData();fd.append('file',f,f.name);const r=await fetch('/api/evidence',{method:'POST',credentials:'same-origin',body:fd});const d=await r.json().catch(()=>({}));
+      if(!r.ok)throw new Error(d.error||'The file could not be uploaded.');
+      const tgt=S.deal.id===dealId?S.deal:null;if(tgt){const ev=tgt.dd[i].ev,k=ev.indexOf(ph);const item={kind:'file',id:d.id,name:d.name,type:d.type,size:d.size,at:d.at};if(k>=0)ev[k]=item;else ev.push(item);ddEvidenceAdded(i);syncSavedDeal();save()}}
+    catch(e){const ev=S.deal.dd[i]&&S.deal.dd[i].ev,k=ev?ev.indexOf(ph):-1;if(k>=0)ev.splice(k,1);toast(e.message||'The file could not be uploaded.')}
+    renderDD()}}
+function addEvidenceLink(i,url,name){url=safeUrl(url.trim());if(!url){toast('Enter a link starting with https://');return false}
+  const ev=S.deal.dd[i].ev;if(!ev.some(e=>e.kind==='link'&&e.url===url))ev.push({kind:'link',url,name:(name||'').trim().slice(0,120),at:new Date().toISOString()});
+  ddEvidenceAdded(i);syncSavedDeal();save();renderDD();return true}
+const evInput=document.createElement('input');evInput.type='file';evInput.multiple=true;evInput.accept=EV_ACCEPT;evInput.hidden=true;document.body.appendChild(evInput);
+evInput.addEventListener('change',()=>{const i=+evInput.dataset.i,fs=[...evInput.files];evInput.value='';if(fs.length)uploadEvidence(i,fs)});
+$('#ddList').addEventListener('click',async e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.evFile!=null){evInput.dataset.i=b.dataset.evFile;evInput.click();return}
+  if(b.dataset.evLink!=null){const f=$(`[data-ev-form="${b.dataset.evLink}"]`);f.hidden=!f.hidden;if(!f.hidden)f.querySelector('input').focus();return}
+  if(b.dataset.evSrc!=null){addEvidenceLink(+b.dataset.evSrc,b.dataset.url,b.dataset.title);toast('Source added as evidence');return}
+  if(b.dataset.evDel){const [i,j]=b.dataset.evDel.split(':').map(Number),it=S.deal.dd[i].ev[j];if(!it)return;
+    if(!confirm(`Remove ${it.name||it.url} from this check?`))return;S.deal.dd[i].ev.splice(j,1);syncSavedDeal();save();renderDD();
+    // the file is only deleted when no saved deal still uses it
+    if(it.kind==='file'&&!S.saved.some(d=>(d.dd||[]).some(x=>(x.ev||[]).some(v=>v.id===it.id))))fetch('/api/evidence?id='+encodeURIComponent(it.id),{method:'DELETE',credentials:'same-origin'}).catch(()=>{})}});
+$('#ddList').addEventListener('submit',e=>{const f=e.target.closest('[data-ev-form]');if(!f)return;e.preventDefault();const [u,l]=f.querySelectorAll('input');addEvidenceLink(+f.dataset.evForm,u.value,l.value)});
+$('#ddList').addEventListener('dragover',e=>{const r=e.target.closest('.dd-row');if(!r||![...(e.dataTransfer.types||[])].includes('Files'))return;e.preventDefault();$$('.dd-row.drop').forEach(x=>x!==r&&x.classList.remove('drop'));r.classList.add('drop')});
+$('#ddList').addEventListener('dragleave',e=>{const r=e.target.closest('.dd-row');if(r&&!r.contains(e.relatedTarget))r.classList.remove('drop')});
+$('#ddList').addEventListener('drop',e=>{const r=e.target.closest('.dd-row');if(!r)return;e.preventDefault();r.classList.remove('drop');const fs=[...e.dataTransfer.files];if(fs.length)uploadEvidence(+r.dataset.i,fs)});
 $('#ddList').addEventListener('change',e=>{if(e.target.tagName==='SELECT'){S.deal.dd[+e.target.dataset.i].s=e.target.value;save();renderDD()}});
 $('#ddList').addEventListener('input',e=>{if(e.target.tagName==='TEXTAREA'){S.deal.dd[+e.target.dataset.i].n=e.target.value;save()}});
-$('#runAI').addEventListener('click',()=>{if(!feature('dd','#nDD')||!spend(COST.dd,'AI research','#nDD'))return;const b=$('#runAI');b.disabled=true;b.textContent='Researching…';
-  setTimeout(()=>{const n4=/N4|finsbury/i.test(S.deal.area+' '+S.deal.name);
-    S.deal.dd.forEach(x=>{const f=AI_FINDINGS[x.k];if(n4&&f){x.ai=f.n;if(x.s==='none')x.s=f.s}else{x.ai='No automated public-source finding is available for this address. Verify this check independently.'}});
-    S.deal.ai=true;save();renderDD();b.disabled=false;b.textContent='Run AI research';toast('Findings drafted. Check each one.')},900)});
+/* AI research: searches the public web for each check and cites its sources */
+function ddDealText(d){const u=d.units.map(x=>`${x.label}: rent ${gbp(x.rent)}/month, deposit ${gbp(x.dep)}${x.rate?`, nightly rate £${x.rate}`:''}`).join('; ');
+  return [`Deal: ${d.name||'Untitled'}`,`Location: ${d.send&&d.send.addr||d.area||'not given'}`,`Strategy: ${d.strat}${d.london?' (London)':''}`,`Units: ${u}`,d.sourceText?`Advert or notes:\n${d.sourceText.slice(0,6000)}`:''].filter(Boolean).join('\n')}
+function applyResearch(dealId,res){const apply=d=>{if(!d||d.id!==dealId)return;(res.findings||[]).forEach(f=>{const x=d.dd.find(y=>y.k===f.k);if(!x)return;
+    x.ai=f.finding;x.aiSrc=f.sources||[];if(x.s==='none'&&(f.status==='partly'||f.status==='issue'))x.s=f.status});d.ai=true;d.aiAt=res.researchedAt};
+  apply(S.deal);S.saved.forEach(apply);save()}
+async function followResearch(job){const b=$('#runAI'),st=$('#ddStatus'),lv=AI_LEVELS.find(l=>l.id===job.level)||AI_LEVELS[0];
+  b.disabled=true;b.textContent='Researching…';st.textContent=`${lv.name} is researching each check…`;
+  try{const res=await pollJob(job.id,sec=>{st.textContent=`${lv.name} is researching each check… ${sec<120?sec+'s':Math.round(sec/60)+' min'}`});
+    S.ddJob=null;applyResearch(job.dealId,res);if(S.deal.id===job.dealId)renderDD();st.textContent='Findings drafted with their sources. Check each one, then add your evidence.';toast('Research complete')}
+  catch(e){S.ddJob=null;save();st.textContent=e.message||'The research could not be completed.';toast(st.textContent)}
+  finally{b.disabled=false;b.textContent='Run AI research'}}
+$('#runAI').addEventListener('click',async()=>{if(!feature('dd','#nDD'))return;const d=S.deal,st=$('#ddStatus'),b=$('#runAI');
+  if(!(d.area||'').trim()&&!(d.send&&d.send.addr)&&!d.sourceText){st.textContent='Add the area or address in Numbers first, so the research knows where to look.';return}
+  const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];b.disabled=true;
+  try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'dd',level:lv.id,deal:ddDealText(d),checks:DD_TEMPLATE})});
+    const x=await r.json().catch(()=>({}));if(!r.ok)throw new Error(x.error||'The research could not be started.');if(x.credits){AIC.info=x.credits;renderAILevels()}
+    S.ddJob={id:x.jobId,level:lv.id,dealId:d.id};save();followResearch(S.ddJob)}
+  catch(e){b.disabled=false;st.textContent=e.message}});
+window.addEventListener('dealpro:signed-in',()=>{if(S.ddJob&&S.ddJob.id)followResearch(S.ddJob)});
 
 /* ---------- pack ---------- */
 function bindPack(){const p=S.deal.pack;$('#pBiz').value=p.biz;$('#pRedress').value=p.redress;$('#pFee').value=p.fee;$('#pNDA').checked=p.nda}
@@ -1619,7 +1686,7 @@ function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();
   const cols=U.map(u=>`<div><div class="kv-h">${esc(u.label)}</div>${kv([['Rent incl. bills',gbp(u.rent)+'/month'],['Deposit',gbp(u.dep)],['Model rate','£'+u.rate+'/night']])}</div>`).join('')
     +(U.length>1?`<div><div class="kv-h">All units</div>${kv([['Rent',gbp(rent)+'/month'],['Deposits',gbp(dep)],['Upfront',gbp(rent+dep)]])}</div>`:'');
   const tr=U.map(u=>`<tr><td>${esc(u.label)} at £${u.rate}</td>${OCC.map(o=>{const v=month(u,o,null,a).surplus;return `<td class="n" style="${v<0?'color:#B42318':''}">${gbp(v)}</td>`}).join('')}<td class="n">~${pct(be(u,a))}</td></tr>`).join('');
-  const ddr=DD_TEMPLATE.map((t,i)=>{const x=d.dd[i];return `<tr><td class="l">${t.t}</td><td class="l st ${x.s}"><span class="pdot"></span>${SLAB[x.s]}</td></tr>`}).join('');
+  const ddr=DD_TEMPLATE.map((t,i)=>{const x=d.dd[i],ev=x.ev||[];return `<tr><td class="l">${t.t}</td><td class="l st ${x.s}"><span class="pdot"></span>${SLAB[x.s]}</td><td class="l">${ev.length?ev.map(e=>esc(e.name||hostOf(e.url))).join(', '):'None yet'}</td></tr>`}).join('');
   const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   $('#packWrap').innerHTML=`<div class="paper-bar"><span class="dot ${p.final?'good':'none'}"></span>${p.final?'Final pack generated':'Preview. Generate the final pack to remove the watermark.'}</div>
   <article class="pack">${p.final?'':'<div class="wm" aria-hidden="true"><span>PREVIEW</span></div>'}
@@ -1631,7 +1698,7 @@ function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();
     <div class="tw"><table><thead><tr><th>Per unit</th><th>60%</th><th>80%</th><th>100%</th><th>Break-even</th></tr></thead><tbody>${tr}</tbody></table></div>
     <p class="small" style="margin-top:8px">${a.fee}% platform fees, £${a.clean} cleaning per ${a.stay}-night stay, £${a.other}/month other costs, 30-day month. Not a forecast; nightly rates and occupancy are unvalidated.${d.london&&d.strat==='R2SA'?' London short lets are limited to 90 nights a year without planning permission.':''}</p>
     <h3>Due diligence status</h3>
-    <div class="tw"><table><thead><tr><th>Check</th><th style="text-align:left">Status</th></tr></thead><tbody>${ddr}</tbody></table></div>
+    <div class="tw"><table><thead><tr><th>Check</th><th style="text-align:left">Status</th><th style="text-align:left">Evidence</th></tr></thead><tbody>${ddr}</tbody></table></div>
     <h3>Next steps</h3>
     <p>Sourcing fee: <b>${esc(p.fee||'on request')}</b>. The full address and landlord introduction are released after you sign the terms of business and pay the reservation fee.</p>
     <p class="small">${p.biz?`Offered by ${esc(p.biz)}`:'Sourcing business not set'}${p.redress?` | Redress: ${esc(p.redress)}`:''}. This summary is not financial, legal or investment advice. Returns depend on performance and are not guaranteed.</p>
@@ -2122,12 +2189,12 @@ function levelOpts(name){const i=AIC.info,free=!i||i.free;// locked until the se
   return AI_LEVELS.map(l=>{const locked=free&&l.id!=='quick';
     return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="${name}" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)}</span><span class="lv-use">${locked?'Paid plans':esc(l.use)}</span></label>`}).join('')}
 function renderAILevels(){const i=AIC.info,free=!i||i.free;if(free&&AIC.level!=='quick')AIC.level='quick';
-  $('#aiLevelOpts').innerHTML=levelOpts('aiLevel');$('#fLevelOpts').innerHTML=levelOpts('fLevel');
+  $('#aiLevelOpts').innerHTML=levelOpts('aiLevel');$('#fLevelOpts').innerHTML=levelOpts('fLevel');$('#ddLevelOpts').innerHTML=levelOpts('ddLevel');
   const paid=i?(i.plan==='Admin'?'Admin: unlimited credits.':`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}.`):'';
   $('#aiCredits').textContent=!i?'':i.free?`Free plan: ${i.freeLeft} of 2 free analyses left. Upgrade for Analyst and Expert.`:paid;
   $('#fCredits').textContent=!i?'':i.free?`Free plan: ${i.freeSearchesLeft} of 3 searches left this week. Upgrade for Analyst and Expert.`:paid}
 async function loadAICredits(){if(!document.body.dataset.userId)return;try{const r=await fetch('/api/analyze-deal',{credentials:'same-origin'});if(r.ok){AIC.info=await r.json();renderAILevels()}}catch(e){}}
-['#aiLevelOpts','#fLevelOpts'].forEach(id=>$(id).addEventListener('change',e=>{if(e.target.type==='radio'){AIC.level=e.target.value;try{localStorage.setItem('dealpro:ai-level',AIC.level)}catch(err){}renderAILevels()}}));
+['#aiLevelOpts','#fLevelOpts','#ddLevelOpts'].forEach(id=>$(id).addEventListener('change',e=>{if(e.target.type==='radio'){AIC.level=e.target.value;try{localStorage.setItem('dealpro:ai-level',AIC.level)}catch(err){}renderAILevels()}}));
 renderAILevels();window.addEventListener('dealpro:signed-in',loadAICredits);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 $('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInput').value.trim(),btn=$('#analyseWithAI'),status=$('#aiDealStatus');if(!input){status.textContent='Paste the deal information first.';$('#aiDealInput').focus();return}

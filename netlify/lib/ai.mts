@@ -219,14 +219,15 @@ const normalise = (url: string) => { try { const u = new URL(url); u.hash = ""; 
 
 async function webJson(prompt: string, domains: string[], level: LevelId, context: "low" | "medium" | "high", effort: Effort) {
   const client = new OpenAI();
-  const site = `Only use ${domains.join(" or ")} (for example search "site:${domains[0]} ...").`;
+  // With no domains the search is open to the whole web (used for due diligence research).
+  const site = domains.length ? `Only use ${domains.join(" or ")} (for example search "site:${domains[0]} ...").` : "";
   // The most capable setup first, then simpler ones for accounts or gateways that don't support every option.
   const call = (model: string, opts: { tool: "web_search" | "web_search_preview"; filters: boolean; json: boolean; reasoning: boolean }) => () =>
     client.responses.create({
       model,
       ...(opts.reasoning ? { reasoning: { effort } } : {}),
       tools: [opts.tool === "web_search"
-        ? { type: "web_search", search_context_size: context, ...(opts.filters ? { filters: { allowed_domains: domains }, user_location: { type: "approximate" as const, country: "GB" } } : {}) }
+        ? { type: "web_search", search_context_size: context, ...(opts.filters ? { ...(domains.length ? { filters: { allowed_domains: domains } } : {}), user_location: { type: "approximate" as const, country: "GB" } } : {}) }
         : { type: "web_search_preview", search_context_size: context }],
       ...(opts.filters ? { include: ["web_search_call.action.sources" as const] } : {}),
       ...(opts.json ? { text: { format: { type: "json_object" as const } } } : {}),
@@ -408,4 +409,59 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
     await save(st);
   }
   return st;
+}
+
+// ---------- due diligence research ----------
+// Researches each due diligence check for a deal on the public web and returns a draft finding
+// with the sources it used. Only sources the web search really returned are kept, so every link
+// can be opened and checked.
+export type DDCheck = { k: string; t: string; d: string };
+export type DDFinding = { k: string; status: "partly" | "issue" | "none"; finding: string; sources: Array<{ title: string; url: string }> };
+
+const DD_PROMPT = `You are Deal Pro's UK property due diligence researcher. Research the deal below on the public web (council websites, GOV.UK, the Valuation Office Agency, the EPC register, planning portals, transport operators, Land Registry guidance, comparable short-let and rental listings).
+For each check, report what you actually found for this specific property and area, with figures, dates and names where the sources give them. Never invent facts; if the sources don't answer a check, say exactly what the user needs to obtain and from whom.
+Status: "issue" if you found a problem or a risk that needs resolving, "partly" if you found useful evidence but the user still needs to confirm something, "none" if you found nothing relevant. Never mark a check as verified: only the user can do that.`;
+const DD_FORMAT = `Return JSON: {"findings": [{"k": string (the check key), "status": "partly" | "issue" | "none", "finding": string (max 90 words, plain English), "sources": [{"title": string, "url": string}]}]}. Include every check key given, once.`;
+const DD_LEVEL: Record<LevelId, { context: "low" | "medium" | "high"; note: string }> = {
+  quick: { context: "low", note: "Give a quick first pass: the most useful fact for each check." },
+  standard: { context: "medium", note: "Research each check properly and cite the most relevant sources." },
+  deep: { context: "high", note: "Research exhaustively: search several sources, cross-check figures, quote current fees, dates and scheme boundaries, and cite every source you rely on." },
+};
+
+function keepSources(list: unknown, seen: Set<string>) {
+  if (!Array.isArray(list)) return [];
+  return list
+    .filter((x): x is { title?: unknown; url?: unknown } => !!x && typeof x === "object")
+    .map((x) => ({ title: String(x.title || "").slice(0, 160), url: String(x.url || "") }))
+    .filter((x) => /^https?:\/\//.test(x.url) && (seen.size === 0 ? false : seen.has(normalise(x.url))))
+    .slice(0, 6);
+}
+
+export async function runResearch(input: string, level: LevelId) {
+  const { deal, checks } = JSON.parse(input) as { deal: string; checks: DDCheck[] };
+  const lv = DD_LEVEL[level];
+  const effort = LEVELS[level].effort;
+  const list = (cs: DDCheck[]) => cs.map((c) => `- ${c.k}: ${c.t}. ${c.d}`).join("\n");
+  const ask = (cs: DDCheck[]) => webJson(`${DD_PROMPT}\n${lv.note}\n\nDeal:\n${deal}\n\nChecks:\n${list(cs)}\n\n${DD_FORMAT}`, [], level, lv.context, effort);
+  // Expert researches every check separately, in parallel, so each gets a full search.
+  const parts = level === "deep"
+    ? await Promise.all(checks.map((c) => ask([c]).catch((error) => { console.warn("Research failed for", c.k, errText(error)); return null; })))
+    : [await ask(checks)];
+  if (parts.every((p) => !p)) throw new Error("Due diligence research failed for every check");
+  const byKey = new Map<string, DDFinding>();
+  for (const part of parts) {
+    if (!part) continue;
+    const found = Array.isArray(part.parsed.findings) ? part.parsed.findings : [];
+    for (const f of found as Array<Record<string, unknown>>) {
+      const k = String(f?.k || "");
+      if (!checks.some((c) => c.k === k) || byKey.has(k)) continue;
+      // Only the user can mark a check verified, so the AI's "verified" becomes "partly".
+      const status = f.status === "issue" ? "issue" : f.status === "partly" || f.status === "verified" ? "partly" : "none";
+      byKey.set(k, { k, status, finding: String(f.finding || "").slice(0, 900), sources: keepSources(f.sources, part.seen) });
+    }
+  }
+  return {
+    findings: checks.map((c) => byKey.get(c.k) || { k: c.k, status: "none" as const, finding: "The research didn't find public information for this check. Obtain the evidence directly and add it below.", sources: [] }),
+    researchedAt: new Date().toISOString(),
+  };
 }
