@@ -740,6 +740,7 @@ td.t{text-align:right;color:var(--ink-2)}
 .ai-level-opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.ai-level{position:relative;display:grid;gap:3px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:var(--surface)}
 .ai-level input{position:absolute;opacity:0;pointer-events:none}.ai-level b{font-size:14px}.ai-level span{font-size:12px;color:var(--ink-2)}.ai-level{--lv:#34c26b}.ai-level.lv-standard{--lv:#f59e0b}.ai-level.lv-deep{--lv:#e0142b}.ai-level b{display:flex;align-items:center;gap:7px}.lv-dot{width:9px;height:9px;border-radius:50%;background:var(--lv);flex:none}
 .ai-level:has(input:checked){border-color:var(--lv);box-shadow:0 0 0 1px var(--lv) inset;background:color-mix(in srgb,var(--lv) 10%,var(--surface))}
+.lv-time{font-size:11.5px!important;color:var(--muted)!important}
 .ai-level:has(input:focus-visible){outline:2px solid var(--lv);outline-offset:2px}.ai-level.locked{opacity:.55}.ai-level .lv-use{color:var(--lv);font-weight:500}.ai-credits{font-size:12px;color:var(--ink-2);margin:8px 0 0}
 .ai-level-stack{grid-template-columns:1fr}
 @media(max-width:560px){.ai-level-opts{grid-template-columns:1fr}}
@@ -1661,8 +1662,9 @@ function applyResearch(dealId,res){const apply=d=>{if(!d||d.id!==dealId)return;(
     x.ai=f.finding;x.aiSrc=f.sources||[];if(x.s==='none'&&(f.status==='partly'||f.status==='issue'))x.s=f.status});d.ai=true;d.aiAt=res.researchedAt;d.aiLevel=res.level};
   apply(S.deal);S.saved.forEach(apply);save()}
 async function followResearch(job){const b=$('#runAI'),st=$('#ddStatus'),lv=AI_LEVELS.find(l=>l.id===job.level)||AI_LEVELS[0];
-  b.disabled=true;b.textContent='Researching…';st.textContent=`${lv.name} is researching each check…`;
-  try{const res=await pollJob(job.id,sec=>{st.textContent=`${lv.name} is researching each check… ${sec<120?sec+'s':Math.round(sec/60)+' min'}`});
+  b.disabled=true;b.textContent='Researching…';const t0=job.at||Date.now(),el=()=>Math.round((Date.now()-t0)/1000),est=estSecs('dd',lv.id);
+  const tick=()=>{st.textContent=`${lv.name} is researching each check… ${leftTxt(est,el(),0)} (usually ${estTxt('dd',lv.id)})`};tick();
+  try{const res=await pollJob(job.id,tick);
     S.ddJob=null;applyResearch(job.dealId,Object.assign({},res,{level:job.level}));if(S.deal.id===job.dealId)renderDD();st.textContent='Findings drafted with their sources. Check each one, then add your evidence.';toast('Research complete')}
   catch(e){S.ddJob=null;save();st.textContent=e.message||'The research could not be completed.';toast(st.textContent)}
   finally{b.disabled=false;b.textContent='Run AI research'}}
@@ -1671,7 +1673,7 @@ $('#runAI').addEventListener('click',async()=>{if(!feature('dd','#nDD'))return;c
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];b.disabled=true;
   try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'dd',level:lv.id,deal:ddDealText(d),checks:DD_TEMPLATE})});
     const x=await r.json().catch(()=>({}));if(!r.ok)throw new Error(x.error||'The research could not be started.');if(x.credits){AIC.info=x.credits;renderAILevels()}
-    S.ddJob={id:x.jobId,level:lv.id,dealId:d.id};save();followResearch(S.ddJob)}
+    S.ddJob={id:x.jobId,level:lv.id,dealId:d.id,at:Date.now()};save();followResearch(S.ddJob)}
   catch(e){b.disabled=false;st.textContent=e.message}});
 window.addEventListener('dealpro:signed-in',()=>{if(S.ddJob&&S.ddJob.id)followResearch(S.ddJob)});
 
@@ -1982,7 +1984,7 @@ function syncSel(){const n=FS.sel.size,b=$('#fBuildSel');if(b){b.disabled=!n;b.t
   $$('#fResults tr[data-k]').forEach(tr=>tr.classList.toggle('is-sel',FS.sel.has(+tr.dataset.k)));
   const all=$('#fSelAll');if(all){const cb=$$('#fResults [data-sel]');all.checked=cb.length>0&&cb.every(c=>c.checked);all.indeterminate=!all.checked&&cb.some(c=>c.checked)}}
 function syncFee(){$$('.js-fee').forEach(e=>e.textContent=gbp(dealFee()))}
-function onFind(){readFind();save();renderFind()}
+function onFind(){readFind();save();renderFind();$$('#fLevelOpts .lv-time').forEach(e=>{e.textContent='Takes ~'+estTxt('search',e.dataset.lv,findSiteCount())})}
 $('#fPanel').addEventListener('input',onFind);$('#fPanel').addEventListener('change',onFind);
 $('#fReset').addEventListener('click',()=>{S.find.f=FIND_DEF();bindFind();save();renderFind()});
 const FIND_MSG=m=>{const n=$('#nFind');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
@@ -1990,7 +1992,6 @@ async function pollJob(jobId,onTick,onProgress,maxMs=17*60e3){const t0=Date.now(
   if(!p.ok)throw new Error(d.error||'The AI could not finish. Please try again.');if(d.credits){AIC.info=d.credits;renderAILevels()}
   if(d.progress&&onProgress)onProgress(d.progress);if(d.status==='done')return d.analysis;if(d.status==='error')throw new Error((d.error||'The AI could not finish. Please try again.')+(d.detail?` (Admin detail: ${d.detail})`:''));
   if(onTick)onTick(Math.round((Date.now()-t0)/1000));if(Date.now()-t0>maxMs)throw new Error('The AI is taking too long. Please try again.')}}
-const SEARCH_TIME={quick:'under a minute',standard:'a few minutes',deep:'10–30 minutes. Expert searches every site round after round, then opens the best listings to check they are still available. You can leave this page and come back'};
 function drawSearch(sites,lv,prog,sec){const P=(prog&&prog.sites)||{},phase=prog&&prog.phase||'search',box=$('#fResults');
   const done=sites.filter(s=>P[s]&&P[s].status!=='searching').length;
   const head=phase==='verify'?`Checking the best listings are still available… ${prog.verified||0} checked`:phase==='rank'||phase==='done'?'Ranking the best deals…':`${esc(lv.name)} is searching ${sites.length} site${sites.length>1?'s':''} for live listings…`;
@@ -1998,7 +1999,11 @@ function drawSearch(sites,lv,prog,sec){const P=(prog&&prog.sites)||{},phase=prog
     <div class="meter"><span style="width:${phase==='search'?Math.round(done/sites.length*100):100}%"></span></div>
     <ol>${sites.map(s=>{const st=P[s]||{status:'searching',found:0};const rounds=st.rounds>1?` · round ${Math.min(st.round+(st.status==='searching'?1:0),st.rounds)} of ${st.rounds}`:'';
       return `<li class="${st.status==='searching'?'act':'done'}"><span class="dot ${st.status==='done'?'good':st.status==='error'?'bad':'none'}"></span>${SITE_LABEL(s)}<span class="mono muted">${st.status==='error'?'unavailable':`${st.found||0} found${rounds}`}</span></li>`}).join('')}</ol>
-    ${prog&&prog.found?`<p class="fnote">${prog.found} unique listings so far.</p>`:''}<p class="fnote">This usually takes ${SEARCH_TIME[lv.id]||'a few minutes'}.</p></div>`}
+    ${prog&&prog.found?`<p class="fnote">${prog.found} unique listings so far.</p>`:''}<p class="fnote"><b>${leftTxt(estSecs('search',lv.id,sites.length),sec||0,searchFrac(sites,prog,lv))}</b> · usually takes ${estTxt('search',lv.id,sites.length)}.${lv.id==='deep'?' Expert searches every site round after round, then opens the best listings to check they are still available. You can leave this page and come back.':''}</p></div>`}
+// Share of the search done: the rounds across all sites, then (Expert) the listing checks, then ranking.
+function searchFrac(sites,prog,lv){if(!prog)return 0;const P=prog.sites||{},deep=lv.id==='deep',sw=deep?.7:.85;
+  if(prog.phase==='rank'||prog.phase==='done')return .95;if(prog.phase==='verify')return sw+.25*Math.min(1,(prog.verified||0)/40);
+  const r=sites.reduce((a,s)=>{const x=P[s];return a+(!x?0:x.status!=='searching'?1:(x.round||0)/(x.rounds||1))},0)/Math.max(1,sites.length);return sw*r}
 async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LEVELS[0],btn=$('#fSearch');
   FS.busy=true;btn.disabled=true;let last=null;const t0=Date.parse(p.at)||Date.now(),secs=()=>Math.round((Date.now()-t0)/1000);drawSearch(p.sites,lv,null,secs());
   try{const res=await pollJob(p.id,()=>drawSearch(p.sites,lv,last,secs()),pr=>{last=pr;drawSearch(p.sites,lv,pr,secs())},100*60e3);
@@ -2200,11 +2205,23 @@ function renderAIAnalysis(a){
     ${Array.isArray(a.occupancy_scenarios)&&a.occupancy_scenarios.length?aiList('Occupancy scenarios',a.occupancy_scenarios.map(o=>`${o.occupancy}: ${o.monthly_profit}`)):''}${Array.isArray(a.stress_tests)&&a.stress_tests.length?aiList('Stress tests',a.stress_tests.map(t=>`${t.scenario}: ${t.monthly_profit}${t.still_works===false?' (fails)':t.still_works?' (still works)':''}`)):''}${aiList('Important risks',a.risks)}${aiList('Assumptions',a.assumptions)}${aiList('Missing information',a.missing_information)}${aiList('What to do next',a.next_actions)}${a._level==='quick'?scoutMore('analyse'):''}`}
 renderAIAnalysis(S.deal.aiAnalysis);
 /* power levels: ids must match LEVELS in netlify/lib/ai.mts */
-const AI_LEVELS=[{id:'quick',name:'Scout',desc:'Quick first look',use:'Uses the least credits',time:'~10 sec'},{id:'standard',name:'Analyst',desc:'Full, detailed analysis',use:'Uses more credits',time:'~30 sec'},{id:'deep',name:'Expert',desc:'Stress-tested, thorough',use:'Uses the most credits',time:'1–2 min'}];
+const AI_LEVELS=[{id:'quick',name:'Scout',desc:'Quick first look',use:'Uses the least credits'},{id:'standard',name:'Analyst',desc:'Full, detailed analysis',use:'Uses more credits'},{id:'deep',name:'Expert',desc:'Stress-tested, thorough',use:'Uses the most credits'}];
 const AIC={info:null,level:(()=>{try{return localStorage.getItem('dealpro:ai-level')||'quick'}catch(e){return 'quick'}})()};
+/* time estimates in seconds, from how much work each level does */
+const EST_S={analyse:{quick:15,standard:45,deep:120},dd:{quick:30,standard:90,deep:240},search:{quick:60,standard:180,deep:1200}};
+// Sites are searched side by side, so more sites add a little time rather than multiplying it.
+function estSecs(kind,lv,sites){const b=EST_S[kind][lv]||60;return kind==='search'?Math.round(b*(1+Math.max(0,(sites||6)-4)*.08)):b}
+const durTxt=s=>s<60?`${Math.max(5,Math.round(s/5)*5)} sec`:`${Math.round(s/60)} min`;
+function estTxt(kind,lv,sites){if(kind==='search'&&lv==='deep')return '15–30 min';const s=estSecs(kind,lv,sites);
+  return s<60?durTxt(s):s<120?'1–2 min':`${Math.round(s/60*.8)}–${Math.round(s/60*1.3)} min`}
+// Time left: starts from the estimate and, once real progress is known, follows the actual pace.
+function leftTxt(est,elapsed,frac){let total=est;if(frac>.1&&elapsed>15)total=(est+elapsed/frac)/2;const left=total-elapsed;
+  return left>10?`about ${durTxt(left)} left`:elapsed>est*1.5?'taking a little longer than usual':'almost done'}
+const LEVEL_KIND={aiLevel:'analyse',fLevel:'search',ddLevel:'dd'};
+const findSiteCount=()=>{try{return SITES.filter(s=>S.find.f.sites[s]).length||1}catch(e){return 6}};
 function levelOpts(name){const i=AIC.info,free=!i||i.free;// locked until the server confirms a paid plan
   return AI_LEVELS.map(l=>{const locked=free&&l.id!=='quick';
-    return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="${name}" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)}</span><span class="lv-use">${locked?'Paid plans':esc(l.use)}</span></label>`}).join('')}
+    return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="${name}" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)}</span><span class="lv-use">${locked?'Paid plans':esc(l.use)}</span><span class="lv-time" data-kind="${LEVEL_KIND[name]}" data-lv="${l.id}">Takes ~${estTxt(LEVEL_KIND[name],l.id,findSiteCount())}</span></label>`}).join('')}
 function renderAILevels(){const i=AIC.info,free=!i||i.free;if(free&&AIC.level!=='quick')AIC.level='quick';
   $('#aiLevelOpts').innerHTML=levelOpts('aiLevel');$('#fLevelOpts').innerHTML=levelOpts('fLevel');$('#ddLevelOpts').innerHTML=levelOpts('ddLevel');
   const paid=i?(i.plan==='Admin'?'Admin: unlimited credits.':`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}.`):'';
@@ -2216,14 +2233,14 @@ renderAILevels();window.addEventListener('dealpro:signed-in',loadAICredits);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 $('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInput').value.trim(),btn=$('#analyseWithAI'),status=$('#aiDealStatus');if(!input){status.textContent='Paste the deal information first.';$('#aiDealInput').focus();return}
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];
-  btn.disabled=true;btn.textContent='Analysing…';status.textContent=`${lv.name} analysis started. This usually takes ${lv.time}.`;
+  btn.disabled=true;btn.textContent='Analysing…';status.textContent=`${lv.name} analysis started. This usually takes ${estTxt('analyse',lv.id)}.`;
   try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'analyse',deal:input,level:lv.id})});const start=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(start.error||'Analysis failed.');if(start.credits){AIC.info=start.credits;renderAILevels()}
     const t0=Date.now();let data;
     for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(start.jobId),{credentials:'same-origin'});data=await p.json().catch(()=>({}));
       if(!p.ok)throw new Error(data.error||'Analysis failed.');if(data.credits){AIC.info=data.credits;renderAILevels()}
       if(data.status==='done')break;if(data.status==='error')throw new Error(data.error||'Analysis failed.');
-      status.textContent=`${lv.name} analysis in progress… ${Math.round((Date.now()-t0)/1000)}s`;if(Date.now()-t0>17*60e3)throw new Error('The analysis is taking too long. Please try again.')}
+      {const el=Math.round((Date.now()-t0)/1000);status.textContent=`${lv.name} analysis in progress… ${el}s · ${leftTxt(estSecs('analyse',lv.id),el,0)}`}if(Date.now()-t0>17*60e3)throw new Error('The analysis is taking too long. Please try again.')}
     S.deal.aiAnalysis=Object.assign({},data.analysis,{_level:lv.id});S.deal.sourceText=input;save();renderAIAnalysis(S.deal.aiAnalysis);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
   catch(e){status.textContent=e.message||'The analysis could not be completed. Please try again.'}finally{btn.disabled=false;btn.textContent='Analyse with AI'}});
 $('#advancedToggle').addEventListener('click',e=>{const on=document.body.classList.toggle('advanced-mode');e.currentTarget.setAttribute('aria-expanded',String(on));e.currentTarget.textContent=on?'Hide advanced controls':'Show advanced controls'});
