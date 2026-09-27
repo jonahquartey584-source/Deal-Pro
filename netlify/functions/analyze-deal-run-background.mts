@@ -46,7 +46,10 @@ export default async (request: Request, _context: Context) => {
   } catch (error) {
     console.error("AI job failed", error);
     const latest = (await store.get(jobId, { type: "json" }) as Record<string, unknown> | null) || job;
-    await refundJob(jobId, latest, "The search could not be completed. Your credits have not been used; please try again.");
+    const detail = String((error as Error)?.message || error).slice(0, 1500);
+    await refundJob(jobId, { ...latest, errorDetail: detail }, job.kind === "search"
+      ? "The search could not be completed. Your credits have not been used; please try again."
+      : "The analysis could not be completed. Your credits have not been used; please try again.");
   }
 };
 

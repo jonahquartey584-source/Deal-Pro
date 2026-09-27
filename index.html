@@ -787,7 +787,7 @@ td.t{text-align:right;color:var(--ink-2)}
       <div class="ws-free" id="wsFree" hidden><div class="ws-use"><span id="wsFreeTxt">0 of 2 free analyses used</span></div><div class="meter" aria-hidden="true"><span id="wsFreeBar" style="width:0%"></span></div></div>
       <span class="ws-pct" id="wsPct">0% used</span>
       <p class="ws-note">Your work is saved securely to your account.</p>
-      <button class="btn sm block" data-go="plans">Manage plan</button>
+      <button class="btn sm block" id="managePlan" type="button">Manage plan</button>
       <a class="btn sm block" id="adminLink" href="/admin.html" hidden>Admin dashboard</a>
       <div class="account-row"><span class="account-email" id="accountEmail"></span><button class="btn ghost sm block" id="signOut" type="button">Sign out</button></div>
     </div>
@@ -1347,13 +1347,21 @@ const CHECKOUT={
 };
 const CONTACT_EMAIL='jonahquartey584@gmail.com';
 function checkoutLink(id){return CHECKOUT[id]}
-function startCheckout(id){const url=checkoutLink(id);if(url){window.location.assign(checkoutURL(url));return true}
-  if(id==='Free'){toast(`To cancel your subscription, email ${CONTACT_EMAIL} and we'll sort it the same day.`);return false}
+// Remember a plan change in progress, so the account can be refreshed when the customer comes back.
+function markBilling(){try{sessionStorage.setItem('dealpro:billing',JSON.stringify({from:S.plan,at:Date.now()}))}catch(e){}}
+async function openPortal(){try{const r=await fetch('/api/billing-portal',{method:'POST',credentials:'same-origin'});const d=await r.json().catch(()=>({}));
+    if(r.ok&&d.url){markBilling();window.location.assign(d.url);return true}}catch(e){}
+  toast(`To change or cancel your plan, email ${CONTACT_EMAIL} and we'll sort it the same day.`);return false}
+function startCheckout(id){
+  // Existing subscribers change or cancel through Stripe's customer portal, so they're never charged twice.
+  if(S.stripe&&S.stripe.customer&&S.plan!=='Free'){openPortal();return true}
+  const url=checkoutLink(id);if(url){markBilling();window.location.assign(checkoutURL(url));return true}
+  if(id==='Free'){toast(`You're on the Free plan.`);return false}
   const name=PLAN_DEFS[id]?PLAN_DEFS[id].name:'this plan';
   toast(`Online checkout for ${name} is coming soon. Email ${CONTACT_EMAIL} and we'll set it up for you.`);return false}
 const COST={search:2,import:1,dd:5,pack:3};// hidden usage units per action; deal numbers are free
 let S=store.get('state',null);
-if(!S||!S.deal){S={plan:'Free',deal:freshDeal(),saved:[]}}
+if(!S||!S.deal){S=Object.assign({plan:'Free',saved:[]},S&&typeof S==='object'?S:{},{deal:freshDeal()})}/* keep the plan and Stripe link even if no deal was saved yet */
 // fields added for per-deal unlocks; older saved state loads with these defaults
 // migrate older state: credits are replaced by usage limits; old plan names map to the new plans
 {const MAP={Starter:'Free',Team:'Free',TeamStd:'Free',TeamPrem:'Free'};if(S.plan==null)S.plan='Free';if(MAP[S.plan])S.plan=MAP[S.plan];if(!PLAN_DEFS[S.plan])S.plan='Pro';delete S.credits;
@@ -1903,7 +1911,7 @@ $('#fReset').addEventListener('click',()=>{S.find.f=FIND_DEF();bindFind();save()
 const FIND_MSG=m=>{const n=$('#nFind');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
 async function pollJob(jobId,onTick,onProgress,maxMs=17*60e3){const t0=Date.now();for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(jobId),{credentials:'same-origin'});const d=await p.json().catch(()=>({}));
   if(!p.ok)throw new Error(d.error||'The AI could not finish. Please try again.');if(d.credits){AIC.info=d.credits;renderAILevels()}
-  if(d.progress&&onProgress)onProgress(d.progress);if(d.status==='done')return d.analysis;if(d.status==='error')throw new Error(d.error||'The AI could not finish. Please try again.');
+  if(d.progress&&onProgress)onProgress(d.progress);if(d.status==='done')return d.analysis;if(d.status==='error')throw new Error((d.error||'The AI could not finish. Please try again.')+(d.detail?` (Admin detail: ${d.detail})`:''));
   if(onTick)onTick(Math.round((Date.now()-t0)/1000));if(Date.now()-t0>maxMs)throw new Error('The AI is taking too long. Please try again.')}}
 const SEARCH_TIME={quick:'under a minute',standard:'a few minutes',deep:'10–30 minutes. Expert searches every site round after round, then opens the best listings to check they are still available. You can leave this page and come back'};
 function drawSearch(sites,lv,prog,sec){const P=(prog&&prog.sites)||{},phase=prog&&prog.phase||'search',box=$('#fResults');
@@ -2393,6 +2401,26 @@ $$('.tutorial-media .chap').forEach(box=>{const video=box.parentElement.querySel
   const fits=()=>{const ok=isFinite(video.duration)&&video.duration>=CH[CH.length-1].t;box.hidden=!ok;if(list)list.hidden=!ok;return ok};
   box.hidden=true;if(list)list.hidden=true;
   video.addEventListener('loadedmetadata',()=>{if(fits()){size();sync()}});video.addEventListener('timeupdate',()=>{if(!box.hidden)sync()});if(video.readyState>=1&&fits()){size();sync()}});
+
+/* ---------- keep the plan in sync with Stripe ---------- */
+// After checkout or the customer portal, Stripe tells the server via the webhook a few seconds
+// later. Check the account until the plan changes, then reload so the whole site reflects it.
+async function remotePlan(){try{const r=await fetch('/api/account-state',{credentials:'same-origin'});if(!r.ok)return null;const d=await r.json();return d.state||null}catch(e){return null}}
+function applyRemote(st,note){try{localStorage.setItem('dealpro:state',JSON.stringify(st));if(note)sessionStorage.setItem('dealpro:plan-changed',st.plan)}catch(e){}location.reload()}
+async function watchBilling(){let b=null;try{b=JSON.parse(sessionStorage.getItem('dealpro:billing')||'null')}catch(e){}
+  const back=/[?&]billing=1/.test(location.search);if(!b&&!back)return;
+  if(back)history.replaceState(null,'',location.pathname);
+  const from=b?b.from:S.plan,until=Date.now()+90e3;if(b)toast('Checking your subscription…');
+  while(Date.now()<until){const st=await remotePlan();
+    if(st&&st.plan&&st.plan!==from){try{sessionStorage.removeItem('dealpro:billing')}catch(e){}applyRemote(st,true);return}
+    await new Promise(r=>setTimeout(r,3000))}
+  try{sessionStorage.removeItem('dealpro:billing')}catch(e){}
+  if(b)toast("Your payment is still being confirmed. Your plan will update shortly; refresh in a minute.")}
+window.addEventListener('dealpro:signed-in',()=>{let changed=null;try{changed=sessionStorage.getItem('dealpro:plan-changed');sessionStorage.removeItem('dealpro:plan-changed')}catch(e){}
+  if(changed)toast(`You're now on the ${(PLAN_DEFS[changed]||{name:changed}).name} plan.`);watchBilling()});
+// Coming back to the tab: pick up a plan change made elsewhere (for example by the admin).
+document.addEventListener('visibilitychange',async()=>{if(document.hidden||!document.body.dataset.userId)return;const st=await remotePlan();if(st&&st.plan&&st.plan!==S.plan)applyRemote(st,true)});
+$('#managePlan').addEventListener('click',()=>{if(S.stripe&&S.stripe.customer&&S.plan!=='Free')openPortal();else go('plans')});
 
 /* ---------- boot ---------- */
 const siteIntro=$('#siteIntro');if(siteIntro)setTimeout(()=>siteIntro.remove(),1700);

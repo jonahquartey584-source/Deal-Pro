@@ -86,28 +86,44 @@ const LEVEL_PROMPT: Record<LevelId, string> = {
   deep: `Give a thorough, investment-committee-grade analysis. Double-check every calculation. Stress-test the deal: nightly rate 20% lower, occupancy 15 points lower, costs 10% higher, and a one-month void; say whether it still works. Consider local demand, seasonality, competition, exit options and the worst realistic case. Also include the key "stress_tests" (array of {"scenario": string, "monthly_profit": string, "still_works": boolean}).`,
 };
 
+const errText = (error: unknown) => {
+  const e = error as { status?: number; message?: string };
+  return `${e.status ? `${e.status} ` : ""}${String(e.message || error).slice(0, 300)}`;
+};
+// Errors worth retrying with another model or setup (bad request, unknown model, unsupported feature).
+const retryable = (error: unknown) => { const st = (error as { status?: number }).status; return !st || (st >= 400 && st < 500 && st !== 401 && st !== 429); };
+
+// Tries each attempt in turn and throws one error listing every failure.
+async function tryEach<T>(label: string, attempts: Array<[string, () => Promise<T>]>): Promise<T> {
+  const failures: string[] = [];
+  for (const [name, run] of attempts) {
+    try { return await run(); } catch (error) {
+      failures.push(`${name}: ${errText(error)}`);
+      console.warn(`${label} failed with ${name}:`, errText(error));
+      if (!retryable(error)) break;
+    }
+  }
+  throw new Error(`${label} failed. ${failures.join(" | ")}`);
+}
+
 async function complete(system: string, user: string, level: LevelId) {
   const client = new OpenAI();
   const { model, effort } = LEVELS[level];
-  const request = (m: string) => client.chat.completions.create({
-    model: m,
-    reasoning_effort: effort,
-    response_format: { type: "json_object" },
-    messages: [{ role: "system", content: system }, { role: "user", content: user }],
-  });
-  let completion;
-  try {
-    completion = await request(model);
-  } catch (error) {
-    // If this account can't use the configured model, fall back rather than fail.
-    const status = (error as { status?: number }).status;
-    if (model === FALLBACK_MODEL || (status !== 404 && status !== 400)) throw error;
-    console.warn(`Model ${model} unavailable (${status}); falling back to ${FALLBACK_MODEL}`);
-    completion = await request(FALLBACK_MODEL);
-  }
-  const content = completion.choices[0]?.message?.content;
-  if (!content) throw new Error("Empty AI response");
-  return JSON.parse(content) as Record<string, unknown>;
+  const messages = [{ role: "system" as const, content: system }, { role: "user" as const, content: user }];
+  const withModel = (m: string, reasoning: boolean) => async () => {
+    const completion = await client.chat.completions.create({
+      model: m, messages, response_format: { type: "json_object" }, ...(reasoning ? { reasoning_effort: effort } : {}),
+    });
+    const content = completion.choices[0]?.message?.content;
+    if (!content) throw new Error("Empty AI response");
+    return JSON.parse(content) as Record<string, unknown>;
+  };
+  return tryEach("AI analysis", [
+    [model, withModel(model, true)],
+    [FALLBACK_MODEL, withModel(FALLBACK_MODEL, true)],
+    [`${FALLBACK_MODEL} (no reasoning setting)`, withModel(FALLBACK_MODEL, false)],
+    ["gpt-4.1-mini", withModel("gpt-4.1-mini", false)],
+  ]);
 }
 
 export const runAnalysis = (deal: string, level: LevelId) =>
@@ -203,22 +219,25 @@ const normalise = (url: string) => { try { const u = new URL(url); u.hash = ""; 
 
 async function webJson(prompt: string, domains: string[], level: LevelId, context: "low" | "medium" | "high", effort: Effort) {
   const client = new OpenAI();
-  const run = (model: string) => client.responses.create({
-    model,
-    reasoning: { effort },
-    tools: [{ type: "web_search", search_context_size: context, filters: { allowed_domains: domains }, user_location: { type: "approximate", country: "GB" } }],
-    include: ["web_search_call.action.sources"],
-    text: { format: { type: "json_object" } },
-    input: prompt,
-  });
-  let response;
-  try {
-    response = await run(LEVELS[level].model);
-  } catch (error) {
-    const status = (error as { status?: number }).status;
-    if (status !== 404 && status !== 400) throw error;
-    response = await run(FALLBACK_MODEL);
-  }
+  const site = `Only use ${domains.join(" or ")} (for example search "site:${domains[0]} ...").`;
+  // The most capable setup first, then simpler ones for accounts or gateways that don't support every option.
+  const call = (model: string, opts: { tool: "web_search" | "web_search_preview"; filters: boolean; json: boolean; reasoning: boolean }) => () =>
+    client.responses.create({
+      model,
+      ...(opts.reasoning ? { reasoning: { effort } } : {}),
+      tools: [opts.tool === "web_search"
+        ? { type: "web_search", search_context_size: context, ...(opts.filters ? { filters: { allowed_domains: domains }, user_location: { type: "approximate" as const, country: "GB" } } : {}) }
+        : { type: "web_search_preview", search_context_size: context }],
+      ...(opts.filters ? { include: ["web_search_call.action.sources" as const] } : {}),
+      ...(opts.json ? { text: { format: { type: "json_object" as const } } } : {}),
+      input: opts.filters ? prompt : `${prompt}\n${site}\nReply with the JSON only.`,
+    });
+  const response = await tryEach("Web search", [
+    [LEVELS[level].model, call(LEVELS[level].model, { tool: "web_search", filters: true, json: true, reasoning: true })],
+    [FALLBACK_MODEL, call(FALLBACK_MODEL, { tool: "web_search", filters: true, json: true, reasoning: true })],
+    [`${FALLBACK_MODEL} (plain)`, call(FALLBACK_MODEL, { tool: "web_search", filters: false, json: false, reasoning: false })],
+    ["gpt-4.1-mini (preview search)", call("gpt-4.1-mini", { tool: "web_search_preview", filters: false, json: false, reasoning: false })],
+  ]);
   // URLs the web search really returned.
   const seen = new Set<string>();
   for (const item of response.output as Array<Record<string, any>>) {
@@ -302,7 +321,7 @@ Only report what the pages actually say. Use null or "" when a detail isn't show
 export type SearchState = {
   filters: Filters; sites: string[]; phase: "search" | "verify" | "rank" | "done";
   round: number; verifyAt: number; listings: Listing[];
-  sites_status: Record<string, { status: string; found: number; round?: number; rounds?: number; error?: string }>;
+  sites_status: Record<string, { status: string; found: number; round?: number; rounds?: number; error?: string; detail?: string }>;
   ranking?: Record<string, unknown> | null; startedAt: string;
 };
 
@@ -342,7 +361,7 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
         const count = st.listings.filter((l) => l.site === site).length;
         // A failed first round means the site can't be searched; later failures just end that site early.
         st.sites_status[site] = round === 0 && !count
-          ? { status: "error", found: 0, error: "Couldn't search this site" }
+          ? { status: "error", found: 0, error: "Couldn't search this site", detail: errText(error) }
           : { status: "done", found: count, round: round + 1, rounds: lv.passes };
       }
       await save(st).catch(() => {});
@@ -350,7 +369,9 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
     st.round += 1;
     await save(st);
   }
-  if (st.sites.length && st.sites.every((s) => st.sites_status[s]?.status === "error")) throw new Error("All site searches failed");
+  if (st.sites.length && st.sites.every((s) => st.sites_status[s]?.status === "error")) {
+    throw new Error(`All site searches failed. ${st.sites_status[st.sites[0]]?.detail || ""}`);
+  }
 
   // Verify: open the most promising listings (cheapest per bedroom first) in batches.
   if (st.phase === "verify") {

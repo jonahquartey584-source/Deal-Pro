@@ -94,6 +94,18 @@ export default async (request: Request, _context: Context) => {
     return new Response("ok");
   }
 
+  // Plan changes made in Stripe (for example upgrading Premium to Max in the customer portal):
+  // follow the subscription's current price.
+  if (event.type === "customer.subscription.updated" && ["active", "trialing", "past_due"].includes(obj.status)) {
+    const customer = String(obj.customer || "");
+    const link = await store.get(`stripe/customers/${customer}`, { type: "json" }) as { userId?: string } | null;
+    const item = obj.items?.data?.[0];
+    const plan = planForAmount(Number(item?.price?.unit_amount ?? item?.plan?.amount) * (Number(item?.quantity) || 1));
+    if (link?.userId && plan && PLANS.includes(plan)) await setPlan(link.userId, plan, { customer, subscription: obj.id });
+    else if (!plan) console.warn("Subscription updated with an unrecognised price", obj.id);
+    return new Response("ok");
+  }
+
   return new Response("ok");
 };
 

@@ -62,6 +62,8 @@ export default async (request: Request, _context: Context) => {
       analysis: job.status === "done" ? job.analysis : undefined,
       progress: job.progress,
       error: job.error,
+      // The underlying AI error, for the admin only, to diagnose failures.
+      detail: isAdmin ? job.errorDetail : undefined,
       credits: creditSummary(isAdmin, plan, (await store.get(`users/${user.id}/ai-usage`, { type: "json" }) as Usage | null) || {}),
     });
   }
