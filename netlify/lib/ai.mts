@@ -151,25 +151,34 @@ export const runRank = (payload: string, level: LevelId) => complete(`${RANK_PRO
 // Each ticked site is searched separately with OpenAI's web search, restricted to that
 // site's domain. Only listing URLs that the search actually returned are kept, so the AI
 // can't invent listings.
-export const SITES: Record<string, { label: string; domains: string[]; what: string }> = {
-  OpenRent: { label: "OpenRent", domains: ["openrent.co.uk"], what: "property to rent, mostly from private landlords" },
-  SpareRoom: { label: "SpareRoom", domains: ["spareroom.co.uk"], what: "whole properties and rooms to rent" },
-  Gumtree: { label: "Gumtree", domains: ["gumtree.com"], what: "property to rent or buy" },
-  Rightmove: { label: "Rightmove", domains: ["rightmove.co.uk"], what: "residential property to rent or buy" },
-  Zoopla: { label: "Zoopla", domains: ["zoopla.co.uk"], what: "residential property to rent or buy" },
-  Facebook: { label: "Facebook Marketplace", domains: ["facebook.com"], what: "Facebook Marketplace property listings" },
-  RightmoveCommercial: { label: "Rightmove Commercial", domains: ["rightmove.co.uk"], what: "commercial property to let or buy (rightmove.co.uk/commercial-property)" },
-  Realla: { label: "Realla", domains: ["realla.co"], what: "commercial property to let or buy" },
-  NovaLoca: { label: "NovaLoca", domains: ["novaloca.com"], what: "commercial property, offices and shops to let or buy" },
-  LoopNet: { label: "LoopNet", domains: ["loopnet.co.uk", "loopnet.com"], what: "UK commercial property to let or buy" },
+// "listing" matches the URL of a single advert on that site, and "example" shows the model that
+// shape. Search-results, area and category pages don't match, so they are never shown as listings.
+export const SITES: Record<string, { label: string; domains: string[]; what: string; listing: RegExp; example: string }> = {
+  OpenRent: { label: "OpenRent", domains: ["openrent.co.uk"], what: "property to rent, mostly from private landlords", listing: /openrent\.co\.uk\/(?:property-to-rent\/[^?#]+\/)?\d{5,}\/?(?:[?#]|$)/i, example: "https://www.openrent.co.uk/property-to-rent/leeds/2-bed-flat-park-lane/1234567" },
+  SpareRoom: { label: "SpareRoom", domains: ["spareroom.co.uk"], what: "whole properties and rooms to rent", listing: /spareroom\.co\.uk\/(?:flatshare\/[^#]*[?&](?:flatshare_id|advert_id)=\d+|flatshare\/[^?#]+\/\d{5,}\/?(?:[?#]|$))/i, example: "https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=12345678" },
+  Gumtree: { label: "Gumtree", domains: ["gumtree.com"], what: "property to rent or buy", listing: /gumtree\.com\/p\/[^/?#]+\/[^/?#]+\/\d{6,}/i, example: "https://www.gumtree.com/p/property-to-rent/2-bed-flat-in-leeds/1234567890" },
+  Rightmove: { label: "Rightmove", domains: ["rightmove.co.uk"], what: "residential property to rent or buy", listing: /rightmove\.co\.uk\/properties\/\d{6,}/i, example: "https://www.rightmove.co.uk/properties/123456789" },
+  Zoopla: { label: "Zoopla", domains: ["zoopla.co.uk"], what: "residential property to rent or buy", listing: /zoopla\.co\.uk\/(?:to-rent|for-sale|new-homes)\/details\/\d{6,}/i, example: "https://www.zoopla.co.uk/to-rent/details/12345678/" },
+  Facebook: { label: "Facebook Marketplace", domains: ["facebook.com"], what: "Facebook Marketplace property listings", listing: /facebook\.com\/marketplace\/item\/\d{6,}/i, example: "https://www.facebook.com/marketplace/item/1234567890123456/" },
+  RightmoveCommercial: { label: "Rightmove Commercial", domains: ["rightmove.co.uk"], what: "commercial property to let or buy (rightmove.co.uk/commercial-property)", listing: /rightmove\.co\.uk\/(?:properties\/\d{6,}|commercial-property-(?:to-let|for-sale)\/property-\d{6,})/i, example: "https://www.rightmove.co.uk/properties/123456789" },
+  Realla: { label: "Realla", domains: ["realla.co"], what: "commercial property to let or buy", listing: /realla\.co\/(?:m|p|listing|properties)\/[^?#]*\d{4,}/i, example: "https://realla.co/m/12345678-office-to-let-high-street-leeds" },
+  NovaLoca: { label: "NovaLoca", domains: ["novaloca.com"], what: "commercial property, offices and shops to let or buy", listing: /novaloca\.com\/[^?#]*\/(?:\d{5,}|[^/?#]*-\d{5,})\/?(?:[?#]|$)/i, example: "https://www.novaloca.com/offices/to-let/leeds/high-street/12345" },
+  LoopNet: { label: "LoopNet", domains: ["loopnet.co.uk", "loopnet.com"], what: "UK commercial property to let or buy", listing: /loopnet\.(?:co\.uk|com)\/Listing\/[^?#]+\/\d{5,}/i, example: "https://www.loopnet.co.uk/Listing/1-High-Street-Leeds/12345678/" },
+};
+// Pages that show many listings rather than one.
+const SEARCH_PAGE = /\/(?:search|find|results|browse|property-to-rent\/?$|properties-to-rent|to-rent\/?(?:property\/)?[^/]*\/?$|for-sale\/?(?:property\/)?[^/]*\/?$)|[?&](?:location|searchLocation|q|query|search|keywords?|locationIdentifier)=/i;
+export const isListingUrl = (site: string, url: string) => {
+  const conf = SITES[site];
+  return !!conf && conf.listing.test(url) && !SEARCH_PAGE.test(url.replace(/[?&](?:flatshare_id|advert_id)=\d+/i, ""));
 };
 
 // How hard each level searches. Expert runs many rounds per site from different angles,
 // then opens the best listings to confirm they're still available.
 const SEARCH_LEVEL: Record<LevelId, { passes: number; perPass: number; context: "low" | "medium" | "high"; effort: Effort; verify: number }> = {
   // Scout: one quick look per site. Analyst: two rounds per site from different angles. Expert: eight rounds plus checks.
-  quick: { passes: 1, perPass: 5, context: "low", effort: "low", verify: 0 },
-  standard: { passes: 2, perPass: 12, context: "medium", effort: "low", verify: 0 },
+  // Every level opens the best listings to confirm they are still available; deeper levels check more.
+  quick: { passes: 1, perPass: 5, context: "low", effort: "low", verify: 6 },
+  standard: { passes: 2, perPass: 12, context: "medium", effort: "low", verify: 18 },
   deep: { passes: 8, perPass: 15, context: "high", effort: "medium", verify: 40 },
 };
 
@@ -193,7 +202,8 @@ export type Listing = {
   site: string; id: string; title: string; type: string; beds: number | null; area: string; postcode: string;
   price: number; mode: "rent" | "buy"; private: boolean | null; furnished: string; url: string; found: string;
   verified?: "available" | "unavailable" | "unknown";
-  details?: { deposit: string; availableFrom: string; highlights: string[] };
+  checkedAt?: string;
+  details?: { deposit: string; availableFrom: string; listed?: string; highlights: string[] };
 };
 
 // Bedrooms can be one size or several (for example studio to 2 beds); "4" means 4 or more.
@@ -272,7 +282,7 @@ async function searchSite(site: string, f: Filters, level: LevelId, pass: number
   const buy = f.mode === "buy";
   const skip = exclude.length ? `\nYou've already found these, so don't return them again:\n${exclude.slice(-80).join("\n")}` : "";
   const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
-${ANGLES[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only use individual listing pages, never search-results or category pages.${skip}
+${ANGLES[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only return individual listing pages: one property per URL, shaped like ${conf.example}. Never return search-results, area, category or map pages, even if they show listings; open the individual advert and use its URL. Skip adverts marked let agreed, under offer, sold STC or no longer available.${skip}
 Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "private_landlord": true | false | null}]}.
 Only include listings you actually found in the search results. Never invent a listing, price or URL. If you find none, return {"listings": []}.`;
   const { parsed, seen } = await webJson(prompt, conf.domains, level, lv.context, lv.effort);
@@ -280,7 +290,7 @@ Only include listings you actually found in the search results. Never invent a l
   const out: Listing[] = [];
   for (const x of (parsed.listings || []) as Array<Record<string, unknown>>) {
     const url = String(x.url || "");
-    if (!/^https:\/\//.test(url) || !hostMatches(url, conf.domains)) continue;
+    if (!/^https:\/\//.test(url) || !hostMatches(url, conf.domains) || !isListingUrl(site, url)) continue;
     // Keep only pages the search returned (when the API reports its sources).
     if (seen.size && !seen.has(normalise(url))) continue;
     const price = Math.round(Number(x.price));
@@ -307,15 +317,16 @@ async function verifyBatch(batch: Listing[], level: LevelId) {
   const domains = [...new Set(batch.flatMap((l) => SITES[l.site].domains))];
   const prompt = `Open each of these property listing pages and check them:
 ${batch.map((l, i) => `${i + 1}. ${l.url}`).join("\n")}
-For each, confirm whether it is still available (not let agreed, under offer, sold or removed), and read the details.
-Return JSON: {"checks": [{"url": string (exactly as given), "available": true | false | null, "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not]}]}.
+For each, confirm the page is a single property advert (not a search-results or area page) and whether it is still available (not let agreed, under offer, sold STC, expired or removed), and read the details.
+Return JSON: {"checks": [{"url": string (exactly as given), "is_listing": true | false, "available": true | false | null, "listed": string (the date it was added or last updated, if shown), "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not]}]}.
 Only report what the pages actually say. Use null or "" when a detail isn't shown.`;
-  const { parsed } = await webJson(prompt, domains, level, "high", "medium");
+  const { parsed } = await webJson(prompt, domains, level, level === "quick" ? "medium" : "high", level === "quick" ? "low" : "medium");
   const byUrl = new Map(batch.map((l) => [normalise(l.url), l]));
   for (const c of (parsed.checks || []) as Array<Record<string, any>>) {
     const l = byUrl.get(normalise(String(c.url || "")));
     if (!l) continue;
-    l.verified = c.available === false ? "unavailable" : c.available === true ? "available" : "unknown";
+    l.verified = c.is_listing === false || c.available === false ? "unavailable" : c.available === true ? "available" : "unknown";
+    l.checkedAt = new Date().toISOString();
     const price = Math.round(Number(c.price));
     if (Number.isFinite(price) && price > 0) l.price = price;
     if (Number.isFinite(Number(c.beds)) && c.beds !== null) l.beds = Math.round(Number(c.beds));
@@ -324,6 +335,7 @@ Only report what the pages actually say. Use null or "" when a detail isn't show
     l.details = {
       deposit: String(c.deposit || "").slice(0, 60),
       availableFrom: String(c.available_from || "").slice(0, 60),
+      listed: String(c.listed || "").slice(0, 60),
       highlights: Array.isArray(c.highlights) ? c.highlights.slice(0, 8).map((h: unknown) => String(h).slice(0, 120)) : [],
     };
   }
@@ -387,15 +399,22 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
     throw new Error(`All site searches failed. ${st.sites_status[st.sites[0]]?.detail || ""}`);
   }
 
-  // Verify: open the most promising listings (cheapest per bedroom first) in batches.
+  // Verify: open the most promising listings (cheapest per bedroom first, taking turns across
+  // sites so every site gets checked) in batches of 5, several batches at a time.
   if (st.phase === "verify") {
-    const order = [...st.listings].sort((a, b) => a.price / Math.max(1, a.beds ?? 1) - b.price / Math.max(1, b.beds ?? 1));
+    const bySite = new Map<string, Listing[]>();
+    for (const l of [...st.listings].sort((a, b) => a.price / Math.max(1, a.beds ?? 1) - b.price / Math.max(1, b.beds ?? 1))) {
+      bySite.set(l.site, [...(bySite.get(l.site) || []), l]);
+    }
+    const order: Listing[] = [];
+    for (let i = 0; order.length < st.listings.length; i++) for (const list of bySite.values()) if (list[i]) order.push(list[i]);
     const targets = order.slice(0, lv.verify);
     while (st.verifyAt < targets.length) {
       if (timeLeft() < 4 * 60_000) return st;
-      const batch = targets.slice(st.verifyAt, st.verifyAt + 5);
-      try { await verifyBatch(batch, level); } catch (error) { console.error("Verify failed", error); }
-      st.verifyAt += batch.length;
+      const group = targets.slice(st.verifyAt, st.verifyAt + 20);
+      const batches = Array.from({ length: Math.ceil(group.length / 5) }, (_, i) => group.slice(i * 5, i * 5 + 5));
+      await Promise.all(batches.map((batch) => verifyBatch(batch, level).catch((error) => console.error("Verify failed", error))));
+      st.verifyAt += group.length;
       await save(st);
     }
     // Drop listings the pages say are gone.
