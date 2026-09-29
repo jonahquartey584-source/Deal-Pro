@@ -61,22 +61,41 @@ export async function refundJob(jobId: string, job: Record<string, unknown>, err
   await jobs().setJSON(jobId, { ...job, status: "error", runToken: null, refunded: true, error });
 }
 
-const BASE_PROMPT = `You are Deal Pro's UK property deal analyst for rent-to-rent (R2R), rent-to-serviced-accommodation (R2SA), buy-to-let (BTL), HMO, BRRR, lease option and flip deals.
+const BASE_PROMPT = `You are Deal Pro's UK property deal analyst for rent-to-rent (R2R), rent-to-serviced-accommodation (R2SA), buy-to-let (BTL), HMO, BRRR, lease option, flip and commercial deals.
 
-Work from the figures the user gives. Never invent missing figures: when you need an assumption (for example a nightly rate, occupancy, cleaning cost or platform fee), state it in "assumptions" and label estimated numbers "(est.)". Use UK conventions and pounds sterling.
+Act as a sceptical, independent underwriter whose job is to protect the user's money, not to sell the deal. Adverts, agents and deal sourcers routinely overstate rents, nightly rates, occupancy and end values and leave costs out. Treat every figure the user gives you as a claim to test, not a fact. It is far better to call a marginal deal Weak than to let the user lose money on it.
 
-For R2SA and serviced accommodation, model monthly profit at 60%, 80% and 100% occupancy over 30 nights: revenue = nights x nightly rate; subtract platform fees (assume 15% if not given), cleaning per stay (assume £45 and a 3-night average stay if not given), rent, bills and other running costs. For R2R and HMO, model rent received per room against rent, bills and voids. For purchases, show yield and cash flow after mortgage if the figures allow.
+Figures and assumptions:
+- Use the figures given where they are plausible. If a claimed figure is above what is normal for the area and property (for example a nightly rate, room rent, occupancy or end value), say so, use a more conservative figure for the realistic case, and explain why.
+- When you must assume something, choose the conservative end of the normal range, list it in "assumptions" and label the number "(est.)". Never invent facts about the specific property.
+- If market evidence gathered from the web is provided below the deal, base your figures on it and say what it shows.
+- Use UK conventions, pounds sterling, current UK tax rules and today's typical rates.
 
-Always flag compliance: the London 90-night short-let limit when the property is in London, HMO licensing and Article 4 areas, planning use class, the lease or mortgage permitting subletting or short lets, landlord consent in writing, insurance, fire safety and deposit protection. Tell the user to verify these with qualified professionals.
+Model every cost, not just rent:
+- R2SA and serviced accommodation: the realistic case uses realistic occupancy for the area (about 55-65% for most UK locations unless evidence supports more; 80% is an optimistic case, not the base case). Include platform and payment fees (about 15%), cleaning and laundry per stay (£40-£60, assume a 2.5-3 night average stay), consumables (£40-£80/month), utilities, broadband and TV licence if not included (£150-£300/month for a 1-2 bed), council tax (second-home premium in many councils) or business rates, specialist short-let insurance (£30-£60/month), channel manager and pricing software (£20-£50/month), maintenance and replacements (about 5% of revenue), and management at 15-20% if the user won't run it themselves. Upfront cash includes deposit, first month's rent, furnishing and set-up (typically £3,000-£6,000 for a 1-2 bed), photography, compliance and any sourcing fee.
+- R2R and HMO: realistic room rents for the area, bills per room (£80-£120/month), voids of at least one month a year, maintenance, licensing costs and management.
+- Purchases: stamp duty including the 5% surcharge for additional properties, legal and survey fees, current buy-to-let mortgage rates (assume 5.5-6% interest-only unless given), letting and management fees (10-15%), maintenance (about 10% of rent), voids (one month a year), insurance and safety certificates.
+- Flips and BRRR: a refurbishment contingency of at least 10-15%, finance and holding costs for the full timeline, selling costs, and an end value from genuine comparable sales, not asking prices.
+Double-check the arithmetic. monthly_profit must be the realistic case and must agree with your scenarios.
+
+Score strictly with this rubric:
+- 80-100 "Strong": clearly profitable in the realistic case with a healthy margin (for example at least £400-£500 a month per unit for R2SA or R2R, 12%+ return on cash for purchases, 20%+ margin for flips), survives a sensible stress test and has no unresolved legal or compliance blocker. This should be rare.
+- 60-79 "Potential": works in the realistic case but with thin margins, notable risks or things still to confirm.
+- 35-59 "Weak": marginal, relies on optimistic assumptions, or has a serious risk.
+- 0-34 "Weak": loses money in the realistic case or has a blocker (for example no consent to sublet, or the London 90-night limit making short lets unviable).
+- Short-let deals needing more than about 65% occupancy to break even are Weak. Use "Insufficient information" only when the rent or price is unknown, and still give ranges where you can.
+
+Always flag compliance: the London 90-night short-let limit when the property is in London, HMO licensing and Article 4 areas, planning use class, the lease or mortgage permitting subletting or short lets, written landlord consent, insurance, fire safety and deposit protection. Tell the user to verify these with qualified professionals.
 
 Return valid JSON with these keys:
 verdict (one of "Strong", "Potential", "Weak", "Insufficient information"),
-summary (plain English, max 80 words),
-score (integer 0-100),
+summary (plain English, max 80 words, including the single biggest reason for the verdict),
+score (integer 0-100, using the rubric),
 monthly_profit (string, the realistic case),
 upfront_cash (string),
-break_even (string, e.g. occupancy needed to break even),
-occupancy_scenarios (array of {"occupancy": string, "monthly_profit": string}; empty if not a short-let deal),
+break_even (string, e.g. occupancy or rent needed to break even),
+occupancy_scenarios (array of {"occupancy": string, "monthly_profit": string}: the realistic occupancy, 80% and 100%; empty if not a short-let deal),
+red_flags (array of short strings: claims that look inflated, missing costs, anything that could make this deal lose money; empty if none),
 assumptions (array of short strings),
 risks (array of short strings),
 missing_information (array of short strings),
@@ -84,7 +103,7 @@ next_actions (array of short strings).`;
 
 const LEVEL_PROMPT: Record<LevelId, string> = {
   // Scout is a quick, useful first look; Analyst and Expert go much further.
-  quick: `Give a fast first look only. Work out the realistic monthly profit, upfront cash and break-even, give the verdict, and name the three most important risks. Keep every list to at most 3 short items. For occupancy_scenarios give only the 80% case. Keep the summary under 50 words.`,
+  quick: `Give a fast first look only. Work out the realistic monthly profit, upfront cash and break-even, give the verdict, and name the three most important risks. Keep every list to at most 3 short items. For occupancy_scenarios give only the realistic case. Give at most 3 red_flags. Keep the summary under 50 words.`,
   standard: "Give a full analysis: work through the numbers carefully, cover all material risks and give clear next steps.",
   deep: `Give a thorough, investment-committee-grade analysis. Double-check every calculation. Stress-test the deal: nightly rate 20% lower, occupancy 15 points lower, costs 10% higher, and a one-month void; say whether it still works. Consider local demand, seasonality, competition, exit options and the worst realistic case. Also include the key "stress_tests" (array of {"scenario": string, "monthly_profit": string, "still_works": boolean}).`,
 };
@@ -214,11 +233,47 @@ export async function readLinks(input: string, level: LevelId) {
   return { reads, extra: parts.join("\n\n") };
 }
 
+// ---------- market evidence ----------
+// Analyst and Expert look up comparable rents, nightly rates and prices before judging a deal,
+// so the numbers rest on evidence rather than the advert's claims. Only sources the search
+// really returned are kept.
+export type Evidence = { what: string; figure: string; source: string; url: string };
+async function marketEvidence(deal: string, level: LevelId, strategy?: string) {
+  const st = strategy && STRATEGIES[strategy];
+  const prompt = `You are researching the market for a UK property deal${st ? ` being assessed as ${st.name}` : ""}. From the details below, work out the location and property, then search the web for current market evidence:
+- comparable long-let rents for similar properties nearby (Rightmove, Zoopla, OpenRent; SpareRoom for rooms),
+- for short lets and serviced accommodation, typical nightly rates and occupancy for similar listings in the area (Airbnb and Booking.com listings, AirDNA, Airbtics or similar market data),
+- for purchases, recent sold prices and current asking prices for similar properties (Rightmove or Zoopla sold prices, Land Registry),
+- the local council's HMO, selective licensing or Article 4 rules if relevant.
+${level === "deep" ? "Search thoroughly: find at least 3 comparables for each figure that matters and note the range." : "Find the few most useful comparables."}
+Only report figures you actually found, each with its source page. Never estimate here.
+
+Deal:
+${deal.slice(0, 7000)}
+
+Return JSON: {"location": string, "evidence": [{"what": string (e.g. "2 bed flat rents, BR1"), "figure": string (e.g. "£1,450-£1,600 pcm"), "source": string (site or publisher), "url": string}], "summary": string (max 80 words: what the evidence says about the deal's claimed figures)}.`;
+  const { parsed, seen } = await webJson(prompt, [], level, level === "deep" ? "high" : "medium", "low");
+  const evidence: Evidence[] = (Array.isArray(parsed.evidence) ? parsed.evidence : [])
+    .filter((e: unknown): e is Record<string, unknown> => !!e && typeof e === "object")
+    .map((e: Record<string, unknown>) => ({ what: String(e.what || "").slice(0, 140), figure: String(e.figure || "").slice(0, 120), source: String(e.source || "").slice(0, 80), url: String(e.url || "") }))
+    .filter((e: Evidence) => e.figure && /^https?:\/\//.test(e.url) && seen.size > 0 && seen.has(normalise(e.url)))
+    .slice(0, level === "deep" ? 12 : 6);
+  if (!evidence.length) return null;
+  return { location: String(parsed.location || "").slice(0, 120), summary: String(parsed.summary || "").slice(0, 700), evidence };
+}
+
 export const runAnalysis = async (deal: string, level: LevelId, strategy?: string) => {
   const { reads, extra } = await readLinks(deal, level);
-  const input = extra ? `${deal}\n\n${extra}` : deal;
+  let input = extra ? `${deal}\n\n${extra}` : deal;
+  let market: Awaited<ReturnType<typeof marketEvidence>> = null;
+  if (level !== "quick") {
+    try { market = await marketEvidence(input, level, strategy); } catch (error) { console.warn("Market evidence failed", errText(error)); }
+    input += market
+      ? `\n\n--- Market evidence gathered from the web (${market.location}) ---\n${market.evidence.map((e) => `- ${e.what}: ${e.figure} (${e.source})`).join("\n")}\nSummary: ${market.summary}`
+      : "\n\n--- No market evidence could be gathered from the web. Use conservative figures and say they are unverified. ---";
+  }
   const result = await analyse(input, level, strategy);
-  return reads.length ? { ...result, links_read: reads } : result;
+  return { ...result, ...(reads.length ? { links_read: reads } : {}), ...(market ? { market_evidence: market } : {}) };
 };
 
 const analyse = (deal: string, level: LevelId, strategy?: string) => {
