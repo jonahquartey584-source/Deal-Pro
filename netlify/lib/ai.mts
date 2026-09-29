@@ -17,7 +17,9 @@ export const LEVELS: Record<LevelId, { credits: number; model: string; effort: E
 const FALLBACK_MODEL = "gpt-5-mini";
 
 // Weekly credits on paid plans, shared by deal analyses and Deal Finder searches at every level.
-export const WEEKLY_CREDITS: Record<string, number> = { Pro: 60, Max5: 300, Max20: 1200 };
+export const WEEKLY_CREDITS: Record<string, number> = { Lite: 15, Pro: 60, Max5: 300, Max20: 1200 };
+// Plans limited to Scout. Analyst and Expert start at Premium.
+export const SCOUT_ONLY_PLANS = new Set(["Lite"]);
 
 export const accounts = () => getStore({ name: "deal-premium-accounts", consistency: "strong" });
 export const jobs = () => getStore({ name: "deal-analysis-jobs", consistency: "strong" });
@@ -67,7 +69,7 @@ For R2SA and serviced accommodation, model monthly profit at 60%, 80% and 100% o
 
 Always flag compliance: the London 90-night short-let limit when the property is in London, HMO licensing and Article 4 areas, planning use class, the lease or mortgage permitting subletting or short lets, landlord consent in writing, insurance, fire safety and deposit protection. Tell the user to verify these with qualified professionals.
 
-Return valid JSON with exactly these keys:
+Return valid JSON with these keys:
 verdict (one of "Strong", "Potential", "Weak", "Insufficient information"),
 summary (plain English, max 80 words),
 score (integer 0-100),
@@ -127,8 +129,30 @@ async function complete(system: string, user: string, level: LevelId) {
   ]);
 }
 
-export const runAnalysis = (deal: string, level: LevelId) =>
-  complete(`${BASE_PROMPT}\n\n${LEVEL_PROMPT[level]}`, deal, level);
+// Strategies a user can ask the analyser to use. Ids must match STRATEGIES in index.html.
+export const STRATEGIES: Record<string, { name: string; prompt: string }> = {
+  R2SA: { name: "Rent-to-serviced accommodation (R2SA)", prompt: "Model it as rent-to-serviced accommodation: nightly rate, occupancy at 60%, 80% and 100%, platform fees, cleaning, rent, bills and running costs, break-even occupancy and upfront cash (deposit, first month, furnishing, set-up). Check landlord consent for short lets and, in London, the 90-night limit." },
+  R2R: { name: "Rent-to-rent (R2R, let by the room or as an HMO)", prompt: "Model it as rent-to-rent let by the room: realistic room rents for the area, rent paid to the landlord, bills, voids (assume one month a year if not given), management and maintenance, monthly profit per room and in total, and upfront cash. Check HMO licensing, Article 4, a company let and written consent to sublet." },
+  BTL: { name: "Buy-to-let (BTL)", prompt: "Model it as a buy-to-let purchase: purchase price, 25% deposit unless given, stamp duty at current rates including the 5% surcharge for additional properties, legal and survey costs, mortgage at an assumed 5.5% interest-only rate unless given, realistic market rent, letting and management fees, maintenance, insurance and voids. Give gross and net yield, monthly cash flow, return on cash invested and whether it passes a lender's 125% interest cover stress test." },
+  HMO: { name: "HMO (buy and let by the room)", prompt: "Model it as an owned HMO: purchase and conversion costs, stamp duty, room count and realistic room rents, bills, management, voids and maintenance, mortgage (HMO rates, assume 6% interest-only unless given), net yield, monthly cash flow and return on cash. Check mandatory and additional HMO licensing, Article 4 and planning use class (C3 to C4 or sui generis)." },
+  BRRR: { name: "BRRR (buy, refurbish, refinance, rent)", prompt: "Model it as BRRR: purchase price, stamp duty, refurbishment, bridging or purchase finance costs, holding costs and timeline, end value after works (say it is an estimate and what it is based on), refinance at 75% loan-to-value, money left in the deal after refinance, monthly cash flow on the new mortgage and return on money left in. Flag if the end value is optimistic." },
+  Flip: { name: "Flip (buy, refurbish, sell)", prompt: "Model it as a flip: purchase price, stamp duty, legal fees, refurbishment with a 10% contingency, finance and holding costs over the project, selling costs (agent and legal), realistic resale value from comparable sales (say it is an estimate), profit before tax, profit as a percentage of the resale value (aim for at least 15-20%) and return on cash invested. Give the maximum purchase price that still hits a 20% margin." },
+  LeaseOption: { name: "Lease option (purchase lease option)", prompt: "Model it as a purchase lease option: option fee, monthly payment to the owner, what you can let it for (single let, rooms or serviced accommodation), monthly profit during the option, the agreed purchase price against today's value, and the option term. Flag that it needs a specialist solicitor and that the owner must take independent legal advice." },
+  SA: { name: "Owned serviced accommodation", prompt: "Model it as an owned serviced accommodation: purchase and furnishing costs, stamp duty, mortgage (holiday-let or SA products, assume 6% interest-only unless given), nightly rate and occupancy at 60%, 80% and 100%, platform fees, cleaning, bills, council tax or business rates, net profit, yield and return on cash. Check planning, the lease and, in London, the 90-night limit." },
+  Commercial: { name: "Commercial property", prompt: "Model it as commercial property: rent or price, lease length, break clauses and tenant covenant if known, business rates and service charges, net initial yield, void risk and re-letting costs, and use class. For conversions to residential, mention permitted development and prior approval." },
+};
+
+const STRATEGY_FORMAT = `Also include:
+strategy_metrics (array of up to 8 {"label": string, "value": string}: the key figures for this strategy, for example yield, cash flow, return on cash or profit margin; label estimates "(est.)"),
+better_strategy (string: if another strategy clearly suits this property better, name it and say why in one sentence; otherwise "").`;
+
+export const runAnalysis = (deal: string, level: LevelId, strategy?: string) => {
+  const st = strategy && STRATEGIES[strategy];
+  const focus = st
+    ? `The user wants this deal analysed as: ${st.name}. ${st.prompt} Judge the verdict and score for this strategy.`
+    : "Work out which strategy the details describe (or suit best) and analyse it for that, saying which you chose in the summary.";
+  return complete(`${BASE_PROMPT}\n\n${focus}\n${STRATEGY_FORMAT}\n\n${LEVEL_PROMPT[level]}`, deal, level);
+};
 
 const RANK_PROMPT = `You are Deal Pro's UK property deal sourcer. You are given Deal Finder search results as JSON (each has an id, site, type, beds, area, postcode and either a monthly rent or an asking price) plus the user's search filters. Rank them by how good they are as property deals for the user's strategy: rent-to-rent / serviced accommodation for rentals; buy-to-let, HMO, BRRR or serviced accommodation for purchases. Estimate a realistic nightly rate or rent for the location where needed and say it is an estimate.
 

@@ -1,6 +1,6 @@
 import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
-import { accounts, jobs, currentWeek, currentSearchWeek, refundJob, ADMIN_EMAIL, FREE_ANALYSES, FREE_SEARCHES_PER_WEEK, LEVELS, WEEK_MS, WEEKLY_CREDITS, SITES, type LevelId, type Reserved, type Usage } from "../lib/ai.mts";
+import { accounts, jobs, currentWeek, currentSearchWeek, refundJob, ADMIN_EMAIL, FREE_ANALYSES, FREE_SEARCHES_PER_WEEK, LEVELS, WEEK_MS, WEEKLY_CREDITS, SCOUT_ONLY_PLANS, SITES, STRATEGIES, type LevelId, type Reserved, type Usage } from "../lib/ai.mts";
 
 const json = (data: unknown, status = 200) => Response.json(data, {
   status,
@@ -23,6 +23,7 @@ function creditSummary(isAdmin: boolean, plan: string, usage: Usage) {
   return {
     plan: isAdmin ? "Admin" : plan,
     free,
+    scoutOnly: !isAdmin && (free || SCOUT_ONLY_PLANS.has(plan)),
     freeLeft: free ? Math.max(0, FREE_ANALYSES - (Number(usage.count) || 0)) : null,
     freeSearchesLeft: free ? Math.max(0, FREE_SEARCHES_PER_WEEK - sweek.searchWeekUsed) : null,
     searchResetsAt: free && sweek.searchWeekStart ? new Date(Date.parse(sweek.searchWeekStart) + WEEK_MS).toISOString() : null,
@@ -73,7 +74,7 @@ export default async (request: Request, _context: Context) => {
   // kind "analyse": one deal from the AI Deal Analyser. kind "rank": Deal Finder results to rank.
   // kind "search": live Deal Finder search of the ticked sites, then ranking.
   // kind "dd": web research for the due diligence checks of one deal.
-  const body = await request.json().catch(() => null) as { kind?: string; deal?: string; level?: string; listings?: unknown; filters?: unknown; sites?: unknown; checks?: unknown } | null;
+  const body = await request.json().catch(() => null) as { kind?: string; deal?: string; level?: string; listings?: unknown; filters?: unknown; sites?: unknown; checks?: unknown; strategy?: string } | null;
   const kind = body?.kind === "search" ? "search" : body?.kind === "rank" ? "rank" : body?.kind === "dd" ? "dd" : "analyse";
   const level = (body?.level && body.level in LEVELS ? body.level : "quick") as LevelId;
   let input: string;
@@ -81,6 +82,7 @@ export default async (request: Request, _context: Context) => {
     input = body?.deal?.trim() || "";
     if (!input) return json({ error: "Paste the property advert or deal details first." }, 400);
     if (input.length > 30_000) return json({ error: "Deal details must be under 30,000 characters." }, 413);
+    if (body?.strategy && !(body.strategy in STRATEGIES)) return json({ error: "Choose a strategy from the list." }, 400);
   } else if (kind === "dd") {
     const deal = body?.deal?.trim() || "";
     const checks = Array.isArray(body?.checks) ? body.checks.slice(0, 20).filter((c): c is { k: string; t: string; d: string } =>
@@ -128,6 +130,7 @@ export default async (request: Request, _context: Context) => {
       reserved.searches = 1;
     }
   } else if (!isAdmin) {
+    if (SCOUT_ONLY_PLANS.has(plan) && level !== "quick") return json({ error: "Lite includes Scout. Upgrade to Premium for Analyst and Expert." }, 402);
     const cost = LEVELS[level].credits;
     const week = currentWeek(usage);
     if (week.weekUsed + cost > (WEEKLY_CREDITS[plan] ?? 0)) {
@@ -144,6 +147,7 @@ export default async (request: Request, _context: Context) => {
   const runToken = crypto.randomUUID();
   await jobs().setJSON(jobId, {
     userId: user.id, kind, level, input, reserved,
+    strategy: kind === "analyse" && body?.strategy && body.strategy in STRATEGIES ? body.strategy : undefined,
     runToken, status: "queued", createdAt: new Date().toISOString(),
   });
 

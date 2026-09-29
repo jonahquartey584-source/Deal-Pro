@@ -7,9 +7,9 @@ const STRATEGIES = ["R2SA", "R2R", "BTL", "HMO", "BRRR", "Lease option", "Flip",
 const PROPERTY_TYPES = ["Flat", "House", "Studio", "HMO", "Commercial", "Other"];
 const CONTACTED = ["Landlord", "Agent"];
 const MAX_POSTS_PER_USER = 20;
-// Posting deals needs a paid plan: Premium can post a set number a month, Max is unlimited.
+// Posting deals needs a paid plan: Lite and Premium can post a set number a month, Max is unlimited.
 // Everyone signed in can browse, reply and use the region chat.
-const MONTHLY_POSTS: Record<string, number> = { Pro: 10 };
+const MONTHLY_POSTS: Record<string, number> = { Lite: 3, Pro: 10 };
 const UNLIMITED_PLANS = new Set(["Max5", "Max20"]);
 const monthKey = () => new Date().toISOString().slice(0, 7);
 // Regions for deals and the region chat rooms. Keep in sync with REGIONS in index.html.
@@ -181,7 +181,7 @@ export default async (request: Request, _context: Context) => {
     if (!allowance.allowed) {
       return json(allowance.limit
         ? { error: `You've posted your ${allowance.limit} deals for this month. Upgrade to Max for unlimited posts.`, posting: allowance }
-        : { error: "Posting deals needs Deal Pro Premium or Max. You can still browse deals, reply and use the region chat.", posting: allowance }, 402);
+        : { error: "Posting deals needs a paid plan (Lite, Premium or Max). You can still browse deals, reply and use the region chat.", posting: allowance }, 402);
     }
     if (!isAdmin) {
       const { blobs } = await store.list({ prefix: `posts/` });

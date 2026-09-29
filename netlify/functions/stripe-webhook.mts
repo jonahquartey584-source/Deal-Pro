@@ -7,11 +7,11 @@ import type { Config, Context } from "@netlify/functions";
 // The plan is worked out from the amount actually paid, never from anything the
 // browser sent, so nobody can pay for Premium and receive Max. Amounts are in pence;
 // override with STRIPE_PLAN_AMOUNTS, e.g. {"3900":"Pro","10000":"Max5"}.
-const DEFAULT_PLAN_AMOUNTS: Record<string, string> = { "3900": "Pro", "10000": "Max5", "20000": "Max20" };
+const DEFAULT_PLAN_AMOUNTS: Record<string, string> = { "999": "Lite", "3900": "Pro", "10000": "Max5", "20000": "Max20" };
 function planForAmount(amount: number) {
   return planAmounts()[String(amount)];
 }
-const PLANS = ["Pro", "Max5", "Max20"];
+const PLANS = ["Lite", "Pro", "Max5", "Max20"];
 const TOLERANCE_SECONDS = 300;
 
 const accounts = () => getStore({ name: "deal-premium-accounts", consistency: "strong" });

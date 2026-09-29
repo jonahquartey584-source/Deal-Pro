@@ -348,7 +348,7 @@ pre.notice{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface-
 }
 
 /* pricing */
-.plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.plans{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .plan{background:var(--surface);padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .plan.feat{box-shadow:inset 0 2px 0 var(--brand)}
 .plan-h{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px}
@@ -362,7 +362,7 @@ pre.notice{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface-
 .plan li{display:flex;gap:9px;align-items:flex-start}
 .plan li svg{flex:none;margin-top:3px;color:var(--muted)}
 .cur{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--ink-2)}
-@media (max-width:860px){.plans{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1180px){.plans{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:860px){.plans{grid-template-columns:minmax(0,1fr)}}
 
 /* find deals */
 .find{display:grid;grid-template-columns:minmax(0,288px) minmax(0,1fr);gap:24px;align-items:start}
@@ -579,7 +579,7 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .how-n{font-size:12px;color:var(--accent)}
 .how h3{font-size:16px;margin:10px 0 6px}
 .how p{color:var(--ink-2);font-size:13.5px}
-.hplans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.hplans{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .hplan{background:var(--surface);padding:22px;display:grid;gap:8px;align-content:start;min-width:0}
 .hplan h3{font-size:15px}
 .hplan .price .mono{font-size:30px}
@@ -608,7 +608,7 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .own-acts{display:flex;gap:8px;flex-wrap:wrap}
 @media (max-width:1099px){.hero-grid{grid-template-columns:minmax(0,1fr);gap:40px}.how{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:899px){.hero{margin:-18px -16px 0;padding:48px 16px 48px}}
-@media (max-width:760px){.prods,.hplans{grid-template-columns:minmax(0,1fr)}.own{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:1100px){.hplans{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:760px){.prods,.hplans{grid-template-columns:minmax(0,1fr)}.own{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:560px){.how{grid-template-columns:minmax(0,1fr)}.strip.mini{grid-template-columns:repeat(2,minmax(0,1fr))}.hsec{margin-top:64px}}
 
 /* plans and usage */
@@ -741,6 +741,34 @@ td.t{text-align:right;color:var(--ink-2)}
 .ai-level input{position:absolute;opacity:0;pointer-events:none}.ai-level b{font-size:14px}.ai-level span{font-size:12px;color:var(--ink-2)}.ai-level{--lv:#34c26b}.ai-level.lv-standard{--lv:#f59e0b}.ai-level.lv-deep{--lv:#e0142b}.ai-level b{display:flex;align-items:center;gap:7px}.lv-dot{width:9px;height:9px;border-radius:50%;background:var(--lv);flex:none}
 .ai-level:has(input:checked){border-color:var(--lv);box-shadow:0 0 0 1px var(--lv) inset;background:color-mix(in srgb,var(--lv) 10%,var(--surface))}
 .live-ok{color:var(--good,#1E9E5A);font-weight:600;white-space:nowrap}.dc-live{margin:-4px 0 8px;font-size:12.5px}
+.fig-s{font-size:12px;color:var(--muted);margin-top:4px}.fig-v.neg{color:var(--bad)}
+.pl-kpis{margin-bottom:14px}
+.ai-strats{display:flex;flex-wrap:wrap;gap:6px}.ai-strat{position:relative;cursor:pointer}.ai-strat input{position:absolute;opacity:0;pointer-events:none}
+.ai-strat span{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12.5px;color:var(--ink-2);background:var(--surface)}
+.ai-strat input:checked+span{border-color:var(--brand);background:var(--brand-soft);color:var(--ink);font-weight:600}.ai-strat input:focus-visible+span{outline:2px solid var(--brand);outline-offset:2px}
+.ai-as{font-size:12.5px;color:var(--ink-2);margin:10px 0 0}.ai-smetrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
+.ai-smetrics div{border:1px solid var(--line);border-radius:6px;padding:8px 10px;display:grid;gap:3px}.ai-smetrics span{font-size:11.5px;color:var(--muted)}.ai-smetrics b{font-size:13.5px}
+.pl-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:14px;margin-bottom:18px}@media (max-width:860px){.pl-grid{grid-template-columns:minmax(0,1fr)}}
+.pl-panel{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:14px 16px;min-width:0}.pl-panel h2{font-size:14px;margin:0 0 10px}
+.pl-fun{list-style:none;margin:0;padding:0;display:grid;gap:6px}.pl-fun li{display:grid;grid-template-columns:104px minmax(0,1fr) 28px;align-items:center;gap:10px;font-size:12.5px}
+.pl-fl{color:var(--ink-2);white-space:nowrap}.pl-ft{height:10px;border-radius:0 4px 4px 0;background:var(--surface-2)}.pl-fb{display:block;height:100%;background:var(--brand);border-radius:0 4px 4px 0}.pl-fb.lost{background:var(--line-2)}.pl-fn{font-family:var(--mono);text-align:right;color:var(--ink)}
+.pl-attn{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:13px}.pl-attn li{display:grid;gap:2px}.pl-attn li span{color:var(--ink-2);font-size:12.5px}.pl-attn .linkbtn{justify-self:start;text-align:left}
+.pl-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:12px}.pl-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 auto}
+.pl-chip{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;padding:3px 10px;font-size:12.5px;cursor:pointer}.pl-chip span{color:var(--muted);margin-left:2px}.pl-chip[aria-pressed="true"]{border-color:var(--brand);color:var(--ink);background:var(--brand-soft)}
+.pl-q{width:200px;height:30px}.pl-views{display:flex;gap:4px}
+.pl-board{display:flex;gap:10px;overflow-x:auto;padding-bottom:10px;align-items:flex-start}
+.pl-col{flex:0 0 236px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px;min-height:160px}.pl-col.over{outline:2px dashed var(--brand);outline-offset:-3px}.pl-col.lost{opacity:.8}
+.pl-col header{margin-bottom:8px}.pl-col header div{display:flex;align-items:center;gap:8px}.pl-col header b{font-size:13px}.pl-col header p{margin:2px 0 0;font-size:11.5px;color:var(--muted)}
+.pl-n{font-family:var(--mono);font-size:11.5px;color:var(--ink-2);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:0 7px}
+.pl-cards{display:grid;gap:8px}.pl-empty{font-size:12px;color:var(--muted);text-align:center;border:1px dashed var(--line);border-radius:6px;padding:14px 6px;margin:0}
+.pl-card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px;cursor:grab;min-width:0}.pl-card.dragging{opacity:.5}
+.pl-ct{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.pl-name{border:0;background:none;padding:0;color:var(--ink);font-weight:600;font-size:13px;text-align:left;cursor:pointer}.pl-name:hover{text-decoration:underline}
+.pl-score{font-family:var(--mono);font-size:11.5px;border:1px solid var(--line-2);border-radius:4px;padding:0 5px;color:var(--ink)}
+.pl-sub{font-size:12px;color:var(--muted);margin-top:2px}.pl-card .ctags{margin:6px 0}
+.pl-kv{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:6px 0}.pl-kv dt{font-size:11px;color:var(--muted)}.pl-kv dd{margin:0;font-family:var(--mono);font-size:13px}.pl-kv dd.neg,td.neg{color:var(--bad)}
+.pl-why{font-size:12px;color:var(--warn);margin:4px 0}.pl-iss{font-size:11.5px;color:var(--bad)}
+.pl-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}.pl-sel{height:28px;font-size:12px;padding:0 6px;max-width:150px}
+.pl-list td{vertical-align:middle}
 .lv-time{font-size:11.5px!important;color:var(--muted)!important}
 .ai-level:has(input:focus-visible){outline:2px solid var(--lv);outline-offset:2px}.ai-level.locked{opacity:.55}.ai-level .lv-use{color:var(--lv);font-weight:500}.ai-credits{font-size:12px;color:var(--ink-2);margin:8px 0 0}
 .ai-level-stack{grid-template-columns:1fr}
@@ -789,7 +817,7 @@ td.t{text-align:right;color:var(--ink-2)}
       <button class="tab tab-lg" data-v="analyser"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 13.5V8.5M8 13.5v-11M13 13.5V6"/></svg><span class="tab-txt"><span class="tab-l">Deal Analyser</span><span class="tab-d">Numbers, due diligence and deal pack</span></span></button>
       <button class="tab tab-lg" data-v="community"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="2.25"/><circle cx="11" cy="6.5" r="1.75"/><path d="M1.75 13.5c.4-2.3 1.9-3.75 3.75-3.75s3.35 1.45 3.75 3.75M9.5 10.25c.5-.35 1-.5 1.5-.5 1.5 0 2.6 1.2 2.9 3.75"/></svg><span class="tab-txt"><span class="tab-l">Deal Community</span><span class="tab-d">Post and find contacted deals</span></span></button>
       <div class="nav-div" role="presentation"></div>
-      <button class="tab" data-v="deals"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2.25" y="2.75" width="11.5" height="10.5" rx="1.25"/><path d="M2.25 6.25h11.5M5 9.5h6"/></svg>My deals</button>
+      <button class="tab tab-lg" data-v="deals"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2.25" y="2.75" width="11.5" height="10.5" rx="1.25"/><path d="M2.25 6.25h11.5M5 9.5h6"/></svg><span class="tab-txt"><span class="tab-l">My deals</span><span class="tab-d">Pipeline dashboard</span></span></button>
       <button class="tab" data-v="plans"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1.75" y="3.75" width="12.5" height="8.5" rx="1.25"/><path d="M1.75 6.75h12.5M4.5 9.75h2"/></svg>Plans</button>
     </nav>
     <div class="ws">
@@ -937,8 +965,9 @@ td.t{text-align:right;color:var(--ink-2)}
     <div class="ai-simple">
       <div class="ai-entry">
         <h2>Analyse a deal with AI</h2>
-        <p>Paste the advert, landlord message or deal details. Include the rent, deposit, area and expected nightly rate when you have them.</p>
+        <p>Paste the advert, landlord message or deal details, and choose the strategy you want it judged on. Include the rent or price, deposit, area and anything else you know.</p>
         <label class="f"><span>Deal information</span><textarea class="inp" id="aiDealInput" placeholder="Paste the full property advert or describe the deal here…"></textarea></label>
+        <fieldset class="ai-levels"><legend>Strategy to analyse for</legend><div class="ai-strats" id="aiStratOpts"></div><p class="ai-credits" id="aiStratDesc"></p></fieldset>
         <fieldset class="ai-levels" id="aiLevels"><legend>Power level</legend><div class="ai-level-opts" id="aiLevelOpts"></div><p class="ai-credits" id="aiCredits"></p></fieldset>
         <button class="btn primary block" id="analyseWithAI" type="button">Analyse with AI</button>
         <p class="note" id="aiDealStatus" role="status">The AI will explain its verdict and clearly show anything it could not verify.</p>
@@ -964,7 +993,7 @@ td.t{text-align:right;color:var(--ink-2)}
             <label class="f"><span>Deal name</span><input class="inp" id="dName"></label>
             <div class="row2">
               <label class="f"><span>Area</span><input class="inp" id="dArea"></label>
-              <label class="f"><span>Strategy</span><select class="inp" id="dStrat"><option>R2SA</option><option>R2R</option></select></label>
+              <label class="f"><span>Strategy</span><select class="inp" id="dStrat"></select></label>
             </div>
             <label class="check"><input type="checkbox" id="dLondon"><span>In London (90-night short-let limit applies)</span></label>
           </div>
@@ -1080,11 +1109,21 @@ td.t{text-align:right;color:var(--ink-2)}
     <header class="ph">
       <div class="ph-main">
         <nav class="crumbs" aria-label="Breadcrumb"><span>Workspace</span><span class="sep">/</span><span class="cur">My deals</span></nav>
-        <h1>My deals</h1>
-        <p class="ph-desc">Deals saved securely to your account.</p>
+        <h1>Deal pipeline</h1>
+        <p class="ph-desc">Every deal you're working on, from first look to completion. Drag a deal to move it to the next stage.</p>
       </div>
       <div class="ph-actions"><button class="btn" id="newDeal">New blank deal</button><button class="btn primary" id="saveDeal">Save current deal</button></div>
     </header>
+    <div class="strip pl-kpis" id="plKpis"></div>
+    <div class="pl-grid">
+      <section class="pl-panel"><h2>Deals by stage</h2><div id="plFunnel"></div></section>
+      <section class="pl-panel"><h2>Needs attention</h2><ul class="pl-attn" id="plAttn"></ul></section>
+    </div>
+    <div class="pl-bar">
+      <div class="pl-chips" id="plStrat" role="group" aria-label="Filter by strategy"></div>
+      <input class="inp pl-q" id="plSearch" type="search" placeholder="Search deals" aria-label="Search deals">
+      <div class="pl-views" role="group" aria-label="View"><button class="btn sm" type="button" data-pl-view="board">Board</button><button class="btn sm" type="button" data-pl-view="list">List</button></div>
+    </div>
     <div id="dealList"></div>
   </section>
 
@@ -1305,6 +1344,9 @@ td.t{text-align:right;color:var(--ink-2)}
 (function(){
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Property strategies. Ids must match STRATEGIES in netlify/lib/ai.mts.
+const STRATS=[['R2SA','R2SA','Rent-to-serviced accommodation'],['R2R','R2R','Rent-to-rent, let by the room'],['BTL','BTL','Buy-to-let'],['HMO','HMO','Buy and let by the room'],['BRRR','BRRR','Buy, refurbish, refinance, rent'],['Flip','Flip','Buy, refurbish and sell'],['LeaseOption','Lease option','Purchase lease option'],['SA','Owned SA','Owned serviced accommodation'],['Commercial','Commercial','Commercial property']];
+const stratName=k=>(STRATS.find(x=>x[0]===k)||[k,k||'R2SA'])[1];
 const gbp=x=>{if(!isFinite(x))return '–';const r=Math.round(x+1e-9);return (r<0?'-£':'£')+Math.abs(r).toLocaleString('en-GB')};
 const pct=x=>isFinite(x)?Math.round(x*100)+'%':'–';
 const store={get(k,d){try{const v=localStorage.getItem('dealpro:'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('dealpro:'+k,JSON.stringify(v))}catch(e){}}};
@@ -1329,21 +1371,22 @@ const SAMPLE_AD=`Deal 2 - (£1,650 studio)
 💰 Nightly Rate £180`;
 
 function sampleDeal(){return{
-  id:'d1',name:'Finsbury Park Studio Pair',area:'Islington, London N4 (Zone 2)',strat:'R2SA',london:true,status:'Checking',
+  id:'d1',name:'Finsbury Park Studio Pair',area:'Islington, London N4 (Zone 2)',strat:'R2SA',london:true,status:'Analysing',
   units:[{label:'Studio A',rent:1500,dep:1500,rate:165},{label:'Studio B',rent:1650,dep:1650,rate:180}],
   a:{fee:15,clean:45,stay:3,other:150},
   dd:DD_TEMPLATE.map(x=>({k:x.k,s:'none',n:''})),ai:false,
   pack:{biz:'',redress:'',fee:'',nda:true,final:false},
   send:{co:'',email:'',addr:'',ll:'',role:'Owner / landlord',phone:'',lemail:'',use:'Serviced accommodation',docs:'Advert, photos, landlord emails'}
 }}
-function secondDeal(){const d=sampleDeal();Object.assign(d,{id:'d2',name:'Islington Studio Flats',area:'Islington, London',status:'Issue found',
+function secondDeal(){const d=sampleDeal();Object.assign(d,{id:'d2',name:'Islington Studio Flats',area:'Islington, London',status:'Due diligence',
   units:[{label:'Studio 1',rent:1700,dep:1700,rate:180},{label:'Studio 2',rent:1700,dep:1569,rate:180},{label:'Studio 3',rent:1700,dep:1700,rate:180}]});return d}
-function freshDeal(){const d=sampleDeal();Object.assign(d,{id:'d'+Date.now(),name:'New deal',area:'',london:false,status:'Checking',units:[{label:'Unit 1',rent:0,dep:0,rate:0}]});return d}
+function freshDeal(){const d=sampleDeal();Object.assign(d,{id:'d'+Date.now(),name:'New deal',area:'',london:false,status:'Analysing',units:[{label:'Unit 1',rent:0,dep:0,rate:0}]});return d}
 
-const PLAN_DEFS={Free:{name:'Free',s:6,w:6},Pro:{name:'Premium',s:30,w:300},Max5:{name:'Max 5x',s:150,w:1500},Max20:{name:'Max 20x',s:600,w:6000}};
+const PLAN_DEFS={Free:{name:'Free',s:6,w:6},Lite:{name:'Lite',s:12,w:75},Pro:{name:'Premium',s:30,w:300},Max5:{name:'Max 5x',s:150,w:1500},Max20:{name:'Max 20x',s:600,w:6000}};
 // Stripe payment links. A plan with no link here can't be bought online yet, so its
 // button asks the customer to get in touch instead of opening the wrong checkout.
 const CHECKOUT={
+  Lite:'https://buy.stripe.com/6oUfZha6c5X06YoeIg7g40c',
   Pro:'https://buy.stripe.com/aFa8wP5PW1GK4Qg8jS7g40a',
   Max5:'https://buy.stripe.com/9B6aEX7Y4clo1E47fO7g408',
   Max20:'https://buy.stripe.com/7sYcN52DK5X0gyY57G7g409'
@@ -1389,7 +1432,7 @@ function fmtLeft(ms){const m=Math.max(1,Math.ceil(ms/60000)),hr=Math.floor(m/60)
 function nextMonth(t){const d=new Date(t);return new Date(d.getFullYear(),d.getMonth()+1,1)}
 const FEAT_NAME={import:'Advert import',dd:'AI due diligence',pack:'Deal packs'};
 function limitNote(where,kind,feat){const el=$(where);const u=S.usage;let msg;
-  if(kind==='feature')msg=`${FEAT_NAME[feat]} ${feat==='pack'?'are':'is'} included with Premium and Max plans.`;
+  if(kind==='feature')msg=`${FEAT_NAME[feat]} ${feat==='pack'?'are':'is'} included with every paid plan, from Lite at £9.99 a month.`;
   else if(kind==='weekly')msg=`You've reached your weekly limit. It resets ${wkday(u.wStart+WEEK)}.`;
   else if(kind==='cap')msg=`You've reached your extra usage cap for this month. Raise the cap in Usage, or wait until it resets on ${nextMonth(now()).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}.`;
   else msg=`You've reached your session limit. It resets at ${hhmm(u.sStart+SESSION)}.`;
@@ -1485,7 +1528,7 @@ $$('.tab').forEach(t=>t.addEventListener('click',()=>go(t.dataset.v)));
 document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g)go(g.dataset.go)});
 
 /* ---------- analyse ---------- */
-function bindDeal(){const d=S.deal;
+function bindDeal(){const d=S.deal;try{renderStratOpts()}catch(e){}/* defined later in the script */
   $('#dName').value=d.name;$('#dArea').value=d.area;$('#dStrat').value=d.strat;$('#dLondon').checked=d.london;
   $('#aFee').value=d.a.fee;$('#aClean').value=d.a.clean;$('#aStay').value=d.a.stay;$('#aOther').value=d.a.other;renderUnits();renderResults()}
 function renderUnits(){const d=S.deal;
@@ -1741,21 +1784,79 @@ $('#copyNotice').addEventListener('click',()=>{const t=noticeText();
   try{navigator.clipboard.writeText(t).then(()=>toast('Deal Notice copied')).catch(selectNotice)}catch(e){selectNotice()}});
 
 /* ---------- deals ---------- */
-const DSTAT={'Checking':'warn','Issue found':'bad','Sent to sourcer':'neutral','Completed':'good'};
+/* ---------- deal pipeline ---------- */
+$('#dStrat').innerHTML=STRATS.map(([k,n,d])=>`<option value="${k}" title="${esc(d)}">${esc(n)}</option>`).join('');
+const STAGES=[['Lead','Found, not analysed yet'],['Analysing','Running the numbers'],['Due diligence','Checking the details'],['Viewing','Viewing booked or done'],['Offer made','Offer or proposal sent'],['Agreed','Terms agreed, paperwork in progress'],['Completed','Live or completed'],['Lost','Rejected or fell through']];
+const STAGE_KEYS=STAGES.map(x=>x[0]),OPEN_STAGES=STAGE_KEYS.slice(0,6);
+const OLD_STAGE={'Checking':'Analysing','Issue found':'Due diligence','Sent to sourcer':'Offer made'};// statuses used before the pipeline
+const stageOf=d=>{const s=OLD_STAGE[d.status]||d.status;return STAGE_KEYS.includes(s)?s:'Analysing'};
+const PL={view:store.get('pl-view','board'),strat:'all',q:''};
+// Monthly profit: the AI's figure when the deal has been analysed, otherwise the numbers model at 80% for rentals.
+function dealProfit(d){const a=d.aiAnalysis;
+  if(a&&a.monthly_profit){const m=String(a.monthly_profit).replace(/,/g,'').match(/(-|−|minus\s*|loss of\s*)?£\s?(\d+(?:\.\d+)?)\s*(k)?/i);if(m){let v=+m[2]*(m[3]?1000:1);if(m[1])v=-v;return {v,src:'AI'}}}
+  if(['R2SA','R2R','SA',undefined,''].includes(d.strat)&&(d.units||[]).some(u=>u.rent>0&&u.rate>0))return {v:d.units.reduce((s,u)=>s+month(u,.8,null,d.a).surplus,0),src:'model'};
+  return null}
+const dealRent=d=>(d.units||[]).reduce((s,u)=>s+(+u.rent||0),0);
+const dealUpfront=d=>(d.units||[]).reduce((s,u)=>s+(+u.rent||0)+(+u.dep||0),0);
+function ddState(d){const dd=d.dd||[];return {done:dd.filter(x=>x.s==='verified').length,issues:dd.filter(x=>x.s==='issue').length,tot:dd.length||8}}
+const daysIn=d=>{const t=Date.parse(d.stageAt||d.savedAt||'');return t?Math.max(0,Math.floor((Date.now()-t)/864e5)):null};
+function attention(d){const st=stageOf(d),dd=ddState(d),days=daysIn(d),r=[];if(!OPEN_STAGES.includes(st))return r;
+  if(dd.issues)r.push(`${dd.issues} due diligence issue${dd.issues>1?'s':''}`);
+  if(days!=null&&days>=14)r.push(`No movement for ${days} days`);
+  if(['Offer made','Agreed'].includes(st)&&dd.done<dd.tot)r.push(`${dd.tot-dd.done} of ${dd.tot} checks not verified`);
+  return r}
+function plRows(){const q=PL.q.trim().toLowerCase();return S.saved.map((d,i)=>({d,i})).filter(({d})=>(PL.strat==='all'||(d.strat||'R2SA')===PL.strat)&&(!q||[d.name,d.area,stratName(d.strat)].join(' ').toLowerCase().includes(q)))}
 function renderDeals(){const L=S.saved;
-  $('#dealList').innerHTML=L.length?`<div class="dl"><div class="dl-head"><span>Deal</span><span class="r">Rent pcm</span><span class="r">Surplus 60%</span><span class="r">Surplus 80%</span><span>Status</span><span></span></div>`+L.map((d,i)=>{const t=OCC.map(o=>d.units.reduce((s,u)=>s+month(u,o,null,d.a).surplus,0));
-    return `<div class="dl-row"><div class="dl-t"><button class="dl-name" data-open="${i}">${esc(d.name)}</button>${isExample(d)?'<span class="ex-tag">Example</span>':''}<div class="dl-sub">${esc(d.area)} · ${esc(d.strat)} · ${d.units.length} unit${d.units.length>1?'s':''}</div></div>
-    <div class="dl-f" data-l="Rent pcm">${gbp(d.units.reduce((s,u)=>s+u.rent,0))}</div>
-    <div class="dl-f${t[0]<0?' neg':''}" data-l="Surplus 60%">${gbp(t[0])}</div>
-    <div class="dl-f${t[1]<0?' neg':''}" data-l="Surplus 80%">${gbp(t[1])}</div>
-    <div class="dl-ctl"><span class="sel"><span class="dot ${DSTAT[d.status]||'neutral'}"></span><select class="inp" id="st${i}" data-st="${i}" aria-label="Status for ${esc(d.name)}">${Object.keys(DSTAT).map(k=>`<option${k===d.status?' selected':''}>${k}</option>`).join('')}</select></span>
-    <div class="dl-act"><button class="btn sm" data-open="${i}">Open</button><button class="btn ghost sm" data-del="${i}">Delete</button></div></div></div>`}).join('')+'</div>'
-  :'<div class="dl"><div class="empty">No saved deals yet. Analyse a deal and save it here.</div></div>';}
+  const open=L.filter(d=>OPEN_STAGES.includes(stageOf(d))),won=L.filter(d=>stageOf(d)==='Completed').length,lost=L.filter(d=>stageOf(d)==='Lost').length;
+  const withP=open.map(dealProfit).filter(Boolean),profit=withP.reduce((s,x)=>s+x.v,0),up=open.reduce((s,d)=>s+dealUpfront(d),0);
+  $('#plKpis').innerHTML=[
+    ['Active deals',String(open.length),`${L.length} saved in total`],
+    ['Est. monthly profit',withP.length?gbp(profit):'–',withP.length?`Across ${withP.length} active deal${withP.length>1?'s':''} with figures`:'Analyse a deal to see this'],
+    ['Upfront cash',up?gbp(up):'–','First month’s rent and deposits, active deals'],
+    ['Completed',String(won),won+lost?`${Math.round(won/(won+lost)*100)}% of closed deals won`:'No closed deals yet'],
+  ].map(([l,v,sub],j)=>`<div class="fig"><div class="fig-l">${l}</div><div class="fig-v${j===1&&withP.length&&profit<0?' neg':''}">${v}</div><div class="fig-s">${esc(sub)}</div></div>`).join('');
+  const counts=STAGE_KEYS.map(k=>L.filter(d=>stageOf(d)===k).length),mx=Math.max(1,...counts);
+  $('#plFunnel').innerHTML=`<ol class="pl-fun">${STAGES.map(([k,desc],j)=>`<li title="${k}: ${counts[j]} deal${counts[j]===1?'':'s'}. ${desc}."><span class="pl-fl">${k}</span><span class="pl-ft"><span class="pl-fb${k==='Lost'?' lost':''}" style="width:${counts[j]?Math.max(4,counts[j]/mx*100):0}%"></span></span><span class="pl-fn">${counts[j]}</span></li>`).join('')}</ol>`;
+  const attn=L.map((d,i)=>({d,i,why:attention(d)})).filter(x=>x.why.length);
+  $('#plAttn').innerHTML=attn.length?attn.slice(0,6).map(x=>`<li><button class="linkbtn" data-open="${x.i}">${esc(x.d.name||'Untitled deal')}</button><span>${esc(x.why.join(' · '))}</span></li>`).join('')+(attn.length>6?`<li class="muted">and ${attn.length-6} more</li>`:'')
+    :'<li class="muted">Nothing needs attention. Deals with due diligence issues, unverified checks at offer stage, or no movement for 14 days show here.</li>';
+  const used=STRATS.filter(x=>L.some(d=>(d.strat||'R2SA')===x[0]));
+  $('#plStrat').innerHTML=[['all','All strategies',L.length]].concat(used.map(x=>[x[0],x[1],L.filter(d=>(d.strat||'R2SA')===x[0]).length]))
+    .map(([k,n,c])=>`<button type="button" class="pl-chip" data-pl-strat="${k}" aria-pressed="${PL.strat===k}">${esc(n)} <span>${c}</span></button>`).join('');
+  $$('[data-pl-view]').forEach(b=>{const on=b.dataset.plView===PL.view;b.setAttribute('aria-pressed',String(on));b.classList.toggle('primary',on)});
+  if(!L.length){$('#dealList').innerHTML='<div class="dl"><div class="empty">No saved deals yet. Analyse a deal and click Save, and it will appear in your pipeline.</div></div>';return}
+  const rows=plRows();
+  $('#dealList').innerHTML=!rows.length?'<div class="dl"><div class="empty">No deals match this filter.</div></div>':PL.view==='list'?plList(rows):plBoard(rows)}
+const stageSel=(i,d)=>`<select class="inp pl-sel" data-st="${i}" aria-label="Stage for ${esc(d.name||'deal')}">${STAGE_KEYS.map(k=>`<option${k===stageOf(d)?' selected':''}>${k}</option>`).join('')}</select>`;
+const scoreOf=d=>d.aiAnalysis&&d.aiAnalysis.score!=null?Math.max(0,Math.min(100,+d.aiAnalysis.score||0)):null;
+function plCard({d,i}){const p=dealProfit(d),dd=ddState(d),days=daysIn(d),sc=scoreOf(d),why=attention(d);
+  return `<article class="pl-card" draggable="true" data-i="${i}">
+    <div class="pl-ct"><button class="pl-name" data-open="${i}">${esc(d.name||'Untitled deal')}</button>${sc!=null?`<span class="pl-score" title="AI score out of 100">${sc}</span>`:''}</div>
+    <div class="pl-sub">${esc(d.area||'No area yet')}</div>
+    <div class="ctags"><span class="ctag">${esc(stratName(d.strat||'R2SA'))}</span>${isExample(d)?'<span class="ctag">Example</span>':''}</div>
+    <dl class="pl-kv"><div><dt>Profit/mo</dt><dd class="${p&&p.v<0?'neg':''}">${p?gbp(p.v):'–'}</dd></div><div><dt>Checks</dt><dd>${dd.done}/${dd.tot}</dd></div></dl>
+    ${why.length?`<p class="pl-why"><span aria-hidden="true">⚠</span> ${esc(why[0])}</p>`:''}
+    <div class="pl-foot">${stageSel(i,d)}<span class="muted" title="Time in this stage">${days!=null?(days?days+'d':'Today'):''}</span></div></article>`}
+function plBoard(rows){return `<div class="pl-board" role="region" aria-label="Pipeline board, scroll sideways" tabindex="0">${STAGES.map(([k,desc])=>{const r=rows.filter(x=>stageOf(x.d)===k);
+  return `<section class="pl-col${k==='Lost'?' lost':''}" data-stage="${k}" aria-label="${k}"><header><div><b>${k}</b><span class="pl-n">${r.length}</span></div><p>${desc}</p></header><div class="pl-cards">${r.map(plCard).join('')||'<p class="pl-empty">Drag a deal here</p>'}</div></section>`}).join('')}</div>`}
+function plList(rows){return `<div class="sheet pl-list" tabindex="0" role="region" aria-label="Deals"><table><thead><tr><th>Deal</th><th>Strategy</th><th>Stage</th><th class="nr">Rent pcm</th><th class="nr">Profit/mo</th><th class="nr">AI score</th><th>Checks</th><th>In stage</th><th></th></tr></thead><tbody>${rows.map(({d,i})=>{const p=dealProfit(d),dd=ddState(d),days=daysIn(d),sc=scoreOf(d);
+  return `<tr><td><button class="pl-name" data-open="${i}">${esc(d.name||'Untitled deal')}</button><div class="pl-sub">${esc(d.area||'')}</div></td><td>${esc(stratName(d.strat||'R2SA'))}</td><td>${stageSel(i,d)}</td><td class="nr mono">${dealRent(d)?gbp(dealRent(d)):'–'}</td><td class="nr mono${p&&p.v<0?' neg':''}">${p?gbp(p.v):'–'}</td><td class="nr mono">${sc??'–'}</td><td>${dd.done}/${dd.tot}${dd.issues?` <span class="pl-iss">${dd.issues} issue${dd.issues>1?'s':''}</span>`:''}</td><td class="muted">${days!=null?(days?days+' days':'Today'):''}</td>
+    <td><div class="dl-act"><button class="btn sm" data-open="${i}">Open</button><button class="btn ghost sm" data-del="${i}">Delete</button></div></td></tr>`}).join('')}</tbody></table></div>`}
+function setStage(i,st){const d=S.saved[i];if(!d||stageOf(d)===st)return;d.status=st;d.stageAt=new Date().toISOString();if(S.deal.id===d.id){S.deal.status=st;S.deal.stageAt=d.stageAt}save();renderDeals();toast(`${d.name||'Deal'} moved to ${st}`)}
 $('#dealList').addEventListener('click',e=>{const o=e.target.closest('[data-open]'),x=e.target.closest('[data-del]');
   if(o){S.deal=JSON.parse(JSON.stringify(S.saved[+o.dataset.open]));save();bindDeal();go('analyser','numbers');toast('Deal opened')}
   if(x){const b=x;if(b.dataset.confirm){S.saved.splice(+b.dataset.del,1);save();renderDeals();toast('Deal deleted')}else{b.dataset.confirm='1';b.textContent='Confirm delete';setTimeout(()=>{if(b.isConnected){delete b.dataset.confirm;b.textContent='Delete'}},3000)}}});
-$('#dealList').addEventListener('change',e=>{const s=e.target.dataset.st;if(s==null)return;S.saved[+s].status=e.target.value;save();renderDeals()});
-function saveCurrent(){const c=JSON.parse(JSON.stringify(S.deal));const i=S.saved.findIndex(d=>d.id===c.id);
+$('#plAttn').addEventListener('click',e=>{const o=e.target.closest('[data-open]');if(o){S.deal=JSON.parse(JSON.stringify(S.saved[+o.dataset.open]));save();bindDeal();go('analyser','dd');toast('Deal opened')}});
+$('#dealList').addEventListener('change',e=>{const s=e.target.dataset.st;if(s!=null)setStage(+s,e.target.value)});
+$('#plStrat').addEventListener('click',e=>{const b=e.target.closest('[data-pl-strat]');if(b){PL.strat=b.dataset.plStrat;renderDeals()}});
+$('#plSearch').addEventListener('input',e=>{PL.q=e.target.value;renderDeals()});
+$$('[data-pl-view]').forEach(b=>b.addEventListener('click',()=>{PL.view=b.dataset.plView;store.set('pl-view',PL.view);renderDeals()}));
+// drag a card to another stage
+$('#dealList').addEventListener('dragstart',e=>{const c=e.target.closest('.pl-card');if(!c)return;e.dataTransfer.setData('text/plain',c.dataset.i);e.dataTransfer.effectAllowed='move';c.classList.add('dragging')});
+$('#dealList').addEventListener('dragend',e=>{$$('.pl-card.dragging,.pl-col.over').forEach(x=>x.classList.remove('dragging','over'))});
+$('#dealList').addEventListener('dragover',e=>{const col=e.target.closest('.pl-col');if(!col)return;e.preventDefault();$$('.pl-col.over').forEach(x=>x!==col&&x.classList.remove('over'));col.classList.add('over')});
+$('#dealList').addEventListener('drop',e=>{const col=e.target.closest('.pl-col');if(!col)return;e.preventDefault();col.classList.remove('over');const i=e.dataTransfer.getData('text/plain');if(i!=='')setStage(+i,col.dataset.stage)});
+function saveCurrent(){const c=JSON.parse(JSON.stringify(S.deal));const now=new Date().toISOString();c.status=stageOf(c);if(!c.savedAt)c.savedAt=now;if(!c.stageAt)c.stageAt=now;S.deal.status=c.status;S.deal.savedAt=c.savedAt;S.deal.stageAt=c.stageAt;const i=S.saved.findIndex(d=>d.id===c.id);
   if(i<0&&S.plan==='Free'&&S.saved.length>=3){toast('The Free plan saves up to 3 deals. Upgrade to save more.');return}if(i>=0)S.saved[i]=c;else S.saved.unshift(c);save();renderDeals();toast('Deal saved')}
 $('#saveDeal').addEventListener('click',saveCurrent);
 $('#saveDealTop').addEventListener('click',saveCurrent);
@@ -1776,9 +1877,12 @@ function renderPlans(){
     box.innerHTML=`<div class="plan"><div class="plan-h"><h3>Free</h3></div><p class="plan-from">Try Deal Pro</p>
       <div class="price"><span class="mono">£0</span><span class="per">per month</span></div><div class="bill-note">Free forever</div>
       <div class="lead">Limited usage</div>${feats(['3 Deal Finder searches a week','2 Scout AI deal analyses','Browse the Deal Community, reply and chat','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
+    <div class="plan"><div class="plan-h"><h3>Lite</h3></div><p class="plan-from">A bit more room to work</p>
+      <div class="price"><span class="mono">£9.99</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
+      <div class="lead">Everything in Free, plus:</div>${feats(['15 AI credits a week (Scout)','Post 3 deals a month in the Deal Community','AI due diligence research','Deal packs','Unlimited saved deals'])}${planBtn('Lite')}</div>
     <div class="plan feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div><p class="plan-from">For everyday sourcing</p>
       <div class="price"><span class="mono">£${ann?33:39}</span><span class="per">per month</span></div><div class="bill-note">${ann?'Billed annually (£396 upfront)':'Billed monthly'}</div>
-      <div class="lead">Everything in Free, plus:</div>${feats(['60 AI credits a week for searches and analyses','Post 10 deals a month in the Deal Community','More usage','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
+      <div class="lead">Everything in Lite, plus:</div>${feats(['Analyst and Expert power levels','60 AI credits a week for searches and analyses','Post 10 deals a month in the Deal Community','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
     <div class="plan"><div class="plan-h"><h3>Max</h3></div><p class="plan-from">From £100/month · For sourcers who work deals all day</p>
       <div class="seg segb tier" role="group" aria-label="Max usage tier"><button id="maxT5" data-tier="5" aria-pressed="${mt==='5'}">5x</button><button id="maxT20" data-tier="20" aria-pressed="${mt==='20'}">20x</button></div>
       <div class="price"><span class="mono">£${mt==='20'?200:100}</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
@@ -2042,7 +2146,7 @@ const SCOUT_MORE={
   search:'Scout did one quick search per site, checked the 6 best listings are still live, and picked the top 3. Analyst searches every site twice from different angles, checks 18 listings and ranks the top 10. Expert searches round after round and checks 40.',
   analyse:'Scout gives a quick first look. Analyst works through every cost, assumption and risk. Expert also stress-tests the deal with a lower nightly rate, lower occupancy, higher costs and an empty month.',
   dd:'Scout gives one quick fact per check. Analyst researches each check properly with more sources, and Expert researches every check separately in depth.'};
-function scoutMore(kind){let free=true;try{free=!AIC.info||AIC.info.free}catch(e){}/* AIC is set up later in the script */
+function scoutMore(kind){let free=true;try{free=!AIC.info||AIC.info.free||AIC.info.scoutOnly}catch(e){}/* AIC is set up later in the script */
   return `<div class="scout-more"><p><b>Want more?</b> ${SCOUT_MORE[kind]}</p>${free?'<button class="btn sm primary" type="button" data-go="plans">Upgrade for Analyst and Expert</button>':'<span class="muted">Choose Analyst or Expert and run it again.</span>'}</div>`}
 function rankHTML(){const R=FS.rank;if(!R)return '';const lv=R.level;
   if(R.status==='loading')return `<div class="rank lv-${lv.id}" role="status"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b id="fRankT">${esc(lv.name)} is ranking these deals…</b></div><p class="muted">Results are below. The AI's top picks will appear here.</p></div>`;
@@ -2066,7 +2170,7 @@ function analyseText(text,name){text=String(text||'').trim();if(!text){toast('Pa
   startAnalysis(()=>{const d=freshDeal();d.name=String(name||'').trim().slice(0,80)||'Pasted deal';S.deal=d;markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
     $('#aiDealInput').value=text;renderAIAnalysis(null);$('#analyseWithAI').click()})}
 function buildDeal(ls){ls=ls.filter(Boolean).filter(isOpen);if(!ls.length)return;startAnalysis(()=>{const d=sampleDeal(),areas=[...new Set(ls.map(x=>x.area))],short=a=>a.split(',')[0].trim();
-  Object.assign(d,{id:'d'+Date.now(),name:areas.length>1?`${areas[0]} + ${areas.length-1} more`:areas[0],area:areas.join('; '),strat:'R2SA',london:true,status:'Checking',
+  Object.assign(d,{id:'d'+Date.now(),name:areas.length>1?`${areas[0]} + ${areas.length-1} more`:areas[0],area:areas.join('; '),strat:'R2SA',london:true,status:'Analysing',
     units:ls.map(x=>({label:`${x.type} · ${short(x.area)}`,rent:x.price,dep:x.price,rate:RATE_EST(x.beds),url:x.url}))});
   S.deal=d;FS.sel.clear();markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
   // Fill in the deal for the AI and start the analysis straight away.
@@ -2171,7 +2275,7 @@ function renderHome(){syncFee();
     <div class="pv-nums"><div class="pv-label">Deal Analyser · ${esc(S.deal.name||'Untitled deal')}</div>
       <div class="strip mini">${fig('Upfront cash',gbp(f.up))}${fig('Surplus at 60%',gbp(f.t60),f.t60<0?' neg':'')}${fig('Surplus at 80%',gbp(f.t80),f.t80<0?' neg':'')}${fig('Break-even',isFinite(f.be)?pct(f.be):'Never')}</div></div>`;
   const hp=(n,pr,per,sub,feat)=>`<div class="hplan${feat?' feat':''}"><div class="plan-h"><h3>${n}</h3>${feat?'<span class="tag">Most popular</span>':''}</div><div class="price"><span class="mono">${pr}</span><span class="per">${per}</span></div><div class="sub">${sub}</div></div>`;
-  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 2 AI deal analyses.')+hp('Premium','£39','per month','For everyday sourcing. AI searches and analyses at every power level, billed monthly.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
+  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 2 AI deal analyses.')+hp('Lite','£9.99','per month','15 Scout credits a week and 3 Deal Community posts a month.')+hp('Premium','£39','per month','For everyday sourcing. AI searches and analyses at every power level, billed monthly.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
 
 
 /* ---------- hero: slow liquid field, paused offscreen, static under reduced motion ---------- */
@@ -2212,6 +2316,9 @@ function renderAIAnalysis(a){
   const verdict=String(a.verdict||'Analysis complete'),tone=/strong/i.test(verdict)?'strong':/weak/i.test(verdict)?'weak':'';
   out.className='ai-output';out.innerHTML=`<div class="ai-score"><div><div class="ai-verdict ${tone}">${esc(verdict)}</div><p>${esc(String(a.summary||''))}</p></div><strong>${Math.max(0,Math.min(100,+a.score||0))}<span class="muted" style="font-size:13px">/100</span></strong></div>
     <div class="ai-metrics"><div class="ai-metric"><span>Monthly profit</span><b>${esc(String(a.monthly_profit||'Not enough information'))}</b></div><div class="ai-metric"><span>Upfront cash</span><b>${esc(String(a.upfront_cash||'Not enough information'))}</b></div><div class="ai-metric"><span>Break-even</span><b>${esc(String(a.break_even||'Not enough information'))}</b></div></div>
+    ${a._strategy&&a._strategy!=='auto'?`<p class="ai-as">Analysed as <b>${esc(stratName(a._strategy))}</b></p>`:''}
+    ${Array.isArray(a.strategy_metrics)&&a.strategy_metrics.length?`<div class="ai-smetrics">${a.strategy_metrics.slice(0,8).map(m=>`<div><span>${esc(String(m&&m.label||''))}</span><b>${esc(String(m&&m.value||''))}</b></div>`).join('')}</div>`:''}
+    ${a.better_strategy?`<div class="alert"><b>Another strategy may suit this better.</b> ${esc(String(a.better_strategy))}</div>`:''}
     ${Array.isArray(a.occupancy_scenarios)&&a.occupancy_scenarios.length?aiList('Occupancy scenarios',a.occupancy_scenarios.map(o=>`${o.occupancy}: ${o.monthly_profit}`)):''}${Array.isArray(a.stress_tests)&&a.stress_tests.length?aiList('Stress tests',a.stress_tests.map(t=>`${t.scenario}: ${t.monthly_profit}${t.still_works===false?' (fails)':t.still_works?' (still works)':''}`)):''}${aiList('Important risks',a.risks)}${aiList('Assumptions',a.assumptions)}${aiList('Missing information',a.missing_information)}${aiList('What to do next',a.next_actions)}${a._level==='quick'?scoutMore('analyse'):''}`}
 renderAIAnalysis(S.deal.aiAnalysis);
 /* power levels: ids must match LEVELS in netlify/lib/ai.mts */
@@ -2229,29 +2336,37 @@ function leftTxt(est,elapsed,frac){let total=est;if(frac>.1&&elapsed>15)total=(e
   return left>10?`about ${durTxt(left)} left`:elapsed>est*1.5?'taking a little longer than usual':'almost done'}
 const LEVEL_KIND={aiLevel:'analyse',fLevel:'search',ddLevel:'dd'};
 const findSiteCount=()=>{try{return SITES.filter(s=>S.find.f.sites[s]).length||1}catch(e){return 6}};
-function levelOpts(name){const i=AIC.info,free=!i||i.free;// locked until the server confirms a paid plan
+function levelOpts(name){const i=AIC.info,free=!i||i.free||i.scoutOnly;// locked until the server confirms a plan with every level
   return AI_LEVELS.map(l=>{const locked=free&&l.id!=='quick';
-    return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="${name}" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)}</span><span class="lv-use">${locked?'Paid plans':esc(l.use)}</span><span class="lv-time" data-kind="${LEVEL_KIND[name]}" data-lv="${l.id}">Takes ~${estTxt(LEVEL_KIND[name],l.id,findSiteCount())}</span></label>`}).join('')}
-function renderAILevels(){const i=AIC.info,free=!i||i.free;if(free&&AIC.level!=='quick')AIC.level='quick';
+    return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="${name}" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)}</span><span class="lv-use">${locked?'Premium and Max':esc(l.use)}</span><span class="lv-time" data-kind="${LEVEL_KIND[name]}" data-lv="${l.id}">Takes ~${estTxt(LEVEL_KIND[name],l.id,findSiteCount())}</span></label>`}).join('')}
+function renderAILevels(){const i=AIC.info,free=!i||i.free||i.scoutOnly;if(free&&AIC.level!=='quick')AIC.level='quick';
   $('#aiLevelOpts').innerHTML=levelOpts('aiLevel');$('#fLevelOpts').innerHTML=levelOpts('fLevel');$('#ddLevelOpts').innerHTML=levelOpts('ddLevel');
-  const paid=i?(i.plan==='Admin'?'Admin: unlimited credits.':`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}.`):'';
+  const paid=i?(i.plan==='Admin'?'Admin: unlimited credits.':`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}.${i.scoutOnly?' Upgrade to Premium for Analyst and Expert.':''}`):'';
   $('#aiCredits').textContent=!i?'':i.free?`Free plan: ${i.freeLeft} of 2 free analyses left. Upgrade for Analyst and Expert.`:paid;
   $('#fCredits').textContent=!i?'':i.free?`Free plan: ${i.freeSearchesLeft} of 3 searches left this week. Upgrade for Analyst and Expert.`:paid}
 async function loadAICredits(){if(!document.body.dataset.userId)return;try{const r=await fetch('/api/analyze-deal',{credentials:'same-origin'});if(r.ok){AIC.info=await r.json();renderAILevels()}}catch(e){}}
 ['#aiLevelOpts','#fLevelOpts','#ddLevelOpts'].forEach(id=>$(id).addEventListener('change',e=>{if(e.target.type==='radio'){AIC.level=e.target.value;try{localStorage.setItem('dealpro:ai-level',AIC.level)}catch(err){}renderAILevels()}}));
 renderAILevels();window.addEventListener('dealpro:signed-in',loadAICredits);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+/* strategy to analyse for: 'auto' lets the AI pick */
+const STRAT_OPTS=[['auto','Let AI decide','The AI works out which strategy the details describe or suit best.']].concat(STRATS);
+const aiStrat=()=>STRAT_OPTS.some(x=>x[0]===S.deal.aiStrategy)?S.deal.aiStrategy:'auto';
+function renderStratOpts(){const cur=aiStrat();
+  $('#aiStratOpts').innerHTML=STRAT_OPTS.map(([k,n,d])=>`<label class="ai-strat" title="${esc(d)}"><input type="radio" name="aiStrat" value="${k}"${k===cur?' checked':''}><span>${esc(n)}</span></label>`).join('');
+  $('#aiStratDesc').textContent=(STRAT_OPTS.find(x=>x[0]===cur)||STRAT_OPTS[0])[2]}
+$('#aiStratOpts').addEventListener('change',e=>{if(e.target.name!=='aiStrat')return;const v=e.target.value;S.deal.aiStrategy=v;if(v!=='auto'){S.deal.strat=v;try{$('#dStrat').value=v}catch(err){}if(typeof renderMeta==='function')renderMeta()}save();renderStratOpts()});
+renderStratOpts();window.addEventListener('dealpro:signed-in',renderStratOpts);
 $('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInput').value.trim(),btn=$('#analyseWithAI'),status=$('#aiDealStatus');if(!input){status.textContent='Paste the deal information first.';$('#aiDealInput').focus();return}
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];
   btn.disabled=true;btn.textContent='Analysing…';status.textContent=`${lv.name} analysis started. This usually takes ${estTxt('analyse',lv.id)}.`;
-  try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'analyse',deal:input,level:lv.id})});const start=await r.json().catch(()=>({}));
+  try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'analyse',deal:input,level:lv.id,...(aiStrat()!=='auto'?{strategy:aiStrat()}:{})})});const start=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(start.error||'Analysis failed.');if(start.credits){AIC.info=start.credits;renderAILevels()}
     const t0=Date.now();let data;
     for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(start.jobId),{credentials:'same-origin'});data=await p.json().catch(()=>({}));
       if(!p.ok)throw new Error(data.error||'Analysis failed.');if(data.credits){AIC.info=data.credits;renderAILevels()}
       if(data.status==='done')break;if(data.status==='error')throw new Error(data.error||'Analysis failed.');
       {const el=Math.round((Date.now()-t0)/1000);status.textContent=`${lv.name} analysis in progress… ${el}s · ${leftTxt(estSecs('analyse',lv.id),el,0)}`}if(Date.now()-t0>17*60e3)throw new Error('The analysis is taking too long. Please try again.')}
-    S.deal.aiAnalysis=Object.assign({},data.analysis,{_level:lv.id});S.deal.sourceText=input;save();renderAIAnalysis(S.deal.aiAnalysis);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
+    S.deal.aiAnalysis=Object.assign({},data.analysis,{_level:lv.id,_strategy:aiStrat()});S.deal.sourceText=input;save();renderAIAnalysis(S.deal.aiAnalysis);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
   catch(e){status.textContent=e.message||'The analysis could not be completed. Please try again.'}finally{btn.disabled=false;btn.textContent='Analyse with AI'}});
 $('#advancedToggle').addEventListener('click',e=>{const on=document.body.classList.toggle('advanced-mode');e.currentTarget.setAttribute('aria-expanded',String(on));e.currentTarget.textContent=on?'Hide advanced controls':'Show advanced controls'});
 window.addEventListener('dealpro:save-error',()=>toast('Your latest change could not be saved. Check your connection and try again.'));
@@ -2269,11 +2384,11 @@ async function cApi({url='',...opts}={}){const r=await fetch('/api/community'+ur
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Something went wrong. Please try again.');return d}
 async function loadCommunity(){if(CM.loading)return;CM.loading=true;CM.error='';
   try{const d=await cApi();CM.posts=d.posts||[];CM.posting=d.posting||null;renderPostNote()}catch(e){CM.error=e.message}finally{CM.loading=false}renderCommunityList()}
-// Posting deals needs Premium (a monthly allowance) or Max (unlimited); Free can browse, reply and chat.
-function renderPostNote(){const p=CM.posting,n=$('#cPostNote');if(!n)return;n.textContent=!p?'':p.left==null?'':p.allowed?`${p.left} of ${p.limit} posts left this month`:p.limit?'Monthly posts used':'Premium feature'}
+// Posting deals needs Lite or Premium (a monthly allowance) or Max (unlimited); Free can browse, reply and chat.
+function renderPostNote(){const p=CM.posting,n=$('#cPostNote');if(!n)return;n.textContent=!p?'':p.left==null?'':p.allowed?`${p.left} of ${p.limit} posts left this month`:p.limit?'Monthly posts used':'Paid plans'}
 function postingBlocked(){const p=CM.posting;if(!p||p.allowed)return false;
   const n=$('#nCommunity')||(()=>{const d=document.createElement('div');d.className='limit-note';d.id='nCommunity';d.setAttribute('role','status');$('#cForm').before(d);return d})();
-  n.innerHTML=`<div>${p.limit?`You've posted your ${p.limit} deals for this month. Upgrade to Max for unlimited posts.`:'Posting deals needs Deal Pro Premium or Max. You can still browse deals, reply and use the region chat for free.'}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false;return true}
+  n.innerHTML=`<div>${p.limit?`You've posted your ${p.limit} deals for this month. ${p.plan==='Lite'?'Upgrade to Premium for 10 a month, or Max for unlimited posts.':'Upgrade to Max for unlimited posts.'}`:'Posting deals needs a paid plan: Lite (3 a month, £9.99), Premium (10 a month) or Max (unlimited). You can still browse deals, reply and use the region chat for free.'}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false;return true}
 function renderCommunity(){const f=$('#cForm');const em=document.body.dataset.userEmail||'';
   if(f&&!f.elements.contactEmail.value)f.elements.contactEmail.value=em;const nm=($('.ws-name')||{}).textContent||'';if(f&&!f.elements.contactName.value&&nm&&nm!==em)f.elements.contactName.value=nm;
   if(CM.posts)renderCommunityList();loadCommunity();if(CH.on)openRoom(CH.room)}

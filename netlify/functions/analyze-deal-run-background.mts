@@ -40,7 +40,9 @@ export default async (request: Request, _context: Context) => {
       }
       analysis = { listings: st.listings, sites: st.sites_status, ranking: st.ranking ?? null };
     } else {
-      analysis = await (job.kind === "rank" ? runRank : job.kind === "dd" ? runResearch : runAnalysis)(String(job.input), level);
+      analysis = job.kind === "rank" ? await runRank(String(job.input), level)
+        : job.kind === "dd" ? await runResearch(String(job.input), level)
+        : await runAnalysis(String(job.input), level, typeof job.strategy === "string" ? job.strategy : undefined);
     }
     await store.setJSON(jobId, { ...job, status: "done", analysis, search: undefined, runToken: null, finishedAt: heartbeat() });
   } catch (error) {
