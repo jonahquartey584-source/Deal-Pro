@@ -146,7 +146,82 @@ const STRATEGY_FORMAT = `Also include:
 strategy_metrics (array of up to 8 {"label": string, "value": string}: the key figures for this strategy, for example yield, cash flow, return on cash or profit margin; label estimates "(est.)"),
 better_strategy (string: if another strategy clearly suits this property better, name it and say why in one sentence; otherwise "").`;
 
-export const runAnalysis = (deal: string, level: LevelId, strategy?: string) => {
+// ---------- reading listing links ----------
+// When the user pastes a link, read the advert first so the analysis has the real details.
+// Pages are fetched directly only from known property sites (never arbitrary hosts); anything
+// else, or a site that blocks the request, is read through OpenAI's web search instead.
+const propertyHosts = () => [...new Set(Object.values(SITES).flatMap((s) => s.domains)), "onthemarket.com", "primelocation.com", "zoopla.co.uk", "purplebricks.co.uk", "home.co.uk", "idealflatmate.co.uk", "roomgo.co.uk", "openrent.com"];/* SITES is defined further down */
+const MAX_LINKS = 3;
+export type LinkRead = { url: string; ok: boolean; via: "page" | "search" | "none"; note?: string };
+
+const decode = (t: string) => t.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&pound;/g, "£").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+function pageText(html: string) {
+  const meta = [...html.matchAll(/<meta[^>]+(?:property|name)=["'](?:og:title|og:description|description|twitter:description)["'][^>]*content=["']([^"']+)["']/gi)].map((m) => decode(m[1]));
+  const title = decode((html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] || "").trim());
+  const ld = [...html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1].trim()).join("\n").slice(0, 4000);
+  const body = decode(html.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>|<noscript[\s\S]*?<\/noscript>|<svg[\s\S]*?<\/svg>/gi, " ")
+    .replace(/<(?:br|\/p|\/li|\/h\d|\/div|\/tr)[^>]*>/gi, "\n").replace(/<[^>]+>/g, " ")).replace(/[ \t]+/g, " ").replace(/\n\s*\n+/g, "\n").trim();
+  return [title && `Title: ${title}`, meta.length && `Summary: ${[...new Set(meta)].join(" | ")}`, ld && `Structured data: ${ld}`, `Page text:\n${body.slice(0, 7000)}`].filter(Boolean).join("\n");
+}
+const BLOCKED = /captcha|are you a robot|access denied|verify you are human|enable javascript|cf-chl|just a moment/i;
+
+async function fetchPage(url: string) {
+  const host = new URL(url).hostname.toLowerCase();
+  if (!propertyHosts().some((d) => host === d || host.endsWith(`.${d}`))) return null;
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 9000);
+  try {
+    const r = await fetch(url, { redirect: "follow", signal: ctl.signal, headers: {
+      "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36",
+      "Accept": "text/html,application/xhtml+xml", "Accept-Language": "en-GB,en;q=0.9" } });
+    // Stay on property sites even after redirects.
+    const finalHost = new URL(r.url || url).hostname.toLowerCase();
+    if (!propertyHosts().some((d) => finalHost === d || finalHost.endsWith(`.${d}`))) return null;
+    if (!r.ok || !/html/i.test(r.headers.get("content-type") || "")) return null;
+    const text = pageText((await r.text()).slice(0, 1_500_000));
+    return text.length > 400 && !BLOCKED.test(text.slice(0, 1500)) ? text : null;
+  } catch { return null; } finally { clearTimeout(timer); }
+}
+
+async function searchPage(url: string, level: LevelId) {
+  const host = new URL(url).hostname.replace(/^www\./, "");
+  const prompt = `Open this exact property advert and read it: ${url}
+Return JSON: {"found": true | false (false if you could not open this exact advert), "status": string (e.g. "available", "let agreed", "under offer", "sold", "removed"), "title": string, "price": string (with the period, e.g. "£1,450 pcm" or "£210,000"), "property_type": string, "bedrooms": string, "bathrooms": string, "address_or_area": string, "postcode": string, "furnished": string, "deposit": string, "bills": string, "available_from": string, "advertiser": string (private landlord, agent or company, and name if shown), "key_features": [strings], "description": string (the advert text, up to 250 words), "restrictions": string (pets, DSS, sharers, short lets or subletting if mentioned)}.
+Only report what the advert says. Use "" when a detail isn't shown. Never guess.`;
+  const { parsed } = await webJson(prompt, [host], level, "medium", "low");
+  if (parsed.found === false || !(parsed.price || parsed.description || parsed.title)) return null;
+  return Object.entries(parsed).filter(([k, v]) => k !== "found" && v !== "" && v != null && !(Array.isArray(v) && !v.length))
+    .map(([k, v]) => `${k.replace(/_/g, " ")}: ${Array.isArray(v) ? v.join("; ") : String(v)}`).join("\n");
+}
+
+export async function readLinks(input: string, level: LevelId) {
+  const urls = [...new Set((input.match(/https?:\/\/[^\s<>"')]+/gi) || []).map((u) => u.replace(/[.,;]+$/, "")))]
+    .filter((u) => { try { const x = new URL(u); return x.protocol === "https:" && !/^\d+\.\d+\.\d+\.\d+$/.test(x.hostname); } catch { return false; } })
+    .slice(0, MAX_LINKS);
+  const reads: LinkRead[] = [];
+  const parts: string[] = [];
+  for (const url of urls) {
+    let text = await fetchPage(url);
+    let via: LinkRead["via"] = text ? "page" : "none";
+    if (!text) {
+      try { text = await searchPage(url, level); if (text) via = "search"; } catch (error) { console.warn("Could not read listing", url, errText(error)); }
+    }
+    reads.push({ url, ok: !!text, via, ...(text ? {} : { note: "The page couldn't be opened" }) });
+    parts.push(text
+      ? `--- Listing details read from ${url} ---\n${text}`
+      : `--- ${url} could not be opened. Say so plainly and ask the user to paste the advert text; don't treat the link as missing information about the deal itself. ---`);
+  }
+  return { reads, extra: parts.join("\n\n") };
+}
+
+export const runAnalysis = async (deal: string, level: LevelId, strategy?: string) => {
+  const { reads, extra } = await readLinks(deal, level);
+  const input = extra ? `${deal}\n\n${extra}` : deal;
+  const result = await analyse(input, level, strategy);
+  return reads.length ? { ...result, links_read: reads } : result;
+};
+
+const analyse = (deal: string, level: LevelId, strategy?: string) => {
   const st = strategy && STRATEGIES[strategy];
   const focus = st
     ? `The user wants this deal analysed as: ${st.name}. ${st.prompt} Judge the verdict and score for this strategy.`

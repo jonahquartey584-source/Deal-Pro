@@ -746,6 +746,7 @@ td.t{text-align:right;color:var(--ink-2)}
 .ai-strats{display:flex;flex-wrap:wrap;gap:6px}.ai-strat{position:relative;cursor:pointer}.ai-strat input{position:absolute;opacity:0;pointer-events:none}
 .ai-strat span{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12.5px;color:var(--ink-2);background:var(--surface)}
 .ai-strat input:checked+span{border-color:var(--brand);background:var(--brand-soft);color:var(--ink);font-weight:600}.ai-strat input:focus-visible+span{outline:2px solid var(--brand);outline-offset:2px}
+.ai-links p{margin:10px 0 0;font-size:12.5px}.ai-links .ok{color:var(--good)}.ai-links .bad{color:var(--warn)}.ai-links a{color:inherit;text-decoration:underline}
 .ai-as{font-size:12.5px;color:var(--ink-2);margin:10px 0 0}.ai-smetrics{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:10px}
 .ai-smetrics div{border:1px solid var(--line);border-radius:6px;padding:8px 10px;display:grid;gap:3px}.ai-smetrics span{font-size:11.5px;color:var(--muted)}.ai-smetrics b{font-size:13.5px}
 .pl-grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:14px;margin-bottom:18px}@media (max-width:860px){.pl-grid{grid-template-columns:minmax(0,1fr)}}
@@ -965,8 +966,8 @@ td.t{text-align:right;color:var(--ink-2)}
     <div class="ai-simple">
       <div class="ai-entry">
         <h2>Analyse a deal with AI</h2>
-        <p>Paste the advert, landlord message or deal details, and choose the strategy you want it judged on. Include the rent or price, deposit, area and anything else you know.</p>
-        <label class="f"><span>Deal information</span><textarea class="inp" id="aiDealInput" placeholder="Paste the full property advert or describe the deal here…"></textarea></label>
+        <p>Paste a listing link, the advert text, a landlord message or deal details, and choose the strategy you want it judged on. Include the rent or price, deposit, area and anything else you know.</p>
+        <label class="f"><span>Deal information</span><textarea class="inp" id="aiDealInput" placeholder="Paste a listing link (Rightmove, Zoopla, OpenRent, Gumtree…), the full advert, or describe the deal here…"></textarea></label>
         <fieldset class="ai-levels"><legend>Strategy to analyse for</legend><div class="ai-strats" id="aiStratOpts"></div><p class="ai-credits" id="aiStratDesc"></p></fieldset>
         <fieldset class="ai-levels" id="aiLevels"><legend>Power level</legend><div class="ai-level-opts" id="aiLevelOpts"></div><p class="ai-credits" id="aiCredits"></p></fieldset>
         <button class="btn primary block" id="analyseWithAI" type="button">Analyse with AI</button>
@@ -2316,6 +2317,7 @@ function renderAIAnalysis(a){
   const verdict=String(a.verdict||'Analysis complete'),tone=/strong/i.test(verdict)?'strong':/weak/i.test(verdict)?'weak':'';
   out.className='ai-output';out.innerHTML=`<div class="ai-score"><div><div class="ai-verdict ${tone}">${esc(verdict)}</div><p>${esc(String(a.summary||''))}</p></div><strong>${Math.max(0,Math.min(100,+a.score||0))}<span class="muted" style="font-size:13px">/100</span></strong></div>
     <div class="ai-metrics"><div class="ai-metric"><span>Monthly profit</span><b>${esc(String(a.monthly_profit||'Not enough information'))}</b></div><div class="ai-metric"><span>Upfront cash</span><b>${esc(String(a.upfront_cash||'Not enough information'))}</b></div><div class="ai-metric"><span>Break-even</span><b>${esc(String(a.break_even||'Not enough information'))}</b></div></div>
+    ${Array.isArray(a.links_read)&&a.links_read.length?`<div class="ai-links">${a.links_read.map(l=>l.ok?`<p class="ok">✓ Read the listing on <a href="${esc(safeUrl(l.url))}" target="_blank" rel="noopener noreferrer">${esc(hostOf(l.url))}</a></p>`:`<p class="bad">⚠ Couldn't open the listing on ${esc(hostOf(l.url))}. Copy the advert text from the page and paste it in, then analyse again.</p>`).join('')}</div>`:''}
     ${a._strategy&&a._strategy!=='auto'?`<p class="ai-as">Analysed as <b>${esc(stratName(a._strategy))}</b></p>`:''}
     ${Array.isArray(a.strategy_metrics)&&a.strategy_metrics.length?`<div class="ai-smetrics">${a.strategy_metrics.slice(0,8).map(m=>`<div><span>${esc(String(m&&m.label||''))}</span><b>${esc(String(m&&m.value||''))}</b></div>`).join('')}</div>`:''}
     ${a.better_strategy?`<div class="alert"><b>Another strategy may suit this better.</b> ${esc(String(a.better_strategy))}</div>`:''}
@@ -2358,14 +2360,14 @@ $('#aiStratOpts').addEventListener('change',e=>{if(e.target.name!=='aiStrat')ret
 renderStratOpts();window.addEventListener('dealpro:signed-in',renderStratOpts);
 $('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInput').value.trim(),btn=$('#analyseWithAI'),status=$('#aiDealStatus');if(!input){status.textContent='Paste the deal information first.';$('#aiDealInput').focus();return}
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];
-  btn.disabled=true;btn.textContent='Analysing…';status.textContent=`${lv.name} analysis started. This usually takes ${estTxt('analyse',lv.id)}.`;
+  btn.disabled=true;btn.textContent='Analysing…';const hasLink=/https?:\/\//i.test(input),extraS=hasLink?40:0;status.textContent=`${lv.name} analysis started${hasLink?', reading the listing first':''}. This usually takes ${hasLink?durTxt(estSecs('analyse',lv.id)+extraS):estTxt('analyse',lv.id)}.`;
   try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'analyse',deal:input,level:lv.id,...(aiStrat()!=='auto'?{strategy:aiStrat()}:{})})});const start=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(start.error||'Analysis failed.');if(start.credits){AIC.info=start.credits;renderAILevels()}
     const t0=Date.now();let data;
     for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(start.jobId),{credentials:'same-origin'});data=await p.json().catch(()=>({}));
       if(!p.ok)throw new Error(data.error||'Analysis failed.');if(data.credits){AIC.info=data.credits;renderAILevels()}
       if(data.status==='done')break;if(data.status==='error')throw new Error(data.error||'Analysis failed.');
-      {const el=Math.round((Date.now()-t0)/1000);status.textContent=`${lv.name} analysis in progress… ${el}s · ${leftTxt(estSecs('analyse',lv.id),el,0)}`}if(Date.now()-t0>17*60e3)throw new Error('The analysis is taking too long. Please try again.')}
+      {const el=Math.round((Date.now()-t0)/1000);status.textContent=`${lv.name} ${hasLink&&el<25?'is reading the listing':'analysis in progress'}… ${el}s · ${leftTxt(estSecs('analyse',lv.id)+extraS,el,0)}`}if(Date.now()-t0>17*60e3)throw new Error('The analysis is taking too long. Please try again.')}
     S.deal.aiAnalysis=Object.assign({},data.analysis,{_level:lv.id,_strategy:aiStrat()});S.deal.sourceText=input;save();renderAIAnalysis(S.deal.aiAnalysis);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
   catch(e){status.textContent=e.message||'The analysis could not be completed. Please try again.'}finally{btn.disabled=false;btn.textContent='Analyse with AI'}});
 $('#advancedToggle').addEventListener('click',e=>{const on=document.body.classList.toggle('advanced-mode');e.currentTarget.setAttribute('aria-expanded',String(on));e.currentTarget.textContent=on?'Hide advanced controls':'Show advanced controls'});
