@@ -116,28 +116,43 @@ const LEVEL_PROMPT: Record<LevelId, string> = {
   deep: `Give a thorough, investment-committee-grade analysis. Double-check every calculation. Stress-test the deal: nightly rate 20% lower, occupancy 15 points lower, costs 10% higher, and a one-month void; say whether it still works. Consider local demand, seasonality, competition, exit options and the worst realistic case. Also include the key "stress_tests" (array of {"scenario": string, "monthly_profit": string, "still_works": boolean}).`,
 };
 
+// Includes the network reason behind a "Connection error" (for example ECONNRESET or a DNS failure).
 const errText = (error: unknown) => {
-  const e = error as { status?: number; message?: string };
-  return `${e.status ? `${e.status} ` : ""}${String(e.message || error).slice(0, 300)}`;
+  const e = error as { status?: number; message?: string; cause?: { code?: string; message?: string; cause?: { code?: string } } };
+  const cause = e.cause ? ` (${[e.cause.code || e.cause.cause?.code, e.cause.message].filter(Boolean).join(": ").slice(0, 160)})` : "";
+  return `${e.status ? `${e.status} ` : ""}${String(e.message || error).slice(0, 300)}${cause}`;
 };
+// No HTTP status means the request never got an answer: a network problem, not the request itself.
+const isConnectionError = (error: unknown) => !(error as { status?: number }).status;
+// One OpenAI client with generous retries and a timeout, shared by every AI call.
+let openaiClient: OpenAI | null = null;
+export const ai = () => (openaiClient ||= new OpenAI({ maxRetries: 3, timeout: 180_000 }));
 // Errors worth retrying with another model or setup (bad request, unknown model, unsupported feature).
 const retryable = (error: unknown) => { const st = (error as { status?: number }).status; return !st || (st >= 400 && st < 500 && st !== 401 && st !== 429); };
 
-// Tries each attempt in turn and throws one error listing every failure.
+// Tries each attempt in turn. If every one failed only because OpenAI couldn't be reached,
+// waits and goes round again (a brief outage or network blip), then throws one error listing
+// every failure.
 async function tryEach<T>(label: string, attempts: Array<[string, () => Promise<T>]>): Promise<T> {
   const failures: string[] = [];
-  for (const [name, run] of attempts) {
-    try { return await run(); } catch (error) {
-      failures.push(`${name}: ${errText(error)}`);
-      console.warn(`${label} failed with ${name}:`, errText(error));
-      if (!retryable(error)) break;
+  for (const wait of [0, 10_000, 30_000]) {
+    if (wait) { console.warn(`${label}: OpenAI unreachable, trying again in ${wait / 1000}s`); await new Promise((r) => setTimeout(r, wait)); }
+    let networkOnly = true;
+    for (const [name, run] of attempts) {
+      try { return await run(); } catch (error) {
+        failures.push(`${name}: ${errText(error)}`);
+        console.warn(`${label} failed with ${name}:`, errText(error));
+        if (!isConnectionError(error)) networkOnly = false;
+        if (!retryable(error)) break;
+      }
     }
+    if (!networkOnly) break;
   }
-  throw new Error(`${label} failed. ${failures.join(" | ")}`);
+  throw new Error(`${label} failed. ${failures.slice(-8).join(" | ")}`);
 }
 
 async function complete(system: string, user: string, level: LevelId) {
-  const client = new OpenAI();
+  const client = ai();
   const { model, effort } = LEVELS[level];
   const messages = [{ role: "system" as const, content: system }, { role: "user" as const, content: user }];
   const withModel = (m: string, reasoning: boolean) => async () => {
@@ -418,7 +433,7 @@ const hostMatches = (url: string, domains: string[]) => {
 const normalise = (url: string) => { try { const u = new URL(url); u.hash = ""; return u.toString().replace(/\/$/, ""); } catch { return url; } };
 
 async function webJson(prompt: string, domains: string[], level: LevelId, context: "low" | "medium" | "high", effort: Effort) {
-  const client = new OpenAI();
+  const client = ai();
   // With no domains the search is open to the whole web (used for due diligence research).
   const site = domains.length ? `Only use ${domains.join(" or ")} (for example search "site:${domains[0]} ...").` : "";
   // The most capable setup first, then simpler ones for accounts or gateways that don't support every option.
