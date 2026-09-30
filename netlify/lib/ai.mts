@@ -288,7 +288,7 @@ const analyse = (deal: string, level: LevelId, strategy?: string) => {
 
 const RANK_PROMPT = `You are Deal Pro's UK property deal sourcer. You are given Deal Finder search results as JSON (each has an id, site, type, beds, area, postcode and either a monthly rent or an asking price) plus the user's search filters. Rank them by how good they are as property deals for the user's strategy: rent-to-rent / serviced accommodation for rentals; buy-to-let, HMO, BRRR or serviced accommodation for purchases. Estimate a realistic nightly rate or rent for the location where needed and say it is an estimate.
 
-Judge each on: for rentals, likely monthly profit at 80% occupancy (revenue = 24 nights x nightly rate, minus 15% platform fees, £45 cleaning per 3-night stay, rent and about £150 other costs), break-even occupancy, for purchases, gross yield and cash flow; price or rent level against the area, demand for short stays in that location, and compliance risk (in London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights don't count, so note when a London deal would need them; HMO and Article 4 where relevant). Treat nightly rates as estimates and say so. Never invent facts about a specific listing. The id is only for matching your picks to the results: never mention ids anywhere in your text. When you compare listings, name them by type and street or area (for example "the 1 bed flat on Adam & Eve Court").
+Judge each on: for rentals, likely monthly profit at 80% occupancy (revenue = 24 nights x nightly rate, minus 15% platform fees, £45 cleaning per 3-night stay, rent and about £150 other costs), break-even occupancy, for purchases, gross yield and cash flow; price or rent level against the area, demand for short stays in that location, and compliance risk (in London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights don't count, so note when a London deal would need them; HMO and Article 4 where relevant). Treat nightly rates as estimates and say so. If the filters include "notes" (the user's own criteria in their words), rank listings that meet them higher and say which criteria each pick meets or misses. Never invent facts about a specific listing. The id is only for matching your picks to the results: never mention ids anywhere in your text. When you compare listings, name them by type and street or area (for example "the 1 bed flat on Adam & Eve Court").
 
 Return valid JSON with exactly these keys:
 summary (plain English, max 60 words, what the best options have in common),
@@ -351,7 +351,7 @@ const ANGLES = [
 ];
 export type Filters = {
   mode?: string; beds?: string | string[]; min?: number | string; max?: number | string; loc?: string;
-  priv?: boolean; furn?: string; type?: string;
+  priv?: boolean; furn?: string; type?: string; notes?: string;
 };
 
 export type Listing = {
@@ -385,7 +385,8 @@ function describe(f: Filters) {
     f.furn && f.furn !== "any" ? f.furn : "",
     f.priv ? "private landlords only (no agents)" : "",
   ];
-  return parts.filter(Boolean).join(", ");
+  const notes = typeof f.notes === "string" ? f.notes.replace(/\s+/g, " ").trim().slice(0, 500) : "";
+  return parts.filter(Boolean).join(", ") + (notes ? `. The user's own criteria, in their words (follow them where the listing shows it): "${notes}"` : "");
 }
 
 const hostMatches = (url: string, domains: string[]) => {

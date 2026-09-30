@@ -783,6 +783,8 @@ td.t{text-align:right;color:var(--ink-2)}
 .pl-why{font-size:12px;color:var(--warn);margin:4px 0}.pl-iss{font-size:11.5px;color:var(--bad)}
 .pl-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}.pl-sel{height:28px;font-size:12px;padding:0 6px;max-width:150px}
 .pl-list td{vertical-align:middle}
+.fnotes{display:grid;gap:6px;padding-bottom:12px;border-bottom:1px solid var(--line)}.fnotes textarea{min-height:76px;resize:vertical}
+.fnotes-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.fnotes-msg{font-size:12px;color:var(--ink-2)}.fnotes-note{margin:0;font-size:11.5px;color:var(--muted)}
 .lv-time{font-size:11.5px!important;color:var(--muted)!important}
 .ai-level:has(input:focus-visible){outline:2px solid var(--lv);outline-offset:2px}.ai-level.locked{opacity:.55}.ai-level .lv-use{color:var(--lv);font-weight:500}.ai-credits{font-size:12px;color:var(--ink-2);margin:8px 0 0}
 .ai-level-stack{grid-template-columns:1fr}
@@ -919,6 +921,11 @@ td.t{text-align:right;color:var(--ink-2)}
         <div class="fs">
           <div class="fs-h"><h2>Filters</h2><button class="btn ghost sm" id="fReset">Reset</button></div>
           <div class="fields">
+            <div class="fnotes">
+              <label class="f"><span>Describe what you want <span class="muted">(optional)</span></span><textarea class="inp" id="fNotes" rows="3" maxlength="500" placeholder="e.g. 2–3 bed flats in Leeds under £1,300, near a train station, with parking, suitable for R2SA"></textarea></label>
+              <div class="fnotes-acts"><button class="btn sm" id="fNotesFill" type="button">Fill in the filters</button><span class="fnotes-msg" id="fNotesMsg" role="status"></span></div>
+              <p class="fnotes-note">The AI searches with everything you write here, as well as the filters below.</p>
+            </div>
             <fieldset class="fg"><legend>Listing</legend>
               <div class="seg"><input type="radio" name="fMode" id="fModeRent" value="rent" checked><label for="fModeRent">Rent</label><input type="radio" name="fMode" id="fModeBuy" value="buy"><label for="fModeBuy">Buy</label></div>
             </fieldset>
@@ -2010,7 +2017,7 @@ const LISTINGS=[
 ];
 const SITES=['OpenRent','SpareRoom','Gumtree','Rightmove','Zoopla','Facebook','RightmoveCommercial','Realla','NovaLoca','LoopNet'];
 const SITE_LABEL=s=>({Facebook:'Facebook Marketplace',RightmoveCommercial:'Rightmove Commercial'})[s]||s;
-const FIND_DEF=()=>({mode:'rent',beds:[],min:1200,max:5000,loc:'',priv:false,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false}});
+const FIND_DEF=()=>({notes:'',mode:'rent',beds:[],min:1200,max:5000,loc:'',priv:false,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false}});
 if(!S.find||!S.find.f)S.find={f:FIND_DEF(),searched:false,sort:null};
 S.find.f=Object.assign(FIND_DEF(),S.find.f);S.find.f.sites=Object.assign(FIND_DEF().sites,S.find.f.sites);
 const FS={busy:false,sel:new Set()};
@@ -2035,13 +2042,39 @@ $('#fBedsSeg').addEventListener('change',e=>{const t=e.target,boxes=$$('input[na
   if(t.id==='fBedsAny'){boxes.forEach(c=>{c.checked=false});t.checked=true;return}
   if(t.checked){const on=boxes.filter(c=>c.checked).map(c=>+c.value);if(on.length>1){const lo=Math.min(...on),hi=Math.max(...on);boxes.forEach(c=>{if(+c.value>=lo&&+c.value<=hi)c.checked=true})}}
   $('#fBedsAny').checked=!boxes.some(c=>c.checked)},true);
-function bindFind(){const f=S.find.f;
+/* typed criteria: pick out the obvious filters; everything else goes to the AI as the user's own words */
+function parseCriteria(text){const t=' '+String(text||'').replace(/[–—]/g,'-').replace(/,(?=\d{3}\b)/g,'')+' ',lo=t.toLowerCase(),out={},got=[];
+  const money=(n,k)=>Math.round(+n*(k?1000:1));
+  if(/\b(buy|purchase|for sale|to buy|btl|brrr|flip)\b/.test(lo))out.mode='buy';else if(/\b(rent|to let|pcm|per month|r2sa|r2r|rent to rent)\b/.test(lo))out.mode='rent';
+  if(out.mode)got.push(out.mode==='buy'?'To buy':'To rent');
+  const bedN=w=>w==='studio'?0:+w;
+  let m=lo.match(/\b(studio|\d)\s*(?:-|to|or)\s*(\d)\+?\s*(?:bed|bedroom|br)/);
+  if(m){const a=bedN(m[1]),b=Math.min(4,+m[2]);out.beds=[];for(let i=Math.min(a,b);i<=Math.max(a,b);i++)out.beds.push(String(i))}
+  else if((m=lo.match(/\b(\d)\s*\+\s*(?:bed|bedroom|br)|\b(\d)\s*(?:bed|bedroom|br)s?\s*(?:or more|plus|\+)/))){const a=+(m[1]||m[2]);out.beds=[];for(let i=Math.min(a,4);i<=4;i++)out.beds.push(String(i))}
+  else if((m=lo.match(/\b(\d)\s*(?:-\s*)?(?:bed|bedroom|br)s?\b/)))out.beds=[String(Math.min(4,+m[1]))];
+  else if(/\bstudios?\b/.test(lo))out.beds=['0'];
+  if(out.beds)got.push(out.beds.length>1?`${out.beds[0]==='0'?'Studio':out.beds[0]}–${out.beds[out.beds.length-1]==='4'?'4+':out.beds[out.beds.length-1]} beds`:out.beds[0]==='0'?'Studio':`${out.beds[0]==='4'?'4+':out.beds[0]} bed`);
+  if((m=lo.match(/£\s?(\d+(?:\.\d+)?)\s*(k)?\s*(?:-|to)\s*£?\s?(\d+(?:\.\d+)?)\s*(k)?/))){out.min=money(m[1],m[2]||m[4]);out.max=money(m[3],m[4])}
+  else{if((m=lo.match(/(?:under|below|max(?:imum)?|up to|less than|no more than|budget(?: of)?)\s*£?\s?(\d+(?:\.\d+)?)\s*(k)?/)))out.max=money(m[1],m[2]);
+    if((m=lo.match(/(?:over|above|min(?:imum)?|from|at least|more than)\s*£\s?(\d+(?:\.\d+)?)\s*(k)?/)))out.min=money(m[1],m[2])}
+  if(out.max!=null||out.min!=null){if(out.min==null)out.min='';if(out.max==null)out.max='';got.push(`${out.min!==''?gbp(out.min):'£0'}–${out.max!==''?gbp(out.max):'any'}`)}
+  if(/\bcommercial|office|retail|shop|industrial|warehouse\b/.test(lo))out.type='commercial';else if(/\bhouses?\b|\bterrace|\bsemi\b|detached|bungalow/.test(lo))out.type='house';else if(/\bflats?\b|apartment|maisonette/.test(lo))out.type='flat';else if(out.beds&&out.beds.join()==='0')out.type='studio';
+  if(out.type)got.push(out.type[0].toUpperCase()+out.type.slice(1));
+  if(/\bunfurnished\b/.test(lo))out.furn='unfurnished';else if(/\bfurnished\b/.test(lo))out.furn='furnished';if(out.furn)got.push(out.furn[0].toUpperCase()+out.furn.slice(1));
+  if(/private landlord|no agents?|direct(?:ly)? from (?:the )?landlord/.test(lo)){out.priv=true;got.push('Private landlords')}
+  // location: a postcode district, or the place after "in"/"around"/"near"
+  const pc=t.match(/\b([A-Z]{1,2}\d[A-Z\d]?)(?:\s*\d[A-Z]{2})?\b/);
+  const place=t.match(/\b(?:in|around|within|across|near)\s+((?:[A-Z][\w'&.-]*)(?:[\s-]+(?:[A-Z][\w'&.-]*|upon|on|under|le|by|de))*)/);
+  if(place)out.loc=place[1].replace(/\s+(?:under|over|with|near|for|and|or|up)$/i,'').trim();else if(pc)out.loc=pc[1];
+  if(out.loc)got.push(out.loc);
+  return {f:out,got}}
+function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';
   $(f.mode==='buy'?'#fModeBuy':'#fModeRent').checked=true;
   f.beds=bedList(f.beds);$$('input[name="fBeds"]').forEach(c=>{c.checked=f.beds.includes(c.value)});$('#fBedsAny').checked=!f.beds.length;
   $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fFurn').value=f.furn;$('#fType').value=f.type;
   SITES.forEach(s=>{$('#fSite'+s).checked=!!f.sites[s]});findChrome()}
 function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
-  f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
+  f.notes=$('#fNotes').value.slice(0,500);f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
   f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
   SITES.forEach(s=>{f.sites[s]=$('#fSite'+s).checked})}
 function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;
@@ -2124,6 +2157,9 @@ function syncFee(){$$('.js-fee').forEach(e=>e.textContent=gbp(dealFee()))}
 function onFind(){readFind();save();renderFind();$$('#fLevelOpts .lv-time').forEach(e=>{e.textContent='Takes ~'+estTxt('search',e.dataset.lv,findSiteCount())})}
 $('#fPanel').addEventListener('input',onFind);$('#fPanel').addEventListener('change',onFind);
 $('#fReset').addEventListener('click',()=>{S.find.f=FIND_DEF();bindFind();save();renderFind()});
+$('#fNotesFill').addEventListener('click',()=>{const text=$('#fNotes').value.trim(),msg=$('#fNotesMsg');if(!text){msg.textContent='Type what you’re looking for first.';$('#fNotes').focus();return}
+  const {f,got}=parseCriteria(text);readFind();Object.assign(S.find.f,f);bindFind();save();renderFind();
+  msg.textContent=got.length?`Filled in: ${got.join(' · ')}. Check the filters, then search.`:'No filters to fill in. The AI will still search with what you wrote.'});
 const FIND_MSG=m=>{const n=$('#nFind');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
 async function pollJob(jobId,onTick,onProgress,maxMs=17*60e3){const t0=Date.now();for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(jobId),{credentials:'same-origin'});const d=await p.json().catch(()=>({}));
   if(!p.ok)throw new Error(d.error||'The AI could not finish. Please try again.');if(d.credits){AIC.info=d.credits;renderAILevels()}
