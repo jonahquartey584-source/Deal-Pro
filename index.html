@@ -787,6 +787,7 @@ td.t{text-align:right;color:var(--ink-2)}
 .fnotes-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.fnotes-msg{font-size:12px;color:var(--ink-2)}.fnotes-note{margin:0;font-size:11.5px;color:var(--muted)}
 .ai-sc{display:inline-block;min-width:30px;text-align:center;font:600 12px var(--mono);border-radius:5px;padding:1px 6px;border:1px solid var(--line-2)}.ai-sc.hi{color:var(--good);border-color:currentColor}.ai-sc.mid{color:var(--warn);border-color:currentColor}.ai-sc.lo{color:var(--muted)}
 .rank-stats{font-size:12px!important;color:var(--muted)}.rank-exp{font-size:14px!important;line-height:1.6;color:var(--ink);max-width:80ch}.rank-hl{margin:6px 0 4px;padding-left:18px;display:grid;gap:3px;font-size:13px;color:var(--ink-2)}.rank-sub{font-size:13px;margin:12px 0 2px}
+.cardlinks{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);white-space:nowrap;cursor:pointer}.cardlinks input{accent-color:var(--brand)}
 .lv-time{font-size:11.5px!important;color:var(--muted)!important}
 .ai-level:has(input:focus-visible){outline:2px solid var(--lv);outline-offset:2px}.ai-level.locked{opacity:.55}.ai-level .lv-use{color:var(--lv);font-weight:500}.ai-credits{font-size:12px;color:var(--ink-2);margin:8px 0 0}
 .ai-level-stack{grid-template-columns:1fr}
@@ -2152,9 +2153,9 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   const th=(k,lab,cls='')=>{const on=so&&so.k===k;return `<th class="${cls}" aria-sort="${on?(so.dir>0?'ascending':'descending'):'none'}"><button class="sort" data-sort="${k}">${lab}<span class="sa" aria-hidden="true">${on?(so.dir>0?'↑':'↓'):''}</span></button></th>`};
   const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
   const acts=view==='cards'
-    ?(m?`<button class="btn sm primary" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${CARD_SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${CARD_SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
+    ?(m?`<button class="btn sm primary" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${CARD_SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${CARD_SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
       <button class="btn sm car-arrow" id="fPrev" aria-label="Previous deals">${CHEV(-1)}</button><button class="btn sm car-arrow" id="fNext" aria-label="Next deals">${CHEV(1)}</button>`:'')
-    :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
+    :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
   const L=`<span class="lockc">${LOCK}Locked</span>`;
   let body;
   if(!m)body=`<div class="fempty"><h2>${hidden?'No listings confirmed live':'No listings match these filters'}</h2><p>${hidden?'Every listing found either had a dead link or its site blocked the check. Try Analyst or Expert, which open more listings to confirm them, or show the unconfirmed ones.':'Try a wider price range, a different location or more sites.'}</p></div>`;
@@ -2246,6 +2247,8 @@ async function rankNow(){const conf=SRC().map((r,i)=>({r,i})).filter(x=>confirme
     const data=await pollJob(d.jobId);FS.rank={status:'done',level:lv,data};S.find.rank={level:lv.id,data};save()}
   catch(e){FS.rank={status:'error',level:lv,error:e.message||'The ranking could not be completed.'}}renderFind()}
 document.addEventListener('click',e=>{if(e.target.closest('#fRankNow'))rankNow()});
+// Untick "Include links" for pre-NDA cards: no listing links or street names.
+document.addEventListener('change',e=>{if(e.target.id==='fCardLinks'){S.find.cardLinks=e.target.checked;save();toast(e.target.checked?'Copied cards will include listing links and full areas.':'Pre-NDA: copied cards will leave out links and street names.')}});
 function rankHTML(){restoreRank();const R=FS.rank;
   if(!R){const n=SRC().filter(confirmedLive).length;return n?`<div class="rank"><div class="rank-h"><b>No AI ranking for these results yet</b></div><p class="muted">Rank the ${n} confirmed listing${n===1?'':'s'} and get an explanation of what the search found.</p><button class="btn sm primary" type="button" id="fRankNow">Rank with AI</button></div>`:''}
   const lv=R.level;
@@ -2274,7 +2277,9 @@ function copyTsv(){const n=openRows().length;if(!n){toast('No deals to copy.');r
 /* copy deal cards to send to a client: WhatsApp-ready text, plus formatted cards for email */
 const cardsLabel=n=>FS.sel.size?`Copy ${FS.sel.size} selected card${FS.sel.size===1?'':'s'}`:`Copy all ${n} deal card${n===1?'':'s'}`;
 function cardRows(){const shown=(FS.lastRows||sortRows(findRows())).filter(isOpen);return FS.sel.size?shown.filter(r=>FS.sel.has(r.k)):shown}
-function cardFacts(r,i){const buy=r.mode==='buy',where=[r.area,r.postcode].filter(Boolean).join(' ').replace(/\s*\(.*?\)/g,'').trim();
+const preNDA=()=>S.find.cardLinks===false;
+function cardFacts(r,i){const buy=r.mode==='buy',town=String(r.area||'').replace(/\s*\(.*?\)/g,'').split(',').pop().trim();
+  const where=(preNDA()?[town,r.postcode]:[r.area,r.postcode]).filter(Boolean).join(' ').replace(/\s*\(.*?\)/g,'').trim();
   const u={rent:r.price,rate:RATE_EST(r.beds,r.area+' '+r.postcode)},occ=buy?[]:OCC.map(x=>month(u,x,null,DEF_A).surplus);
   const live=r.verified==='available'&&r.checkedAt?new Date(r.checkedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'';
   return {head:`Deal ${i+1} · ${r.type}${buy?` · ${gbp(r.price)}`:` · ${gbp(r.price)}/month`}`,lines:[
@@ -2282,17 +2287,18 @@ function cardFacts(r,i){const buy=r.mode==='buy',where=[r.area,r.postcode].filte
     ...(buy?[['💷',`Asking price ${gbp(r.price)}`]]:[['💸',`Rent ${gbp(r.price)}/month (${gbp(r.price*12)}/year)`],['💸',`Deposit about ${gbp(r.price)} (est.)`],['💰',`Nightly rate about £${u.rate} (est.)`],
       ['💷',OCC.map((x,j)=>`${gbp(occ[j])} at ${pct(x)}`).join(' · ')+' occupancy (est.)']]),
     ...(r.ai>=0?[['⭐',`AI score ${r.ai}/100${r.aiv?' · '+r.aiv:''}`]]:[]),
-    ...(live?[['✅',`Listing checked live ${live}`]]:[]),['🔗',r.url]]}}
+    ...(live?[['✅',`Listing checked live ${live}`]]:[]),...(preNDA()?[]:[['🔗',r.url]])]}}
 function copyCards(){const rows=cardRows();if(!rows.length){toast('No deals to copy.');return}
   const f=S.find.f,today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-  const title=`${rows.length} property deal${rows.length===1?'':'s'}${f.loc?` · ${f.loc}`:''} · ${today}`,foot='Figures are illustrative estimates. Nightly rates and occupancy are not verified. Please check all details before committing.';
+  const title=`${rows.length} property deal${rows.length===1?'':'s'}${f.loc?` · ${f.loc}`:''} · ${today}${preNDA()?' · Pre-NDA summary':''}`;
+  const foot=(preNDA()?'Pre-NDA summary: the full address and listing details are shared once an NDA is in place. ':'')+'Figures are illustrative estimates. Nightly rates and occupancy are not verified. Please check all details before committing.';
   const cards=rows.map(cardFacts);
   const text=[title,'',...cards.map(c=>[`*${c.head}*`,...c.lines.filter(l=>l[1]).map(([e,t])=>`${e} ${t}`)].join('\n')+'\n'),foot,'','Found with Deal Pro · usedealpro.com'].join('\n');
   const eh=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const html=`<div style="font-family:Arial,Helvetica,sans-serif;color:#15171a"><p style="font-size:16px;font-weight:bold;margin:0 0 12px">${eh(title)}</p>${cards.map(c=>`<div style="border:1px solid #d9dbe0;border-radius:8px;padding:12px 14px;margin:0 0 12px;max-width:560px"><p style="font-size:15px;font-weight:bold;margin:0 0 6px">${eh(c.head)}</p>${c.lines.filter(l=>l[1]).map(([e,t])=>`<p style="margin:2px 0;font-size:14px">${e} ${e==='🔗'?`<a href="${eh(t)}">${eh(t)}</a>`:eh(t)}</p>`).join('')}</div>`).join('')}<p style="font-size:12px;color:#5b606a">${eh(foot)}</p><p style="font-size:12px;color:#5b606a">Found with Deal Pro · usedealpro.com</p></div>`;
   const lab=`${rows.length} deal card${rows.length===1?'':'s'}`;
   const fb=()=>{const w=$('#fTsvWrap'),ta=$('#fTsv');if(!w){toast('Copying isn’t available in this browser.');return}w.hidden=false;ta.value=text;ta.focus();ta.select();ta.scrollTop=0;toast(`Selected ${lab}. Press Ctrl/Cmd+C to copy.`)};
-  const done=()=>toast(`Copied ${lab}. Paste into WhatsApp, an email or a message.`);
+  const done=()=>toast(`Copied ${lab}${preNDA()?' (pre-NDA, no links)':''}. Paste into WhatsApp, an email or a message.`);
   try{if(window.ClipboardItem&&navigator.clipboard.write){navigator.clipboard.write([new ClipboardItem({'text/plain':new Blob([text],{type:'text/plain'}),'text/html':new Blob([html],{type:'text/html'})})]).then(done).catch(()=>navigator.clipboard.writeText(text).then(done).catch(fb))}
     else navigator.clipboard.writeText(text).then(done).catch(fb)}catch(e){fb()}}
 // Start a new deal from pasted or posted text and run the AI analysis on it straight away.
