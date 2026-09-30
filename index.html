@@ -743,6 +743,17 @@ td.t{text-align:right;color:var(--ink-2)}
 .live-ok{color:var(--good,#1E9E5A);font-weight:600;white-space:nowrap}.dc-live{margin:-4px 0 8px;font-size:12.5px}
 .fig-s{font-size:12px;color:var(--muted);margin-top:4px}.fig-v.neg{color:var(--bad)}
 .pl-kpis{margin-bottom:14px}
+.cbar{display:grid;gap:10px;margin-bottom:14px}
+.csearch{display:flex;align-items:center;gap:10px;height:46px;padding:0 14px;border:1px solid var(--line-2);border-radius:10px;background:var(--field);color:var(--muted)}.csearch:focus-within{border-color:var(--brand)}
+.csearch svg{width:18px;height:18px;flex:none}.csearch input{flex:1;min-width:0;border:0;background:none;color:var(--ink);font:inherit;font-size:15px;outline:none}
+.cquick{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.cq-div{width:1px;height:18px;background:var(--line);margin:0 4px}
+.csaved{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px}.csaved:empty{display:none}
+.ss{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:999px;background:var(--surface)}.ss-go{border:0;background:none;color:var(--ink-2);font-size:12.5px;padding:3px 4px 3px 10px;cursor:pointer}.ss-go b{color:var(--accent);font-weight:600}
+.ss-x{border:0;background:none;color:var(--muted);cursor:pointer;padding:0 8px 0 4px;font-size:15px;line-height:1}.ss-x:hover{color:var(--ink)}
+.csort select{height:30px;font-size:12.5px;padding:0 8px}
+.c-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.c-star{border:0;background:none;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;padding:0 2px}.c-star.on{color:#F5B83D}.c-star:hover{color:var(--ink)}
+.c-new{display:inline-block;margin-right:6px;font-size:11px;font-weight:700;letter-spacing:.02em;color:#fff;background:var(--brand);border-radius:4px;padding:1px 6px;vertical-align:2px}
+.nav-badge{display:inline-block;margin-left:6px;min-width:18px;padding:0 5px;border-radius:999px;background:var(--brand);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;vertical-align:1px}
 .ai-strats{display:flex;flex-wrap:wrap;gap:6px}.ai-strat{position:relative;cursor:pointer}.ai-strat input{position:absolute;opacity:0;pointer-events:none}
 .ai-strat span{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:4px 11px;font-size:12.5px;color:var(--ink-2);background:var(--surface)}
 .ai-strat input:checked+span{border-color:var(--brand);background:var(--brand-soft);color:var(--ink);font-weight:600}.ai-strat input:focus-visible+span{outline:2px solid var(--brand);outline-offset:2px}
@@ -818,7 +829,7 @@ td.t{text-align:right;color:var(--ink-2)}
       <button class="tab" data-v="home" aria-current="page"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2.5 7L8 2.5 13.5 7v6.5h-11z"/><path d="M6.5 13.5V10h3v3.5"/></svg>Home</button>
       <button class="tab tab-lg" data-v="find"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.25"/><path d="M10.25 10.25l3.25 3.25"/></svg><span class="tab-txt"><span class="tab-l">Deal Finder</span><span class="tab-d">Search free property deals</span></span></button>
       <button class="tab tab-lg" data-v="analyser"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 13.5V8.5M8 13.5v-11M13 13.5V6"/></svg><span class="tab-txt"><span class="tab-l">Deal Analyser</span><span class="tab-d">Numbers, due diligence and deal pack</span></span></button>
-      <button class="tab tab-lg" data-v="community"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="2.25"/><circle cx="11" cy="6.5" r="1.75"/><path d="M1.75 13.5c.4-2.3 1.9-3.75 3.75-3.75s3.35 1.45 3.75 3.75M9.5 10.25c.5-.35 1-.5 1.5-.5 1.5 0 2.6 1.2 2.9 3.75"/></svg><span class="tab-txt"><span class="tab-l">Deal Community</span><span class="tab-d">Post and find contacted deals</span></span></button>
+      <button class="tab tab-lg" data-v="community"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="2.25"/><circle cx="11" cy="6.5" r="1.75"/><path d="M1.75 13.5c.4-2.3 1.9-3.75 3.75-3.75s3.35 1.45 3.75 3.75M9.5 10.25c.5-.35 1-.5 1.5-.5 1.5 0 2.6 1.2 2.9 3.75"/></svg><span class="tab-txt"><span class="tab-l">Deal Community<span class="nav-badge" id="cNewBadge" hidden></span></span><span class="tab-d">Post and find contacted deals</span></span></button>
       <div class="nav-div" role="presentation"></div>
       <button class="tab tab-lg" data-v="deals"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2.25" y="2.75" width="11.5" height="10.5" rx="1.25"/><path d="M2.25 6.25h11.5M5 9.5h6"/></svg><span class="tab-txt"><span class="tab-l">My deals</span><span class="tab-d">Pipeline dashboard</span></span></button>
       <button class="tab" data-v="plans"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="1.75" y="3.75" width="12.5" height="8.5" rx="1.25"/><path d="M1.75 6.75h12.5M4.5 9.75h2"/></svg>Plans</button>
@@ -1182,6 +1193,11 @@ td.t{text-align:right;color:var(--ink-2)}
       <div class="fs cform-acts"><button class="btn primary" type="submit" id="cSubmit">Post deal</button><button class="btn ghost" type="button" id="cCancel">Cancel</button><span class="cmsg" id="cMsg" role="status"></span></div>
     </form>
     <div id="cDealsPane">
+    <div class="cbar">
+      <label class="csearch"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.25"/><path d="M10.25 10.25l3.25 3.25"/></svg><span class="sr">Search deals</span><input id="cQ" type="search" placeholder="Search by town, postcode, street or keyword, e.g. Leeds R2SA 2 bed" autocomplete="off"></label>
+      <div class="cquick" id="cQuick" role="group" aria-label="Quick filters"></div>
+      <div class="csaved" id="cSavedSearches"></div>
+    </div>
     <div class="find">
       <div class="panel fpanel" id="cFilters">
         <div class="fs">
@@ -1189,6 +1205,11 @@ td.t{text-align:right;color:var(--ink-2)}
           <div class="fields">
             <label class="f"><span>Region</span><select class="inp js-regions" id="cfRegion"><option value="any">Any</option></select></label>
             <label class="f"><span>Location</span><input class="inp" id="cfLoc" placeholder="Town, area or postcode" autocomplete="off"></label>
+            <div class="row2">
+              <label class="f"><span>Bedrooms</span><select class="inp" id="cfBeds"><option value="any">Any</option><option value="0">Studio+</option><option value="1">1+</option><option value="2">2+</option><option value="3">3+</option><option value="4">4+</option></select></label>
+              <label class="f"><span>Contacted</span><select class="inp" id="cfContacted"><option value="any">Anyone</option><option value="Landlord">Landlord</option><option value="Agent">Agent</option></select></label>
+            </div>
+            <label class="f"><span>Posted</span><select class="inp" id="cfAge"><option value="any">Any time</option><option value="1">Last 24 hours</option><option value="7">Last 7 days</option><option value="30">Last 30 days</option></select></label>
             <label class="f"><span>Price is</span><select class="inp" id="cfPriceType"><option value="any">Any</option><option value="pcm">Rent per month</option><option value="purchase">Purchase price</option></select></label>
             <div class="row2">
               <label class="f"><span>Min price</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="cfMin" min="0" step="50"></span></label>
@@ -2385,32 +2406,69 @@ const CM={posts:null,loading:false,error:''};
 const REGIONS=['London','Midlands','North East','North West','South East','South West','Yorkshire and Humber','Other'];
 const roomId=r=>r.toLowerCase().replace(/[^a-z]+/g,'-');
 $$('.js-regions').forEach(sel=>sel.insertAdjacentHTML('beforeend',REGIONS.map(r=>`<option value="${esc(r)}">${esc(r)}</option>`).join('')));
-const CF_DEF=()=>({region:'any',loc:'',priceType:'any',min:'',max:'',type:'any',strat:'any'});
-let CF=CF_DEF();
+const CF_DEF=()=>({q:'',region:'any',loc:'',priceType:'any',min:'',max:'',type:'any',strat:'any',beds:'any',contacted:'any',age:'any',starred:false,sort:CF&&CF.sort||'new'});
+var CF=null;CF=CF_DEF();
 async function cApi({url='',...opts}={}){const r=await fetch('/api/community'+url,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...opts});
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Something went wrong. Please try again.');return d}
-async function loadCommunity(){if(CM.loading)return;CM.loading=true;CM.error='';
-  try{const d=await cApi();CM.posts=d.posts||[];CM.posting=d.posting||null;renderPostNote()}catch(e){CM.error=e.message}finally{CM.loading=false}renderCommunityList()}
+// Callers that arrive while a load is running share it, so a shared deal link can wait for the posts.
+function loadCommunity(){if(CM.loading)return CM.loading;CM.error='';
+  CM.loading=(async()=>{try{const d=await cApi();CM.posts=d.posts||[];CM.posting=d.posting||null;renderPostNote()}catch(e){CM.error=e.message}finally{CM.loading=null}renderCommunityList();renderCNewBadge()})();
+  return CM.loading}
 // Posting deals needs Lite or Premium (a monthly allowance) or Max (unlimited); Free can browse, reply and chat.
 function renderPostNote(){const p=CM.posting,n=$('#cPostNote');if(!n)return;n.textContent=!p?'':p.left==null?'':p.allowed?`${p.left} of ${p.limit} posts left this month`:p.limit?'Monthly posts used':'Paid plans'}
 function postingBlocked(){const p=CM.posting;if(!p||p.allowed)return false;
   const n=$('#nCommunity')||(()=>{const d=document.createElement('div');d.className='limit-note';d.id='nCommunity';d.setAttribute('role','status');$('#cForm').before(d);return d})();
   n.innerHTML=`<div>${p.limit?`You've posted your ${p.limit} deals for this month. ${p.plan==='Lite'?'Upgrade to Premium for 10 a month, or Max for unlimited posts.':'Upgrade to Max for unlimited posts.'}`:'Posting deals needs a paid plan: Lite (3 a month, £9.99), Premium (10 a month) or Max (unlimited). You can still browse deals, reply and use the region chat for free.'}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false;return true}
-function renderCommunity(){const f=$('#cForm');const em=document.body.dataset.userEmail||'';
+function renderCommunity(){cMarkSeen();const f=$('#cForm');const em=document.body.dataset.userEmail||'';
   if(f&&!f.elements.contactEmail.value)f.elements.contactEmail.value=em;const nm=($('.ws-name')||{}).textContent||'';if(f&&!f.elements.contactName.value&&nm&&nm!==em)f.elements.contactName.value=nm;
   if(CM.posts)renderCommunityList();loadCommunity();if(CH.on)openRoom(CH.room)}
-function cRows(){const q=CF.loc.trim().toLowerCase(),n=v=>v===''?null:+v;const mn=n(CF.min),mx=n(CF.max);
-  return (CM.posts||[]).filter(p=>(!q||(p.location+' '+p.postcode+' '+p.title).toLowerCase().includes(q))
-    &&(CF.region==='any'||p.region===CF.region)&&(CF.priceType==='any'||p.priceType===CF.priceType)&&(mn==null||p.price>=mn)&&(mx==null||p.price<=mx)
-    &&(CF.type==='any'||p.propertyType===CF.type)&&(CF.strat==='any'||p.strategy===CF.strat))}
+/* finding deals: search, quick filters, sorting, starred deals, saved searches and what's new */
+if(!Array.isArray(S.cStars))S.cStars=[];if(!Array.isArray(S.cSearches))S.cSearches=[];
+const DAY=864e5;
+const cHay=p=>[p.title,p.location,p.postcode,p.region,p.strategy,p.propertyType,p.contacted+' contacted',p.beds===0?'studio':p.beds!=null?p.beds+' bed':'',p.status,p.description].join(' ').toLowerCase();
+function cMatch(p,f){const n=v=>v===''||v==null?null:+v,mn=n(f.min),mx=n(f.max),words=(f.q||'').toLowerCase().split(/\s+/).filter(Boolean),loc=(f.loc||'').trim().toLowerCase();
+  const hay=words.length?cHay(p):'';
+  return words.every(w=>hay.includes(w))&&(!loc||(p.location+' '+p.postcode+' '+p.title).toLowerCase().includes(loc))
+    &&(f.region==='any'||p.region===f.region)&&(f.priceType==='any'||p.priceType===f.priceType)&&(mn==null||p.price>=mn)&&(mx==null||p.price<=mx)
+    &&(f.type==='any'||p.propertyType===f.type)&&(f.strat==='any'||p.strategy===f.strat)
+    &&(f.beds==='any'||(p.beds!=null&&p.beds>=+f.beds))&&(f.contacted==='any'||p.contacted===f.contacted)
+    &&(f.age==='any'||Date.now()-Date.parse(p.createdAt)<=+f.age*DAY)&&(!f.starred||S.cStars.includes(p.id))}
+const C_SORT={new:(a,b)=>Date.parse(b.createdAt)-Date.parse(a.createdAt),low:(a,b)=>a.price-b.price,high:(a,b)=>b.price-a.price,talk:(a,b)=>(b.replyCount||0)-(a.replyCount||0)};
+function cRows(){return (CM.posts||[]).filter(p=>cMatch(p,CF)).sort(C_SORT[CF.sort]||C_SORT.new)}
+// Filters that narrow the list (sorting doesn't count).
+const cActive=f=>{const d=CF_DEF();return Object.keys(d).filter(k=>k!=='sort'&&String(f[k]??'')!==String(d[k]))};
+function cDescribe(f){const parts=[];if(f.q)parts.push(`“${f.q.trim()}”`);if(f.loc)parts.push(f.loc.trim());if(f.region!=='any')parts.push(f.region);if(f.strat!=='any')parts.push(f.strat);
+  if(f.type!=='any')parts.push(f.type);if(f.beds!=='any')parts.push(f.beds==='0'?'Studio+':f.beds+'+ bed');if(f.min!==''||f.max!=='')parts.push(`${f.min!==''?gbp(+f.min):'£0'}–${f.max!==''?gbp(+f.max):'any'}`);
+  if(f.priceType!=='any')parts.push(f.priceType==='pcm'?'Rent':'Purchase');if(f.contacted!=='any')parts.push(f.contacted+' contacted');if(f.age!=='any')parts.push(`Last ${f.age==='1'?'24h':f.age+' days'}`);if(f.starred)parts.push('Saved');
+  return parts.join(' · ')||'All deals'}
+const cIsNew=p=>CM.seenBefore&&Date.parse(p.createdAt)>Date.parse(CM.seenBefore)&&!p.mine;
+function bindCF(){const f=CF;$('#cQ').value=f.q;$('#cfRegion').value=f.region;$('#cfLoc').value=f.loc;$('#cfPriceType').value=f.priceType;$('#cfMin').value=f.min;$('#cfMax').value=f.max;
+  $('#cfType').value=f.type;$('#cfStrat').value=f.strat;$('#cfBeds').value=f.beds;$('#cfContacted').value=f.contacted;$('#cfAge').value=f.age}
+function renderCQuick(){const posts=CM.posts||[],box=$('#cQuick');if(!box)return;
+  const strats=[...new Set(posts.map(p=>p.strategy))].sort((a,b)=>posts.filter(p=>p.strategy===b).length-posts.filter(p=>p.strategy===a).length);
+  const chip=(key,label,on,count)=>`<button type="button" class="pl-chip" data-cq="${esc(key)}" aria-pressed="${on}">${esc(label)}${count!=null?` <span>${count}</span>`:''}</button>`;
+  box.innerHTML=chip('strat:any','All',CF.strat==='any'&&!CF.starred&&CF.age==='any'&&CF.contacted==='any',posts.length)
+    +strats.map(k=>chip('strat:'+k,k,CF.strat===k,posts.filter(p=>p.strategy===k).length)).join('')
+    +'<span class="cq-div" aria-hidden="true"></span>'
+    +chip('age:7','New this week',CF.age==='7',posts.filter(p=>Date.now()-Date.parse(p.createdAt)<=7*DAY).length)
+    +chip('contacted:Landlord','Landlord contacted',CF.contacted==='Landlord',posts.filter(p=>p.contacted==='Landlord').length)
+    +chip('starred','★ Saved',CF.starred,posts.filter(p=>S.cStars.includes(p.id)).length);
+  const ss=$('#cSavedSearches');
+  ss.innerHTML=S.cSearches.length?`<span class="muted">Saved searches:</span>${S.cSearches.map(x=>{const fresh=posts.filter(p=>cMatch(p,Object.assign(CF_DEF(),x.f))&&Date.parse(p.createdAt)>Date.parse(x.seen)&&!p.mine).length;
+    return `<span class="ss"><button type="button" class="ss-go" data-ss="${esc(x.id)}">${esc(x.name)}${fresh?` <b>${fresh} new</b>`:''}</button><button type="button" class="ss-x" data-ssdel="${esc(x.id)}" aria-label="Delete saved search ${esc(x.name)}">×</button></span>`}).join('')}`:''}
+function renderCNewBadge(){const b=$('#cNewBadge');if(!b)return;const since=S.cSeenAt,n=since&&CM.posts?CM.posts.filter(p=>Date.parse(p.createdAt)>Date.parse(since)&&!p.mine).length:0;
+  b.hidden=!n||curView==='community';b.textContent=n>9?'9+':String(n);b.title=`${n} new deal${n===1?'':'s'} since your last visit`}
+// Opening the Deal Community marks everything as seen, but deals new since the last visit keep their badge until you leave.
+function cMarkSeen(){if(CM.seenBefore===undefined)CM.seenBefore=S.cSeenAt||null;S.cSeenAt=new Date().toISOString();save();renderCNewBadge()}
 function cCard(p){const price=p.priceType==='purchase'?`${gbp(p.price)} purchase`:`${gbp(p.price)}/month`;
   const subj=encodeURIComponent('Deal Pro: '+p.title);
-  return `<article class="dcard" data-cid="${esc(p.id)}"><h3>${esc(p.title)}</h3>
+  const starred=S.cStars.includes(p.id);
+  return `<article class="dcard" data-cid="${esc(p.id)}"><div class="c-top"><h3>${cIsNew(p)?'<span class="c-new">New</span>':''}${esc(p.title)}</h3><button type="button" class="c-star${starred?' on':''}" data-cstar="${esc(p.id)}" aria-pressed="${starred}" aria-label="${starred?'Remove from saved deals':'Save this deal'}" title="${starred?'Saved':'Save deal'}">${starred?'★':'☆'}</button></div>
     <div class="ctags">${p.region?`<span class="ctag">${esc(p.region)}</span>`:''}<span class="ctag hot">${esc(p.strategy)}</span><span class="ctag">${esc(p.propertyType)}</span>${p.beds!=null?`<span class="ctag">${p.beds===0?'Studio':p.beds+' bed'}</span>`:''}<span class="ctag">${esc(p.contacted)} contacted</span></div>
     <ul class="adv"><li><span class="em-dot" aria-hidden="true"></span><span>${esc(p.location)}${p.postcode?' '+esc(p.postcode):''}</span></li><li><span class="em-dot" aria-hidden="true"></span><span><b>${price}</b></span></li>${p.status?`<li><span class="em-dot" aria-hidden="true"></span><span>${esc(p.status)}</span></li>`:''}</ul>
     ${p.description?`<p class="cdesc">${esc(p.description)}</p>`:''}
     <div class="dc-foot"><div class="dc-note"><span class="cmeta">Posted by ${esc(p.contactName||'a member')} on ${fmtDate(p.createdAt)}${p.mine?' · your deal':''}</span></div>
-      <div class="dc-act"><a class="btn sm primary" href="mailto:${esc(p.contactEmail)}?subject=${subj}">Email</a><button class="btn sm" type="button" data-canalyse="${esc(p.id)}">Analyse</button>${p.contactPhone?`<a class="btn sm" href="tel:${esc(p.contactPhone.replace(/[^+\d]/g,''))}">${esc(p.contactPhone)}</a>`:''}${p.listingUrl?`<a class="btn sm" href="${esc(p.listingUrl)}" target="_blank" rel="noopener nofollow">Listing ↗</a>`:''}${p.canDelete?`<button class="btn sm ghost" data-cdel="${esc(p.id)}">Delete</button>`:''}</div>
+      <div class="dc-act"><a class="btn sm primary" href="mailto:${esc(p.contactEmail)}?subject=${subj}">Email</a><button class="btn sm" type="button" data-canalyse="${esc(p.id)}">Analyse</button>${p.contactPhone?`<a class="btn sm" href="tel:${esc(p.contactPhone.replace(/[^+\d]/g,''))}">${esc(p.contactPhone)}</a>`:''}${p.listingUrl?`<a class="btn sm" href="${esc(p.listingUrl)}" target="_blank" rel="noopener nofollow">Listing ↗</a>`:''}<button class="btn sm ghost" type="button" data-clink="${esc(p.id)}">Copy link</button>${p.canDelete?`<button class="btn sm ghost" data-cdel="${esc(p.id)}">Delete</button>`:''}</div>
       <button class="btn sm ghost block" data-creplies="${esc(p.id)}" aria-expanded="${CR.open.has(p.id)}">${CR.open.has(p.id)?'Hide replies':replyLabel(p.replyCount)}</button></div>
     ${CR.open.has(p.id)?`<div class="creplies">${repliesHTML(p.id)}</div>`:''}
   </article>`}
@@ -2435,11 +2493,33 @@ function renderCommunityList(){const box=$('#cResults');if(!box)return;
   if(!CM.posts){box.innerHTML='<div class="fempty"><h2>Loading deals…</h2></div>';return}
   const rows=cRows(),all=CM.posts.length;
   if(!all){box.innerHTML='<div class="fempty"><h2>No deals posted yet</h2><p>Be the first: post a deal where you have already contacted the landlord or agent.</p></div>';return}
-  box.innerHTML=`<div class="ftool"><div class="fsum"><b class="mono">${rows.length}</b> of <b class="mono">${all}</b> deal${all===1?'':'s'}</div></div>`+
-    (rows.length?`<div class="cgrid">${rows.map(cCard).join('')}</div>`:'<div class="fempty"><h2>No deals match these filters</h2><p>Try a wider price range, another location or a different strategy.</p></div>')}
-function readCF(){CF={region:$('#cfRegion').value,loc:$('#cfLoc').value,priceType:$('#cfPriceType').value,min:$('#cfMin').value,max:$('#cfMax').value,type:$('#cfType').value,strat:$('#cfStrat').value};renderCommunityList()}
+  const act=cActive(CF),saved=S.cSearches.some(x=>JSON.stringify(Object.assign(CF_DEF(),x.f,{sort:''}))===JSON.stringify(Object.assign({},CF,{sort:''})));
+  renderCQuick();
+  box.innerHTML=`<div class="ftool"><div><div class="fsum"><b class="mono">${rows.length}</b> of <b class="mono">${all}</b> deal${all===1?'':'s'}${act.length?` · <span class="muted">${esc(cDescribe(CF))}</span>`:''}</div></div>
+    <div class="ph-actions">${act.length?`<button class="btn sm ghost" type="button" data-cclear>Clear filters</button>${saved?'<span class="muted" style="font-size:12.5px">Search saved</span>':'<button class="btn sm" type="button" data-csave>Save this search</button>'}`:''}
+      <label class="csort"><span class="sr">Sort deals</span><select class="inp" id="cSort"><option value="new"${CF.sort==='new'?' selected':''}>Newest first</option><option value="low"${CF.sort==='low'?' selected':''}>Price: low to high</option><option value="high"${CF.sort==='high'?' selected':''}>Price: high to low</option><option value="talk"${CF.sort==='talk'?' selected':''}>Most discussed</option></select></label></div></div>`+
+    (rows.length?`<div class="cgrid">${rows.map(cCard).join('')}</div>`:`<div class="fempty"><h2>${CF.starred&&!S.cStars.length?'No saved deals yet':'No deals match these filters'}</h2><p>${CF.starred&&!S.cStars.length?'Tap ☆ on a deal to save it here.':'Try a wider price range, another location or a different strategy.'}${act.length&&!saved?' Or save this search, and you’ll see how many new deals match each time you visit.':''}</p>${act.length?'<button class="btn sm" type="button" data-cclear>Clear filters</button>':''}</div>`)}
+function readCF(){CF=Object.assign({},CF,{q:$('#cQ').value,region:$('#cfRegion').value,loc:$('#cfLoc').value,priceType:$('#cfPriceType').value,min:$('#cfMin').value,max:$('#cfMax').value,type:$('#cfType').value,strat:$('#cfStrat').value,beds:$('#cfBeds').value,contacted:$('#cfContacted').value,age:$('#cfAge').value});renderCommunityList()}
+$('#cQ').addEventListener('input',readCF);
 $('#cFilters').addEventListener('input',readCF);$('#cFilters').addEventListener('change',readCF);
-$('#cReset').addEventListener('click',()=>{CF=CF_DEF();$('#cfRegion').value='any';$('#cfLoc').value='';$('#cfPriceType').value='any';$('#cfMin').value='';$('#cfMax').value='';$('#cfType').value='any';$('#cfStrat').value='any';renderCommunityList()});
+$('#cReset').addEventListener('click',()=>{CF=CF_DEF();bindCF();renderCommunityList()});
+$('#cQuick').addEventListener('click',e=>{const b=e.target.closest('[data-cq]');if(!b)return;const [k,v]=b.dataset.cq.split(':');const on=b.getAttribute('aria-pressed')==='true';
+  if(k==='strat')CF.strat=v==='any'?'any':(on?'any':v);if(v==='any'&&k==='strat'){CF.starred=false;CF.age='any';CF.contacted='any'}
+  if(k==='age')CF.age=on?'any':v;if(k==='contacted')CF.contacted=on?'any':v;if(k==='starred')CF.starred=!on;bindCF();renderCommunityList()});
+$('#cSavedSearches').addEventListener('click',e=>{const g=e.target.closest('[data-ss]'),x=e.target.closest('[data-ssdel]');
+  if(x){S.cSearches=S.cSearches.filter(s=>s.id!==x.dataset.ssdel);save();renderCommunityList();return}
+  if(g){const ss=S.cSearches.find(s=>s.id===g.dataset.ss);if(!ss)return;CF=Object.assign(CF_DEF(),ss.f);ss.seen=new Date().toISOString();save();bindCF();renderCommunityList()}});
+$('#cResults').addEventListener('change',e=>{if(e.target.id==='cSort'){CF.sort=e.target.value;renderCommunityList()}});
+$('#cResults').addEventListener('click',async e=>{
+  if(e.target.closest('[data-cclear]')){CF=CF_DEF();bindCF();renderCommunityList();return}
+  if(e.target.closest('[data-csave]')){if(S.cSearches.length>=10){toast('You can save up to 10 searches. Delete one first.');return}
+    const f={};cActive(CF).forEach(k=>{f[k]=CF[k]});S.cSearches.push({id:'s'+Date.now(),name:cDescribe(CF).slice(0,60),f,seen:new Date().toISOString()});save();renderCommunityList();toast('Search saved. New matching deals will show a count next to it.');return}
+  const st=e.target.closest('[data-cstar]');if(st){const id=st.dataset.cstar,i=S.cStars.indexOf(id);if(i>=0)S.cStars.splice(i,1);else S.cStars.push(id);save();renderCommunityList();return}
+  const cl=e.target.closest('[data-clink]');if(cl){const url=`${location.origin}/?deal=${encodeURIComponent(cl.dataset.clink)}`;
+    try{await navigator.clipboard.writeText(url);toast('Link copied. Signed-in members can open the deal from it.')}catch(err){prompt('Copy this link:',url)}}});
+// A shared deal link (/?deal=…) opens that deal once the member is signed in.
+window.addEventListener('dealpro:signed-in',()=>{const id=new URLSearchParams(location.search).get('deal');loadCommunity();
+  if(id&&/^[\w-]{6,80}$/.test(id)){history.replaceState(null,'',location.pathname);go('community');viewDeal(id)}});
 function cFormShow(on){const f=$('#cForm'),t=$('#cPostToggle');f.hidden=!on;t.setAttribute('aria-expanded',String(on));t.textContent=on?'Close form':'Post a deal';
   const m=$('#cMsg');m.textContent='';m.classList.remove('bad');
   // Opened from the region chat: start with that region, and share the deal in its room.
@@ -2563,7 +2643,7 @@ $('#cTut').addEventListener('toggle',e=>{const v=e.currentTarget.querySelector('
 $('#chPost').addEventListener('click',()=>{if(postingBlocked())return;cFormShow(true)});
 // "View deal" on a deal shared in the chat: show it in the Deals list with its replies open.
 async function viewDeal(id){cTab(false);$('#cReset').click();
-  if(!(CM.posts||[]).some(p=>p.id===id))await loadCommunity();
+  if(CM.loading)await CM.loading;if(!(CM.posts||[]).some(p=>p.id===id))await loadCommunity();
   if(!(CM.posts||[]).some(p=>p.id===id)){toast('That deal has been removed.');return}
   if(!CR.open.has(id)){CR.open.add(id);loadReplies(id)}renderCommunityList();
   const card=$(`#cResults .dcard[data-cid="${CSS.escape(id)}"]`);if(card){card.scrollIntoView({block:'center',behavior:reduced()?'auto':'smooth'});card.classList.remove('just-open');void card.offsetWidth;card.classList.add('just-open')}}
