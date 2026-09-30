@@ -38,7 +38,7 @@ export default async (request: Request, _context: Context) => {
         if (next.status >= 400) throw new Error(`Could not continue the search (${next.status})`);
         return;
       }
-      analysis = { listings: st.listings, sites: st.sites_status, ranking: st.ranking ?? null };
+      analysis = { listings: st.listings, sites: st.sites_status, ranking: st.ranking ?? null, removed: st.removed || 0 };
     } else {
       analysis = job.kind === "rank" ? await runRank(String(job.input), level)
         : job.kind === "dd" ? await runResearch(String(job.input), level)

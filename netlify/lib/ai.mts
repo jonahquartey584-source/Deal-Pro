@@ -192,6 +192,11 @@ function pageText(html: string) {
 }
 const BLOCKED = /captcha|are you a robot|access denied|verify you are human|enable javascript|cf-chl|just a moment/i;
 
+const BROWSER_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36",
+  "Accept": "text/html,application/xhtml+xml", "Accept-Language": "en-GB,en;q=0.9",
+};
+
 async function fetchPage(url: string) {
   const host = new URL(url).hostname.toLowerCase();
   if (!propertyHosts().some((d) => host === d || host.endsWith(`.${d}`))) return null;
@@ -339,9 +344,9 @@ export const isListingUrl = (site: string, url: string) => {
 const SEARCH_LEVEL: Record<LevelId, { passes: number; perPass: number; context: "low" | "medium" | "high"; effort: Effort; verify: number }> = {
   // Scout: one quick look per site. Analyst: two rounds per site from different angles. Expert: eight rounds plus checks.
   // Every level opens the best listings to confirm they are still available; deeper levels check more.
-  quick: { passes: 1, perPass: 5, context: "low", effort: "low", verify: 6 },
-  standard: { passes: 2, perPass: 12, context: "medium", effort: "low", verify: 18 },
-  deep: { passes: 8, perPass: 15, context: "high", effort: "medium", verify: 40 },
+  quick: { passes: 1, perPass: 5, context: "low", effort: "low", verify: 10 },
+  standard: { passes: 2, perPass: 12, context: "medium", effort: "low", verify: 25 },
+  deep: { passes: 8, perPass: 15, context: "high", effort: "medium", verify: 60 },
 };
 
 // Each round searches from a different angle so later rounds find listings earlier ones missed.
@@ -365,6 +370,10 @@ export type Listing = {
   price: number; mode: "rent" | "buy"; private: boolean | null; furnished: string; url: string; found: string;
   verified?: "available" | "unavailable" | "unknown";
   checkedAt?: string;
+  // "live": the page opened and shows the advert; "gone": 404, removed, or bounced to a search page;
+  // "unknown": the site blocked the check, so the AI has to open it instead.
+  link?: "live" | "gone" | "unknown";
+  confirmed?: boolean;
   details?: { deposit: string; availableFrom: string; listed?: string; highlights: string[] };
 };
 
@@ -447,7 +456,7 @@ async function searchSite(site: string, f: Filters, level: LevelId, pass: number
   const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
 ${ANGLES[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only return individual listing pages: one property per URL, shaped like ${conf.example}. Never return search-results, area, category or map pages, even if they show listings; open the individual advert and use its URL. Skip adverts marked let agreed, under offer, sold STC or no longer available.${skip}
 Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "private_landlord": true | false | null}]}.
-Only include listings you actually found in the search results. Never invent a listing, price or URL. If you find none, return {"listings": []}.`;
+Only include listings you actually found in the search results, with the URL exactly as the search returned it. Never build or guess a URL from an ID or address, and never invent a listing or price. If you find none, return {"listings": []}.`;
   const { parsed, seen } = await webJson(prompt, conf.domains, level, lv.context, lv.effort);
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   const out: Listing[] = [];
@@ -480,15 +489,25 @@ async function verifyBatch(batch: Listing[], level: LevelId) {
   const domains = [...new Set(batch.flatMap((l) => SITES[l.site].domains))];
   const prompt = `Open each of these property listing pages and check them:
 ${batch.map((l, i) => `${i + 1}. ${l.url}`).join("\n")}
-For each, confirm the page is a single property advert (not a search-results or area page) and whether it is still available (not let agreed, under offer, sold STC, expired or removed), and read the details.
-Return JSON: {"checks": [{"url": string (exactly as given), "is_listing": true | false, "available": true | false | null, "listed": string (the date it was added or last updated, if shown), "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not]}]}.
+For each, confirm the page opens (not a 404 or "page not found"), is a single property advert (not a search-results or area page), and whether it is still available (not let agreed, under offer, sold STC, expired or removed), and read the details from the page itself.
+Return JSON: {"checks": [{"url": string (exactly as given), "opened": true | false (false if you could not open this exact page), "is_listing": true | false, "available": true | false | null, "title": string (the advert's own title), "type": string (e.g. "2 bed flat"), "area": string (street/area and town as the advert shows), "listed": string (the date it was added or last updated, if shown), "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not]}]}.
 Only report what the pages actually say. Use null or "" when a detail isn't shown.`;
   const { parsed } = await webJson(prompt, domains, level, level === "quick" ? "medium" : "high", level === "quick" ? "low" : "medium");
   const byUrl = new Map(batch.map((l) => [normalise(l.url), l]));
   for (const c of (parsed.checks || []) as Array<Record<string, any>>) {
     const l = byUrl.get(normalise(String(c.url || "")));
     if (!l) continue;
-    l.verified = c.is_listing === false || c.available === false ? "unavailable" : c.available === true ? "available" : "unknown";
+    // A definite "gone" or "let agreed" removes it; not being able to open it never undoes a direct check.
+    l.verified = c.is_listing === false || c.available === false ? "unavailable"
+      : c.opened !== false && c.available === true ? "available"
+      : l.link === "live" ? "available" : "unknown";
+    if (c.opened === false) continue;
+    // Describe the row from the advert itself, so the details match what the link opens.
+    if (l.verified === "available") {
+      if (c.title) l.title = String(c.title).slice(0, 140);
+      if (c.type) l.type = String(c.type).slice(0, 60);
+      if (c.area) l.area = String(c.area).slice(0, 120);
+    }
     l.checkedAt = new Date().toISOString();
     const price = Math.round(Number(c.price));
     if (Number.isFinite(price) && price > 0) l.price = price;
@@ -508,8 +527,8 @@ Only report what the pages actually say. Use null or "" when a detail isn't show
 // 15-minute background function: each run works until its deadline, saves this state,
 // and the runner starts another run to continue.
 export type SearchState = {
-  filters: Filters; sites: string[]; phase: "search" | "verify" | "rank" | "done";
-  round: number; verifyAt: number; listings: Listing[];
+  filters: Filters; sites: string[]; phase: "search" | "check" | "verify" | "rank" | "done";
+  round: number; checkAt?: number; verifyAt: number; listings: Listing[]; removed?: number;
   sites_status: Record<string, { status: string; found: number; round?: number; rounds?: number; error?: string; detail?: string }>;
   ranking?: Record<string, unknown> | null; startedAt: string;
 };
@@ -523,7 +542,34 @@ export function newSearch(input: string, level: LevelId): SearchState {
   };
 }
 
-export const searchProgress = (st: SearchState) => ({ phase: st.phase, sites: st.sites_status, found: st.listings.length, verified: st.verifyAt });
+export const searchProgress = (st: SearchState) => ({ phase: st.phase, sites: st.sites_status, found: st.listings.length, checked: st.checkAt || 0, verified: st.verifyAt, removed: st.removed || 0 });
+
+// ---------- link checks ----------
+// Every listing's link is opened before it is shown. Pages that 404, bounce to a search or home
+// page, or say the advert has gone are removed. Sites that block the check are left "unknown"
+// for the AI to open instead.
+const GONE_TEXT = /(no longer available|no longer on the market|no longer listed|has been removed|been taken down|advert has expired|ad has expired|listing (?:has )?expired|listing not found|property not found|advert not found|page not found|page (?:you|you're|you are) looking for|couldn['’]t find (?:that|the|this) page|this (?:ad|advert|listing|property) is no longer|\b404\b\W{0,3}(?:error|not found|page))/i;
+const TAKEN_TITLE = /\b(let agreed|under offer|sold stc|sold subject to contract|reserved)\b/i;
+export async function checkLink(l: Listing): Promise<"live" | "gone" | "unknown"> {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 9000);
+  try {
+    const r = await fetch(l.url, { redirect: "follow", signal: ctl.signal, headers: BROWSER_HEADERS });
+    if (r.status === 404 || r.status === 410) return "gone";
+    const final = r.url || l.url;
+    // A removed advert often redirects to a search or home page.
+    if (normalise(final) !== normalise(l.url) && !isListingUrl(l.site, final)) return "gone";
+    if (!r.ok || !/html/i.test(r.headers.get("content-type") || "")) return "unknown";
+    const text = pageText((await r.text()).slice(0, 1_500_000));
+    if (text.length < 300 || BLOCKED.test(text.slice(0, 1500))) return "unknown";
+    const head = text.slice(0, 2500);
+    if (GONE_TEXT.test(head)) return "gone";
+    const title = head.match(/^Title: (.*)$/m)?.[1]?.trim() || "";
+    if (TAKEN_TITLE.test(title)) return "gone";
+    if (title && !/rightmove|zoopla|openrent|spareroom|gumtree|facebook/i.test(title.replace(/[|\-–].*$/, "").trim())) l.title = title.replace(/\s*[|–-]\s*(Rightmove|Zoopla|OpenRent|SpareRoom|Gumtree|Facebook).*$/i, "").slice(0, 140);
+    return "live";
+  } catch { return "unknown"; } finally { clearTimeout(timer); }
+}
 
 export async function stepSearch(st: SearchState, level: LevelId, deadline: number, save: (st: SearchState) => Promise<void>) {
   const lv = SEARCH_LEVEL[level];
@@ -533,7 +579,7 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
 
   // Rounds: every site is searched in parallel, each round from a new angle.
   while (st.phase === "search") {
-    if (st.round >= lv.passes) { st.phase = lv.verify ? "verify" : "rank"; break; }
+    if (st.round >= lv.passes) { st.phase = "check"; break; }
     if (timeLeft() < 4 * 60_000) return st;
     const round = st.round;
     await Promise.all(st.sites.map(async (site) => {
@@ -562,16 +608,35 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
     throw new Error(`All site searches failed. ${st.sites_status[st.sites[0]]?.detail || ""}`);
   }
 
-  // Verify: open the most promising listings (cheapest per bedroom first, taking turns across
-  // sites so every site gets checked) in batches of 5, several batches at a time.
-  if (st.phase === "verify") {
-    const bySite = new Map<string, Listing[]>();
-    for (const l of [...st.listings].sort((a, b) => a.price / Math.max(1, a.beds ?? 1) - b.price / Math.max(1, b.beds ?? 1))) {
-      bySite.set(l.site, [...(bySite.get(l.site) || []), l]);
+  // Check: open every listing's link directly, several at a time, and drop dead ones.
+  if (st.phase === "check") {
+    st.checkAt = st.checkAt || 0;
+    while (st.checkAt < st.listings.length) {
+      if (timeLeft() < 4 * 60_000) return st;
+      const group = st.listings.slice(st.checkAt, st.checkAt + 8);
+      await Promise.all(group.map(async (l) => { l.link = await checkLink(l); if (l.link === "live") { l.verified = "available"; l.checkedAt = new Date().toISOString(); } }));
+      st.checkAt += group.length;
+      if (st.checkAt % 24 === 0 || st.checkAt >= st.listings.length) await save(st);
     }
-    const order: Listing[] = [];
-    for (let i = 0; order.length < st.listings.length; i++) for (const list of bySite.values()) if (list[i]) order.push(list[i]);
-    const targets = order.slice(0, lv.verify);
+    const before = st.listings.length;
+    st.listings = st.listings.filter((l) => l.link !== "gone");
+    st.removed = (st.removed || 0) + before - st.listings.length;
+    st.phase = "verify";
+    await save(st);
+  }
+
+  // Verify: the AI opens the links the direct check couldn't confirm (taking turns across sites),
+  // then, with any budget left, the cheapest confirmed ones to read their details.
+  if (st.phase === "verify") {
+    const byPrice = (a: Listing, b: Listing) => a.price / Math.max(1, a.beds ?? 1) - b.price / Math.max(1, b.beds ?? 1);
+    const roundRobin = (list: Listing[]) => {
+      const bySite = new Map<string, Listing[]>();
+      for (const l of [...list].sort(byPrice)) bySite.set(l.site, [...(bySite.get(l.site) || []), l]);
+      const out: Listing[] = [];
+      for (let i = 0; out.length < list.length; i++) for (const sl of bySite.values()) if (sl[i]) out.push(sl[i]);
+      return out;
+    };
+    const targets = [...roundRobin(st.listings.filter((l) => l.link !== "live")), ...roundRobin(st.listings.filter((l) => l.link === "live"))].slice(0, lv.verify);
     while (st.verifyAt < targets.length) {
       if (timeLeft() < 4 * 60_000) return st;
       const group = targets.slice(st.verifyAt, st.verifyAt + 20);
@@ -580,19 +645,23 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
       st.verifyAt += group.length;
       await save(st);
     }
-    // Drop listings the pages say are gone.
+    // Drop listings the pages say are gone; confirmed listings come first, and only those are ranked.
+    const before = st.listings.length;
     st.listings = st.listings.filter((l) => l.verified !== "unavailable");
+    st.removed = (st.removed || 0) + before - st.listings.length;
+    for (const l of st.listings) l.confirmed = l.verified === "available";
+    st.listings.sort((a, b) => Number(!!b.confirmed) - Number(!!a.confirmed));
     st.phase = "rank";
     await save(st);
   }
 
   if (st.phase === "rank") {
     if (timeLeft() < 3 * 60_000) return st;
-    if (st.listings.length) {
+    if (st.listings.some((l) => l.confirmed)) {
       try {
         st.ranking = await runRank(JSON.stringify({
           filters: st.filters,
-          listings: st.listings.slice(0, level === "quick" ? 40 : 120).map((l, i) => ({
+          listings: st.listings.filter((l) => l.confirmed).slice(0, level === "quick" ? 40 : 120).map((l, i) => ({
             id: String(i), site: SITES[l.site].label, type: l.type, beds: l.beds, area: l.area, postcode: l.postcode,
             [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price,
             ...(l.details ? { checked_details: l.details, still_available: l.verified } : {}),

@@ -2022,7 +2022,8 @@ const SITE_LABEL=s=>({Facebook:'Facebook Marketplace',RightmoveCommercial:'Right
 const FIND_DEF=()=>({notes:'',mode:'rent',beds:[],min:1200,max:5000,loc:'',priv:false,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false}});
 if(!S.find||!S.find.f)S.find={f:FIND_DEF(),searched:false,sort:null};
 S.find.f=Object.assign(FIND_DEF(),S.find.f);S.find.f.sites=Object.assign(FIND_DEF().sites,S.find.f.sites);
-const FS={busy:false,sel:new Set()};
+const FS={busy:false,sel:new Set(),showUnconfirmed:false};
+document.addEventListener('click',e=>{if(e.target.closest('#fShowUnc')){FS.showUnconfirmed=!FS.showUnconfirmed;renderFind()}});
 // Live search results (saved to the account). The LISTINGS sample above only feeds the home page preview.
 // Results saved before listing links were checked can include search-results pages; hide those.
 const NOT_LISTING=/\/(?:search|find|results|browse|properties-to-rent|property-to-rent\/?$|to-rent\/?(?:property\/)?[^/]*\/?$|for-sale\/?(?:property\/)?[^/]*\/?$)|[?&](?:location|searchLocation|q|query|search|keywords?|locationIdentifier)=|\/(?:property-to-rent|to-rent|for-sale|flatshare|property-for-sale)\/[a-z-]+\/?$|\/[A-Za-z-]+\.html$/i;
@@ -2032,7 +2033,7 @@ let LIVE=Array.isArray(S.find.live)?S.find.live.filter(r=>listingLink(r.url)):nu
 function liveTag(r){const when=r.checkedAt?new Date(r.checkedAt).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
   if(r.verified==='available')return `<span class="live-ok" title="Opened and still available${when?' at '+when:''}${r.details&&r.details.listed?` · listed ${esc(r.details.listed)}`:''}">✓ Live${when?' · '+esc(when.split(',')[0]):''}</span>`;
   if(r.verified==='unknown')return `<span class="muted" title="The listing opened but its availability wasn't clear">Couldn't confirm</span>`;
-  return `<span class="muted" title="Found in search results on ${esc(r.found||'')}; not opened yet">Not checked</span>`}
+  return `<span class="muted" title="Found in search results on ${esc(r.found||'')}; the link couldn't be confirmed">Not confirmed</span>`}
 const reduced=()=>{try{return matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){return false}};
 const bedsTxt=b=>b===0?'Studio':String(b);
 /* UK-wide location helpers: which region a place is in, and whether it's in Greater London */
@@ -2094,8 +2095,10 @@ function locMatch(x,q){q=q.trim().toLowerCase();if(!q)return true;const pc=x.pos
   // Postcode district (SE1, W2, W1D): match the district, so SE1 does not also match SE11, but W1 matches W1D.
   if(/^[a-z]{1,2}\d[a-z\d]?$/.test(q))return pc.startsWith(q)&&!/\d/.test(pc.charAt(q.length));
   return new RegExp('(^|[^a-z0-9])'+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).test((x.area+' '+x.postcode).toLowerCase())}
-function findRows(){const f=S.find.f;
-  return SRC().map((x,i)=>Object.assign({k:i},x)).filter(x=>x.mode===f.mode
+// Only listings whose link was opened and confirmed live are shown, unless the member asks to see the rest.
+const confirmedLive=x=>x.verified==='available';
+function findRows(all=false){const f=S.find.f;
+  return SRC().map((x,i)=>Object.assign({k:i},x)).filter(x=>(all||FS.showUnconfirmed||confirmedLive(x))&&x.mode===f.mode
     &&bedsMatch(bedList(f.beds),x.beds)
     &&(f.min===''||x.price>=f.min)&&(f.max===''||x.price<=f.max)
     &&(LIVE||locMatch(x,f.loc))&&(!f.priv||x.private!==false)
@@ -2138,7 +2141,9 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   const rows=sortRows(findRows()),keys=new Set(rows.filter(isOpen).map(r=>r.k));[...FS.sel].forEach(k=>{if(!keys.has(k))FS.sel.delete(k)});
   const pr=rows.map(r=>r.price).sort((a,b)=>a-b),m=pr.length,med=m?(m%2?pr[(m-1)/2]:(pr[m/2-1]+pr[m/2])/2):NaN,nOpen=keys.size;
   const ll=new Set(rows.map(r=>r.site)).size,buy=S.find.f.mode==='buy',so=S.find.sort,sv=so?`${so.k}:${so.dir}`:'';
-  const sum=`<b class="mono">${m}</b> listing${m===1?'':'s'} from <b class="mono">${ll}</b> site${ll===1?'':'s'}${m?` · median <b class="mono">${gbp(med)}</b>${buy?'':' pcm'}`:''}${S.find.liveAt?` · searched ${fmtDate(S.find.liveAt)}`:''}`;
+  const hidden=FS.showUnconfirmed?0:findRows(true).length-rows.length,nUnc=findRows(true).filter(x=>!confirmedLive(x)).length;
+  const sum=`<b class="mono">${m}</b> ${FS.showUnconfirmed?'':'live '}listing${m===1?'':'s'} from <b class="mono">${ll}</b> site${ll===1?'':'s'}${m?` · median <b class="mono">${gbp(med)}</b>${buy?'':' pcm'}`:''}${S.find.liveAt?` · searched ${fmtDate(S.find.liveAt)}`:''}`;
+  const unc=nUnc?`<div class="fsub">${FS.showUnconfirmed?`Showing ${nUnc} listing${nUnc===1?'':'s'} that couldn't be confirmed live. Their links may not work.`:`${hidden} more couldn't be confirmed live, so they're hidden.`} <button class="linkbtn" type="button" id="fShowUnc">${FS.showUnconfirmed?'Hide them':'Show them anyway'}</button></div>`:'';
   const th=(k,lab,cls='')=>{const on=so&&so.k===k;return `<th class="${cls}" aria-sort="${on?(so.dir>0?'ascending':'descending'):'none'}"><button class="sort" data-sort="${k}">${lab}<span class="sa" aria-hidden="true">${on?(so.dir>0?'↑':'↓'):''}</span></button></th>`};
   const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
   const acts=view==='cards'
@@ -2147,7 +2152,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
     :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
   const L=`<span class="lockc">${LOCK}Locked</span>`;
   let body;
-  if(!m)body=`<div class="fempty"><h2>No listings match these filters</h2><p>Try a wider price range, a different location or more sites.</p></div>`;
+  if(!m)body=`<div class="fempty"><h2>${hidden?'No listings confirmed live':'No listings match these filters'}</h2><p>${hidden?'Every listing found either had a dead link or its site blocked the check. Try Analyst or Expert, which open more listings to confirm them, or show the unconfirmed ones.':'Try a wider price range, a different location or more sites.'}</p></div>`;
   else if(view==='cards')body=`<div class="cards" id="fCards" tabindex="0" role="region" aria-label="Deal cards, scroll sideways">${rows.map((r,i)=>dealCard(r,i)).join('')}</div>`;
   else body=`<div id="fTsvWrap" hidden><label class="f"><span>Deals as tab-separated rows. Copy them, then paste into cell A1 of a Google Sheet.</span><textarea class="inp mono" id="fTsv" readonly></textarea></label></div>
     <div class="sheet" tabindex="0" role="region" aria-label="Search results"><table><thead><tr><th class="rn"><span class="sr">Row</span></th><th class="ck"><input type="checkbox" id="fSelAll" aria-label="Select all rows"${nOpen?'':' disabled'}></th>
@@ -2155,7 +2160,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
       <tbody>${rows.map((r,i)=>{const o=isOpen(r);return `<tr data-k="${r.k}"><td class="rn">${i+1}</td><td class="ck">${o?`<input type="checkbox" id="fsel${r.k}" data-sel="${r.k}" aria-label="Select ${esc(r.type)}, ${esc(r.area)}"${FS.sel.has(r.k)?' checked':''}>`:''}</td>
         <td>${esc(SITE_LABEL(r.site))}</td><td class="clip" title="${esc(r.title||'')}">${esc(r.title||'')}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td><td class="muted">${esc(r.furnished)}</td><td>${liveTag(r)}</td>
         <td>${o?`<a class="xlink" href="${esc(r.url)}" target="_blank" rel="noopener">Open ↗</a>`:L}</td><td>${o?`<button class="btn xs" data-build="${r.k}">Analyse deal</button>`:`<button class="btn xs" data-unlock="${r.k}" data-n="${i+1}">Unlock · ${gbp(dealFee())}</button>`}</td></tr>`}).join('')}</tbody></table></div>`;
-  box.innerHTML=rankHTML()+`<div class="ftool"><div><div class="fsum" id="fSummary">${sum}</div>${view==='sheet'?'<div class="fsub">Copy, then paste into cell A1 of a Google Sheet.</div>':''}</div>
+  box.innerHTML=rankHTML()+`<div class="ftool"><div><div class="fsum" id="fSummary">${sum}</div>${unc}${view==='sheet'?'<div class="fsub">Copy, then paste into cell A1 of a Google Sheet.</div>':''}</div>
     <div class="ph-actions">${acts}${toggle}</div></div>${body}`;
   const c=$('#fCards');if(c){c.style.scrollBehavior='auto';c.scrollLeft=prevScroll;c.style.scrollBehavior='';
     const upd=()=>{const p=$('#fPrev'),n=$('#fNext');if(p)p.disabled=c.scrollLeft<=2;if(n)n.disabled=c.scrollLeft+c.clientWidth>=c.scrollWidth-2};c.addEventListener('scroll',upd,{passive:true});upd()}
@@ -2177,16 +2182,17 @@ async function pollJob(jobId,onTick,onProgress,maxMs=17*60e3){const t0=Date.now(
   if(onTick)onTick(Math.round((Date.now()-t0)/1000));if(Date.now()-t0>maxMs)throw new Error('The AI is taking too long. Please try again.')}}
 function drawSearch(sites,lv,prog,sec){const P=(prog&&prog.sites)||{},phase=prog&&prog.phase||'search',box=$('#fResults');
   const done=sites.filter(s=>P[s]&&P[s].status!=='searching').length;
-  const head=phase==='verify'?`Checking the best listings are still available… ${prog.verified||0} checked`:phase==='rank'||phase==='done'?'Ranking the best deals…':`${esc(lv.name)} is searching ${sites.length} site${sites.length>1?'s':''} for live listings…`;
+  const head=phase==='check'?`Opening every link to make sure each listing exists… ${prog.checked||0} of ${prog.found||0}`:phase==='verify'?`Confirming listings are still available… ${prog.verified||0} opened${prog.removed?` · ${prog.removed} dead link${prog.removed===1?'':'s'} removed`:''}`:phase==='rank'||phase==='done'?'Ranking the best deals…':`${esc(lv.name)} is searching ${sites.length} site${sites.length>1?'s':''} for live listings…`;
   box.innerHTML=`<div class="fprog" role="status" aria-live="polite"><div class="fprog-t">${head}${sec?` <span class="muted">${sec<120?sec+'s':Math.round(sec/60)+' min'}</span>`:''}</div>
     <div class="meter"><span style="width:${phase==='search'?Math.round(done/sites.length*100):100}%"></span></div>
     <ol>${sites.map(s=>{const st=P[s]||{status:'searching',found:0};const rounds=st.rounds>1?` · round ${Math.min(st.round+(st.status==='searching'?1:0),st.rounds)} of ${st.rounds}`:'';
       return `<li class="${st.status==='searching'?'act':'done'}"><span class="dot ${st.status==='done'?'good':st.status==='error'?'bad':'none'}"></span>${SITE_LABEL(s)}<span class="mono muted">${st.status==='error'?'unavailable':`${st.found||0} found${rounds}`}</span></li>`}).join('')}</ol>
     ${prog&&prog.found?`<p class="fnote">${prog.found} unique listings so far.</p>`:''}<p class="fnote"><b>${leftTxt(estSecs('search',lv.id,sites.length),sec||0,searchFrac(sites,prog,lv))}</b> · usually takes ${estTxt('search',lv.id,sites.length)}.${lv.id==='deep'?' Expert searches every site round after round, then opens the best listings to check they are still available. You can leave this page and come back.':''}</p></div>`}
 // Share of the search done: the rounds across all sites, then (Expert) the listing checks, then ranking.
-const VERIFY_N={quick:6,standard:18,deep:40};/* listings each level opens to check; matches SEARCH_LEVEL in netlify/lib/ai.mts */
+const VERIFY_N={quick:10,standard:25,deep:60};/* listings each level opens to check; matches SEARCH_LEVEL in netlify/lib/ai.mts */
 function searchFrac(sites,prog,lv){if(!prog)return 0;const P=prog.sites||{},sw=.7;
-  if(prog.phase==='rank'||prog.phase==='done')return .95;if(prog.phase==='verify')return sw+.25*Math.min(1,(prog.verified||0)/(VERIFY_N[lv.id]||20));
+  if(prog.phase==='rank'||prog.phase==='done')return .95;if(prog.phase==='check')return sw+.1*Math.min(1,(prog.checked||0)/Math.max(1,prog.found||1));
+  if(prog.phase==='verify')return sw+.1+.15*Math.min(1,(prog.verified||0)/(VERIFY_N[lv.id]||20));
   const r=sites.reduce((a,s)=>{const x=P[s];return a+(!x?0:x.status!=='searching'?1:(x.round||0)/(x.rounds||1))},0)/Math.max(1,sites.length);return sw*r}
 async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LEVELS[0],btn=$('#fSearch');
   FS.busy=true;btn.disabled=true;let last=null;const t0=Date.parse(p.at)||Date.now(),secs=()=>Math.round((Date.now()-t0)/1000);drawSearch(p.sites,lv,null,secs());
@@ -2194,7 +2200,8 @@ async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LE
     LIVE=(res.listings||[]).slice(0,500);/* the server only returns single-listing links */S.find.live=LIVE;S.find.liveAt=new Date().toISOString();S.find.liveSites=res.sites||{};S.find.searched=true;FS.sel.clear();
     FS.rank=res.ranking?{status:'done',level:lv,data:res.ranking}:null;
     const missed=Object.entries(res.sites||{}).filter(([,v])=>v.status==='error').map(([k])=>SITE_LABEL(k));
-    toast(`Found ${LIVE.length} listing${LIVE.length===1?'':'s'} across ${p.sites.length} site${p.sites.length>1?'s':''}.${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
+    const live=LIVE.filter(confirmedLive).length;FS.showUnconfirmed=false;
+    toast(`${live} live listing${live===1?'':'s'} across ${p.sites.length} site${p.sites.length>1?'s':''}, every link checked.${res.removed?` Removed ${res.removed} dead or taken link${res.removed===1?'':'s'}.`:''}${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
   catch(e){toast(e.message||'The search failed. Please try again.')}
   finally{delete S.find.pending;save();FS.busy=false;btn.disabled=false;renderFind()}}
 $('#fSearch').addEventListener('click',async()=>{if(FS.busy)return;readFind();const sites=SITES.filter(s=>S.find.f.sites[s]);
@@ -2213,7 +2220,7 @@ window.addEventListener('dealpro:signed-in',()=>{if(S.find.pending&&!FS.busy)fol
 const rankText=v=>String(v??'').replace(/\b(?:listing\s+)?ids?\s*[:#]?\s*(\d+)\b/gi,(m,n)=>{const r=SRC()[+n];return r?`the ${r.type.toLowerCase()} on ${(r.area||r.title||'').split(',')[0].replace(/\s*\(.*\)$/,'')}`:m});
 /* Scout is a good quick look; this shows what the deeper levels add */
 const SCOUT_MORE={
-  search:'Scout did one quick search per site, checked the 6 best listings are still live, and picked the top 3. Analyst searches every site twice from different angles, checks 18 listings and ranks the top 10. Expert searches round after round and checks 40.',
+  search:'Scout did one quick search per site, checked every link and picked the top 3. Analyst searches every site twice from different angles, confirms up to 25 listings the sites wouldn’t let us check directly, and ranks the top 10. Expert searches round after round and confirms up to 60.',
   analyse:'Scout gives a quick first look. Analyst checks the figures against real market evidence (comparable rents, nightly rates and prices) and works through every cost and risk. Expert also stress-tests the deal with a lower nightly rate, lower occupancy, higher costs and an empty month.',
   dd:'Scout gives one quick fact per check. Analyst researches each check properly with more sources, and Expert researches every check separately in depth.'};
 function scoutMore(kind){let free=true;try{free=!AIC.info||AIC.info.free||AIC.info.scoutOnly}catch(e){}/* AIC is set up later in the script */
@@ -2399,7 +2406,7 @@ renderAIAnalysis(S.deal.aiAnalysis);
 const AI_LEVELS=[{id:'quick',name:'Scout',desc:'Quick first look',use:'Uses the least credits'},{id:'standard',name:'Analyst',desc:'Full, detailed analysis',use:'Uses more credits'},{id:'deep',name:'Expert',desc:'Stress-tested, thorough',use:'Uses the most credits'}];
 const AIC={info:null,level:(()=>{try{return localStorage.getItem('dealpro:ai-level')||'quick'}catch(e){return 'quick'}})()};
 /* time estimates in seconds, from how much work each level does */
-const EST_S={analyse:{quick:15,standard:90,deep:240},dd:{quick:30,standard:90,deep:240},search:{quick:100,standard:240,deep:1200}};
+const EST_S={analyse:{quick:15,standard:90,deep:240},dd:{quick:30,standard:90,deep:240},search:{quick:120,standard:300,deep:1200}};
 // Sites are searched side by side, so more sites add a little time rather than multiplying it.
 function estSecs(kind,lv,sites){const b=EST_S[kind][lv]||60;return kind==='search'?Math.round(b*(1+Math.max(0,(sites||6)-4)*.08)):b}
 const durTxt=s=>s<60?`${Math.max(5,Math.round(s/5)*5)} sec`:`${Math.round(s/60)} min`;
