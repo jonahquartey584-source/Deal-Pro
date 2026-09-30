@@ -785,6 +785,8 @@ td.t{text-align:right;color:var(--ink-2)}
 .pl-list td{vertical-align:middle}
 .fnotes{display:grid;gap:6px;padding-bottom:12px;border-bottom:1px solid var(--line)}.fnotes textarea{min-height:76px;resize:vertical}
 .fnotes-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.fnotes-msg{font-size:12px;color:var(--ink-2)}.fnotes-note{margin:0;font-size:11.5px;color:var(--muted)}
+.ai-sc{display:inline-block;min-width:30px;text-align:center;font:600 12px var(--mono);border-radius:5px;padding:1px 6px;border:1px solid var(--line-2)}.ai-sc.hi{color:var(--good);border-color:currentColor}.ai-sc.mid{color:var(--warn);border-color:currentColor}.ai-sc.lo{color:var(--muted)}
+.rank-stats{font-size:12px!important;color:var(--muted)}.rank-exp{font-size:14px!important;line-height:1.6;color:var(--ink);max-width:80ch}.rank-hl{margin:6px 0 4px;padding-left:18px;display:grid;gap:3px;font-size:13px;color:var(--ink-2)}.rank-sub{font-size:13px;margin:12px 0 2px}
 .lv-time{font-size:11.5px!important;color:var(--muted)!important}
 .ai-level:has(input:focus-visible){outline:2px solid var(--lv);outline-offset:2px}.ai-level.locked{opacity:.55}.ai-level .lv-use{color:var(--lv);font-weight:500}.ai-credits{font-size:12px;color:var(--ink-2);margin:8px 0 0}
 .ai-level-stack{grid-template-columns:1fr}
@@ -2127,7 +2129,7 @@ function dealCard(r,i,o={}){const open=!o.preview&&isOpen(r),u={rent:r.price,rat
     :open?`<button class="btn sm primary" data-build="${r.k}">Analyse deal</button><a class="btn sm" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a>`
     :`<button class="btn sm" data-unlock="${r.k}" data-n="${i+1}">${LOCK}Unlock this deal · ${gbp(dealFee())}</button>`;
   return `<article class="dcard${open?' is-open':''}${FS.justOpened===r.k&&open?' just-open':''}" data-k="${r.k}" aria-label="Deal ${i+1}">
-    <h3>Deal ${i+1} (${gbp(r.price)} ${bedWord(r.beds)})</h3>${o.preview?'':`<p class="dc-live">${liveTag(r)}</p>`}
+    <h3>Deal ${i+1} (${gbp(r.price)} ${bedWord(r.beds)})${r.ai>=0?` <span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="AI score · ${esc(r.aiv||'')}">${r.ai}</span>`:''}</h3>${o.preview?'':`<p class="dc-live">${liveTag(r)}</p>`}
     <ul class="adv">${li('📍',`${esc(o.preview?String(r.area||r.postcode).replace(/\s*\(.*\)$/,''):[r.postcode,(r.area||'').split(',').pop().trim()].filter(Boolean).join(', '))}${o.plain?'':' <span class="em" aria-hidden="true">📍</span>'}`)}${open?li('🏠',esc(r.area)):''}${li('🛏',esc(r.type))}</ul>
     <ul class="adv">${li('💸',`Rent <b>${gbp(r.price)}</b>/month (${gbp(r.price*12)}/year)`)}${li('💸',`Deposit <b>${gbp(r.price)}</b> <span class="muted">(est.)</span>`)}${li('💰',`Nightly rate <b>£${u.rate}</b> <span class="muted">(est.)</span>`)}</ul>
     <ul class="adv">${OCC.map((x,j)=>li('💷',`<b class="${occ[j]<0?'neg':''}">${gbp(occ[j])}</b> at ${pct(x)} occupancy`)).join('')}</ul>
@@ -2138,7 +2140,9 @@ function dealCard(r,i,o={}){const open=!o.preview&&isOpen(r),u={rent:r.price,rat
 function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fResults');
   if(!LIVE){box.innerHTML=`<div class="fempty"><h2>Search live property listings</h2><p>Set your filters, tick the sites and choose a power level, then run Search with AI. Deal Pro searches every ticked site for current listings, shows them in a sheet with a link to each one, and picks out the best deals. Copy them into Google Sheets or analyse any of them in the Deal Analyser.</p></div>`;return}
   const view=S.find.view==='cards'?'cards':'sheet',prevScroll=($('#fCards')||{}).scrollLeft||0;
-  const rows=sortRows(findRows()),keys=new Set(rows.filter(isOpen).map(r=>r.k));[...FS.sel].forEach(k=>{if(!keys.has(k))FS.sel.delete(k)});
+  const SC=aiScores(),base=findRows();base.forEach(r=>{const x=SC.get(r.k);r.ai=x?x.score:-1;r.aiv=x?x.verdict:''});
+  // With a ranking, the list is sorted by AI score unless the member picked another sort.
+  const rows=S.find.sort?sortRows(base):SC.size?base.slice().sort((a,b)=>b.ai-a.ai||a.k-b.k):base,keys=new Set(rows.filter(isOpen).map(r=>r.k));[...FS.sel].forEach(k=>{if(!keys.has(k))FS.sel.delete(k)});
   const pr=rows.map(r=>r.price).sort((a,b)=>a-b),m=pr.length,med=m?(m%2?pr[(m-1)/2]:(pr[m/2-1]+pr[m/2])/2):NaN,nOpen=keys.size;
   const ll=new Set(rows.map(r=>r.site)).size,buy=S.find.f.mode==='buy',so=S.find.sort,sv=so?`${so.k}:${so.dir}`:'';
   const hidden=FS.showUnconfirmed?0:findRows(true).length-rows.length,nUnc=findRows(true).filter(x=>!confirmedLive(x)).length;
@@ -2156,9 +2160,9 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   else if(view==='cards')body=`<div class="cards" id="fCards" tabindex="0" role="region" aria-label="Deal cards, scroll sideways">${rows.map((r,i)=>dealCard(r,i)).join('')}</div>`;
   else body=`<div id="fTsvWrap" hidden><label class="f"><span>Deals as tab-separated rows. Copy them, then paste into cell A1 of a Google Sheet.</span><textarea class="inp mono" id="fTsv" readonly></textarea></label></div>
     <div class="sheet" tabindex="0" role="region" aria-label="Search results"><table><thead><tr><th class="rn"><span class="sr">Row</span></th><th class="ck"><input type="checkbox" id="fSelAll" aria-label="Select all rows"${nOpen?'':' disabled'}></th>
-      ${th('site','Site')}${th('title','Listing')}${th('type','Type')}${th('beds','Beds','nr')}${th('area','Area')}${th('postcode','Postcode')}${th('price',S.find.f.mode==='buy'?'Price':'Rent pcm','nr')}<th>Furnished</th><th>Checked</th><th>Link</th><th>Action</th></tr></thead>
+      ${SC.size?th('ai','AI score','nr'):''}${th('site','Site')}${th('title','Listing')}${th('type','Type')}${th('beds','Beds','nr')}${th('area','Area')}${th('postcode','Postcode')}${th('price',S.find.f.mode==='buy'?'Price':'Rent pcm','nr')}<th>Furnished</th><th>Checked</th><th>Link</th><th>Action</th></tr></thead>
       <tbody>${rows.map((r,i)=>{const o=isOpen(r);return `<tr data-k="${r.k}"><td class="rn">${i+1}</td><td class="ck">${o?`<input type="checkbox" id="fsel${r.k}" data-sel="${r.k}" aria-label="Select ${esc(r.type)}, ${esc(r.area)}"${FS.sel.has(r.k)?' checked':''}>`:''}</td>
-        <td>${esc(SITE_LABEL(r.site))}</td><td class="clip" title="${esc(r.title||'')}">${esc(r.title||'')}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td><td class="muted">${esc(r.furnished)}</td><td>${liveTag(r)}</td>
+        ${SC.size?`<td class="nr">${r.ai>=0?`<span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="${esc(r.aiv)}">${r.ai}</span>`:'<span class="muted">–</span>'}</td>`:''}<td>${esc(SITE_LABEL(r.site))}</td><td class="clip" title="${esc(r.title||'')}">${esc(r.title||'')}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td><td class="muted">${esc(r.furnished)}</td><td>${liveTag(r)}</td>
         <td>${o?`<a class="xlink" href="${esc(r.url)}" target="_blank" rel="noopener">Open ↗</a>`:L}</td><td>${o?`<button class="btn xs" data-build="${r.k}">Analyse deal</button>`:`<button class="btn xs" data-unlock="${r.k}" data-n="${i+1}">Unlock · ${gbp(dealFee())}</button>`}</td></tr>`}).join('')}</tbody></table></div>`;
   box.innerHTML=rankHTML()+`<div class="ftool"><div><div class="fsum" id="fSummary">${sum}</div>${unc}${view==='sheet'?'<div class="fsub">Copy, then paste into cell A1 of a Google Sheet.</div>':''}</div>
     <div class="ph-actions">${acts}${toggle}</div></div>${body}`;
@@ -2198,7 +2202,7 @@ async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LE
   FS.busy=true;btn.disabled=true;let last=null;const t0=Date.parse(p.at)||Date.now(),secs=()=>Math.round((Date.now()-t0)/1000);drawSearch(p.sites,lv,null,secs());
   try{const res=await pollJob(p.id,()=>drawSearch(p.sites,lv,last,secs()),pr=>{last=pr;drawSearch(p.sites,lv,pr,secs())},100*60e3);
     LIVE=(res.listings||[]).slice(0,500);/* the server only returns single-listing links */S.find.live=LIVE;S.find.liveAt=new Date().toISOString();S.find.liveSites=res.sites||{};S.find.searched=true;FS.sel.clear();
-    FS.rank=res.ranking?{status:'done',level:lv,data:res.ranking}:null;
+    FS.rank=res.ranking?{status:'done',level:lv,data:res.ranking}:null;S.find.rank=res.ranking?{level:lv.id,data:res.ranking}:null;S.find.removed=res.removed||0;
     const missed=Object.entries(res.sites||{}).filter(([,v])=>v.status==='error').map(([k])=>SITE_LABEL(k));
     const live=LIVE.filter(confirmedLive).length;FS.showUnconfirmed=false;
     toast(`${live} live listing${live===1?'':'s'} across ${p.sites.length} site${p.sites.length>1?'s':''}, every link checked.${res.removed?` Removed ${res.removed} dead or taken link${res.removed===1?'':'s'}.`:''}${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
@@ -2225,16 +2229,39 @@ const SCOUT_MORE={
   dd:'Scout gives one quick fact per check. Analyst researches each check properly with more sources, and Expert researches every check separately in depth.'};
 function scoutMore(kind){let free=true;try{free=!AIC.info||AIC.info.free||AIC.info.scoutOnly}catch(e){}/* AIC is set up later in the script */
   return `<div class="scout-more"><p><b>Want more?</b> ${SCOUT_MORE[kind]}</p>${free?'<button class="btn sm primary" type="button" data-go="plans">Upgrade for Analyst and Expert</button>':'<span class="muted">Choose Analyst or Expert and run it again.</span>'}</div>`}
-function rankHTML(){const R=FS.rank;if(!R)return '';const lv=R.level;
-  if(R.status==='loading')return `<div class="rank lv-${lv.id}" role="status"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b id="fRankT">${esc(lv.name)} is ranking these deals…</b></div><p class="muted">Results are below. The AI's top picks will appear here.</p></div>`;
-  if(R.status==='error')return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>AI ranking unavailable</b></div><p class="muted">${esc(R.error)}</p></div>`;
-  const a=R.data||{},picks=Array.isArray(a.picks)?a.picks:[];
-  const li=p=>{const r=SRC()[+p.id];if(!r)return '';const notes=Array.isArray(p.notes)&&p.notes.length?`<ul class="rank-notes">${p.notes.map(n=>`<li>${esc(rankText(n))}</li>`).join('')}</ul>`:'';
+// The AI's scores for every confirmed listing, by row index.
+function aiScores(){const a=FS.rank&&FS.rank.status==='done'?FS.rank.data||{}:{},m=new Map(),v=x=>Math.max(0,Math.min(100,Math.round(+x.score||0)));
+  (Array.isArray(a.scores)?a.scores:[]).forEach(x=>{if(x&&SRC()[+x.id])m.set(+x.id,{score:v(x),verdict:String(x.verdict||'')})});
+  (Array.isArray(a.picks)?a.picks:[]).forEach(x=>{if(x&&SRC()[+x.id]&&!m.has(+x.id))m.set(+x.id,{score:v(x),verdict:String(x.verdict||'')})});return m}
+// Restore a saved ranking when results are reopened.
+function restoreRank(){if(FS.rank||!LIVE||!S.find.rank||!S.find.rank.data)return;try{FS.rank={status:'done',level:AI_LEVELS.find(l=>l.id===S.find.rank.level)||AI_LEVELS[0],data:S.find.rank.data}}catch(e){}}
+async function rankNow(){const conf=SRC().map((r,i)=>({r,i})).filter(x=>confirmedLive(x.r));if(!conf.length){toast('There are no confirmed listings to rank.');return}
+  // Confirmed listings come first in the results, so their positions double as ids.
+  const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];FS.rank={status:'loading',level:lv};renderFind();
+  try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'rank',level:lv.id,filters:S.find.f,
+      listings:conf.slice(0,80).map(({r,i})=>({id:String(i),site:SITE_LABEL(r.site),type:r.type,beds:r.beds,area:r.area,postcode:r.postcode,[r.mode==='buy'?'asking_price':'rent_pcm']:r.price,...(r.details?{checked_details:r.details}:{})}))})});
+    const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'The ranking could not be started.');if(d.credits){AIC.info=d.credits;renderAILevels()}
+    const data=await pollJob(d.jobId);FS.rank={status:'done',level:lv,data};S.find.rank={level:lv.id,data};save()}
+  catch(e){FS.rank={status:'error',level:lv,error:e.message||'The ranking could not be completed.'}}renderFind()}
+document.addEventListener('click',e=>{if(e.target.closest('#fRankNow'))rankNow()});
+function rankHTML(){restoreRank();const R=FS.rank;
+  if(!R){const n=SRC().filter(confirmedLive).length;return n?`<div class="rank"><div class="rank-h"><b>No AI ranking for these results yet</b></div><p class="muted">Rank the ${n} confirmed listing${n===1?'':'s'} and get an explanation of what the search found.</p><button class="btn sm primary" type="button" id="fRankNow">Rank with AI</button></div>`:''}
+  const lv=R.level;
+  if(R.status==='loading')return `<div class="rank lv-${lv.id}" role="status"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b id="fRankT">${esc(lv.name)} is ranking these deals…</b></div><p class="muted">Results are below. The AI's scores, top picks and an explanation of what it found will appear here.</p></div>`;
+  if(R.status==='error')return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>AI ranking unavailable</b></div><p class="muted">${esc(R.error)}</p><button class="btn sm" type="button" id="fRankNow">Try again</button></div>`;
+  const a=R.data||{},picks=(Array.isArray(a.picks)?a.picks:[]).filter(p=>SRC()[+p.id]);
+  const li=p=>{const r=SRC()[+p.id];const notes=Array.isArray(p.notes)&&p.notes.length?`<ul class="rank-notes">${p.notes.map(n=>`<li>${esc(rankText(n))}</li>`).join('')}</ul>`:'';
     return `<li><div class="rank-top"><b>${esc(r.type)} · ${esc(r.area)}</b><span class="mono">${gbp(r.price)}${r.mode==='buy'?'':' pcm'}</span><span class="muted">${esc(SITE_LABEL(r.site))}</span><span class="rank-score">${Math.max(0,Math.min(100,+p.score||0))}/100 · ${esc(String(p.verdict||''))}</span></div>
       <p>${esc(rankText(p.reason))}${p.monthly_profit_80?` <span class="muted">Est. at 80%: ${esc(String(p.monthly_profit_80))}</span>`:''}</p>${notes}
       <div class="rank-act"><button class="btn xs primary" data-build="${+p.id}">Analyse deal</button><a class="btn xs" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a></div></li>`};
-  return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>${esc(lv.name)}'s top picks</b></div>${a.summary?`<p>${esc(rankText(a.summary))}</p>`:''}
-    <ol class="rank-list">${picks.map(li).join('')}</ol>${Array.isArray(a.watch_outs)&&a.watch_outs.length?`<p class="muted">Watch out: ${a.watch_outs.map(w=>esc(rankText(w))).join(' · ')}</p>`:''}${lv.id==='quick'?scoutMore('search'):''}</div>`}
+  const hl=Array.isArray(a.highlights)?a.highlights.filter(Boolean).slice(0,6):[];
+  const conf=SRC().filter(confirmedLive).length,unc=SRC().length-conf,rem=S.find.removed||0;
+  return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>What ${esc(lv.name)} found</b></div>
+    <p class="rank-stats">${conf} confirmed live listing${conf===1?'':'s'}${rem?` · ${rem} dead or taken link${rem===1?'':'s'} removed`:''}${unc?` · ${unc} couldn't be confirmed`:''} · every listing below is scored and sorted, best first</p>
+    ${a.explanation?`<p class="rank-exp">${esc(rankText(a.explanation))}</p>`:a.summary?`<p class="rank-exp">${esc(rankText(a.summary))}</p>`:''}
+    ${hl.length?`<ul class="rank-hl">${hl.map(h=>`<li>${esc(rankText(h))}</li>`).join('')}</ul>`:''}
+    ${picks.length?`<h3 class="rank-sub">Top picks</h3>${a.explanation&&a.summary?`<p>${esc(rankText(a.summary))}</p>`:''}<ol class="rank-list">${picks.map(li).join('')}</ol>`:''}
+    ${Array.isArray(a.watch_outs)&&a.watch_outs.length?`<p class="muted">Watch out: ${a.watch_outs.map(w=>esc(rankText(w))).join(' · ')}</p>`:''}${lv.id==='quick'?scoutMore('search'):''}</div>`}
 function openRows(){return sortRows(findRows()).filter(isOpen)}
 function findTsv(){const c=v=>{const s=String(v??'').replace(/[\t\r\n]+/g,' ');return /^[=+\-@]/.test(s)?"'"+s:s};
   return [['Site','Listing','Type','Beds','Area','Postcode',S.find.f.mode==='buy'?'Price':'Rent pcm','Furnished','Checked','URL'],

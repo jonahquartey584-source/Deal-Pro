@@ -301,13 +301,18 @@ const RANK_PROMPT = `You are Deal Pro's UK property deal sourcer. You are given 
 
 Judge each on: for rentals, likely monthly profit at 80% occupancy (revenue = 24 nights x nightly rate, minus 15% platform fees, £45 cleaning per 3-night stay, rent and about £150 other costs), break-even occupancy, for purchases, gross yield and cash flow; price or rent level against the area, demand for short stays in that location, and compliance risk (in London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights don't count, so note when a London deal would need them; HMO and Article 4 where relevant). Treat nightly rates as estimates and say so. If the filters include "notes" (the user's own criteria in their words), rank listings that meet them higher and say which criteria each pick meets or misses. Never invent facts about a specific listing. The id is only for matching your picks to the results: never mention ids anywhere in your text. When you compare listings, name them by type and street or area (for example "the 1 bed flat on Adam & Eve Court").
 
-Return valid JSON with exactly these keys:
-summary (plain English, max 60 words, what the best options have in common),
-picks (array, best first, of {"id": string, "score": integer 0-100, "verdict": "Strong" | "Potential" | "Weak", "reason": string, "monthly_profit_80": string}),
+You may also get "search_summary": how many listings each site returned, how many links were removed as dead or taken, and how many couldn't be confirmed. Use it to explain the search.
+
+Return valid JSON with these keys:
+explanation (plain English, 80-150 words, written to the user: what the search found across the sites, how prices compare with what's normal for the area, which areas, property types or sites look best value and why, how well the results match the user's criteria and notes, and anything notable such as removed dead links or thin results),
+highlights (array of 3-6 short, specific findings, e.g. "The cheapest 2 beds are in LS6, from £950 pcm" or "Rightmove had the most matches"),
+summary (plain English, max 40 words: what the best options have in common),
+scores (array with one entry for EVERY listing given, best first: {"id": string, "score": integer 0-100, "verdict": "Strong" | "Potential" | "Weak"}),
+picks (array, best first, of {"id": string, "score": integer 0-100, "verdict": "Strong" | "Potential" | "Weak", "reason": string, "monthly_profit_80": string}; the same scores as in "scores"),
 watch_outs (array of short strings that apply across these results).`;
 
 const RANK_LEVEL: Record<LevelId, string> = {
-  quick: "Return only the 3 best picks, with a one-sentence reason each. Give at most 2 watch_outs.",
+  quick: "Return only the 3 best picks, with a one-sentence reason each, but still score every listing in \"scores\". Keep the explanation under 80 words and give at most 2 watch_outs.",
   standard: "Return the 10 best picks, with a two-sentence reason each covering the numbers and the main risk.",
   deep: `Return the 10 best picks. For each, give a thorough reason covering the numbers, local demand, the biggest risk and whether it survives a 20% lower nightly rate. Also add "notes" to each pick (array of short strings: compliance points and what to check with the landlord).`,
 };
@@ -661,13 +666,25 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
       try {
         st.ranking = await runRank(JSON.stringify({
           filters: st.filters,
+          search_summary: {
+            sites: Object.fromEntries(st.sites.map((site) => [SITES[site].label, st.sites_status[site]?.status === "error" ? "couldn't be searched" : st.listings.filter((l) => l.site === site && l.confirmed).length])),
+            removed_dead_or_taken_links: st.removed || 0,
+            unconfirmed_hidden: st.listings.filter((l) => !l.confirmed).length,
+          },
           listings: st.listings.filter((l) => l.confirmed).slice(0, level === "quick" ? 40 : 120).map((l, i) => ({
             id: String(i), site: SITES[l.site].label, type: l.type, beds: l.beds, area: l.area, postcode: l.postcode,
             [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price,
             ...(l.details ? { checked_details: l.details, still_available: l.verified } : {}),
           })),
         }), level);
-      } catch (error) { console.error("Ranking failed", error); st.ranking = null; }
+      } catch (error) {
+        console.error("Ranking failed, retrying with Scout", error);
+        try {
+          st.ranking = await runRank(JSON.stringify({ filters: st.filters, listings: st.listings.filter((l) => l.confirmed).slice(0, 40).map((l, i) => ({
+            id: String(i), site: SITES[l.site].label, type: l.type, beds: l.beds, area: l.area, postcode: l.postcode, [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price,
+          })) }), "quick");
+        } catch (again) { console.error("Ranking failed", again); st.ranking = null; }
+      }
     }
     st.phase = "done";
     await save(st);
