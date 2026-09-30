@@ -1009,7 +1009,7 @@ td.t{text-align:right;color:var(--ink-2)}
               <label class="f"><span>Area</span><input class="inp" id="dArea"></label>
               <label class="f"><span>Strategy</span><select class="inp" id="dStrat"></select></label>
             </div>
-            <label class="check"><input type="checkbox" id="dLondon"><span>In London (90-night short-let limit applies)</span></label>
+            <label class="check"><input type="checkbox" id="dLondon"><span>In London (90-night limit on stays under 90 nights)</span></label>
           </div>
         </div>
         <div class="fs">
@@ -1600,7 +1600,7 @@ function renderResults(){const d=S.deal,a=d.a,U=d.units;syncName();renderMeta();
   // alerts
   const al=[];
   if(d.london&&d.strat==='R2SA'){const gap=U.reduce((s,u)=>s+90*u.rate-u.rent*12,0);
-    al.push(`<div class="alert ${gap<0?'bad':'warn'}"><b>London 90-night limit.</b> At 90 nights a year the units earn ${gbp(U.reduce((s,u)=>s+90*u.rate,0))} against ${gbp(rent*12)} rent, ${gap<0?'a '+gbp(-gap)+' shortfall':'a '+gbp(gap)+' margin'} before any other costs. Year-round use needs planning permission or another lawful basis.</div>`)}
+    al.push(`<div class="alert ${gap<0?'bad':'warn'}"><b>London 90-night limit.</b> At 90 nights a year the units earn ${gbp(U.reduce((s,u)=>s+90*u.rate,0))} against ${gbp(rent*12)} rent, ${gap<0?'a '+gbp(-gap)+' shortfall':'a '+gbp(gap)+' margin'} before any other costs. The limit only counts stays of under 90 consecutive nights: corporate or mid-term lets of 90+ nights don't count, so they can fill the rest of the year. Otherwise year-round short lets need planning permission.</div>`)}
   const vatOcc=OCC.find((o,i)=>revs[i]*12>=90000);
   if(vatOcc!==undefined)al.push(`<div class="alert warn"><b>VAT.</b> Run through one business, revenue reaches ${gbp(revs[OCC.indexOf(vatOcc)]*12)} a year at ${pct(vatOcc)} occupancy, over the £90,000 VAT threshold. VAT at 20% would cut the surplus.</div>`);
   if(U.some(u=>u.dep>u.rent*12/52*5))al.push(`<div class="alert warn"><b>Deposit above 5 weeks' rent</b> on at least one unit. The cap applies to lets to individuals.</div>`);
@@ -1768,7 +1768,7 @@ function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();
     <div class="kv">${cols}</div>
     <h3>Illustrative monthly surplus</h3>
     <div class="tw"><table><thead><tr><th>Per unit</th><th>60%</th><th>80%</th><th>100%</th><th>Break-even</th></tr></thead><tbody>${tr}</tbody></table></div>
-    <p class="small" style="margin-top:8px">${a.fee}% platform fees, £${a.clean} cleaning per ${a.stay}-night stay, £${a.other}/month other costs, 30-day month. Not a forecast; nightly rates and occupancy are unvalidated.${d.london&&d.strat==='R2SA'?' London short lets are limited to 90 nights a year without planning permission.':''}</p>
+    <p class="small" style="margin-top:8px">${a.fee}% platform fees, £${a.clean} cleaning per ${a.stay}-night stay, £${a.other}/month other costs, 30-day month. Not a forecast; nightly rates and occupancy are unvalidated.${d.london&&d.strat==='R2SA'?' In London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights are not.':''}</p>
     <h3>Due diligence status</h3>
     <div class="tw"><table><thead><tr><th>Check</th><th style="text-align:left">Status</th><th style="text-align:left">Evidence</th></tr></thead><tbody>${ddr}</tbody></table></div>
     <h3>Next steps</h3>
