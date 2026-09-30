@@ -13,7 +13,7 @@ const MONTHLY_POSTS: Record<string, number> = { Lite: 3, Pro: 10 };
 const UNLIMITED_PLANS = new Set(["Max5", "Max20"]);
 const monthKey = () => new Date().toISOString().slice(0, 7);
 // Regions for deals and the region chat rooms. Keep in sync with REGIONS in index.html.
-const REGIONS = ["London", "Midlands", "North East", "North West", "South East", "South West", "Yorkshire and Humber", "Other"];
+const REGIONS = ["London", "South East", "East of England", "South West", "Midlands", "North West", "North East", "Yorkshire and Humber", "Scotland", "Wales", "Northern Ireland", "Other"];
 const slug = (region: string) => region.toLowerCase().replace(/[^a-z]+/g, "-");
 const ROOMS = new Map(REGIONS.map((r) => [slug(r), r]));
 const MAX_MESSAGE = 1000;
