@@ -87,7 +87,9 @@ Score strictly with this rubric:
 
 The London 90-night rule: in Greater London, letting a home as temporary sleeping accommodation for stays of fewer than 90 consecutive nights is limited to 90 nights a year without planning permission. It counts nights, not guests: stays of 90 or more consecutive nights (corporate lets, contractor, relocation, insurance or other mid-term lets) don't count towards it, whoever the guest is, while short stays count even when a company books them. So never treat the rule as a blocker by default for London R2SA or serviced accommodation. Model how the operator will fill the year: if the user says they do corporate or mid-term lets, or the details suggest it, model a mix of up to 90 short-stay nights plus 90+ night lets for the rest, pricing the long stays at a realistic furnished, bills-included monthly rate for the area (well below nightly-rate revenue) with a void between placements; if the plan relies on short stays alone, show the capped 90-night case. Say which model you used and what it depends on.
 
-Deals can be anywhere in the UK. Use local evidence for the property's own town, never London figures, and apply the rules of its nation:
+Analyse every deal for its exact location. Work out the neighbourhood, town, postcode district, council and nation, and base the rent, nightly rate, occupancy, seasonality, running costs and resale or refinance values on that area, using the local research provided below the deal. Name the area and source of each local figure in "assumptions". Take account of what drives demand there (universities, hospitals, employers, tourism, events, transport) and the council's own rules (licensing, Article 4, council tax premiums, short-let controls). If the location is unclear, say so, ask for it in "missing_information", and keep figures conservative.
+
+Deals can be anywhere in the UK. Never use London figures outside London, and apply the rules of its nation:
 - England and Northern Ireland: Stamp Duty Land Tax, including the surcharge for additional properties.
 - Scotland: Land and Buildings Transaction Tax with the Additional Dwelling Supplement instead of stamp duty; short-term lets need a licence from the council, and some areas (for example Edinburgh) are short-term let control areas needing planning permission; tenancies are private residential tenancies.
 - Wales: Land Transaction Tax with the higher rates for additional properties; holiday lets must be available and actually let for enough nights a year to pay business rates instead of council tax, and councils can charge council tax premiums on second homes; check any visitor levy.
@@ -104,6 +106,7 @@ upfront_cash (string),
 break_even (string, e.g. occupancy or rent needed to break even),
 occupancy_scenarios (array of {"occupancy": string, "monthly_profit": string}: the realistic occupancy, 80% and 100%; empty if not a short-let deal),
 red_flags (array of short strings: claims that look inflated, missing costs, anything that could make this deal lose money; empty if none),
+local_context ({"area": string (neighbourhood, town, postcode district), "council": string, "demand": string (max 40 words: who rents here and why), "benchmarks": [{"label": string, "value": string}] (the local figures you used), "rules": [short strings: the council and nation rules that apply]}),
 assumptions (array of short strings),
 risks (array of short strings),
 missing_information (array of short strings),
@@ -268,38 +271,61 @@ export async function readLinks(input: string, level: LevelId) {
 export type Evidence = { what: string; figure: string; source: string; url: string };
 async function marketEvidence(deal: string, level: LevelId, strategy?: string) {
   const st = strategy && STRATEGIES[strategy];
-  const prompt = `You are researching the market for a UK property deal${st ? ` being assessed as ${st.name}` : ""}. From the details below, work out the location and property, then search the web for current market evidence:
-- comparable long-let rents for similar properties nearby (Rightmove, Zoopla, OpenRent; SpareRoom for rooms),
-- for short lets and serviced accommodation, typical nightly rates and occupancy for similar listings in the area (Airbnb and Booking.com listings, AirDNA, Airbtics or similar market data),
-- for purchases, recent sold prices and current asking prices for similar properties (Rightmove or Zoopla sold prices, Land Registry),
-- the local council's HMO, selective licensing or Article 4 rules if relevant.
-${level === "deep" ? "Search thoroughly: find at least 3 comparables for each figure that matters and note the range." : "Find the few most useful comparables."}
-Only report figures you actually found, each with its source page. Never estimate here.
+  const depth = level === "deep" ? "Search thoroughly: find at least 3 comparables for each figure that matters, note the range, and check each rule on the council's own website."
+    : level === "standard" ? "Find the most useful comparables for each figure and check the council's rules."
+    : "Do a quick local check: a few comparables for the main figure and the council's key rule.";
+  const prompt = `You are researching the local market for a UK property deal${st ? ` being assessed as ${st.name}` : ""}. It can be anywhere in England, Scotland, Wales or Northern Ireland.
+First work out exactly where it is: the neighbourhood or street, town or city, postcode district, the local council (local authority, or London borough) and the nation. Then search the web for evidence about THAT area specifically, not national or London averages:
+- comparable long-let rents for similar properties in the same postcode district or neighbourhood (Rightmove, Zoopla, OpenRent; SpareRoom for rooms),
+- for short lets and serviced accommodation: nightly rates, occupancy and seasonality for similar listings nearby (Airbnb and Booking.com listings, AirDNA, Airbtics or similar),
+- for purchases: recent sold prices and asking prices for similar nearby properties (Rightmove or Zoopla sold prices, Land Registry, Registers of Scotland),
+- what drives demand locally: universities, hospitals, large employers, business parks, tourism, events, stations and transport links,
+- the council's own rules: HMO and selective licensing, Article 4 directions, second-home or empty-home council tax premiums, short-term let licensing or control areas (Scotland), holiday-let rules (Wales), and any local planning policy on short lets.
+${depth}
+Only report figures and rules you actually found, each with its source page. Never estimate here.
 
 Deal:
 ${deal.slice(0, 7000)}
 
-Return JSON: {"location": string, "evidence": [{"what": string (e.g. "2 bed flat rents, BR1"), "figure": string (e.g. "£1,450-£1,600 pcm"), "source": string (site or publisher), "url": string}], "summary": string (max 80 words: what the evidence says about the deal's claimed figures)}.`;
-  const { parsed, seen } = await webJson(prompt, [], level, level === "deep" ? "high" : "medium", "low");
+Return JSON: {"location": string (neighbourhood, town, postcode district), "council": string, "nation": string,
+"demand_drivers": [short strings, e.g. "University of Leeds, 1 mile"],
+"local_rules": [short strings, e.g. "Leeds selective licensing in Harehills and Beeston"],
+"benchmarks": [{"label": string (e.g. "2 bed rents, LS6"), "value": string (e.g. "£1,050-£1,250 pcm")}],
+"evidence": [{"what": string, "figure": string, "source": string (site or publisher), "url": string}],
+"summary": string (max 80 words: what the local evidence says about the deal's claimed figures)}.`;
+  const { parsed, seen } = await webJson(prompt, [], level, level === "deep" ? "high" : level === "standard" ? "medium" : "low", "low");
   const evidence: Evidence[] = (Array.isArray(parsed.evidence) ? parsed.evidence : [])
     .filter((e: unknown): e is Record<string, unknown> => !!e && typeof e === "object")
     .map((e: Record<string, unknown>) => ({ what: String(e.what || "").slice(0, 140), figure: String(e.figure || "").slice(0, 120), source: String(e.source || "").slice(0, 80), url: String(e.url || "") }))
     .filter((e: Evidence) => e.figure && /^https?:\/\//.test(e.url) && seen.size > 0 && seen.has(normalise(e.url)))
     .slice(0, level === "deep" ? 12 : 6);
+  const list = (v: unknown, n: number) => (Array.isArray(v) ? v : []).map((x) => String(x || "").slice(0, 160)).filter(Boolean).slice(0, n);
+  const benchmarks = (Array.isArray(parsed.benchmarks) ? parsed.benchmarks : [])
+    .filter((b: unknown): b is Record<string, unknown> => !!b && typeof b === "object" && !!(b as Record<string, unknown>).value)
+    .map((b: Record<string, unknown>) => ({ label: String(b.label || "").slice(0, 80), value: String(b.value || "").slice(0, 80) })).slice(0, 8);
+  // Benchmarks and rules are only trusted when at least one real source backs the research.
   if (!evidence.length) return null;
-  return { location: String(parsed.location || "").slice(0, 120), summary: String(parsed.summary || "").slice(0, 700), evidence };
+  return {
+    location: String(parsed.location || "").slice(0, 120), council: String(parsed.council || "").slice(0, 80), nation: String(parsed.nation || "").slice(0, 40),
+    demand_drivers: list(parsed.demand_drivers, 6), local_rules: list(parsed.local_rules, 6), benchmarks,
+    summary: String(parsed.summary || "").slice(0, 700), evidence,
+  };
 }
 
 export const runAnalysis = async (deal: string, level: LevelId, strategy?: string) => {
   const { reads, extra } = await readLinks(deal, level);
   let input = extra ? `${deal}\n\n${extra}` : deal;
   let market: Awaited<ReturnType<typeof marketEvidence>> = null;
-  if (level !== "quick") {
-    try { market = await marketEvidence(input, level, strategy); } catch (error) { console.warn("Market evidence failed", errText(error)); }
-    input += market
-      ? `\n\n--- Market evidence gathered from the web (${market.location}) ---\n${market.evidence.map((e) => `- ${e.what}: ${e.figure} (${e.source})`).join("\n")}\nSummary: ${market.summary}`
-      : "\n\n--- No market evidence could be gathered from the web. Use conservative figures and say they are unverified. ---";
-  }
+  // Every level researches the property's own area first; Scout does a quick check.
+  try { market = await marketEvidence(input, level, strategy); } catch (error) { console.warn("Local research failed", errText(error)); }
+  input += market
+    ? `\n\n--- Local research for ${market.location}${market.council ? ` (${/council|borough|authority/i.test(market.council) ? market.council : `${market.council} council`}${market.nation ? `, ${market.nation}` : ""})` : ""} ---
+Local benchmarks: ${market.benchmarks.map((b) => `${b.label}: ${b.value}`).join("; ") || "none found"}
+Demand drivers: ${market.demand_drivers.join("; ") || "none found"}
+Council rules: ${market.local_rules.join("; ") || "none found"}
+Evidence:\n${market.evidence.map((e) => `- ${e.what}: ${e.figure} (${e.source})`).join("\n")}
+Summary: ${market.summary}`
+    : "\n\n--- No local evidence could be gathered from the web. Use conservative figures for the property's own area and say they are unverified. ---";
   const result = await analyse(input, level, strategy);
   return { ...result, ...(reads.length ? { links_read: reads } : {}), ...(market ? { market_evidence: market } : {}) };
 };
