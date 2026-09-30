@@ -2143,6 +2143,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   const SC=aiScores(),base=findRows();base.forEach(r=>{const x=SC.get(r.k);r.ai=x?x.score:-1;r.aiv=x?x.verdict:''});
   // With a ranking, the list is sorted by AI score unless the member picked another sort.
   const rows=S.find.sort?sortRows(base):SC.size?base.slice().sort((a,b)=>b.ai-a.ai||a.k-b.k):base,keys=new Set(rows.filter(isOpen).map(r=>r.k));[...FS.sel].forEach(k=>{if(!keys.has(k))FS.sel.delete(k)});
+  FS.lastRows=rows;
   const pr=rows.map(r=>r.price).sort((a,b)=>a-b),m=pr.length,med=m?(m%2?pr[(m-1)/2]:(pr[m/2-1]+pr[m/2])/2):NaN,nOpen=keys.size;
   const ll=new Set(rows.map(r=>r.site)).size,buy=S.find.f.mode==='buy',so=S.find.sort,sv=so?`${so.k}:${so.dir}`:'';
   const hidden=FS.showUnconfirmed?0:findRows(true).length-rows.length,nUnc=findRows(true).filter(x=>!confirmedLive(x)).length;
@@ -2151,9 +2152,9 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   const th=(k,lab,cls='')=>{const on=so&&so.k===k;return `<th class="${cls}" aria-sort="${on?(so.dir>0?'ascending':'descending'):'none'}"><button class="sort" data-sort="${k}">${lab}<span class="sa" aria-hidden="true">${on?(so.dir>0?'↑':'↓'):''}</span></button></th>`};
   const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
   const acts=view==='cards'
-    ?(m?`<label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${CARD_SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${CARD_SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
+    ?(m?`<button class="btn sm primary" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${CARD_SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${CARD_SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
       <button class="btn sm car-arrow" id="fPrev" aria-label="Previous deals">${CHEV(-1)}</button><button class="btn sm car-arrow" id="fNext" aria-label="Next deals">${CHEV(1)}</button>`:'')
-    :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
+    :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
   const L=`<span class="lockc">${LOCK}Locked</span>`;
   let body;
   if(!m)body=`<div class="fempty"><h2>${hidden?'No listings confirmed live':'No listings match these filters'}</h2><p>${hidden?'Every listing found either had a dead link or its site blocked the check. Try Analyst or Expert, which open more listings to confirm them, or show the unconfirmed ones.':'Try a wider price range, a different location or more sites.'}</p></div>`;
@@ -2170,6 +2171,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
     const upd=()=>{const p=$('#fPrev'),n=$('#fNext');if(p)p.disabled=c.scrollLeft<=2;if(n)n.disabled=c.scrollLeft+c.clientWidth>=c.scrollWidth-2};c.addEventListener('scroll',upd,{passive:true});upd()}
   FS.justOpened=null;syncSel()}
 function syncSel(){const n=FS.sel.size,b=$('#fBuildSel');if(b){b.disabled=!n;b.textContent=n?`Analyse selected (${n})`:'Analyse selected'}
+  const cc=$('#fCopyCards');if(cc)cc.textContent=cardsLabel((FS.lastRows||[]).filter(isOpen).length);
   $$('#fResults tr[data-k]').forEach(tr=>tr.classList.toggle('is-sel',FS.sel.has(+tr.dataset.k)));
   const all=$('#fSelAll');if(all){const cb=$$('#fResults [data-sel]');all.checked=cb.length>0&&cb.every(c=>c.checked);all.indeterminate=!all.checked&&cb.some(c=>c.checked)}}
 function syncFee(){$$('.js-fee').forEach(e=>e.textContent=gbp(dealFee()))}
@@ -2269,6 +2271,30 @@ function findTsv(){const c=v=>{const s=String(v??'').replace(/[\t\r\n]+/g,' ');r
 function copyTsv(){const n=openRows().length;if(!n){toast('No deals to copy.');return}const t=findTsv(),lab=`${n} deal${n>1?'s':''}`;
   const fb=()=>{const w=$('#fTsvWrap'),ta=$('#fTsv');if(!w)return;w.hidden=false;ta.value=t;ta.focus();ta.select();ta.scrollTop=0;ta.scrollLeft=0;toast(`Selected ${lab}. Press Ctrl/Cmd+C, then paste into cell A1 of a Google Sheet.`)};
   try{navigator.clipboard.writeText(t).then(()=>toast(`Copied ${lab}. Paste into cell A1 of a Google Sheet.`)).catch(fb)}catch(e){fb()}}
+/* copy deal cards to send to a client: WhatsApp-ready text, plus formatted cards for email */
+const cardsLabel=n=>FS.sel.size?`Copy ${FS.sel.size} selected card${FS.sel.size===1?'':'s'}`:`Copy all ${n} deal card${n===1?'':'s'}`;
+function cardRows(){const shown=(FS.lastRows||sortRows(findRows())).filter(isOpen);return FS.sel.size?shown.filter(r=>FS.sel.has(r.k)):shown}
+function cardFacts(r,i){const buy=r.mode==='buy',where=[r.area,r.postcode].filter(Boolean).join(' ').replace(/\s*\(.*?\)/g,'').trim();
+  const u={rent:r.price,rate:RATE_EST(r.beds,r.area+' '+r.postcode)},occ=buy?[]:OCC.map(x=>month(u,x,null,DEF_A).surplus);
+  const live=r.verified==='available'&&r.checkedAt?new Date(r.checkedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'';
+  return {head:`Deal ${i+1} · ${r.type}${buy?` · ${gbp(r.price)}`:` · ${gbp(r.price)}/month`}`,lines:[
+    ['📍',where],['🛏',[r.type,r.furnished&&r.furnished!=='Not stated'?r.furnished:''].filter(Boolean).join(' · ')],
+    ...(buy?[['💷',`Asking price ${gbp(r.price)}`]]:[['💸',`Rent ${gbp(r.price)}/month (${gbp(r.price*12)}/year)`],['💸',`Deposit about ${gbp(r.price)} (est.)`],['💰',`Nightly rate about £${u.rate} (est.)`],
+      ['💷',OCC.map((x,j)=>`${gbp(occ[j])} at ${pct(x)}`).join(' · ')+' occupancy (est.)']]),
+    ...(r.ai>=0?[['⭐',`AI score ${r.ai}/100${r.aiv?' · '+r.aiv:''}`]]:[]),
+    ...(live?[['✅',`Listing checked live ${live}`]]:[]),['🔗',r.url]]}}
+function copyCards(){const rows=cardRows();if(!rows.length){toast('No deals to copy.');return}
+  const f=S.find.f,today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  const title=`${rows.length} property deal${rows.length===1?'':'s'}${f.loc?` · ${f.loc}`:''} · ${today}`,foot='Figures are illustrative estimates. Nightly rates and occupancy are not verified. Please check all details before committing.';
+  const cards=rows.map(cardFacts);
+  const text=[title,'',...cards.map(c=>[`*${c.head}*`,...c.lines.filter(l=>l[1]).map(([e,t])=>`${e} ${t}`)].join('\n')+'\n'),foot,'','Found with Deal Pro · usedealpro.com'].join('\n');
+  const eh=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const html=`<div style="font-family:Arial,Helvetica,sans-serif;color:#15171a"><p style="font-size:16px;font-weight:bold;margin:0 0 12px">${eh(title)}</p>${cards.map(c=>`<div style="border:1px solid #d9dbe0;border-radius:8px;padding:12px 14px;margin:0 0 12px;max-width:560px"><p style="font-size:15px;font-weight:bold;margin:0 0 6px">${eh(c.head)}</p>${c.lines.filter(l=>l[1]).map(([e,t])=>`<p style="margin:2px 0;font-size:14px">${e} ${e==='🔗'?`<a href="${eh(t)}">${eh(t)}</a>`:eh(t)}</p>`).join('')}</div>`).join('')}<p style="font-size:12px;color:#5b606a">${eh(foot)}</p><p style="font-size:12px;color:#5b606a">Found with Deal Pro · usedealpro.com</p></div>`;
+  const lab=`${rows.length} deal card${rows.length===1?'':'s'}`;
+  const fb=()=>{const w=$('#fTsvWrap'),ta=$('#fTsv');if(!w){toast('Copying isn’t available in this browser.');return}w.hidden=false;ta.value=text;ta.focus();ta.select();ta.scrollTop=0;toast(`Selected ${lab}. Press Ctrl/Cmd+C to copy.`)};
+  const done=()=>toast(`Copied ${lab}. Paste into WhatsApp, an email or a message.`);
+  try{if(window.ClipboardItem&&navigator.clipboard.write){navigator.clipboard.write([new ClipboardItem({'text/plain':new Blob([text],{type:'text/plain'}),'text/html':new Blob([html],{type:'text/html'})})]).then(done).catch(()=>navigator.clipboard.writeText(text).then(done).catch(fb))}
+    else navigator.clipboard.writeText(text).then(done).catch(fb)}catch(e){fb()}}
 // Start a new deal from pasted or posted text and run the AI analysis on it straight away.
 function analyseText(text,name){text=String(text||'').trim();if(!text){toast('Paste the deal details first.');return}
   startAnalysis(()=>{const d=freshDeal();d.name=String(name||'').trim().slice(0,80)||'Pasted deal';S.deal=d;markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
@@ -2292,7 +2318,7 @@ $('#fResults').addEventListener('click',e=>{
   if(e.target.closest('#fViewSheet')){S.find.view='sheet';save();renderFind();$('#fViewSheet').focus();return}
   const ar=e.target.closest('#fPrev,#fNext');if(ar){const c=$('#fCards');if(c){const step=312*Math.max(1,Math.floor(c.clientWidth/312));c.scrollBy({left:(ar.id==='fPrev'?-1:1)*step,behavior:reduced()?'auto':'smooth'})}return}
   if(e.target.closest('#fBuildSel')){buildDeal($$('#fResults [data-sel]').filter(c=>c.checked).map(c=>SRC()[+c.dataset.sel]));return}
-  if(e.target.closest('#fCopy'))copyTsv()});
+  if(e.target.closest('#fCopy'))copyTsv();if(e.target.closest('#fCopyCards'))copyCards()});
 $('#fResults').addEventListener('change',e=>{const t=e.target;
   if(t.id==='fSortSel'){const v=t.value;S.find.sort=v?{k:v.split(':')[0],dir:+v.split(':')[1]}:null;save();renderFind();const s=$('#fSortSel');if(s)s.focus();return}
   if(t.id==='fSelAll'){$$('#fResults [data-sel]').forEach(c=>{c.checked=t.checked;const k=+c.dataset.sel;if(t.checked)FS.sel.add(k);else FS.sel.delete(k)});syncSel();return}
