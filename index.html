@@ -2061,30 +2061,49 @@ $('#fBedsSeg').addEventListener('change',e=>{const t=e.target,boxes=$$('input[na
   if(t.checked){const on=boxes.filter(c=>c.checked).map(c=>+c.value);if(on.length>1){const lo=Math.min(...on),hi=Math.max(...on);boxes.forEach(c=>{if(+c.value>=lo&&+c.value<=hi)c.checked=true})}}
   $('#fBedsAny').checked=!boxes.some(c=>c.checked)},true);
 /* typed criteria: pick out the obvious filters; everything else goes to the AI as the user's own words */
-function parseCriteria(text){const t=' '+String(text||'').replace(/[–—]/g,'-').replace(/,(?=\d{3}\b)/g,'')+' ',lo=t.toLowerCase(),out={},got=[];
+// UK towns, cities and London areas, so a place is recognised however it's typed.
+const UK_PLACES=['london','manchester','birmingham','leeds','liverpool','sheffield','bristol','newcastle upon tyne','newcastle','nottingham','leicester','coventry','bradford','cardiff','swansea','newport','edinburgh','glasgow','aberdeen','dundee','inverness','stirling','belfast','derry','londonderry','southampton','portsmouth','brighton','hove','plymouth','exeter','bath','oxford','cambridge','reading','slough','milton keynes','luton','northampton','peterborough','norwich','ipswich','colchester','chelmsford','southend','basildon','stoke','stoke-on-trent','wolverhampton','walsall','derby','lincoln','york','hull','doncaster','wakefield','huddersfield','halifax','harrogate','middlesbrough','sunderland','durham','gateshead','preston','blackpool','bolton','bury','oldham','rochdale','stockport','salford','wigan','warrington','chester','crewe','blackburn','burnley','lancaster','carlisle','worcester','gloucester','cheltenham','swindon','bournemouth','poole','salisbury','winchester','guildford','woking','crawley','canterbury','maidstone','dartford','gravesend','chatham','margate','hastings','eastbourne','watford','st albans','stevenage','hemel hempstead','high wycombe','aylesbury','bedford','telford','shrewsbury','hereford','torquay','truro','barnsley','rotherham','mansfield','grimsby','scunthorpe','croydon','bromley','camden','islington','hackney','tower hamlets','westminster','southwark','lambeth','wandsworth','lewisham','greenwich','newham','brent','ealing','haringey','barnet','enfield','harrow','hillingdon','hounslow','redbridge','romford','ilford','stratford','canary wharf','shoreditch','kingston','richmond','wimbledon','clapham','brixton','peckham','walthamstow','tottenham','wembley','hammersmith','fulham','chelsea','kensington','paddington','bayswater','finsbury park','headingley','didsbury','salford quays'];
+const NUM_WORDS={one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,single:1,double:2};
+const titleCase=t=>t.replace(/\b([a-z])([a-z']*)/g,(m,a,b)=>['upon','on','under','le','by','de','the','of'].includes(m)?m:a.toUpperCase()+b);
+/* typed criteria: pick out the obvious filters; everything else goes to the AI as the user's own words */
+function parseCriteria(text){const raw=String(text||''),out={},got=[];
+  let lo=' '+raw.toLowerCase().replace(/[–—]/g,'-').replace(/(\d),(?=\d{3}\b)/g,'$1')+' ';
+  lo=lo.replace(/\b(one|two|three|four|five|six|seven|eight|nine|ten|single|double)(?=[\s-]*(?:bed|bedroom|br\b))/g,w=>NUM_WORDS[w]);
   const money=(n,k)=>Math.round(+n*(k?1000:1));
-  if(/\b(buy|purchase|for sale|to buy|btl|brrr|flip)\b/.test(lo))out.mode='buy';else if(/\b(rent|to let|pcm|per month|r2sa|r2r|rent to rent)\b/.test(lo))out.mode='rent';
+  if(/\b(buy|buying|purchase|for sale|to buy|btl|brrr|flip|asking price)\b/.test(lo))out.mode='buy';else if(/\b(rent|renting|to let|let|pcm|pw|per month|a month|r2sa|r2r|rent to rent|serviced accommodation)\b/.test(lo))out.mode='rent';
   if(out.mode)got.push(out.mode==='buy'?'To buy':'To rent');
-  const bedN=w=>w==='studio'?0:+w;
-  let m=lo.match(/\b(studio|\d)\s*(?:-|to|or)\s*(\d)\+?\s*(?:bed|bedroom|br)/);
-  if(m){const a=bedN(m[1]),b=Math.min(4,+m[2]);out.beds=[];for(let i=Math.min(a,b);i<=Math.max(a,b);i++)out.beds.push(String(i))}
-  else if((m=lo.match(/\b(\d)\s*\+\s*(?:bed|bedroom|br)|\b(\d)\s*(?:bed|bedroom|br)s?\s*(?:or more|plus|\+)/))){const a=+(m[1]||m[2]);out.beds=[];for(let i=Math.min(a,4);i<=4;i++)out.beds.push(String(i))}
-  else if((m=lo.match(/\b(\d)\s*(?:-\s*)?(?:bed|bedroom|br)s?\b/)))out.beds=[String(Math.min(4,+m[1]))];
+  // bedrooms: "2-3 bed", "studio to 2 bed", "3+ bed", "3 bedroom", "studio"
+  const bedN=w=>w==='studio'?0:+w;const BED='(?:bed|beds|bedroom|bedrooms|br|bedder)\\b';
+  let m=lo.match(new RegExp(`\\b(studio|\\d)\\s*(?:-|to|or)\\s*(\\d)\\+?\\s*${BED}`));
+  if(m){const x=bedN(m[1]),y=Math.min(4,+m[2]);out.beds=[];for(let i=Math.min(x,y);i<=Math.max(x,y);i++)out.beds.push(String(Math.min(i,4)))}
+  else if((m=lo.match(new RegExp(`\\b(\\d)\\s*\\+\\s*${BED}|\\b(\\d)\\s*${BED}\\s*(?:or more|plus|\\+)`)))){const x=+(m[1]||m[2]);out.beds=[];for(let i=Math.min(x,4);i<=4;i++)out.beds.push(String(i))}
+  else if((m=lo.match(new RegExp(`\\b(\\d)\\s*(?:-\\s*)?${BED}`))))out.beds=[String(Math.min(4,+m[1]))];
   else if(/\bstudios?\b/.test(lo))out.beds=['0'];
-  if(out.beds)got.push(out.beds.length>1?`${out.beds[0]==='0'?'Studio':out.beds[0]}–${out.beds[out.beds.length-1]==='4'?'4+':out.beds[out.beds.length-1]} beds`:out.beds[0]==='0'?'Studio':`${out.beds[0]==='4'?'4+':out.beds[0]} bed`);
-  if((m=lo.match(/£\s?(\d+(?:\.\d+)?)\s*(k)?\s*(?:-|to)\s*£?\s?(\d+(?:\.\d+)?)\s*(k)?/))){out.min=money(m[1],m[2]||m[4]);out.max=money(m[3],m[4])}
-  else{if((m=lo.match(/(?:under|below|max(?:imum)?|up to|less than|no more than|budget(?: of)?)\s*£?\s?(\d+(?:\.\d+)?)\s*(k)?/)))out.max=money(m[1],m[2]);
-    if((m=lo.match(/(?:over|above|min(?:imum)?|from|at least|more than)\s*£\s?(\d+(?:\.\d+)?)\s*(k)?/)))out.min=money(m[1],m[2])}
+  if(out.beds){out.beds=[...new Set(out.beds)];got.push(out.beds.length>1?`${out.beds[0]==='0'?'Studio':out.beds[0]}–${out.beds[out.beds.length-1]==='4'?'4+':out.beds[out.beds.length-1]} beds`:out.beds[0]==='0'?'Studio':`${out.beds[0]==='4'?'4+':out.beds[0]} bed`)}
+  // price: ranges first, then max and min; numbers next to "bed" are bedrooms, not prices
+  const P='£?\\s?(\\d+(?:\\.\\d+)?)\\s*(k)?';
+  if((m=lo.match(new RegExp(`(?:between|from)\\s*${P}\\s*(?:and|to|-)\\s*${P}`)))||(m=lo.match(new RegExp(`£\\s?(\\d+(?:\\.\\d+)?)\\s*(k)?\\s*(?:-|to)\\s*£?\\s?(\\d+(?:\\.\\d+)?)\\s*(k)?`)))||(m=lo.match(/\b(\d{3,7})\s*(k)?\s*(?:-|to)\s*(\d{3,7})\s*(k)?\b(?!\s*(?:bed|br))/))){out.min=money(m[1],m[2]||m[4]);out.max=money(m[3],m[4])}
+  else{if((m=lo.match(new RegExp(`(?:under|below|max(?:imum)?|up to|upto|less than|no more than|budget(?: of| is)?|cap(?:ped)? at|<)\\s*${P}`))))out.max=money(m[1],m[2]);
+    if((m=lo.match(new RegExp(`(?:over|above|min(?:imum)?|at least|more than|starting at|>)\\s*${P}`))))out.min=money(m[1],m[2]);
+    if(out.max==null&&out.min==null&&(m=lo.match(/£\s?(\d+(?:\.\d+)?)\s*(k)?|\b(\d{3,7})\s*(k)?\s*(?:pcm|pm|pw|per month|a month|per week|a week)\b/))){const v=money(m[1]||m[3],m[2]||m[4]);out.max=/(pw|per week|a week)\b/.test(lo)?Math.round(v*52/12):v}}
+  // a lone amount like "2 bed 1500" is taken as the budget
+  if(out.max==null&&out.min==null&&(m=lo.match(/(?:^|\s)(\d{3,7})\s*(k)?(?=[\s.,!]|$)(?!\s*(?:bed|br|-))/)))out.max=money(m[1],m[2]);
+  if(out.max!=null&&/(pw|per week|a week)\b/.test(lo)&&out.max<1000&&out.mode!=='buy'){out.max=Math.round(out.max*52/12);if(out.min)out.min=Math.round(out.min*52/12)}
   if(out.max!=null||out.min!=null){if(out.min==null)out.min='';if(out.max==null)out.max='';got.push(`${out.min!==''?gbp(out.min):'£0'}–${out.max!==''?gbp(out.max):'any'}`)}
-  if(/\bcommercial|office|retail|shop|industrial|warehouse\b/.test(lo))out.type='commercial';else if(/\bhouses?\b|\bterrace|\bsemi\b|detached|bungalow/.test(lo))out.type='house';else if(/\bflats?\b|apartment|maisonette/.test(lo))out.type='flat';else if(out.beds&&out.beds.join()==='0')out.type='studio';
-  if(out.type)got.push(out.type[0].toUpperCase()+out.type.slice(1));
+  if(/\b(commercial|office|offices|retail|shop|industrial|warehouse|unit to let)\b/.test(lo))out.type='commercial';else if(/\b(houses?|terraced?|semi|semi-detached|detached|bungalow|townhouse|cottage)\b/.test(lo))out.type='house';else if(/\b(flats?|apartments?|maisonettes?|penthouse)\b/.test(lo))out.type='flat';else if(out.beds&&out.beds.join()==='0')out.type='studio';
+  if(out.type&&!(out.type==='studio'&&out.beds&&out.beds.join()==='0'))got.push(out.type[0].toUpperCase()+out.type.slice(1));
   if(/\bunfurnished\b/.test(lo))out.furn='unfurnished';else if(/\bfurnished\b/.test(lo))out.furn='furnished';if(out.furn)got.push(out.furn[0].toUpperCase()+out.furn.slice(1));
-  if(/private landlord|no agents?|direct(?:ly)? from (?:the )?landlord/.test(lo)){out.priv=true;got.push('Private landlords')}
-  // location: a postcode district, or the place after "in"/"around"/"near"
-  const pc=t.match(/\b([A-Z]{1,2}\d[A-Z\d]?)(?:\s*\d[A-Z]{2})?\b/);
-  const place=t.match(/\b(?:in|around|within|across|near)\s+((?:[A-Z][\w'&.-]*)(?:[\s-]+(?:[A-Z][\w'&.-]*|upon|on|under|le|by|de))*)/);
-  if(place)out.loc=place[1].replace(/\s+(?:under|over|with|near|for|and|or|up)$/i,'').trim();else if(pc)out.loc=pc[1];
-  if(out.loc)got.push(out.loc);
+  if(/private landlords?|no agents?|direct(?:ly)? (?:from|with) (?:the )?landlord/.test(lo)){out.priv=true;got.push('Private landlords')}
+  if((m=lo.match(/\b(?:last|past|within)\s*(24 ?h(?:ours?)?|day|\d+ days?|week|fortnight)\b|\b(new today|just listed|newly listed|brand new listings?)\b/))){const w=m[1]||'';out.fresh=m[2]?'3':/24|day\b/.test(w)&&!/\d+ days?/.test(w)?'1':/fortnight/.test(w)?'14':/week/.test(w)?'7':String(Math.min(14,Math.max(1,parseInt(w)||7))).replace(/^(2|4|5|6)$/,'7').replace(/^(8|9|10|11|12|13)$/,'14');got.push('Listed recently')}
+  // location: a place after in/near/around, a known UK town or London area, or a postcode district
+  const STOP=/\b(under|below|over|above|with|for|max|maximum|min|minimum|between|from|up|upto|at|budget|and|or|near|close|pcm|pm|pw|per|a|that|which|landlord|private|furnished|unfurnished|to|rent|let|buy|sale|r2sa|r2r|hmo|btl|serviced|bed|beds|bedroom|bedrooms|studio|flat|flats|house|houses|within|around|area|areas|please|the|last|past|this|next|week|weeks|month|months|day|days|listed|added|new|newly|recent|recently)\b/;
+  let loc='';
+  const after=lo.match(/\b(?:in|near|around|across|within|nr)\s+([a-z][a-z0-9' .&-]{1,40})/);
+  if(after){const words=[];for(const w of after[1].trim().split(/\s+/)){if(STOP.test(w)||/\d/.test(w))break;words.push(w.replace(/[.,]+$/,''));if(/[.,]$/.test(w))break}if(words.length&&words.join(' ').length>2)loc=titleCase(words.join(' '))}
+  if(!loc){const hit=UK_PLACES.filter(pl=>new RegExp(`\\b${pl.replace(/[-]/g,'[- ]')}\\b`).test(lo)).sort((x,y)=>y.length-x.length)[0];if(hit)loc=titleCase(hit)}
+  const pc=raw.match(/\b([A-Za-z]{1,2}\d{1,2}[A-Za-z]?)(?:\s*\d[A-Za-z]{2})?\b/);
+  if(pc&&!/^(\d|x\d)/i.test(pc[1])&&!new RegExp(`\\b${pc[1]}\\s*(?:bed|br)`,'i').test(raw)){const d=pc[1].toUpperCase();if(!loc)loc=d;else if(!loc.toUpperCase().includes(d))loc=`${loc} ${d}`}
+  if(loc){out.loc=loc;got.push(loc)}
   return {f:out,got}}
 function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';$('#fFresh').value=f.fresh||'any';
   $(f.mode==='buy'?'#fModeBuy':'#fModeRent').checked=true;
@@ -2195,7 +2214,10 @@ function onFind(){readFind();save();renderFind();$$('#fLevelOpts .lv-time').forE
 $('#fPanel').addEventListener('input',onFind);$('#fPanel').addEventListener('change',onFind);
 $('#fReset').addEventListener('click',()=>{S.find.f=FIND_DEF();bindFind();save();renderFind()});
 $('#fNotesFill').addEventListener('click',()=>{const text=$('#fNotes').value.trim(),msg=$('#fNotesMsg');if(!text){msg.textContent='Type what you’re looking for first.';$('#fNotes').focus();return}
-  const {f,got}=parseCriteria(text);readFind();Object.assign(S.find.f,f);bindFind();save();renderFind();
+  const {f,got}=parseCriteria(text);readFind();
+  // No price in the text: drop the starting £1,200–£5,000 range so it doesn't hide matches.
+  const d=FIND_DEF();if(f.min==null&&f.max==null&&+S.find.f.min===d.min&&+S.find.f.max===d.max){f.min='';f.max=''}
+  Object.assign(S.find.f,f);bindFind();save();renderFind();
   msg.textContent=got.length?`Filled in: ${got.join(' · ')}. Check the filters, then search.`:'No filters to fill in. The AI will still search with what you wrote.'});
 const FIND_MSG=m=>{const n=$('#nFind');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
 async function pollJob(jobId,onTick,onProgress,maxMs=17*60e3){const t0=Date.now();for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(jobId),{credentials:'same-origin'});const d=await p.json().catch(()=>({}));
