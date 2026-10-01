@@ -2070,6 +2070,9 @@ const titleCase=t=>t.replace(/\b([a-z])([a-z']*)/g,(m,a,b)=>['upon','on','under'
 function parseCriteria(text){const raw=String(text||''),out={},got=[];
   let lo=' '+raw.toLowerCase().replace(/[–—]/g,'-').replace(/(\d),(?=\d{3}\b)/g,'$1')+' ';
   lo=lo.replace(/\b(one|two|three|four|five|six|seven|eight|nine|ten|single|double)(?=[\s-]*(?:bed|bedroom|br\b))/g,w=>NUM_WORDS[w]);
+  lo=lo.replace(/(\d+(?:\.\d+)?)\s*(?:m|mil|million)\b/g,(x,n)=>String(Math.round(+n*1e6)));
+  // floor areas aren't prices
+  lo=lo.replace(/(\d+(?:\.\d+)?)\s*(?:sqm|sq\.?\s?m|m2|m²|square met(?:re|er)s?|sq\.?\s?ft|sqft|square feet)\b/g,' floor-area ').replace(/\b(\d+)\s*(?:-|to)\s*(\d+)\s*(units|rooms|keys|apartments|flats)\b/g,'$3 $1 to $2');
   const money=(n,k)=>Math.round(+n*(k?1000:1));
   if(/\b(buy|buying|purchase|for sale|to buy|btl|brrr|flip|asking price)\b/.test(lo))out.mode='buy';else if(/\b(rent|renting|to let|let|pcm|pw|per month|a month|r2sa|r2r|rent to rent|serviced accommodation)\b/.test(lo))out.mode='rent';
   if(out.mode)got.push(out.mode==='buy'?'To buy':'To rent');
@@ -2091,7 +2094,9 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   if(out.max==null&&out.min==null&&(m=lo.match(/(?:^|\s)(\d{3,7})\s*(k)?(?=[\s.,!]|$)(?!\s*(?:bed|br|-))/)))out.max=money(m[1],m[2]);
   if(out.max!=null&&/(pw|per week|a week)\b/.test(lo)&&out.max<1000&&out.mode!=='buy'){out.max=Math.round(out.max*52/12);if(out.min)out.min=Math.round(out.min*52/12)}
   if(out.max!=null||out.min!=null){if(out.min==null)out.min='';if(out.max==null)out.max='';got.push(`${out.min!==''?gbp(out.min):'£0'}–${out.max!==''?gbp(out.max):'any'}`)}
-  if(/\b(commercial|office|offices|retail|shop|industrial|warehouse|unit to let)\b/.test(lo))out.type='commercial';else if(/\b(houses?|terraced?|semi|semi-detached|detached|bungalow|townhouse|cottage)\b/.test(lo)&&/\b(flats?|apartments?|maisonettes?)\b/.test(lo)){/* both mentioned: leave the type open */}
+  // whole buildings, hotels and blocks: leave the property type open so they aren't hidden
+  if(/\b(hotels?|aparthotels?|block|blocks|building|buildings|portfolio|units|rooms|keys)\b/.test(lo)){/* any type */}
+  else if(/\b(commercial|office|offices|retail|shop|industrial|warehouse|unit to let)\b/.test(lo))out.type='commercial';else if(/\b(houses?|terraced?|semi|semi-detached|detached|bungalow|townhouse|cottage)\b/.test(lo)&&/\b(flats?|apartments?|maisonettes?)\b/.test(lo)){/* both mentioned: leave the type open */}
   else if(/\b(houses?|terraced?|semi|semi-detached|detached|bungalow|townhouse|cottage)\b/.test(lo))out.type='house';else if(/\b(flats?|apartments?|maisonettes?|penthouse)\b/.test(lo))out.type='flat';else if(out.beds&&out.beds.join()==='0')out.type='studio';
   if(out.type&&!(out.type==='studio'&&out.beds&&out.beds.join()==='0'))got.push(out.type[0].toUpperCase()+out.type.slice(1));
   if(/\bunfurnished\b/.test(lo))out.furn='unfurnished';else if(/\bfurnished\b/.test(lo))out.furn='furnished';if(out.furn)got.push(out.furn[0].toUpperCase()+out.furn.slice(1));
@@ -2108,7 +2113,9 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
       const name=words.join(' ');if(name.length>2)hits.push({pos:lo.indexOf(name,pos),name:titleCase(name)});
       if(!/^[^.!?\n]*$/.test(seg))break}}
   UK_PLACES.forEach(pl=>{for(const mm of lo.matchAll(new RegExp(`\\b${pl.replace(/-/g,'[- ]')}\\b`,'g')))hits.push({pos:mm.index,name:titleCase(pl)})});
-  for(const mm of raw.matchAll(/\b([A-Za-z]{1,2}\d{1,2}[A-Za-z]?)(?:\s*\d[A-Za-z]{2})?\b/g)){const d=mm[1];if(/^(\d|x\d)/i.test(d)||new RegExp(`^\\s*(?:bed|br|k\\b)`,'i').test(raw.slice(mm.index+mm[0].length)))continue;hits.push({pos:mm.index,name:d.toUpperCase()})}
+  // only real UK postcode areas, so planning classes like C1 or E aren't read as places
+  const PC_AREAS=new Set('AB AL B BA BB BD BH BL BN BR BS BT CA CB CF CH CM CO CR CT CV CW DA DD DE DG DH DL DN DT DY E EC EH EN EX FK FY G GL GU HA HD HG HP HR HS HU HX IG IP IV KA KT KW KY L LA LD LE LL LN LS LU M ME MK ML N NE NG NN NP NR NW OL OX PA PE PH PL PO PR RG RH RM S SA SE SG SK SL SM SN SO SP SR SS ST SW SY TA TD TF TN TQ TR TS TW UB W WA WC WD WF WN WR WS WV YO ZE'.split(' '));
+  for(const mm of raw.matchAll(/\b([A-Za-z]{1,2}\d{1,2}[A-Za-z]?)(?:\s*\d[A-Za-z]{2})?\b/g)){const d=mm[1];if(!PC_AREAS.has(d.replace(/\d.*$/,'').toUpperCase())||/^(\d|x\d)/i.test(d)||new RegExp(`^\\s*(?:bed|br|k\\b)`,'i').test(raw.slice(mm.index+mm[0].length)))continue;hits.push({pos:mm.index,name:d.toUpperCase()})}
   // keep each place once, prefer the longer name ("Newcastle upon Tyne" over "Newcastle"), in typed order
   const places=[];hits.filter(h=>h.pos>=0).sort((x,y)=>x.pos-y.pos||y.name.length-x.name.length).forEach(h=>{const k=h.name.toLowerCase();
     if(places.some(p=>p.toLowerCase().includes(k)||k.includes(p.toLowerCase())&&p.length<k.length&&(places[places.indexOf(p)]=h.name)))return;places.push(h.name)});
