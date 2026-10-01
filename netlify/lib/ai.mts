@@ -520,9 +520,16 @@ export function parseListed(text: string, now = Date.now()): string {
   return "";
 }
 
-async function searchSite(site: string, f: Filters, level: LevelId, pass: number, exclude: string[]): Promise<Listing[]> {
+// Several places can be searched at once: "Liverpool, Manchester, Leeds" or "Watford and Luton".
+export const MAX_LOCATIONS = 6;
+export function splitLocations(loc: unknown): string[] {
+  const parts = String(loc || "").split(/\s*(?:[,;/|\n]|\band\b|\bor\b|&|\+)\s*/i).map((x) => x.trim()).filter((x) => x.length > 1);
+  return [...new Map(parts.map((x) => [x.toLowerCase(), x])).values()].slice(0, MAX_LOCATIONS);
+}
+
+async function searchSite(site: string, f: Filters, level: LevelId, pass: number, exclude: string[], want?: number): Promise<Listing[]> {
   const conf = SITES[site];
-  const lv = SEARCH_LEVEL[level];
+  const lv = { ...SEARCH_LEVEL[level], ...(want ? { perPass: want } : {}) };
   const buy = f.mode === "buy";
   const skip = exclude.length ? `\nYou've already found these, so don't return them again:\n${exclude.slice(-80).join("\n")}` : "";
   const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
@@ -683,7 +690,13 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
       if (st.sites_status[site]?.status === "error") return;
       try {
         const mine = st.listings.filter((l) => l.site === site).map((l) => l.url);
-        const found = (await searchSite(site, st.filters, level, round, mine)).filter((l) => l.price >= min && l.price <= max);
+        // Each place is searched separately on this site, sharing out the listings wanted per round.
+        const places = splitLocations(st.filters.loc);
+        const want = places.length > 1 ? Math.max(3, Math.ceil((lv.perPass * 1.6) / places.length)) : undefined;
+        const runs = await Promise.allSettled((places.length ? places : [""]).map((place) => searchSite(site, { ...st.filters, loc: place }, level, round, mine, want)));
+        const ok = runs.filter((r): r is PromiseFulfilledResult<Listing[]> => r.status === "fulfilled");
+        if (!ok.length) throw (runs[0] as PromiseRejectedResult).reason;
+        const found = ok.flatMap((r) => r.value).filter((l) => l.price >= min && l.price <= max);
         const have = known();
         for (const l of found) if (!have.has(l.id) && st.listings.length < 500) { st.listings.push(l); have.add(l.id); }
         const count = st.listings.filter((l) => l.site === site).length;
