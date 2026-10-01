@@ -945,6 +945,7 @@ td.t{text-align:right;color:var(--ink-2)}
               <label class="f"><span id="fMaxL">Max rent</span><span class="ix both"><span class="pre">£</span><input class="inp num" type="number" id="fMax" min="0" step="50"><span class="suf js-pcm">pcm</span></span></label>
             </div>
             <label class="f"><span>Location <span class="muted" style="font-weight:400">· one or more, separated by commas</span></span><input class="inp" id="fLoc" placeholder="e.g. Leeds, Manchester, LS6 (up to 6)" autocomplete="off"></label>
+            <label class="f"><span>Strategy</span><select class="inp" id="fStrategy"><option value="auto">Auto (R2SA for rentals, BTL for purchases)</option><option value="R2SA">R2SA · serviced accommodation</option><option value="R2R">R2R · rent to rent by the room</option><option value="BTL">BTL · buy to let</option><option value="HMO">HMO · buy and let by the room</option><option value="BRRR">BRRR · buy, refurbish, refinance</option><option value="Flip">Flip · buy, refurbish, sell</option><option value="SA">Owned serviced accommodation</option><option value="LeaseOption">Lease option</option><option value="Commercial">Commercial</option><option value="none">Just show prices</option></select></label>
             <label class="f"><span>Listed within</span><select class="inp" id="fFresh"><option value="any">Any time</option><option value="1">Last 24 hours</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option><option value="14">Last 14 days</option></select></label>
             <label class="check"><input type="checkbox" id="fPrivate"><span>Private landlords only</span></label>
             <div class="row2">
@@ -2028,7 +2029,7 @@ const LISTINGS=[
 ];
 const SITES=['OpenRent','SpareRoom','Gumtree','Rightmove','Zoopla','Facebook','RightmoveCommercial','Realla','NovaLoca','LoopNet'];
 const SITE_LABEL=s=>({Facebook:'Facebook Marketplace',RightmoveCommercial:'Rightmove Commercial'})[s]||s;
-const FIND_DEF=()=>({fresh:'any',notes:'',mode:'rent',beds:[],min:1200,max:5000,loc:'',priv:false,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false}});
+const FIND_DEF=()=>({strategy:'auto',fresh:'any',notes:'',mode:'rent',beds:[],min:1200,max:5000,loc:'',priv:false,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false}});
 if(!S.find||!S.find.f)S.find={f:FIND_DEF(),searched:false,sort:null};
 S.find.f=Object.assign(FIND_DEF(),S.find.f);S.find.f.sites=Object.assign(FIND_DEF().sites,S.find.f.sites);
 const FS={busy:false,sel:new Set(),showUnconfirmed:false};
@@ -2077,6 +2078,8 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   const money=(n,k)=>Math.round(+n*(k?1000:1));
   if(/\b(buy|buying|purchase|for sale|to buy|btl|brrr|flip|asking price)\b/.test(lo))out.mode='buy';else if(/\b(rent|renting|to let|let|pcm|pw|per month|a month|r2sa|r2r|rent to rent|serviced accommodation)\b/.test(lo))out.mode='rent';
   if(out.mode)got.push(out.mode==='buy'?'To buy':'To rent');
+  {const SW=[['Flip',/\b(flip|flips|flipping|buy[ ,-]*refurb(?:ish)?[ ,-]*(?:and )?sell)\b/],['BRRR',/\bbrrr\b|refinance/],['HMO',/\bhmos?\b|let by the room/],['R2R',/\b(r2r|rent to rent|rent-to-rent)\b/],['R2SA',/\b(r2sa|serviced accommodation|airbnb|short[- ]lets?)\b/],['LeaseOption',/lease options?/],['Commercial',/\bcommercial\b/],['BTL',/\b(btl|buy to let|buy-to-let)\b/]];
+    const hit=SW.find(([,re])=>re.test(lo));if(hit){out.strategy=hit[0];got.push(STRAT_NAME[hit[0]]||hit[0])}}
   // bedrooms: "2-3 bed", "studio to 2 bed", "3+ bed", "3 bedroom", "studio"
   const bedN=w=>w==='studio'?0:+w;const BED='(?:bed|beds|bedroom|bedrooms|br|bedder)\\b';
   let m=lo.match(new RegExp(`\\b(studio|\\d)\\s*(?:-|to|or)\\s*(\\d)\\+?\\s*${BED}`));
@@ -2087,7 +2090,7 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   if(out.beds){out.beds=[...new Set(out.beds)];got.push(out.beds.length>1?`${out.beds[0]==='0'?'Studio':out.beds[0]}–${out.beds[out.beds.length-1]==='4'?'4+':out.beds[out.beds.length-1]} beds`:out.beds[0]==='0'?'Studio':`${out.beds[0]==='4'?'4+':out.beds[0]} bed`)}
   // price: ranges first, then max and min; numbers next to "bed" are bedrooms, not prices
   const P='£?\\s?(\\d+(?:\\.\\d+)?)\\s*(k)?';
-  if((m=lo.match(new RegExp(`(?:between|from)\\s*${P}\\s*(?:and|to|-)\\s*${P}`)))||(m=lo.match(new RegExp(`£\\s?(\\d+(?:\\.\\d+)?)\\s*(k)?\\s*(?:-|to)\\s*£?\\s?(\\d+(?:\\.\\d+)?)\\s*(k)?`)))||(m=lo.match(/\b(\d{3,7})\s*(k)?\s*(?:-|to)\s*(\d{3,7})\s*(k)?\b(?!\s*(?:bed|br))/))){out.min=money(m[1],m[2]||m[4]);out.max=money(m[3],m[4])}
+  if((m=lo.match(new RegExp(`(?:between|from)\\s*${P}\\s*(?:and|to|-)\\s*${P}`)))||(m=lo.match(new RegExp(`£\\s?(\\d+(?:\\.\\d+)?)\\s*(k)?\\s*(?:-|to)\\s*£?\\s?(\\d+(?:\\.\\d+)?)\\s*(k)?`)))||(m=lo.match(/\b(\d{1,4}(?:\.\d+)?)\s*(k)\s*(?:-|to)\s*(\d{1,4}(?:\.\d+)?)\s*(k)\b/))||(m=lo.match(/\b(\d{3,7})\s*(k)?\s*(?:-|to)\s*(\d{3,7})\s*(k)?\b(?!\s*(?:bed|br))/))){out.min=money(m[1],m[2]||m[4]);out.max=money(m[3],m[4])}
   else{if((m=lo.match(new RegExp(`(?:under|below|max(?:imum)?|up to|upto|less than|no more than|budget(?: of| is)?|cap(?:ped)? at|<)\\s*${P}`))))out.max=money(m[1],m[2]);
     if((m=lo.match(new RegExp(`(?:over|above|min(?:imum)?|at least|more than|starting at|>)\\s*${P}`))))out.min=money(m[1],m[2]);
     if(out.max==null&&out.min==null&&(m=lo.match(/£\s?(\d+(?:\.\d+)?)\s*(k)?|\b(\d{3,7})\s*(k)?\s*(?:pcm|pm|pw|per month|a month|per week|a week)\b/))){const v=money(m[1]||m[3],m[2]||m[4]);out.max=/(pw|per week|a week)\b/.test(lo)?Math.round(v*52/12):v}}
@@ -2123,13 +2126,13 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   const loc=[...new Set(places)].slice(0,6).join(', ');
   if(loc){out.loc=loc;got.push(loc)}
   return {f:out,got}}
-function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';$('#fFresh').value=f.fresh||'any';
+function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';$('#fStrategy').value=f.strategy||'auto';$('#fFresh').value=f.fresh||'any';
   $(f.mode==='buy'?'#fModeBuy':'#fModeRent').checked=true;
   f.beds=bedList(f.beds);$$('input[name="fBeds"]').forEach(c=>{c.checked=f.beds.includes(c.value)});$('#fBedsAny').checked=!f.beds.length;
   $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fFurn').value=f.furn;$('#fType').value=f.type;
   SITES.forEach(s=>{$('#fSite'+s).checked=!!f.sites[s]});findChrome()}
 function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
-  f.notes=$('#fNotes').value.slice(0,500);f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
+  f.notes=$('#fNotes').value.slice(0,500);f.strategy=$('#fStrategy').value;f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
   f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
   SITES.forEach(s=>{f.sites[s]=$('#fSite'+s).checked})}
 function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;
@@ -2170,11 +2173,50 @@ function sortRows(r){const s=S.find.sort;if(!s)return r;
 const LOCK='<svg class="lk" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><rect x="2.25" y="5.25" width="7.5" height="5.5" rx="1"/><path d="M4 5.25V3.75a2 2 0 0 1 4 0v1.5"/></svg>';
 const CHEV=d=>`<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d<0?'M8.5 3.5L5 7l3.5 3.5':'M5.5 3.5L9 7l-3.5 3.5'}"/></svg>`;
 const DEF_A={fee:15,clean:45,stay:3,other:150};
+/* strategy-aware figures for Deal Finder cards, the sheet and copied cards. All rough estimates, labelled as such. */
+// Long-let rents follow different areas from short-let demand: these are the higher-rent towns and cities.
+const PRIME_RENT=/\b(oxford|cambridge|brighton|hove|bristol|bath|edinburgh|reading|guildford|st albans|windsor|winchester|watford|milton keynes|cheltenham|york|aberdeen|surrey|hertfordshire)\b/i;
+const areaTier=w=>isLondonText(w)?0:PRIME_RENT.test(String(w||''))?1:2;
+const RENT_TABLE=[[1300,1700,2200,2800],[800,1000,1250,1500],[500,625,750,875]];// whole-property market rent pcm, rough
+const ROOM_TABLE=[900,650,450];// room rent pcm, rough
+const bIdx=b=>b==null?1:Math.min(3,Math.max(0,b));
+const RENT_EST=(b,w)=>RENT_TABLE[areaTier(w)][bIdx(b)];
+const ROOM_EST=w=>ROOM_TABLE[areaTier(w)];
+// Stamp duty in England for an additional property (5% surcharge on top of the standard bands).
+function sdltAdditional(p){if(p<40000)return 0;const bands=[[125000,0],[250000,.02],[925000,.05],[1500000,.10],[Infinity,.12]];let t=0,lo=0;for(const [hi,r] of bands){if(p>lo)t+=(Math.min(p,hi)-lo)*r;lo=hi}return Math.round(t+p*.05)}
+const STRAT_NAME={R2SA:'R2SA',R2R:'Rent to rent',BTL:'Buy to let',HMO:'HMO',BRRR:'BRRR',Flip:'Flip',SA:'Owned SA',LeaseOption:'Lease option',Commercial:'Commercial',none:'Prices only'};
+// The strategy in use for a listing: the member's choice, or R2SA for rentals and BTL for purchases.
+function stratFor(r){const s=(S.find&&S.find.f&&S.find.f.strategy)||'auto',buy=r.mode==='buy';
+  if(s==='auto')return buy?'BTL':'R2SA';if(s==='R2SA'&&buy)return 'SA';if(s==='SA'&&!buy)return 'R2SA';
+  if(['BTL','HMO','BRRR','Flip'].includes(s)&&!buy)return s==='HMO'?'R2R':'none';if(s==='R2R'&&buy)return 'HMO';return s}
+// Returns {key:[label,value,neg?], lines:[[emoji,html-safe text],...], note}
+function stratFigures(r){const st=stratFor(r),w=r.area+' '+r.postcode,buy=r.mode==='buy',P=r.price,rooms=Math.max(1,r.beds||1);
+  const L=[],note='Figures are rough estimates for the area. Analyse the deal for a full, local check.';
+  if(st==='R2SA'||st==='SA'){const u={rent:buy?0:P,rate:RATE_EST(r.beds,w)},occ=OCC.map(x=>month(u,x,null,DEF_A).surplus);
+    if(buy)L.push(['💷',`Asking price ${gbp(P)}`],['🧾',`Stamp duty about ${gbp(sdltAdditional(P))} (est.)`]);else L.push(['💸',`Rent ${gbp(P)}/month (${gbp(P*12)}/year)`],['💸',`Deposit about ${gbp(P)} (est.)`]);
+    L.push(['💰',`Nightly rate about £${u.rate} (est.)`],['💷',OCC.map((x,j)=>`${gbp(occ[j])} at ${pct(x)}`).join(' · ')+` occupancy${buy?' before mortgage':''} (est.)`]);
+    return {st,key:['Profit at 80%',gbp(occ[1]),occ[1]<0],lines:L,note:'Nightly rate and occupancy are estimates. Analyse the deal for local figures.'}}
+  if(st==='R2R'){const inc=rooms*ROOM_EST(w),bills=100*rooms,prof=inc-P-bills;
+    L.push(['💸',`Rent ${gbp(P)}/month`],['🛏',`Let as ${rooms} room${rooms>1?'s':''} at about ${gbp(ROOM_EST(w))} each (est.)`],['💡',`Bills about ${gbp(bills)}/month (est.)`],['💷',`About ${gbp(prof)}/month after rent and bills (est.)`]);
+    return {st,key:['Profit/mo',gbp(prof),prof<0],lines:L,note}}
+  if(st==='BTL'||st==='HMO'||st==='BRRR'){const rent=st==='HMO'?rooms*ROOM_EST(w):RENT_EST(r.beds,w),sd=sdltAdditional(P),dep=Math.round(P*.25),mort=Math.round(P*.75*.055/12),costs=Math.round(rent*(st==='HMO'?.3:.2)),cf=rent-mort-costs,gy=rent*12/P*100;
+    L.push(['💷',`Asking price ${gbp(P)}`],['🧾',`Stamp duty about ${gbp(sdltAdditional(P))} (est., England)`]);
+    if(st==='BRRR')L.push(['🔨',`Money in before works: about ${gbp(P+sd+1500)} (est.)`]);else L.push(['🏦',`25% deposit ${gbp(dep)} · cash needed about ${gbp(dep+sd+1500)} (est.)`]);
+    L.push(['🏠',`${st==='HMO'?`${rooms} rooms at about ${gbp(ROOM_EST(w))} = `:'Market rent about '}${gbp(rent)}/month (est.)`],['📈',`Gross yield about ${gy.toFixed(1)}% (est.)`],...(gy>15?[['⚠️','Unusually high: cheaper homes often rent for less than the area average. Check local rents before relying on this.']]:[]));
+    if(st!=='BRRR')L.push(['💷',`Cash flow about ${gbp(cf)}/month after a 5.5% interest-only mortgage and costs (est.)`]);else L.push(['🔁','Refinance at 75% of the value after works: analyse for the end value']);
+    return {st,key:['Gross yield',gy.toFixed(1)+'%',gy<5],lines:L,note}}
+  if(st==='Flip'){const sd=sdltAdditional(P),entry=P+sd+1500;
+    L.push(['💷',`Asking price ${gbp(P)}`],['🧾',`Stamp duty about ${gbp(sd)} (est., England)`],['💼',`Cash in before works about ${gbp(entry)} incl. legal fees (est.)`],
+      ...(r.beds?[['🛏',`${gbp(Math.round(P/Math.max(1,r.beds)))} per bedroom`]]:[]),['🔨','Refurb cost, resale value and margin: analyse the deal']);
+    return {st,key:['Cash in',gbp(entry)],lines:L,note:'Purchase costs are estimates. Analyse for comparable sales, refurb and margin.'}}
+  if(st==='LeaseOption'){L.push(buy?['💷',`Asking price ${gbp(P)}`]:['💸',`Rent ${gbp(P)}/month`],['📝','Option fee, monthly payment and term: analyse the deal']);return {st,key:[buy?'Price':'Rent',gbp(P)],lines:L,note}}
+  L.push(buy?['💷',`${st==='Commercial'?'Price':'Asking price'} ${gbp(P)}`]:['💸',`Rent ${gbp(P)}/month`]);
+  return {st,key:[buy?'Price':'Rent',gbp(P)],lines:L,note:'Analyse the deal for the figures that matter to your strategy.'}}
 const bedWord=b=>b===0?'studio':b+' bed';
 const fmtDate=iso=>{try{return new Date(iso).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}catch(e){return String(iso)}};
 const CARD_SORTS=[['','Listing order'],['price:1','Rent, low to high'],['price:-1','Rent, high to low'],['beds:1','Fewest bedrooms'],['beds:-1','Most bedrooms'],['postcode:1','Postcode']];
 // Locked cards show postcode district, type and figures only: no street, landlord, source site or link.
-function dealCard(r,i,o={}){const open=!o.preview&&isOpen(r),u={rent:r.price,rate:RATE_EST(r.beds,r.area+' '+r.postcode)},occ=OCC.map(x=>month(u,x,null,DEF_A).surplus);
+function dealCard(r,i,o={}){const SF=o.preview?null:stratFigures(r),open=!o.preview&&isOpen(r),u={rent:r.price,rate:RATE_EST(r.beds,r.area+' '+r.postcode)},occ=OCC.map(x=>month(u,x,null,DEF_A).surplus);
   const li=(em,txt)=>`<li>${o.plain?'<span class="em-dot" aria-hidden="true"></span>':`<span class="em" aria-hidden="true">${em}</span>`}<span>${txt}</span></li>`;
   const act=o.preview?`<button class="btn sm" data-go="find">Open in Deal Finder</button>`
     :open?`<button class="btn sm primary" data-build="${r.k}">Analyse deal</button><a class="btn sm" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a>`
@@ -2182,10 +2224,9 @@ function dealCard(r,i,o={}){const open=!o.preview&&isOpen(r),u={rent:r.price,rat
   return `<article class="dcard${open?' is-open':''}${FS.justOpened===r.k&&open?' just-open':''}" data-k="${r.k}" aria-label="Deal ${i+1}">
     <h3>Deal ${i+1} (${gbp(r.price)} ${bedWord(r.beds)})${r.ai>=0?` <span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="AI score · ${esc(r.aiv||'')}">${r.ai}</span>`:''}</h3>${o.preview?'':`<p class="dc-live">${liveTag(r)}${ageDays(r)!=null?` <span class="muted">· listed ${ageTxt(ageDays(r)).toLowerCase()}</span>`:''} ${freshTags(r)}</p>`}
     <ul class="adv">${li('📍',`${esc(o.preview?String(r.area||r.postcode).replace(/\s*\(.*\)$/,''):[r.postcode,(r.area||'').split(',').pop().trim()].filter(Boolean).join(', '))}${o.plain?'':' <span class="em" aria-hidden="true">📍</span>'}`)}${open?li('🏠',esc(r.area)):''}${li('🛏',esc(r.type))}</ul>
-    <ul class="adv">${li('💸',`Rent <b>${gbp(r.price)}</b>/month (${gbp(r.price*12)}/year)`)}${li('💸',`Deposit <b>${gbp(r.price)}</b> <span class="muted">(est.)</span>`)}${li('💰',`Nightly rate <b>£${u.rate}</b> <span class="muted">(est.)</span>`)}</ul>
-    <ul class="adv">${OCC.map((x,j)=>li('💷',`<b class="${occ[j]<0?'neg':''}">${gbp(occ[j])}</b> at ${pct(x)} occupancy`)).join('')}</ul>
+    <ul class="adv">${(o.preview?{lines:[['💸',`Rent ${gbp(r.price)}/month (${gbp(r.price*12)}/year)`],['💰',`Nightly rate about £${u.rate} (est.)`],...OCC.map((x,j)=>['💷',`${gbp(occ[j])} at ${pct(x)} occupancy`])]}:SF).lines.map(([e,t])=>li(e,esc(t))).join('')}</ul>
     ${open?`<ul class="adv">${r.title?li('📝',esc(r.title)):''}${li('🔗',`Source: ${esc(SITE_LABEL(r.site))}`)}</ul>`:''}
-    <div class="dc-foot"><div class="dc-note"><span>Figures illustrative. Nightly rate estimated.</span></div>
+    <div class="dc-foot"><div class="dc-note"><span>${o.preview?'Figures illustrative. Nightly rate estimated.':esc(SF.note)}${SF?` · <b>${esc(STRAT_NAME[SF.st]||SF.st)}</b>`:''}</span></div>
       <div class="dc-act">${act}</div></div>
   </article>`}
 function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fResults');
@@ -2196,7 +2237,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   const SC=aiScores(),base=findRows();base.forEach(r=>{const x=SC.get(r.k);r.ai=x?x.score:-1;r.aiv=x?x.verdict:''});
   // With a ranking, the list is sorted by AI score unless the member picked another sort.
   const rows=S.find.sort?sortRows(base):SC.size?base.slice().sort((a,b)=>b.ai-a.ai||a.k-b.k):base,keys=new Set(rows.filter(isOpen).map(r=>r.k));[...FS.sel].forEach(k=>{if(!keys.has(k))FS.sel.delete(k)});
-  FS.lastRows=rows;
+  FS.lastRows=rows;const keyHead=rows.length?stratFigures(rows[0]).key[0]+' (est.)':'Estimate';
   const pr=rows.map(r=>r.price).sort((a,b)=>a-b),m=pr.length,med=m?(m%2?pr[(m-1)/2]:(pr[m/2-1]+pr[m/2])/2):NaN,nOpen=keys.size;
   const ll=new Set(rows.map(r=>r.site)).size,buy=S.find.f.mode==='buy',so=S.find.sort,sv=so?`${so.k}:${so.dir}`:'';
   const hidden=FS.showUnconfirmed||FS.autoUnc?0:findRows(true).length-rows.length,nUnc=findRows(true).filter(x=>!confirmedLive(x)).length;
@@ -2214,9 +2255,9 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   else if(view==='cards')body=`<div class="cards" id="fCards" tabindex="0" role="region" aria-label="Deal cards, scroll sideways">${rows.map((r,i)=>dealCard(r,i)).join('')}</div>`;
   else body=`<div id="fTsvWrap" hidden><label class="f"><span>Deals as tab-separated rows. Copy them, then paste into cell A1 of a Google Sheet.</span><textarea class="inp mono" id="fTsv" readonly></textarea></label></div>
     <div class="sheet" tabindex="0" role="region" aria-label="Search results"><table><thead><tr><th class="rn"><span class="sr">Row</span></th><th class="ck"><input type="checkbox" id="fSelAll" aria-label="Select all rows"${nOpen?'':' disabled'}></th>
-      ${SC.size?th('ai','AI score','nr'):''}${th('site','Site')}${th('title','Listing')}${th('type','Type')}${th('beds','Beds','nr')}${th('area','Area')}${th('postcode','Postcode')}${th('price',S.find.f.mode==='buy'?'Price':'Rent pcm','nr')}<th>Furnished</th>${th('listedTs','Listed')}<th>Checked</th><th>Link</th><th>Action</th></tr></thead>
+      ${SC.size?th('ai','AI score','nr'):''}${th('site','Site')}${th('title','Listing')}${th('type','Type')}${th('beds','Beds','nr')}${th('area','Area')}${th('postcode','Postcode')}${th('price',S.find.f.mode==='buy'?'Price':'Rent pcm','nr')}<th class="nr" title="The main figure for your strategy (estimate)">${esc(keyHead)}</th><th>Furnished</th>${th('listedTs','Listed')}<th>Checked</th><th>Link</th><th>Action</th></tr></thead>
       <tbody>${rows.map((r,i)=>{const o=isOpen(r);return `<tr data-k="${r.k}"><td class="rn">${i+1}</td><td class="ck">${o?`<input type="checkbox" id="fsel${r.k}" data-sel="${r.k}" aria-label="Select ${esc(r.type)}, ${esc(r.area)}"${FS.sel.has(r.k)?' checked':''}>`:''}</td>
-        ${SC.size?`<td class="nr">${r.ai>=0?`<span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="${esc(r.aiv)}">${r.ai}</span>`:'<span class="muted">–</span>'}</td>`:''}<td>${esc(SITE_LABEL(r.site))}</td><td class="clip" title="${esc(r.title||'')}">${esc(r.title||'')}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td><td class="muted">${esc(r.furnished)}</td><td class="fr-cell"><span class="muted">${ageTxt(ageDays(r))||'–'}</span>${freshTags(r)}</td><td>${liveTag(r)}</td>
+        ${SC.size?`<td class="nr">${r.ai>=0?`<span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="${esc(r.aiv)}">${r.ai}</span>`:'<span class="muted">–</span>'}</td>`:''}<td>${esc(SITE_LABEL(r.site))}</td><td class="clip" title="${esc(r.title||'')}">${esc(r.title||'')}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td>${(()=>{const k=stratFigures(r).key;return `<td class="nr mono${k[2]?' neg':''}" title="${esc(k[0])} (estimate)">${esc(k[1])}</td>`})()}<td class="muted">${esc(r.furnished)}</td><td class="fr-cell"><span class="muted">${ageTxt(ageDays(r))||'–'}</span>${freshTags(r)}</td><td>${liveTag(r)}</td>
         <td>${o?`<a class="xlink" href="${esc(r.url)}" target="_blank" rel="noopener">Open ↗</a>`:L}</td><td>${o?`<button class="btn xs" data-build="${r.k}">Analyse deal</button>`:`<button class="btn xs" data-unlock="${r.k}" data-n="${i+1}">Unlock · ${gbp(dealFee())}</button>`}</td></tr>`}).join('')}</tbody></table></div>`;
   const ageH=S.find.liveAt?(Date.now()-Date.parse(S.find.liveAt))/36e5:0,stale=ageH>=24,nNew=rows.filter(isFreshNew).length;
   const fresh=`<div class="fresh-bar${stale?' stale':''}"><span>${stale?`These results are from ${ageH<48?'yesterday':Math.round(ageH/24)+' days ago'}. Some listings may have gone.`:`Searched ${ageH<1?'just now':Math.round(ageH)+'h ago'}.`}${nNew?` <b>${nNew} new</b> in the last 3 days.`:''}</span><button class="btn sm ghost" type="button" id="fEditSearch" title="Change the criteria for this search">Edit search</button><button class="btn sm${stale?' primary':''}" type="button" id="fRefresh" title="Re-check every listing, remove ones that have gone, and look for new ones">Refresh &amp; find new</button></div>`;
@@ -2333,7 +2374,7 @@ function rankHTML(){restoreRank();const R=FS.rank;
   const a=R.data||{},picks=(Array.isArray(a.picks)?a.picks:[]).filter(p=>SRC()[+p.id]);
   const li=p=>{const r=SRC()[+p.id];const notes=Array.isArray(p.notes)&&p.notes.length?`<ul class="rank-notes">${p.notes.map(n=>`<li>${esc(rankText(n))}</li>`).join('')}</ul>`:'';
     return `<li><div class="rank-top"><b>${esc(r.type)} · ${esc(r.area)}</b><span class="mono">${gbp(r.price)}${r.mode==='buy'?'':' pcm'}</span><span class="muted">${esc(SITE_LABEL(r.site))}</span><span class="rank-score">${Math.max(0,Math.min(100,+p.score||0))}/100 · ${esc(String(p.verdict||''))}</span></div>
-      <p>${esc(rankText(p.reason))}${p.monthly_profit_80?` <span class="muted">Est. at 80%: ${esc(String(p.monthly_profit_80))}</span>`:''}</p>${notes}
+      <p>${esc(rankText(p.reason))}${p.key_figure?` <span class="muted">${esc(String(p.key_figure))}</span>`:p.monthly_profit_80?` <span class="muted">Est. at 80%: ${esc(String(p.monthly_profit_80))}</span>`:''}</p>${notes}
       <div class="rank-act"><button class="btn xs primary" data-build="${+p.id}">Analyse deal</button><a class="btn xs" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a></div></li>`};
   const hl=Array.isArray(a.highlights)?a.highlights.filter(Boolean).slice(0,6):[];
   const conf=SRC().filter(confirmedLive).length,unc=SRC().length-conf,rem=S.find.removed||0;
@@ -2356,19 +2397,18 @@ function cardRows(){const shown=(FS.lastRows||sortRows(findRows())).filter(isOpe
 const preNDA=()=>S.find.cardLinks===false;
 function cardFacts(r,i){const buy=r.mode==='buy',town=String(r.area||'').replace(/\s*\(.*?\)/g,'').split(',').pop().trim();
   const where=(preNDA()?[town,r.postcode]:[r.area,r.postcode]).filter(Boolean).join(' ').replace(/\s*\(.*?\)/g,'').trim();
-  const u={rent:r.price,rate:RATE_EST(r.beds,r.area+' '+r.postcode)},occ=buy?[]:OCC.map(x=>month(u,x,null,DEF_A).surplus);
+  const SF=stratFigures(r);
   const live=r.verified==='available'&&r.checkedAt?new Date(r.checkedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'';
   return {head:`Deal ${i+1} · ${r.type}${buy?` · ${gbp(r.price)}`:` · ${gbp(r.price)}/month`}`,lines:[
-    ['📍',where],['🛏',[r.type,r.furnished&&r.furnished!=='Not stated'?r.furnished:''].filter(Boolean).join(' · ')],
-    ...(buy?[['💷',`Asking price ${gbp(r.price)}`]]:[['💸',`Rent ${gbp(r.price)}/month (${gbp(r.price*12)}/year)`],['💸',`Deposit about ${gbp(r.price)} (est.)`],['💰',`Nightly rate about £${u.rate} (est.)`],
-      ['💷',OCC.map((x,j)=>`${gbp(occ[j])} at ${pct(x)}`).join(' · ')+' occupancy (est.)']]),
+    ['📍',where],['🛏',[r.type,r.furnished&&r.furnished!=='Not stated'?r.furnished:''].filter(Boolean).join(' · ')],['🎯',`Strategy: ${STRAT_NAME[SF.st]||SF.st}`],
+    ...SF.lines,
     ...(r.ai>=0?[['⭐',`AI score ${r.ai}/100${r.aiv?' · '+r.aiv:''}`]]:[]),
     ...(ageDays(r)!=null?[['🆕',`Listed ${ageTxt(ageDays(r)).toLowerCase()}${r.hot?' · going fast':''}`]]:r.hot?[['🔥','Going fast']]:[]),
     ...(live?[['✅',`Listing checked live ${live}`]]:[]),...(preNDA()?[]:[['🔗',r.url]])]}}
 function copyCards(){const rows=cardRows();if(!rows.length){toast('No deals to copy.');return}
   const f=S.find.f,today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   const title=`${rows.length} property deal${rows.length===1?'':'s'}${f.loc?` · ${f.loc}`:''} · ${today}${preNDA()?' · Pre-NDA summary':''}`;
-  const foot=(preNDA()?'Pre-NDA summary: the full address and listing details are shared once an NDA is in place. ':'')+'Figures are illustrative estimates. Nightly rates and occupancy are not verified. Please check all details before committing.';
+  const foot=(preNDA()?'Pre-NDA summary: the full address and listing details are shared once an NDA is in place. ':'')+'Figures are rough estimates for the area and are not verified. Please check all details before committing.';
   const cards=rows.map(cardFacts);
   const text=[title,'',...cards.map(c=>[`*${c.head}*`,...c.lines.filter(l=>l[1]).map(([e,t])=>`${e} ${t}`)].join('\n')+'\n'),foot,'','Found with Deal Pro · usedealpro.com'].join('\n');
   const eh=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -2383,16 +2423,18 @@ function analyseText(text,name){text=String(text||'').trim();if(!text){toast('Pa
   startAnalysis(()=>{const d=freshDeal();d.name=String(name||'').trim().slice(0,80)||'Pasted deal';S.deal=d;markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
     $('#aiDealInput').value=text;renderAIAnalysis(null);$('#analyseWithAI').click()})}
 function buildDeal(ls){ls=ls.filter(Boolean).filter(isOpen);if(!ls.length)return;startAnalysis(()=>{const d=sampleDeal(),areas=[...new Set(ls.map(x=>x.area))],short=a=>a.split(',')[0].trim();
-  Object.assign(d,{id:'d'+Date.now(),name:areas.length>1?`${areas[0]} + ${areas.length-1} more`:areas[0],area:areas.join('; '),strat:'R2SA',london:ls.some(x=>isLondonText(x.area+' '+x.postcode)),status:'Analysing',
+  Object.assign(d,{id:'d'+Date.now(),name:areas.length>1?`${areas[0]} + ${areas.length-1} more`:areas[0],area:areas.join('; '),strat:(()=>{const st=stratFor(ls[0]);return st==='none'?(ls[0].mode==='buy'?'BTL':'R2SA'):st})(),london:ls.some(x=>isLondonText(x.area+' '+x.postcode)),status:'Analysing',
     units:ls.map(x=>({label:`${x.type} · ${short(x.area)}`,rent:x.price,dep:x.price,rate:RATE_EST(x.beds,x.area+' '+x.postcode),url:x.url}))});
-  S.deal=d;FS.sel.clear();markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
+  d.aiStrategy=d.strat;S.deal=d;FS.sel.clear();markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
   // Fill in the deal for the AI and start the analysis straight away.
   $('#aiDealInput').value=listingBrief(ls);renderAIAnalysis(null);$('#analyseWithAI').click();
-  toast(`Analysing ${ls.length} listing${ls.length>1?'s':''}. The nightly rate is an estimate.`)})}
-function listingBrief(ls){const one=x=>[`${x.type} in ${x.area}${x.postcode&&!x.area.includes(x.postcode)?` (${x.postcode})`:''}, listed on ${x.site}`,
-    `Rent ${gbp(x.price)} a month`,`Deposit about ${gbp(x.price)} (estimated, not stated in the listing)`,`Nightly rate about ${gbp(RATE_EST(x.beds,x.area+' '+x.postcode))} (estimated for a ${bedsTxt(x.beds).toLowerCase()==='studio'?'studio':x.beds+' bed'})`,
+  toast(`Analysing ${ls.length} listing${ls.length>1?'s':''} as ${STRAT_NAME[d.strat]||d.strat}.`)})}
+function listingBrief(ls){const st=stratFor(ls[0]);
+  const one=x=>[`${x.type} in ${x.area}${x.postcode&&!x.area.includes(x.postcode)?` (${x.postcode})`:''}, listed on ${x.site}`,
+    x.mode==='buy'?`Asking price ${gbp(x.price)}`:`Rent ${gbp(x.price)} a month`,
+    ...(st==='R2SA'?[`Deposit about ${gbp(x.price)} (estimated, not stated in the listing)`,`Nightly rate about ${gbp(RATE_EST(x.beds,x.area+' '+x.postcode))} (estimated)`]:[]),
     `Furnished: ${x.furnished}`,`Listing: ${x.url}`].join('\n');
-  return `Rent-to-serviced-accommodation (R2SA) deal found with Deal Finder.\n\n`+(ls.length>1?ls.map((x,i)=>`Unit ${i+1}: ${one(x)}`).join('\n\n'):one(ls[0]))}
+  return `${STRAT_NAME[st]&&st!=='none'?STRAT_NAME[st]+' ':''}deal found with Deal Finder.${S.find.f.notes?`\nInvestor criteria: ${S.find.f.notes}`:''}\n\n`+(ls.length>1?ls.map((x,i)=>`Unit ${i+1}: ${one(x)}`).join('\n\n'):one(ls[0]))}
 $('#fResults').addEventListener('click',e=>{
   const s=e.target.closest('[data-sort]');if(s){const k=s.dataset.sort,c=S.find.sort;S.find.sort=c&&c.k===k?(c.dir>0?{k,dir:-1}:null):{k,dir:1};save();renderFind();const nb=$(`#fResults [data-sort="${k}"]`);if(nb)nb.focus();return}
   const u=e.target.closest('[data-unlock]');if(u){openUnlock(+u.dataset.unlock,+u.dataset.n||0);return}

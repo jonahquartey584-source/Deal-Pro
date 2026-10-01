@@ -340,7 +340,15 @@ const analyse = (deal: string, level: LevelId, strategy?: string) => {
 
 const RANK_PROMPT = `You are Deal Pro's UK property deal sourcer. You are given Deal Finder search results as JSON (each has an id, site, type, beds, area, postcode and either a monthly rent or an asking price) plus the user's search filters. Rank them by how good they are as property deals for the user's strategy: rent-to-rent / serviced accommodation for rentals; buy-to-let, HMO, BRRR or serviced accommodation for purchases. Estimate a realistic nightly rate or rent for the location where needed and say it is an estimate.
 
-Judge each on: for rentals, likely monthly profit at 80% occupancy (revenue = 24 nights x nightly rate, minus 15% platform fees, £45 cleaning per 3-night stay, rent and about £150 other costs), break-even occupancy, for purchases, gross yield and cash flow; price or rent level against the area, demand for short stays in that location, and compliance risk (in London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights don't count, so note when a London deal would need them; HMO and Article 4 where relevant). Treat nightly rates as estimates and say so. If the filters include "notes" (the user's own criteria in their words), rank listings that meet them higher and say which criteria each pick meets or misses. Never invent facts about a specific listing. The id is only for matching your picks to the results: never mention ids anywhere in your text. When you compare listings, name them by type and street or area (for example "the 1 bed flat on Adam & Eve Court").
+Judge each listing on the user's strategy from the filters ("strategy"; "auto" means R2SA for rentals and buy-to-let for purchases):
+- R2SA / serviced accommodation: monthly profit at 80% occupancy, break-even occupancy and short-stay demand.
+- R2R / HMO by the room: room rents for the area times rooms, minus rent or mortgage, bills and voids; licensing and Article 4.
+- Buy-to-let: gross and net yield and monthly cash flow after a mortgage.
+- BRRR: likely value after works against price plus refurbishment, and money left in after a 75% refinance.
+- Flip: likely resale value from comparable sales against price, refurbishment, costs and stamp duty; margin on resale value.
+- Lease option, commercial and others: the figures that matter for that route.
+Never talk about occupancy or nightly rates unless the strategy is short lets. Do not use the following R2SA method for other strategies.
+For R2SA rentals, likely monthly profit at 80% occupancy (revenue = 24 nights x nightly rate, minus 15% platform fees, £45 cleaning per 3-night stay, rent and about £150 other costs), break-even occupancy, for purchases, gross yield and cash flow; price or rent level against the area, demand for short stays in that location, and compliance risk (in London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights don't count, so note when a London deal would need them; HMO and Article 4 where relevant). Treat nightly rates as estimates and say so. If the filters include "notes" (the user's own criteria in their words), rank listings that meet them higher and say which criteria each pick meets or misses. Never invent facts about a specific listing. The id is only for matching your picks to the results: never mention ids anywhere in your text. When you compare listings, name them by type and street or area (for example "the 1 bed flat on Adam & Eve Court").
 
 You may also get "search_summary": how many listings each site returned, how many links were removed as dead or taken, and how many couldn't be confirmed. Use it to explain the search.
 
@@ -349,7 +357,7 @@ explanation (plain English, 80-150 words, written to the user: what the search f
 highlights (array of 3-6 short, specific findings, e.g. "The cheapest 2 beds are in LS6, from £950 pcm" or "Rightmove had the most matches"),
 summary (plain English, max 40 words: what the best options have in common),
 scores (array with one entry for EVERY listing given, best first: {"id": string, "score": integer 0-100, "verdict": "Strong" | "Potential" | "Weak"}),
-picks (array, best first, of {"id": string, "score": integer 0-100, "verdict": "Strong" | "Potential" | "Weak", "reason": string, "monthly_profit_80": string}; the same scores as in "scores"),
+picks (array, best first, of {"id": string, "score": integer 0-100, "verdict": "Strong" | "Potential" | "Weak", "reason": string, "key_figure": string (the main figure for the strategy, labelled and marked as an estimate, e.g. "Est. profit at 80% occupancy: £900/month", "Est. gross yield: 7.4%", "Est. margin after refurb: 18%")}; the same scores as in "scores"),
 watch_outs (array of short strings that apply across these results).`;
 
 const RANK_LEVEL: Record<LevelId, string> = {
@@ -410,7 +418,7 @@ const ANGLES = [
 ];
 export type Filters = {
   mode?: string; beds?: string | string[]; min?: number | string; max?: number | string; loc?: string;
-  priv?: boolean; furn?: string; type?: string; notes?: string; fresh?: string;
+  priv?: boolean; furn?: string; type?: string; notes?: string; fresh?: string; strategy?: string;
 };
 
 export type Listing = {
@@ -440,6 +448,19 @@ function bedsText(beds: Filters["beds"]) {
   return `bedrooms: ${words}`;
 }
 
+// What suits each strategy, so the search looks for the right kind of listing.
+const STRATEGY_SEARCH: Record<string, string> = {
+  R2SA: "suitable for serviced accommodation (furnished or furnishable, good location for short stays, landlord open to a company let)",
+  R2R: "suitable for rent-to-rent let by the room (enough bedrooms, landlord open to sharers or a company let)",
+  BTL: "suitable for buy-to-let (sound condition, good rental demand)",
+  HMO: "suitable for an HMO (several bedrooms, space for shared kitchen and bathrooms, ideally licensable or already an HMO)",
+  BRRR: "suitable for BRRR: properties needing refurbishment or modernisation, below market value, auction, probate or tired properties",
+  Flip: "suitable for a flip: properties needing refurbishment or modernisation, below market value, auction, probate, chain-free or quick sale",
+  SA: "suitable for owned serviced accommodation (city centre or tourist area, planning for short lets)",
+  LeaseOption: "where the owner may be open to a lease option or creative deal (long time on the market, price reduced, motivated seller)",
+  Commercial: "commercial property",
+};
+
 function describe(f: Filters) {
   const buy = f.mode === "buy";
   const parts = [
@@ -454,6 +475,8 @@ function describe(f: Filters) {
   ];
   const notes = typeof f.notes === "string" ? f.notes.replace(/\s+/g, " ").trim().slice(0, 500) : "";
   const fresh = Number(f.fresh) > 0 ? Number(f.fresh) : 0;
+  const hint = STRATEGY_SEARCH[String(f.strategy || "")];
+  if (hint) parts.push(hint);
   if (fresh) parts.push(`only listings added or updated in the last ${fresh === 1 ? "24 hours" : `${fresh} days`} (newest first)`);
   return parts.filter(Boolean).join(", ") + (notes ? `. The user's own criteria, in their words (follow them where the listing shows it): "${notes}"` : "");
 }
