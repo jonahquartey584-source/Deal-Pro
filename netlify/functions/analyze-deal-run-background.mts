@@ -23,12 +23,17 @@ export default async (request: Request, _context: Context) => {
     let analysis: unknown;
     if (job.kind === "search") {
       let st = (job.search as SearchState | undefined) || newSearch(String(job.input), level);
+      // Stops when the member has cancelled (the job is refunded or removed), instead of writing over it.
       const save = async (s: SearchState) => {
+        const now = await store.get(jobId, { type: "json" }) as Record<string, unknown> | null;
+        if (!now || now.cancelled || now.refunded) throw new Error("Search cancelled");
         await store.setJSON(jobId, { ...job, status: "running", search: s, progress: searchProgress(s), heartbeat: heartbeat() });
       };
       st = await stepSearch(st, level, Date.now() + RUN_MS, save);
       if (st.phase !== "done") {
         if (Date.now() - Date.parse(st.startedAt) > MAX_SEARCH_MS) throw new Error("Search ran too long");
+        const still = await store.get(jobId, { type: "json" }) as Record<string, unknown> | null;
+        if (!still || still.cancelled || still.refunded) return; // cancelled while running
         // Hand over to a fresh run with a new token.
         const runToken = crypto.randomUUID();
         await store.setJSON(jobId, { ...job, status: "queued", runToken, search: st, progress: searchProgress(st), heartbeat: heartbeat() });
@@ -48,13 +53,17 @@ export default async (request: Request, _context: Context) => {
         : job.kind === "dd" ? await runResearch(String(job.input), level)
         : await runAnalysis(String(job.input), level, typeof job.strategy === "string" ? job.strategy : undefined);
     }
+    const final = await store.get(jobId, { type: "json" }) as Record<string, unknown> | null;
+    if (!final || final.cancelled || final.refunded) return; // cancelled while running
     await store.setJSON(jobId, { ...job, status: "done", analysis, search: undefined, runToken: null, finishedAt: heartbeat() });
   } catch (error) {
     console.error("AI job failed", error);
-    const latest = (await store.get(jobId, { type: "json" }) as Record<string, unknown> | null) || job;
+    const latest = (await store.get(jobId, { type: "json" }) as Record<string, unknown> | null);
+    if (!latest || latest.cancelled) return; // cancelled by the member: already refunded
+
     const detail = String((error as Error)?.message || error).slice(0, 1500);
     const offline = /Connection error|ECONN|ETIMEDOUT|ENOTFOUND|fetch failed|socket/i.test(detail) && !/\b[45]\d\d\b/.test(detail);
-    await refundJob(jobId, { ...latest, errorDetail: detail }, offline
+    await refundJob(jobId, { ...(latest || job), errorDetail: detail }, offline
       ? "Deal Pro couldn't reach the AI service just now. Your credits have not been used; please try again in a minute."
       : job.kind === "search"
       ? "The search could not be completed. Your credits have not been used; please try again."

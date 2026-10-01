@@ -792,6 +792,7 @@ td.t{text-align:right;color:var(--ink-2)}
 .fresh-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:10px}.fresh-bar.stale{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--surface))}
 .fr-cell{white-space:nowrap}.fr-tag{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;letter-spacing:.02em;border-radius:4px;padding:1px 5px;vertical-align:1px}.fr-tag.new{background:var(--brand);color:#fff}.fr-tag.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}.fr-tag.old{border:1px solid var(--line-2);color:var(--muted)}
 .warn-note{color:var(--warn)!important}
+.fprog-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.fresh-bar>span{flex:1 1 260px}
 .lv-time{font-size:11.5px!important;color:var(--muted)!important}
 .ai-level:has(input:focus-visible){outline:2px solid var(--lv);outline-offset:2px}.ai-level.locked{opacity:.55}.ai-level .lv-use{color:var(--lv);font-weight:500}.ai-credits{font-size:12px;color:var(--ink-2);margin:8px 0 0}
 .ai-level-stack{grid-template-columns:1fr}
@@ -2218,7 +2219,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
         ${SC.size?`<td class="nr">${r.ai>=0?`<span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="${esc(r.aiv)}">${r.ai}</span>`:'<span class="muted">–</span>'}</td>`:''}<td>${esc(SITE_LABEL(r.site))}</td><td class="clip" title="${esc(r.title||'')}">${esc(r.title||'')}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td><td class="muted">${esc(r.furnished)}</td><td class="fr-cell"><span class="muted">${ageTxt(ageDays(r))||'–'}</span>${freshTags(r)}</td><td>${liveTag(r)}</td>
         <td>${o?`<a class="xlink" href="${esc(r.url)}" target="_blank" rel="noopener">Open ↗</a>`:L}</td><td>${o?`<button class="btn xs" data-build="${r.k}">Analyse deal</button>`:`<button class="btn xs" data-unlock="${r.k}" data-n="${i+1}">Unlock · ${gbp(dealFee())}</button>`}</td></tr>`}).join('')}</tbody></table></div>`;
   const ageH=S.find.liveAt?(Date.now()-Date.parse(S.find.liveAt))/36e5:0,stale=ageH>=24,nNew=rows.filter(isFreshNew).length;
-  const fresh=`<div class="fresh-bar${stale?' stale':''}"><span>${stale?`These results are from ${ageH<48?'yesterday':Math.round(ageH/24)+' days ago'}. Some listings may have gone.`:`Searched ${ageH<1?'just now':Math.round(ageH)+'h ago'}.`}${nNew?` <b>${nNew} new</b> in the last 3 days.`:''}</span><button class="btn sm${stale?' primary':''}" type="button" id="fRefresh" title="Re-check every listing, remove ones that have gone, and look for new ones">Refresh &amp; find new</button></div>`;
+  const fresh=`<div class="fresh-bar${stale?' stale':''}"><span>${stale?`These results are from ${ageH<48?'yesterday':Math.round(ageH/24)+' days ago'}. Some listings may have gone.`:`Searched ${ageH<1?'just now':Math.round(ageH)+'h ago'}.`}${nNew?` <b>${nNew} new</b> in the last 3 days.`:''}</span><button class="btn sm ghost" type="button" id="fEditSearch" title="Change the criteria for this search">Edit search</button><button class="btn sm${stale?' primary':''}" type="button" id="fRefresh" title="Re-check every listing, remove ones that have gone, and look for new ones">Refresh &amp; find new</button></div>`;
   box.innerHTML=rankHTML()+fresh+`<div class="ftool"><div><div class="fsum" id="fSummary">${sum}</div>${unc}${view==='sheet'?'<div class="fsub">Copy, then paste into cell A1 of a Google Sheet.</div>':''}</div>
     <div class="ph-actions">${acts}${toggle}</div></div>${body}`;
   const c=$('#fCards');if(c){c.style.scrollBehavior='auto';c.scrollLeft=prevScroll;c.style.scrollBehavior='';
@@ -2250,7 +2251,8 @@ function drawSearch(sites,lv,prog,sec){const P=(prog&&prog.sites)||{},phase=prog
     <div class="meter"><span style="width:${phase==='search'?Math.round(done/sites.length*100):100}%"></span></div>
     <ol>${sites.map(s=>{const st=P[s]||{status:'searching',found:0};const rounds=st.rounds>1?` · round ${Math.min(st.round+(st.status==='searching'?1:0),st.rounds)} of ${st.rounds}`:'';
       return `<li class="${st.status==='searching'?'act':'done'}"><span class="dot ${st.status==='done'?'good':st.status==='error'?'bad':'none'}"></span>${SITE_LABEL(s)}<span class="mono muted">${st.status==='error'?'unavailable':`${st.found||0} found${rounds}`}</span></li>`}).join('')}</ol>
-    ${prog&&prog.found?`<p class="fnote">${prog.found} unique listings so far.</p>`:''}<p class="fnote"><b>${leftTxt(estSecs('search',lv.id,sites.length),sec||0,searchFrac(sites,prog,lv))}</b> · usually takes ${estTxt('search',lv.id,sites.length)}.${lv.id==='deep'?' Expert searches every site round after round, then opens the best listings to check they are still available. You can leave this page and come back.':''}</p></div>`}
+    ${prog&&prog.found?`<p class="fnote">${prog.found} unique listings so far.</p>`:''}<p class="fnote"><b>${leftTxt(estSecs('search',lv.id,sites.length),sec||0,searchFrac(sites,prog,lv))}</b> · usually takes ${estTxt('search',lv.id,sites.length)}.${lv.id==='deep'?' Expert searches every site round after round, then opens the best listings to check they are still available. You can leave this page and come back.':''}</p>
+    <div class="fprog-acts"><button class="btn sm" type="button" id="fCancel">Cancel search</button><button class="btn sm ghost" type="button" id="fEditRun">Edit search</button></div></div>`}
 // Share of the search done: the rounds across all sites, then (Expert) the listing checks, then ranking.
 const VERIFY_N={quick:10,standard:25,deep:60};/* listings each level opens to check; matches SEARCH_LEVEL in netlify/lib/ai.mts */
 function searchFrac(sites,prog,lv){if(!prog)return 0;const P=prog.sites||{},sw=.7;
@@ -2259,7 +2261,8 @@ function searchFrac(sites,prog,lv){if(!prog)return 0;const P=prog.sites||{},sw=.
   const r=sites.reduce((a,s)=>{const x=P[s];return a+(!x?0:x.status!=='searching'?1:(x.round||0)/(x.rounds||1))},0)/Math.max(1,sites.length);return sw*r}
 async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LEVELS[0],btn=$('#fSearch');
   FS.busy=true;btn.disabled=true;let last=null;const t0=Date.parse(p.at)||Date.now(),secs=()=>Math.round((Date.now()-t0)/1000);drawSearch(p.sites,lv,null,secs());
-  try{const res=await pollJob(p.id,()=>drawSearch(p.sites,lv,last,secs()),pr=>{last=pr;drawSearch(p.sites,lv,pr,secs())},100*60e3);
+  const gone=()=>FS.cancelled===p.id;const stop=()=>{if(gone())throw Object.assign(new Error('cancelled'),{cancelled:true})};
+  try{const res=await pollJob(p.id,()=>{stop();drawSearch(p.sites,lv,last,secs())},pr=>{stop();last=pr;drawSearch(p.sites,lv,pr,secs())},100*60e3);if(gone())return;
     LIVE=(res.listings||[]).slice(0,500);/* the server only returns single-listing links */
     // After a refresh, mark listings that weren't in the previous results as new.
     if(p.prev){const prev=new Set(p.prev),now=new Date().toISOString();LIVE.forEach(x=>{if(!prev.has(x.url))x.newAt=now;else if(p.prevNew&&p.prevNew[x.url])x.newAt=p.prevNew[x.url]})}S.find.live=LIVE;S.find.liveAt=new Date().toISOString();S.find.liveSites=res.sites||{};S.find.searched=true;FS.sel.clear();
@@ -2269,8 +2272,14 @@ async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LE
     const rf=res.refreshed;if(!LIVE.length){toast(`No listings found${S.find.f.loc?` in ${S.find.f.loc}`:''}, even after searching nearby areas. Try a wider price range, more sites or Analyst.`);return}
     toast(rf?`Refreshed: ${rf.gone} listing${rf.gone===1?' has':'s have'} gone and ${rf.gone===1?'was':'were'} removed, ${rf.added} new one${rf.added===1?'':'s'} found. ${live} live now.${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`
       :`${live} live listing${live===1?'':'s'} across ${p.sites.length} site${p.sites.length>1?'s':''}, every link checked.${res.removed?` Removed ${res.removed} dead or taken link${res.removed===1?'':'s'}.`:''}${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
-  catch(e){toast(e.message||'The search failed. Please try again.')}
-  finally{delete S.find.pending;save();FS.busy=false;btn.disabled=false;renderFind()}}
+  catch(e){if(e.cancelled||gone())return;toast(e.message||'The search failed. Please try again.')}
+  finally{if(!gone()){delete S.find.pending;save();FS.busy=false;btn.disabled=false;renderFind()}}}
+// Cancel the running search (credits refunded); "Edit" also takes you back to the criteria to change them.
+async function cancelSearch(edit){const p=S.find.pending;if(!p)return;FS.cancelled=p.id;delete S.find.pending;save();FS.busy=false;$('#fSearch').disabled=false;renderFind();
+  try{const r=await fetch('/api/analyze-deal?job='+encodeURIComponent(p.id),{method:'DELETE',credentials:'same-origin'});const d=await r.json().catch(()=>({}));if(d.credits){AIC.info=d.credits;renderAILevels()}}catch(e){}
+  toast(edit?'Search cancelled. Change your criteria, then search again. Your credits weren’t used.':'Search cancelled. Your credits weren’t used.');if(edit)editSearch()}
+function editSearch(){const panel=$('#fPanel');if(!panel)return;panel.scrollIntoView({block:'start',behavior:reduced()?'auto':'smooth'});setTimeout(()=>{const n=$('#fNotes');if(n)n.focus({preventScroll:true})},350)}
+document.addEventListener('click',e=>{if(e.target.closest('#fCancel'))cancelSearch(false);else if(e.target.closest('#fEditRun'))cancelSearch(true);else if(e.target.closest('#fEditSearch'))editSearch()});
 // refresh: re-check the current results, drop the ones that have gone, and look for new listings
 const RENT_ONLY_SITES=['OpenRent','SpareRoom'];
 async function startSearch(refresh=false){if(FS.busy)return;readFind();let sites=SITES.filter(s=>S.find.f.sites[s]);

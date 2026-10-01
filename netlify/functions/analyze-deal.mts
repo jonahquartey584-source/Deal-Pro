@@ -69,6 +69,19 @@ export default async (request: Request, _context: Context) => {
     });
   }
 
+  // Cancel a running job: it stops at its next save and the reserved credits are refunded now.
+  if (request.method === "DELETE") {
+    const jobId = new URL(request.url).searchParams.get("job");
+    if (!jobId || !/^[0-9a-f-]{36}$/.test(jobId)) return json({ error: "Unknown search." }, 404);
+    const job = await jobs().get(jobId, { type: "json" }) as Record<string, unknown> | null;
+    if (!job || job.userId !== user.id) return json({ error: "Unknown search." }, 404);
+    if (job.status !== "done" && job.status !== "error") {
+      await refundJob(jobId, { ...job, cancelled: true }, "Cancelled. Your credits have not been used.");
+    }
+    await jobs().delete(jobId);
+    return json({ ok: true, credits: creditSummary(isAdmin, plan, (await store.get(`users/${user.id}/ai-usage`, { type: "json" }) as Usage | null) || {}) });
+  }
+
   if (request.method !== "POST") return json({ error: "Method not allowed." }, 405);
 
   // kind "analyse": one deal from the AI Deal Analyser. kind "rank": Deal Finder results to rank.
@@ -170,5 +183,5 @@ export default async (request: Request, _context: Context) => {
 
 export const config: Config = {
   path: "/api/analyze-deal",
-  method: ["GET", "POST"],
+  method: ["GET", "POST", "DELETE"],
 };
