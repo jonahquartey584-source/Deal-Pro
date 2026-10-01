@@ -397,7 +397,7 @@ const SEARCH_LEVEL: Record<LevelId, { passes: number; perPass: number; context: 
 
 // Each round searches from a different angle so later rounds find listings earlier ones missed.
 const ANGLES = [
-  "Start with the most relevant current listings.",
+  "Start with the newest listings (added in the last few days), then the most relevant current ones.",
   "Now look in nearby neighbourhoods, suburbs and towns within about 5 miles.",
   "Now use different wording: flat, apartment, house, maisonette, 'to let', 'available now', 'long let'.",
   "Now focus on the lower half of the price range.",
@@ -408,7 +408,7 @@ const ANGLES = [
 ];
 export type Filters = {
   mode?: string; beds?: string | string[]; min?: number | string; max?: number | string; loc?: string;
-  priv?: boolean; furn?: string; type?: string; notes?: string;
+  priv?: boolean; furn?: string; type?: string; notes?: string; fresh?: string;
 };
 
 export type Listing = {
@@ -416,6 +416,10 @@ export type Listing = {
   price: number; mode: "rent" | "buy"; private: boolean | null; furnished: string; url: string; found: string;
   verified?: "available" | "unavailable" | "unknown";
   checkedAt?: string;
+  // When the advert was added or last updated, as an ISO date, when the site shows it.
+  listedAt?: string;
+  // The advert says it's in high demand, has a closing date or viewings are booked up: likely to go soon.
+  hot?: boolean;
   // "live": the page opened and shows the advert; "gone": 404, removed, or bounced to a search page;
   // "unknown": the site blocked the check, so the AI has to open it instead.
   link?: "live" | "gone" | "unknown";
@@ -447,6 +451,8 @@ function describe(f: Filters) {
     f.priv ? "private landlords only (no agents)" : "",
   ];
   const notes = typeof f.notes === "string" ? f.notes.replace(/\s+/g, " ").trim().slice(0, 500) : "";
+  const fresh = Number(f.fresh) > 0 ? Number(f.fresh) : 0;
+  if (fresh) parts.push(`only listings added or updated in the last ${fresh === 1 ? "24 hours" : `${fresh} days`} (newest first)`);
   return parts.filter(Boolean).join(", ") + (notes ? `. The user's own criteria, in their words (follow them where the listing shows it): "${notes}"` : "");
 }
 
@@ -494,6 +500,26 @@ async function webJson(prompt: string, domains: string[], level: LevelId, contex
   return { parsed, seen };
 }
 
+// Turns "Added today", "Reduced on 28/09/2026", "3 days ago" or "12 Sept 2026" into an ISO date.
+const MONTHS = ["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"];
+export function parseListed(text: string, now = Date.now()): string {
+  const t = String(text || "").toLowerCase();
+  if (!t.trim()) return "";
+  const day = 864e5;
+  const iso = (ms: number) => (ms > now + day || ms < now - 400 * day ? "" : new Date(ms).toISOString());
+  if (/\b(just now|today|new today|hours? ago|minutes? ago)\b/.test(t)) return iso(now);
+  if (/\byesterday\b/.test(t)) return iso(now - day);
+  let m = t.match(/(\d+)\s*(day|week|month)s?\s+ago/);
+  if (m) return iso(now - Number(m[1]) * (m[2] === "day" ? day : m[2] === "week" ? 7 * day : 30 * day));
+  m = t.match(/\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/);
+  if (m) { const y = Number(m[3]) < 100 ? 2000 + Number(m[3]) : Number(m[3]); return iso(Date.UTC(y, Number(m[2]) - 1, Number(m[1]))); }
+  m = t.match(/\b(\d{1,2})(?:st|nd|rd|th)?\s+([a-z]{3})[a-z]*\.?,?\s+(\d{4})\b/);
+  if (m && MONTHS.includes(m[2])) return iso(Date.UTC(Number(m[3]), MONTHS.indexOf(m[2]), Number(m[1])));
+  m = t.match(/\b([a-z]{3})[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/);
+  if (m && MONTHS.includes(m[1])) return iso(Date.UTC(Number(m[3]), MONTHS.indexOf(m[1]), Number(m[2])));
+  return "";
+}
+
 async function searchSite(site: string, f: Filters, level: LevelId, pass: number, exclude: string[]): Promise<Listing[]> {
   const conf = SITES[site];
   const lv = SEARCH_LEVEL[level];
@@ -501,8 +527,8 @@ async function searchSite(site: string, f: Filters, level: LevelId, pass: number
   const skip = exclude.length ? `\nYou've already found these, so don't return them again:\n${exclude.slice(-80).join("\n")}` : "";
   const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
 ${ANGLES[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only return individual listing pages: one property per URL, shaped like ${conf.example}. Never return search-results, area, category or map pages, even if they show listings; open the individual advert and use its URL. Skip adverts marked let agreed, under offer, sold STC or no longer available.${skip}
-Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "private_landlord": true | false | null}]}.
-Only include listings you actually found in the search results, with the URL exactly as the search returned it. Never build or guess a URL from an ID or address, and never invent a listing or price. If you find none, return {"listings": []}.`;
+Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "private_landlord": true | false | null, "added": string (when the advert was added, reduced or updated, exactly as the site shows it, e.g. "Added today", "Added on 28/09/2026", "3 days ago"; "" if not shown)}]}.
+Prefer the newest listings. Only include listings you actually found in the search results, with the URL exactly as the search returned it. Never build or guess a URL from an ID or address, and never invent a listing or price. If you find none, return {"listings": []}.`;
   const { parsed, seen } = await webJson(prompt, conf.domains, level, lv.context, lv.effort);
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
   const out: Listing[] = [];
@@ -525,6 +551,7 @@ Only include listings you actually found in the search results, with the URL exa
       private: typeof x.private_landlord === "boolean" ? x.private_landlord : null,
       furnished: ["Furnished", "Unfurnished", "Part furnished"].includes(String(x.furnished)) ? String(x.furnished) : "Not stated",
       found: today,
+      ...(parseListed(String(x.added || "")) ? { listedAt: parseListed(String(x.added || "")) } : {}),
     });
   }
   return out;
@@ -566,6 +593,8 @@ Only report what the pages actually say. Use null or "" when a detail isn't show
       listed: String(c.listed || "").slice(0, 60),
       highlights: Array.isArray(c.highlights) ? c.highlights.slice(0, 8).map((h: unknown) => String(h).slice(0, 120)) : [],
     };
+    if (!l.listedAt && parseListed(String(c.listed || ""))) l.listedAt = parseListed(String(c.listed || ""));
+    if (HOT_TEXT.test(l.details.highlights.join(" "))) l.hot = true;
   }
 }
 
@@ -575,15 +604,33 @@ Only report what the pages actually say. Use null or "" when a detail isn't show
 export type SearchState = {
   filters: Filters; sites: string[]; phase: "search" | "check" | "verify" | "rank" | "done";
   round: number; checkAt?: number; verifyAt: number; listings: Listing[]; removed?: number;
+  // A refresh starts from the member's current results: they are re-checked and new ones added.
+  previous?: string[];
   sites_status: Record<string, { status: string; found: number; round?: number; rounds?: number; error?: string; detail?: string }>;
   ranking?: Record<string, unknown> | null; startedAt: string;
 };
 
 export function newSearch(input: string, level: LevelId): SearchState {
-  const { filters = {}, sites = [] } = JSON.parse(input) as { filters?: Filters; sites?: string[] };
+  const { filters = {}, sites = [], existing = [] } = JSON.parse(input) as { filters?: Filters; sites?: string[]; existing?: Array<Record<string, unknown>> };
   const wanted = sites.filter((s) => s in SITES);
+  // Current results to re-check: only real listing links on the ticked sites, with their checks reset.
+  const keep: Listing[] = [];
+  for (const x of Array.isArray(existing) ? existing.slice(0, 200) : []) {
+    const site = String(x.site || ""), url = String(x.url || "");
+    if (!wanted.includes(site) || !/^https:\/\//.test(url) || !isListingUrl(site, url) || keep.some((k) => k.id === normalise(url))) continue;
+    const price = Math.round(Number(x.price));
+    if (!Number.isFinite(price) || price <= 0) continue;
+    const beds = x.beds == null || x.beds === "" ? null : Math.max(0, Math.round(Number(x.beds)));
+    keep.push({
+      site, id: normalise(url), url, title: String(x.title || "").slice(0, 140), type: String(x.type || "Property").slice(0, 60),
+      beds: Number.isFinite(beds as number) ? beds : null, area: String(x.area || "").slice(0, 120), postcode: String(x.postcode || "").toUpperCase().slice(0, 8),
+      price, mode: x.mode === "buy" ? "buy" : "rent", private: typeof x.private === "boolean" ? x.private : null,
+      furnished: String(x.furnished || "Not stated").slice(0, 30), found: String(x.found || "").slice(0, 20),
+      ...(typeof x.listedAt === "string" && !Number.isNaN(Date.parse(x.listedAt)) ? { listedAt: x.listedAt } : {}),
+    });
+  }
   return {
-    filters, sites: wanted, phase: "search", round: 0, verifyAt: 0, listings: [], startedAt: new Date().toISOString(),
+    filters, sites: wanted, phase: "search", round: 0, verifyAt: 0, listings: keep, previous: keep.map((l) => l.id), startedAt: new Date().toISOString(),
     sites_status: Object.fromEntries(wanted.map((s) => [s, { status: "searching", found: 0, round: 0, rounds: SEARCH_LEVEL[level].passes }])),
   };
 }
@@ -595,6 +642,7 @@ export const searchProgress = (st: SearchState) => ({ phase: st.phase, sites: st
 // page, or say the advert has gone are removed. Sites that block the check are left "unknown"
 // for the AI to open instead.
 const GONE_TEXT = /(no longer available|no longer on the market|no longer listed|has been removed|been taken down|advert has expired|ad has expired|listing (?:has )?expired|listing not found|property not found|advert not found|page not found|page (?:you|you're|you are) looking for|couldn['’]t find (?:that|the|this) page|this (?:ad|advert|listing|property) is no longer|\b404\b\W{0,3}(?:error|not found|page))/i;
+const HOT_TEXT = /high demand|multiple (?:offers|applications|enquiries)|viewings? (?:are )?(?:now )?(?:fully )?booked|closing date|best and final|limited viewings|lots of interest/i;
 const TAKEN_TITLE = /\b(let agreed|under offer|sold stc|sold subject to contract|reserved)\b/i;
 export async function checkLink(l: Listing): Promise<"live" | "gone" | "unknown"> {
   const ctl = new AbortController();
@@ -612,6 +660,9 @@ export async function checkLink(l: Listing): Promise<"live" | "gone" | "unknown"
     if (GONE_TEXT.test(head)) return "gone";
     const title = head.match(/^Title: (.*)$/m)?.[1]?.trim() || "";
     if (TAKEN_TITLE.test(title)) return "gone";
+    const added = text.match(/\b(?:added|listed|posted|reduced|updated)\b[^.\n]{0,30}?(?:today|yesterday|\d+\s*(?:hours?|days?|weeks?|months?)\s+ago|\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}|\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}\.?,?\s+\d{4})/i)?.[0];
+    if (added) { const at = parseListed(added); if (at) l.listedAt = at; }
+    if (HOT_TEXT.test(text.slice(0, 6000))) l.hot = true;
     if (title && !/rightmove|zoopla|openrent|spareroom|gumtree|facebook/i.test(title.replace(/[|\-–].*$/, "").trim())) l.title = title.replace(/\s*[|–-]\s*(Rightmove|Zoopla|OpenRent|SpareRoom|Gumtree|Facebook).*$/i, "").slice(0, 140);
     return "live";
   } catch { return "unknown"; } finally { clearTimeout(timer); }

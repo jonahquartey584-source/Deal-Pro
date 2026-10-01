@@ -74,7 +74,7 @@ export default async (request: Request, _context: Context) => {
   // kind "analyse": one deal from the AI Deal Analyser. kind "rank": Deal Finder results to rank.
   // kind "search": live Deal Finder search of the ticked sites, then ranking.
   // kind "dd": web research for the due diligence checks of one deal.
-  const body = await request.json().catch(() => null) as { kind?: string; deal?: string; level?: string; listings?: unknown; filters?: unknown; sites?: unknown; checks?: unknown; strategy?: string } | null;
+  const body = await request.json().catch(() => null) as { kind?: string; deal?: string; level?: string; listings?: unknown; filters?: unknown; sites?: unknown; checks?: unknown; strategy?: string; existing?: unknown } | null;
   const kind = body?.kind === "search" ? "search" : body?.kind === "rank" ? "rank" : body?.kind === "dd" ? "dd" : "analyse";
   const level = (body?.level && body.level in LEVELS ? body.level : "quick") as LevelId;
   let input: string;
@@ -94,8 +94,11 @@ export default async (request: Request, _context: Context) => {
   } else if (kind === "search") {
     const sites = Array.isArray(body?.sites) ? body.sites.filter((x): x is string => typeof x === "string" && x in SITES) : [];
     if (!sites.length) return json({ error: "Tick at least one site to search." }, 400);
-    input = JSON.stringify({ filters: body?.filters ?? {}, sites });
-    if (input.length > 5_000) return json({ error: "The search filters are too long." }, 413);
+    // A refresh sends the current results so they can be re-checked and new ones found.
+    const existing = Array.isArray(body?.existing) ? body.existing.slice(0, 200) : [];
+    if (JSON.stringify(body?.filters ?? {}).length > 5_000) return json({ error: "The search filters are too long." }, 413);
+    input = JSON.stringify({ filters: body?.filters ?? {}, sites, existing });
+    if (input.length > 250_000) return json({ error: "Too many results to refresh. Run a new search instead." }, 413);
   } else {
     const listings = Array.isArray(body?.listings) ? body.listings.slice(0, 80) : [];
     if (!listings.length) return json({ error: "There are no results to rank." }, 400);

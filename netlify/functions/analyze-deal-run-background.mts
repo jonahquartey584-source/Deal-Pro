@@ -38,7 +38,11 @@ export default async (request: Request, _context: Context) => {
         if (next.status >= 400) throw new Error(`Could not continue the search (${next.status})`);
         return;
       }
-      analysis = { listings: st.listings, sites: st.sites_status, ranking: st.ranking ?? null, removed: st.removed || 0 };
+      const prev = new Set(st.previous || []);
+      analysis = {
+        listings: st.listings, sites: st.sites_status, ranking: st.ranking ?? null, removed: st.removed || 0,
+        ...(st.previous ? { refreshed: { rechecked: prev.size, gone: [...prev].filter((id) => !st.listings.some((l) => l.id === id)).length, added: st.listings.filter((l) => !prev.has(l.id) && l.confirmed).length } } : {}),
+      };
     } else {
       analysis = job.kind === "rank" ? await runRank(String(job.input), level)
         : job.kind === "dd" ? await runResearch(String(job.input), level)
