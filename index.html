@@ -791,6 +791,7 @@ td.t{text-align:right;color:var(--ink-2)}
 .cardlinks{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);white-space:nowrap;cursor:pointer}.cardlinks input{accent-color:var(--brand)}
 .fresh-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:10px}.fresh-bar.stale{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--surface))}
 .fr-cell{white-space:nowrap}.fr-tag{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;letter-spacing:.02em;border-radius:4px;padding:1px 5px;vertical-align:1px}.fr-tag.new{background:var(--brand);color:#fff}.fr-tag.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}.fr-tag.old{border:1px solid var(--line-2);color:var(--muted)}
+.warn-note{color:var(--warn)!important}
 .lv-time{font-size:11.5px!important;color:var(--muted)!important}
 .ai-level:has(input:focus-visible){outline:2px solid var(--lv);outline-offset:2px}.ai-level.locked{opacity:.55}.ai-level .lv-use{color:var(--lv);font-weight:500}.ai-credits{font-size:12px;color:var(--ink-2);margin:8px 0 0}
 .ai-level-stack{grid-template-columns:1fr}
@@ -2142,7 +2143,7 @@ const freshMatch=(r,f)=>!f.fresh||f.fresh==='any'||(ageDays(r)!=null&&ageDays(r)
 // Only listings whose link was opened and confirmed live are shown, unless the member asks to see the rest.
 const confirmedLive=x=>x.verified==='available';
 function findRows(all=false){const f=S.find.f;
-  return SRC().map((x,i)=>Object.assign({k:i,listedTs:Date.parse(x.listedAt||'')||0},x)).filter(x=>(all||FS.showUnconfirmed||confirmedLive(x))&&freshMatch(x,f)&&x.mode===f.mode
+  return SRC().map((x,i)=>Object.assign({k:i,listedTs:Date.parse(x.listedAt||'')||0},x)).filter(x=>(all||FS.showUnconfirmed||FS.autoUnc||confirmedLive(x))&&freshMatch(x,f)&&x.mode===f.mode
     &&bedsMatch(bedList(f.beds),x.beds)
     &&(f.min===''||x.price>=f.min)&&(f.max===''||x.price<=f.max)
     &&(LIVE||locMatch(x,f.loc))&&(!f.priv||x.private!==false)
@@ -2182,15 +2183,17 @@ function dealCard(r,i,o={}){const open=!o.preview&&isOpen(r),u={rent:r.price,rat
 function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fResults');
   if(!LIVE){box.innerHTML=`<div class="fempty"><h2>Search live property listings</h2><p>Set your filters, tick the sites and choose a power level, then run Search with AI. Deal Pro searches every ticked site for current listings, shows them in a sheet with a link to each one, and picks out the best deals. Copy them into Google Sheets or analyse any of them in the Deal Analyser.</p></div>`;return}
   const view=S.find.view==='cards'?'cards':'sheet',prevScroll=($('#fCards')||{}).scrollLeft||0;
+  // If none of the listings could be confirmed (the sites blocked the check), show them anyway with a warning.
+  {const all=findRows(true);FS.autoUnc=!FS.showUnconfirmed&&all.length>0&&!all.some(confirmedLive)}
   const SC=aiScores(),base=findRows();base.forEach(r=>{const x=SC.get(r.k);r.ai=x?x.score:-1;r.aiv=x?x.verdict:''});
   // With a ranking, the list is sorted by AI score unless the member picked another sort.
   const rows=S.find.sort?sortRows(base):SC.size?base.slice().sort((a,b)=>b.ai-a.ai||a.k-b.k):base,keys=new Set(rows.filter(isOpen).map(r=>r.k));[...FS.sel].forEach(k=>{if(!keys.has(k))FS.sel.delete(k)});
   FS.lastRows=rows;
   const pr=rows.map(r=>r.price).sort((a,b)=>a-b),m=pr.length,med=m?(m%2?pr[(m-1)/2]:(pr[m/2-1]+pr[m/2])/2):NaN,nOpen=keys.size;
   const ll=new Set(rows.map(r=>r.site)).size,buy=S.find.f.mode==='buy',so=S.find.sort,sv=so?`${so.k}:${so.dir}`:'';
-  const hidden=FS.showUnconfirmed?0:findRows(true).length-rows.length,nUnc=findRows(true).filter(x=>!confirmedLive(x)).length;
+  const hidden=FS.showUnconfirmed||FS.autoUnc?0:findRows(true).length-rows.length,nUnc=findRows(true).filter(x=>!confirmedLive(x)).length;
   const sum=`<b class="mono">${m}</b> ${FS.showUnconfirmed?'':'live '}listing${m===1?'':'s'} from <b class="mono">${ll}</b> site${ll===1?'':'s'}${m?` · median <b class="mono">${gbp(med)}</b>${buy?'':' pcm'}`:''}${S.find.liveAt?` · searched ${fmtDate(S.find.liveAt)}`:''}`;
-  const unc=nUnc?`<div class="fsub">${FS.showUnconfirmed?`Showing ${nUnc} listing${nUnc===1?'':'s'} that couldn't be confirmed live. Their links may not work.`:`${hidden} more couldn't be confirmed live, so they're hidden.`} <button class="linkbtn" type="button" id="fShowUnc">${FS.showUnconfirmed?'Hide them':'Show them anyway'}</button></div>`:'';
+  const unc=FS.autoUnc?`<div class="fsub warn-note">These sites wouldn't let Deal Pro confirm the listings automatically, so they're shown unconfirmed. Open each link to check it's still available, or run Analyst or Expert, which confirm more.</div>`:nUnc?`<div class="fsub">${FS.showUnconfirmed?`Showing ${nUnc} listing${nUnc===1?'':'s'} that couldn't be confirmed live. Their links may not work.`:`${hidden} more couldn't be confirmed live, so they're hidden.`} <button class="linkbtn" type="button" id="fShowUnc">${FS.showUnconfirmed?'Hide them':'Show them anyway'}</button></div>`:'';
   const th=(k,lab,cls='')=>{const on=so&&so.k===k;return `<th class="${cls}" aria-sort="${on?(so.dir>0?'ascending':'descending'):'none'}"><button class="sort" data-sort="${k}">${lab}<span class="sa" aria-hidden="true">${on?(so.dir>0?'↑':'↓'):''}</span></button></th>`};
   const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
   const acts=view==='cards'
@@ -2256,13 +2259,16 @@ async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LE
     FS.rank=res.ranking?{status:'done',level:lv,data:res.ranking}:null;S.find.rank=res.ranking?{level:lv.id,data:res.ranking}:null;S.find.removed=res.removed||0;
     const missed=Object.entries(res.sites||{}).filter(([,v])=>v.status==='error').map(([k])=>SITE_LABEL(k));
     const live=LIVE.filter(confirmedLive).length;FS.showUnconfirmed=false;
-    const rf=res.refreshed;
+    const rf=res.refreshed;if(!LIVE.length){toast(`No listings found${S.find.f.loc?` in ${S.find.f.loc}`:''}, even after searching nearby areas. Try a wider price range, more sites or Analyst.`);return}
     toast(rf?`Refreshed: ${rf.gone} listing${rf.gone===1?' has':'s have'} gone and ${rf.gone===1?'was':'were'} removed, ${rf.added} new one${rf.added===1?'':'s'} found. ${live} live now.${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`
       :`${live} live listing${live===1?'':'s'} across ${p.sites.length} site${p.sites.length>1?'s':''}, every link checked.${res.removed?` Removed ${res.removed} dead or taken link${res.removed===1?'':'s'}.`:''}${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
   catch(e){toast(e.message||'The search failed. Please try again.')}
   finally{delete S.find.pending;save();FS.busy=false;btn.disabled=false;renderFind()}}
 // refresh: re-check the current results, drop the ones that have gone, and look for new listings
-async function startSearch(refresh=false){if(FS.busy)return;readFind();const sites=SITES.filter(s=>S.find.f.sites[s]);
+const RENT_ONLY_SITES=['OpenRent','SpareRoom'];
+async function startSearch(refresh=false){if(FS.busy)return;readFind();let sites=SITES.filter(s=>S.find.f.sites[s]);
+  // OpenRent and SpareRoom only list homes to rent, so they're left out of a search for property to buy.
+  if(S.find.f.mode==='buy'&&sites.some(s=>!RENT_ONLY_SITES.includes(s))){const skip=sites.filter(s=>RENT_ONLY_SITES.includes(s));sites=sites.filter(s=>!RENT_ONLY_SITES.includes(s));if(skip.length)toast(`${skip.map(SITE_LABEL).join(' and ')} only list rentals, so they're left out of this purchase search.`)}
   if(!sites.length){toast('Tick at least one site to search');return}
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0],btn=$('#fSearch');
   const existing=refresh&&LIVE?LIVE.map(r=>({site:r.site,url:r.url,title:r.title,type:r.type,beds:r.beds,area:r.area,postcode:r.postcode,price:r.price,mode:r.mode,private:r.private,furnished:r.furnished,found:r.found,listedAt:r.listedAt})):[];

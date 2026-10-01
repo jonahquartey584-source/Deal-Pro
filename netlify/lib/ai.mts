@@ -366,6 +366,8 @@ export const runRank = (payload: string, level: LevelId) => complete(`${RANK_PRO
 // can't invent listings.
 // "listing" matches the URL of a single advert on that site, and "example" shows the model that
 // shape. Search-results, area and category pages don't match, so they are never shown as listings.
+// Sites that only list homes to rent, so they're skipped when searching for property to buy.
+export const RENT_ONLY = new Set(["OpenRent", "SpareRoom"]);
 export const SITES: Record<string, { label: string; domains: string[]; what: string; listing: RegExp; example: string }> = {
   OpenRent: { label: "OpenRent", domains: ["openrent.co.uk"], what: "property to rent, mostly from private landlords", listing: /openrent\.co\.uk\/(?:property-to-rent\/[^?#]+\/)?\d{5,}\/?(?:[?#]|$)/i, example: "https://www.openrent.co.uk/property-to-rent/leeds/2-bed-flat-park-lane/1234567" },
   SpareRoom: { label: "SpareRoom", domains: ["spareroom.co.uk"], what: "whole properties and rooms to rent", listing: /spareroom\.co\.uk\/(?:flatshare\/[^#]*[?&](?:flatshare_id|advert_id)=\d+|flatshare\/[^?#]+\/\d{5,}\/?(?:[?#]|$))/i, example: "https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=12345678" },
@@ -542,8 +544,8 @@ Prefer the newest listings. Only include listings you actually found in the sear
   for (const x of (parsed.listings || []) as Array<Record<string, unknown>>) {
     const url = String(x.url || "");
     if (!/^https:\/\//.test(url) || !hostMatches(url, conf.domains) || !isListingUrl(site, url)) continue;
-    // Keep only pages the search returned (when the API reports its sources).
-    if (seen.size && !seen.has(normalise(url))) continue;
+    // Listings found by reading a site's search page aren't in the search sources, so they aren't dropped
+    // here: every link is opened and checked before it is shown, which removes anything made up.
     const price = Math.round(Number(x.price));
     if (!Number.isFinite(price) || price <= 0) continue;
     const beds = x.beds === null || x.beds === undefined || x.beds === "" ? null : Math.max(0, Math.round(Number(x.beds)));
@@ -613,13 +615,16 @@ export type SearchState = {
   round: number; checkAt?: number; verifyAt: number; listings: Listing[]; removed?: number;
   // A refresh starts from the member's current results: they are re-checked and new ones added.
   previous?: string[];
+  widened?: boolean;
   sites_status: Record<string, { status: string; found: number; round?: number; rounds?: number; error?: string; detail?: string }>;
   ranking?: Record<string, unknown> | null; startedAt: string;
 };
 
 export function newSearch(input: string, level: LevelId): SearchState {
   const { filters = {}, sites = [], existing = [] } = JSON.parse(input) as { filters?: Filters; sites?: string[]; existing?: Array<Record<string, unknown>> };
-  const wanted = sites.filter((s) => s in SITES);
+  const ticked = sites.filter((s) => s in SITES);
+  // Rental-only sites can't have property for sale; keep them out of a purchase search.
+  const wanted = filters.mode === "buy" && ticked.some((s) => !RENT_ONLY.has(s)) ? ticked.filter((s) => !RENT_ONLY.has(s)) : ticked;
   // Current results to re-check: only real listing links on the ticked sites, with their checks reset.
   const keep: Listing[] = [];
   for (const x of Array.isArray(existing) ? existing.slice(0, 200) : []) {
@@ -683,7 +688,9 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
 
   // Rounds: every site is searched in parallel, each round from a new angle.
   while (st.phase === "search") {
-    if (st.round >= lv.passes) { st.phase = "check"; break; }
+    // Nothing found at all: run one more, wider round (the next angle: nearby areas or different wording).
+    if (st.round >= lv.passes && !st.widened && !st.listings.length && st.sites.some((s) => st.sites_status[s]?.status !== "error")) st.widened = true;
+    if (st.round >= lv.passes + (st.widened ? 1 : 0)) { st.phase = "check"; break; }
     if (timeLeft() < 4 * 60_000) return st;
     const round = st.round;
     await Promise.all(st.sites.map(async (site) => {
@@ -692,7 +699,7 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
         const mine = st.listings.filter((l) => l.site === site).map((l) => l.url);
         // Each place is searched separately on this site, sharing out the listings wanted per round.
         const places = splitLocations(st.filters.loc);
-        const want = places.length > 1 ? Math.max(3, Math.ceil((lv.perPass * 1.6) / places.length)) : undefined;
+        const want = places.length > 1 ? Math.max(5, Math.ceil((lv.perPass * 2) / places.length)) : undefined;
         const runs = await Promise.allSettled((places.length ? places : [""]).map((place) => searchSite(site, { ...st.filters, loc: place }, level, round, mine, want)));
         const ok = runs.filter((r): r is PromiseFulfilledResult<Listing[]> => r.status === "fulfilled");
         if (!ok.length) throw (runs[0] as PromiseRejectedResult).reason;
