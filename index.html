@@ -750,11 +750,10 @@ td.t{text-align:right;color:var(--ink-2)}
 #bgfx .grid{position:absolute;inset:-64px;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(ellipse 75% 60% at 50% 35%,#000 20%,transparent 75%);mask-image:radial-gradient(ellipse 75% 60% at 50% 35%,#000 20%,transparent 75%);animation:gridpan 40s linear infinite}
 #bgfx .spot{position:absolute;inset:0;background:radial-gradient(520px circle at var(--mx,70%) var(--my,20%),rgba(224,20,43,.07),transparent 60%)}
 #bgfx .orb{display:none}
-#bgfx .city{position:absolute;inset:0;background:#0b0b0c url(/assets/bg/london.jpg) center 62%/cover no-repeat}
-#bgfx .city video{width:100%;height:100%;object-fit:cover;object-position:center 62%;display:block;opacity:0;transition:opacity 1.2s ease}
-#bgfx .city video.on{opacity:1}
+#bgfx .city{position:absolute;inset:0;overflow:hidden;background:#0b0b0c}
+#bgfx .pano{position:absolute;left:0;top:0;height:115vh;aspect-ratio:3168/1344;background:url(/assets/bg/london-pano.jpg) 0 0/100% 100% no-repeat;will-change:transform}
 #bgfx .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(9,8,11,.82) 0%,rgba(9,8,11,.55) 28%,rgba(9,8,11,.28) 52%,rgba(9,8,11,.5) 78%,rgba(9,8,11,.82) 100%),radial-gradient(ellipse at 50% 55%,transparent 40%,rgba(9,8,11,.55))}
-@media (max-width:760px){#bgfx .city{background-image:url(/assets/bg/london-sm.jpg)}}
+@media (max-width:760px){#bgfx .pano{background-image:url(/assets/bg/london-pano-sm.jpg)}}
 #bgfx #sky{position:absolute;inset:0;width:100%;height:100%}
 @keyframes orb1{to{transform:translate(14vmax,10vmax) scale(1.15)}}
 @keyframes orb2{to{transform:translate(-12vmax,-8vmax) scale(.9)}}
@@ -926,7 +925,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
 </section>
 
 
-<div id="bgfx" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="city"><video id="bgvid" muted loop playsinline preload="none" poster="/assets/bg/london.jpg" aria-hidden="true"></video></div><div class="shade"></div><canvas id="sky"></canvas><div class="spot"></div></div>
+<div id="bgfx" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="city"><div class="pano" id="pano"></div></div><div class="shade"></div><canvas id="sky"></canvas><div class="spot"></div></div>
 <div class="app">
   <aside class="side">
     <button class="brand" data-go="home" aria-label="Deal Pro home">
@@ -2710,27 +2709,26 @@ if(hero.c){try{hero.x=hero.c.getContext('2d')}catch(e){}
   new MutationObserver(ms=>{for(const m of ms)if(m.attributeName==='hidden'&&!m.target.hidden)revealIn(m.target)}).observe(document.querySelector('.content')||document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
 })();
 
-/* ---------- real London skyline (OpenArt video loop) with deal pins dropping onto its buildings ---------- */
-(function(){const v=document.getElementById('bgvid'),cv=document.getElementById('sky');if(!cv||!cv.getContext)return;const ctx=cv.getContext('2d');
+/* ---------- real London panorama (OpenArt) panning sideways, with deal pins riding on its buildings ---------- */
+(function(){const pano=document.getElementById('pano'),cv=document.getElementById('sky');if(!pano||!cv||!cv.getContext)return;const ctx=cv.getContext('2d');
   const still=reduced(),mobile=matchMedia('(max-width:760px),(pointer:coarse)').matches,DPR=Math.min(1.5,devicePixelRatio||1);
-  // the moving video only for full-motion visitors; the still photo shows meanwhile (and for reduced motion)
-  if(v&&!still){const sm=mobile||innerWidth<1300?'-sm':'',mp4=v.canPlayType('video/mp4; codecs="avc1.4D401F"');v.src=`/assets/bg/london-loop${sm}.${mp4?'mp4':'webm'}`;v.preload='auto';v.addEventListener('playing',()=>v.classList.add('on'),{once:true});
-    const play=()=>{const p=v.play();if(p&&p.catch)p.catch(()=>{})};play();document.addEventListener('visibilitychange',()=>{if(document.hidden)v.pause();else play()})}
-  // rooftops in the picture, as fractions of the image (2752 x 1536)
-  const IW=2752,IH=1536,ROOFS=[[.114,.378],[.27,.384],[.467,.352],[.658,.237],[.698,.323],[.781,.352],[.82,.38],[.596,.449],[.741,.527],[.901,.51],[.43,.53],[.2,.55]];
+  // rooftops in the panorama, as fractions of the image (3168 x 1344): the Shard, HMS Belfast, Tower Bridge, the City, Canary Wharf
+  const RATIO=3168/1344,ROOFS=[[.12,.15],[.041,.372],[.23,.536],[.354,.394],[.456,.399],[.54,.357],[.647,.265],[.722,.365],[.622,.454],[.783,.491],[.884,.387],[.931,.365],[.966,.491],[.1,.46],[.5,.55]];
   const TAGS=['NEW','+£320/mo','✓ Live','8.6% yield','BMV','£415k','HMO','R2SA','+£410/mo','Just listed','2 bed · E1','BRRR'];
-  let W=0,H=0,pins=[],last=0,next=1.5;
-  const size=()=>{W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR};
-  // where an image point lands on screen with background-size:cover and position center 62%
-  const map=([fx,fy])=>{const sc=Math.max(W/IW,H/IH),dw=IW*sc,dh=IH*sc;return [(W-dw)/2+fx*dw,(H-dh)*.62+fy*dh]};
+  const PERIOD=mobile?70:80; // seconds for a full left-right-left sweep
+  let W=0,H=0,iw=0,ih=0,off=0,pins=[],last=0,next=1.5,t0=performance.now();
+  const size=()=>{W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;ih=pano.offsetHeight||H*1.15;iw=ih*RATIO};
+  const span=()=>Math.max(0,iw-W);
+  const toScreen=([fx,fy])=>[fx*iw-off,fy*ih];
   const open=(x,y)=>{const el=document.elementFromPoint(x,y);return !el||!el.closest('.panel,.side,.hero-preview,.dcard,.plan,.qp-badge,.public-auth-nav,a,button,input,textarea,select,h1,h2,h3,p,li,table,label')};
   function spawn(){const sd=document.querySelector('.side'),sr=sd?sd.getBoundingClientRect():null,minX=(sr&&sr.height>H*.5?sr.right:0)+60;
-    const free=ROOFS.map(map).filter(([x,y])=>x>minX&&x<W-60&&y>60&&y<H-20&&open(x,y-14)&&open(x,y-44)&&!pins.some(p=>Math.abs(p.x-x)<60));
-    if(!free.length)return;const [x,y]=free[Math.floor(Math.random()*free.length)];pins.push({x,y,t:0,tag:TAGS[Math.floor(Math.random()*TAGS.length)]})}
-  function frame(now){const dt=Math.min(.1,(now-last)/1000||0);last=now;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
-    for(const p of pins){p.t+=dt;const k=p.t,drop=Math.min(1,k/.5),b=k<.5?(1-Math.pow(1-drop,3)):1+Math.sin((k-.5)*9)*Math.exp(-(k-.5)*5)*.12,
-      y=p.y-60*(1-b)-4,x=p.x,fade=k<3.2?1:Math.max(0,1-(k-3.2)/.8);ctx.globalAlpha=fade;
-      ctx.fillStyle='rgba(224,20,43,.3)';ctx.beginPath();ctx.ellipse(x,p.y,9*Math.min(1,k*2),3,0,0,7);ctx.fill();
+    const free=ROOFS.filter(r=>{const [x,y]=toScreen(r);return x>minX&&x<W-120&&y>60&&y<H-20&&open(x,y-14)&&open(x,y-44)&&!pins.some(p=>Math.abs(toScreen(p.r)[0]-x)<70)});
+    if(!free.length)return;pins.push({r:free[Math.floor(Math.random()*free.length)],t:0,tag:TAGS[Math.floor(Math.random()*TAGS.length)]})}
+  function place(now){const t=(now-t0)/1000;off=still?span()*.5:span()*(.5-.5*Math.cos(t/PERIOD*2*Math.PI));pano.style.transform=`translate3d(${-off}px,0,0)`}
+  function frame(now){const dt=Math.min(.1,(now-last)/1000||0);last=now;place(now);ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
+    for(const p of pins){p.t+=dt;const [x,py]=toScreen(p.r),k=p.t,drop=Math.min(1,k/.5),b=k<.5?(1-Math.pow(1-drop,3)):1+Math.sin((k-.5)*9)*Math.exp(-(k-.5)*5)*.12,
+      y=py-60*(1-b)-4,fade=k<3.2?1:Math.max(0,1-(k-3.2)/.8);ctx.globalAlpha=fade;
+      ctx.fillStyle='rgba(224,20,43,.3)';ctx.beginPath();ctx.ellipse(x,py,9*Math.min(1,k*2),3,0,0,7);ctx.fill();
       ctx.shadowColor='rgba(224,20,43,.9)';ctx.shadowBlur=14;ctx.fillStyle='#E0142B';ctx.beginPath();ctx.arc(x,y-13,9,Math.PI*.85,Math.PI*2.15);ctx.lineTo(x,y);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
       ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y-13,3.3,0,7);ctx.fill();
       if(k>.6){const ta=Math.min(1,(k-.6)/.3)*fade,ty=y-32-(k-.6)*8;ctx.globalAlpha=ta;ctx.font='600 12px Geist,system-ui,sans-serif';const tw=ctx.measureText(p.tag).width+16;
@@ -2739,7 +2737,7 @@ if(hero.c){try{hero.x=hero.c.getContext('2d')}catch(e){}
       ctx.globalAlpha=1}
     pins=pins.filter(p=>p.t<4);next-=dt;if(next<=0){spawn();next=(mobile?3.4:2)+Math.random()*1.5}
     requestAnimationFrame(frame)}
-  size();addEventListener('resize',size);if(!still)requestAnimationFrame(frame);
+  size();addEventListener('resize',()=>{size();place(performance.now())});place(performance.now());if(!still)requestAnimationFrame(frame);
 })();
 /* ---------- hero motion: word-by-word headline, tilting card, counting figures ---------- */
 (function(){const h=document.querySelector('.hero .display');if(!h||h.dataset.split)return;h.dataset.split='1';
