@@ -692,6 +692,7 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .meter span.full{background:var(--bad)}
 .limit-note{background:var(--surface);border:1px solid var(--line-2);border-left:2px solid var(--warn);border-radius:0 6px 6px 0;padding:12px 14px;margin-bottom:16px;display:grid;gap:10px;font-size:13px;animation:vt-in .32s var(--ease)}
 .fs .limit-note{margin:10px 0 0}
+.limit-note.ferr{border-left-color:var(--bad);font-size:14px}
 .ln-a{display:flex;gap:8px;flex-wrap:wrap}
 @media (max-width:640px){.plans.two{grid-template-columns:minmax(0,1fr)}}
 
@@ -976,6 +977,7 @@ td.t{text-align:right;color:var(--ink-2)}
         <div class="fs"><fieldset class="ai-levels"><legend>Power level</legend><div class="ai-level-opts ai-level-stack" id="fLevelOpts"></div><p class="ai-credits" id="fCredits"></p></fieldset>
           <button class="btn primary block" id="fSearch">Search with AI</button></div>
       </div>
+      <div class="limit-note ferr" id="fErr" role="alert" hidden></div>
       <div id="fResults"></div>
     </div>
   </section>
@@ -1391,7 +1393,7 @@ const stratName=k=>(STRATS.find(x=>x[0]===k)||[k,k||'R2SA'])[1];
 const gbp=x=>{if(!isFinite(x))return '–';const r=Math.round(x+1e-9);return (r<0?'-£':'£')+Math.abs(r).toLocaleString('en-GB')};
 const pct=x=>isFinite(x)?Math.round(x*100)+'%':'–';
 const store={get(k,d){try{const v=localStorage.getItem('dealpro:'+k);return v?JSON.parse(v):d}catch(e){return d}},set(k,v){try{localStorage.setItem('dealpro:'+k,JSON.stringify(v))}catch(e){}}};
-function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),2400)}
+function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('on'),Math.min(10000,Math.max(2400,String(m).length*70)))}/* longer messages stay up long enough to read */
 
 const DD_TEMPLATE=[
  {k:'terms',t:'Advertised terms',d:'Written offer, rent, deposit, which bills are included (including council tax), usage caps, inventory, availability.'},
@@ -2289,10 +2291,36 @@ $('#fNotesFill').addEventListener('click',()=>{const text=$('#fNotes').value.tri
   Object.assign(S.find.f,f);bindFind();save();renderFind();
   msg.textContent=got.length?`Filled in: ${got.join(' · ')}. Check the filters, then search.`:'No filters to fill in. The AI will still search with what you wrote.'});
 const FIND_MSG=m=>{const n=$('#nFind');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
-async function pollJob(jobId,onTick,onProgress,maxMs=17*60e3){const t0=Date.now();for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(jobId),{credentials:'same-origin'});const d=await p.json().catch(()=>({}));
-  if(!p.ok)throw new Error(d.error||'The AI could not finish. Please try again.');if(d.credits){AIC.info=d.credits;renderAILevels()}
-  if(d.progress&&onProgress)onProgress(d.progress);if(d.status==='done')return d.analysis;if(d.status==='error')throw new Error((d.error||'The AI could not finish. Please try again.')+(d.detail?` (Admin detail: ${d.detail})`:''));
-  if(onTick)onTick(Math.round((Date.now()-t0)/1000));if(Date.now()-t0>maxMs)throw new Error('The AI is taking too long. Please try again.')}}
+// Checks on an AI job every 2 seconds. A dropped connection, a busy server or a sign-in being renewed
+// is retried for up to 3 minutes (the job carries on in the background), and the result is confirmed
+// once received so the server can delete it.
+const netMsg=e=>e instanceof TypeError||/failed to fetch|load failed|network/i.test(String(e&&e.message))?"Couldn't reach Deal Pro. Check your internet connection and try again.":e&&e.message;
+async function pollJob(jobId,onTick,onProgress,maxMs=17*60e3){const t0=Date.now(),url='/api/analyze-deal?job='+encodeURIComponent(jobId);let fails=0,failSince=0;
+  for(;;){await sleep(fails?Math.min(8000,2000*2**fails):2000);
+    let p=null,d={};try{p=await fetch(url,{credentials:'same-origin'});d=await p.json().catch(()=>({}))}catch(e){p=null}
+    if(!p||p.status>=500||p.status===429||p.status===401||(p.ok&&!d.status)){fails++;failSince=failSince||Date.now();
+      if(Date.now()-failSince>3*60e3)throw Object.assign(new Error(!p?"Lost connection to Deal Pro for 3 minutes. Check your internet connection, then press Reconnect. The search carries on in the background.":p.status===401?'Your sign-in needs renewing. Sign in again, then press Reconnect. The search carries on in the background.':`Deal Pro's server isn't responding (error ${p.status}). Press Reconnect in a minute. The search carries on in the background.`),{resume:true});
+      if(onTick)onTick(Math.round((Date.now()-t0)/1000));continue}
+    fails=0;failSince=0;
+    if(!p.ok)throw new Error(p.status===404?'This search has already finished or expired, so its results are no longer available. Please run it again.':d.error||'The AI could not finish. Please try again.');
+    if(d.credits){AIC.info=d.credits;renderAILevels()}
+    if(d.progress&&onProgress)onProgress(d.progress);
+    if(d.status==='done'||d.status==='error')fetch(url,{method:'DELETE',credentials:'same-origin'}).catch(()=>{});
+    if(d.status==='done')return d.analysis;if(d.status==='error')throw new Error((d.error||'The AI could not finish. Please try again.')+(d.detail?` (Admin detail: ${d.detail})`:''));
+    if(onTick)onTick(Math.round((Date.now()-t0)/1000));if(Date.now()-t0>maxMs)throw new Error('The AI is taking too long. Please try again.')}}
+// Deal Finder errors stay on screen until dismissed, with details to copy and send to support.
+function findError(msg,resume){const at=new Date(),n=$('#fErr');FS.err={msg,at:at.toISOString(),resume:!!resume};if(!n)return;
+  n.innerHTML=`<div><b>${resume?'The search lost touch with Deal Pro':'The search hit a problem'}</b> <span class="muted">${at.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</span></div><div>${esc(msg)}</div>
+    <div class="ln-a">${resume?'<button class="btn sm primary" type="button" data-ferr="resume">Reconnect</button>':'<button class="btn sm primary" type="button" data-ferr="retry">Try again</button>'}<button class="btn sm" type="button" data-ferr="copy">Copy error details</button><button class="btn sm ghost" type="button" data-ferr="close">Dismiss</button></div>`;
+  n.hidden=false;n.scrollIntoView({block:'nearest',behavior:reduced()?'auto':'smooth'})}
+function clearFindError(){FS.err=null;const n=$('#fErr');if(n){n.hidden=true;n.innerHTML=''}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-ferr]');if(!b)return;const E=FS.err||{},a=b.dataset.ferr;
+  if(a==='close')clearFindError();
+  else if(a==='retry'){clearFindError();startSearch(false)}
+  else if(a==='resume'){clearFindError();if(S.find.pending&&!FS.busy)followSearch(S.find.pending)}
+  else{const f=S.find.f||{},t=['Deal Pro search error',`Time: ${E.at}`,`Message: ${E.msg}`,`Page: ${location.href}`,`Power level: ${AIC.level}`,`Mode: ${f.mode} · Strategy: ${f.strategy||'auto'} · Location: ${f.loc||'-'} · Price: ${f.min||0}-${f.max||'any'}`,`Sites: ${SITES.filter(s=>(f.sites||{})[s]).join(', ')}`,`Browser: ${navigator.userAgent}`].join('\n');
+    const ok=()=>toast('Error details copied. Paste them in a message to support.');
+    try{navigator.clipboard.writeText(t).then(ok).catch(()=>{prompt('Copy these error details:',t)})}catch(x){prompt('Copy these error details:',t)}}});
 function drawSearch(sites,lv,prog,sec){const P=(prog&&prog.sites)||{},phase=prog&&prog.phase||'search',box=$('#fResults');
   const done=sites.filter(s=>P[s]&&P[s].status!=='searching').length;
   const head=phase==='check'?`Opening every link to make sure each listing exists… ${prog.checked||0} of ${prog.found||0}`:phase==='verify'?`Confirming listings are still available… ${prog.verified||0} opened${prog.removed?` · ${prog.removed} dead link${prog.removed===1?'':'s'} removed`:''}`:phase==='rank'||phase==='done'?'Ranking the best deals…':`${esc(lv.name)} is searching ${sites.length} site${sites.length>1?'s':''} for live listings…`;
@@ -2309,7 +2337,7 @@ function searchFrac(sites,prog,lv){if(!prog)return 0;const P=prog.sites||{},sw=.
   if(prog.phase==='verify')return sw+.1+.15*Math.min(1,(prog.verified||0)/(VERIFY_N[lv.id]||20));
   const r=sites.reduce((a,s)=>{const x=P[s];return a+(!x?0:x.status!=='searching'?1:(x.round||0)/(x.rounds||1))},0)/Math.max(1,sites.length);return sw*r}
 async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LEVELS[0],btn=$('#fSearch');
-  FS.busy=true;btn.disabled=true;let last=null;const t0=Date.parse(p.at)||Date.now(),secs=()=>Math.round((Date.now()-t0)/1000);drawSearch(p.sites,lv,null,secs());
+  clearFindError();FS.busy=true;btn.disabled=true;let last=null,keep=false;const t0=Date.parse(p.at)||Date.now(),secs=()=>Math.round((Date.now()-t0)/1000);drawSearch(p.sites,lv,null,secs());
   const gone=()=>FS.cancelled===p.id;const stop=()=>{if(gone())throw Object.assign(new Error('cancelled'),{cancelled:true})};
   try{const res=await pollJob(p.id,()=>{stop();drawSearch(p.sites,lv,last,secs())},pr=>{stop();last=pr;drawSearch(p.sites,lv,pr,secs())},100*60e3);if(gone())return;
     LIVE=(res.listings||[]).slice(0,500);/* the server only returns single-listing links */
@@ -2321,8 +2349,8 @@ async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LE
     const rf=res.refreshed;if(!LIVE.length){toast(`No listings found${S.find.f.loc?` in ${S.find.f.loc}`:''}, even after searching nearby areas. Try a wider price range, more sites or Analyst.`);return}
     toast(rf?`Refreshed: ${rf.gone} listing${rf.gone===1?' has':'s have'} gone and ${rf.gone===1?'was':'were'} removed, ${rf.added} new one${rf.added===1?'':'s'} found. ${live} live now.${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`
       :`${live} live listing${live===1?'':'s'} across ${p.sites.length} site${p.sites.length>1?'s':''}, every link checked.${res.removed?` Removed ${res.removed} dead or taken link${res.removed===1?'':'s'}.`:''}${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
-  catch(e){if(e.cancelled||gone())return;toast(e.message||'The search failed. Please try again.')}
-  finally{if(!gone()){delete S.find.pending;save();FS.busy=false;btn.disabled=false;renderFind()}}}
+  catch(e){if(e.cancelled||gone())return;keep=!!e.resume;findError(netMsg(e)||'The search failed. Please try again.',keep)}
+  finally{if(!gone()){if(!keep)delete S.find.pending;save();FS.busy=false;btn.disabled=false;renderFind()}}}
 // Cancel the running search (credits refunded); "Edit" also takes you back to the criteria to change them.
 async function cancelSearch(edit){const p=S.find.pending;if(!p)return;FS.cancelled=p.id;delete S.find.pending;save();FS.busy=false;$('#fSearch').disabled=false;renderFind();
   try{const r=await fetch('/api/analyze-deal?job='+encodeURIComponent(p.id),{method:'DELETE',credentials:'same-origin'});const d=await r.json().catch(()=>({}));if(d.credits){AIC.info=d.credits;renderAILevels()}}catch(e){}
@@ -2337,14 +2365,14 @@ async function startSearch(refresh=false){if(FS.busy)return;readFind();let sites
   if(!sites.length){toast('Tick at least one site to search');return}
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0],btn=$('#fSearch');
   const existing=refresh&&LIVE?LIVE.map(r=>({site:r.site,url:r.url,title:r.title,type:r.type,beds:r.beds,area:r.area,postcode:r.postcode,price:r.price,mode:r.mode,private:r.private,furnished:r.furnished,found:r.found,listedAt:r.listedAt})):[];
-  FS.busy=true;btn.disabled=true;$('#nFind').hidden=true;drawSearch(sites,lv,null,0);
+  FS.busy=true;btn.disabled=true;$('#nFind').hidden=true;clearFindError();drawSearch(sites,lv,null,0);
   try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'search',level:lv.id,filters:S.find.f,sites,...(refresh?{existing}:{})})});
     const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(new Error(d.error||'The search could not be started.'),{limit:r.status===402});
     if(d.credits){AIC.info=d.credits;renderAILevels()}
     // Remember the running search so it can be picked up again after leaving the page.
     S.find.pending={id:d.jobId,level:lv.id,sites,at:new Date().toISOString(),...(refresh?{prev:existing.map(x=>x.url),prevNew:Object.fromEntries((LIVE||[]).filter(x=>x.newAt).map(x=>[x.url,x.newAt]))}:{})};save();
     FS.busy=false;followSearch(S.find.pending)}
-  catch(e){FS.busy=false;btn.disabled=false;if(e.limit)FIND_MSG(e.message);else toast(e.message||'The search failed. Please try again.');renderFind()}}
+  catch(e){FS.busy=false;btn.disabled=false;if(e.limit)FIND_MSG(e.message);else findError(netMsg(e)||'The search could not be started. Please try again.');renderFind()}}
 $('#fSearch').addEventListener('click',()=>startSearch(false));
 document.addEventListener('click',e=>{if(e.target.closest('#fRefresh'))startSearch(true)});
 window.addEventListener('dealpro:signed-in',()=>{if(S.find.pending&&!FS.busy)followSearch(S.find.pending)});

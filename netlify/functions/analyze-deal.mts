@@ -54,10 +54,16 @@ export default async (request: Request, _context: Context) => {
     if (job.status !== "done" && job.status !== "error" && Date.now() - lastSeen > 16 * 60 * 1000) {
       job.error = "The analysis took too long. Your credits have not been used; please try again.";
       await refundJob(jobId, job, String(job.error));
-      job.status = "error";
+      Object.assign(job, { status: "error", runToken: null, refunded: true });
     }
-    // Finished jobs are deleted once collected, so the deal text isn't kept.
-    if (job.status === "done" || job.status === "error") await jobs().delete(jobId);
+    // Finished jobs are deleted once collected, so the deal text isn't kept. The page confirms it
+    // has the result with DELETE; until then it's kept for 15 minutes, so a response lost to a
+    // dropped connection, or a second open tab, can still collect it.
+    if (job.status === "done" || job.status === "error") {
+      const collected = Date.parse(String(job.collectedAt || ""));
+      if (!collected) await jobs().setJSON(jobId, { ...job, collectedAt: new Date().toISOString() });
+      else if (Date.now() - collected > 15 * 60 * 1000) await jobs().delete(jobId);
+    }
     return json({
       status: job.status,
       analysis: job.status === "done" ? job.analysis : undefined,
