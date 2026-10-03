@@ -2079,11 +2079,15 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   lo=lo.replace(/(\d+(?:\.\d+)?)\s*(?:sqm|sq\.?\s?m|m2|m²|square met(?:re|er)s?|sq\.?\s?ft|sqft|square feet)\b/g,' floor-area ').replace(/\b(\d+)\s*(?:-|to)\s*(\d+)\s*(units|rooms|keys|apartments|flats)\b/g,'$3 $1 to $2');
   // percentages (ROCE, yield, ROI) aren't prices
   lo=lo.replace(/(\d+(?:\.\d+)?)\s*(?:%|per ?cent\b)/g,' percent ');
+  lo=lo.replace(/\bhouse (tenants|people|families|residents|clients|them)\b/g,'accommodate $1');/* "to house tenants" isn't a property type */
+  // amounts relative to something else ("£100-200 over the LHA rate", "£20k below asking") aren't a budget
+  lo=lo.replace(/£?\s?\d+(?:\.\d+)?\s*k?(?:\s*(?:-|to)\s*£?\s?\d+(?:\.\d+)?\s*k?)?\s*(?:a month\s*|per month\s*|pcm\s*|a week\s*|pw\s*)?(?:above|over|more than|on top of|below|under|less than)\s+(?:it\b|the\s+|their\s+)?(?:lha|local housing|asking|market|valuation|rate|the rate)?/g,m=>/above|over|more than|on top|below|under|less than/.test(m)&&/(it\b|lha|local housing|asking|market|valuation|rate)\s*$/.test(m)?' relative-amount ':m);
   const money=(n,k)=>Math.round(+n*(k?1000:1));
-  if(/\b(buy|buying|purchase|for sale|to buy|btl|brrr|flip|asking price)\b/.test(lo))out.mode='buy';else if(/\b(rent|renting|to let|let|pcm|pw|per month|a month|r2sa|r2r|rent to rent|serviced accommodation)\b/.test(lo))out.mode='rent';
+  if(/\b(buy|buying|purchase|for sale|to buy|btl|brrr|flip|asking price)\b/.test(lo))out.mode='buy';else if(/\b(rent|renting|to let|let|pcm|pw|per month|a month|r2sa|r2r|rent to rent|serviced accommodation|lha|local housing allowance|housing benefit|temporary accommodation)\b/.test(lo))out.mode='rent';
   if(out.mode)got.push(out.mode==='buy'?'To buy':'To rent');
-  {const SW=[['Flip',/\b(flip|flips|flipping|buy[ ,-]*refurb(?:ish)?[ ,-]*(?:and )?sell)\b/],['BRRR',/\bbrrr\b|refinance/],['HMO',/\bhmos?\b|let by the room/],['R2R',/\b(r2r|rent to rent|rent-to-rent)\b/],['R2SA',/\b(r2sa|serviced accommodation|airbnb|short[- ]lets?)\b/],['LeaseOption',/lease options?/],['Commercial',/\bcommercial\b/],['BTL',/\b(btl|buy to let|buy-to-let)\b/]];
-    const hit=SW.find(([,re])=>re.test(lo));if(hit){out.strategy=hit[0];got.push(STRAT_NAME[hit[0]]||hit[0])}}
+  {const SW=[['Flip',/\b(flip|flips|flipping|buy[ ,-]*refurb(?:ish)?[ ,-]*(?:and )?sell)\b/],['BRRR',/\bbrrr\b|refinance/],['HMO',/\bhmos?\b|let by the room/],['R2R',/\b(r2r|rent to rent|rent-to-rent|lha|local housing allowance|housing benefit|temporary accommodation|supported (?:living|housing))\b/],['R2SA',/\b(r2sa|serviced accommodation|airbnb|short[- ]lets?)\b/],['LeaseOption',/lease options?/],['Commercial',/\bcommercial\b/],['BTL',/\b(btl|buy to let|buy-to-let)\b/]];
+    // the strategy mentioned first wins ("R2R ... HMO potential welcome" is R2R)
+    const hit=SW.map(([k,re])=>[k,lo.search(re)]).filter(x=>x[1]>=0).sort((a,b)=>a[1]-b[1])[0];if(hit){out.strategy=hit[0];got.push(STRAT_NAME[hit[0]]||hit[0])}}
   // bedrooms: "2-3 bed", "studio to 2 bed", "3+ bed", "3 bedroom", "studio"
   const bedN=w=>w==='studio'?0:+w;const BED='(?:bed|beds|bedroom|bedrooms|br|bedder)\\b';
   let m=lo.match(new RegExp(`\\b(studio|\\d)\\s*(?:-|to|or)\\s*(\\d)\\+?\\s*${BED}`));
