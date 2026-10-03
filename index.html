@@ -778,7 +778,8 @@ html.fx .rv{opacity:0;transform:translateY(16px)}
 html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(--d,0ms),transform .7s var(--ease) var(--d,0ms)}
 @media (max-width:760px),(pointer:coarse){#bgfx .orb{filter:blur(40px)}}
 /* ---------- hero: see-through, so the animated city shows behind it ---------- */
-.hero{background:transparent;border-bottom-color:rgba(255,255,255,.06)}
+.hero{background:transparent;border-bottom:0}
+.hero::before{-webkit-mask-image:linear-gradient(#000 75%,transparent);mask-image:linear-gradient(#000 75%,transparent)}
 .hero canvas{display:none}
 .hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(9,8,11,.82) 0%,rgba(9,8,11,.62) 38%,rgba(9,8,11,.15) 62%,transparent 80%);pointer-events:none}
 @media (max-width:1099px){.hero::before{background:rgba(9,8,11,.6)}}
@@ -2713,7 +2714,7 @@ if(hero.c){try{hero.x=hero.c.getContext('2d')}catch(e){}
 (function(){const v=document.getElementById('bgvid'),cv=document.getElementById('sky');if(!cv||!cv.getContext)return;const ctx=cv.getContext('2d');
   const still=reduced(),mobile=matchMedia('(max-width:760px),(pointer:coarse)').matches,DPR=Math.min(1.5,devicePixelRatio||1);
   // the moving video only for full-motion visitors; the still photo shows meanwhile (and for reduced motion)
-  if(v&&!still){v.src='/assets/bg/london-loop.mp4';v.preload='auto';v.addEventListener('playing',()=>v.classList.add('on'),{once:true});
+  if(v&&!still){const sm=mobile||innerWidth<1300?'-sm':'',mp4=v.canPlayType('video/mp4; codecs="avc1.4D401F"');v.src=`/assets/bg/london-loop${sm}.${mp4?'mp4':'webm'}`;v.preload='auto';v.addEventListener('playing',()=>v.classList.add('on'),{once:true});
     const play=()=>{const p=v.play();if(p&&p.catch)p.catch(()=>{})};play();document.addEventListener('visibilitychange',()=>{if(document.hidden)v.pause();else play()})}
   // rooftops in the picture, as fractions of the image (2752 x 1536)
   const IW=2752,IH=1536,ROOFS=[[.114,.378],[.27,.384],[.467,.352],[.658,.237],[.698,.323],[.781,.352],[.82,.38],[.596,.449],[.741,.527],[.901,.51],[.43,.53],[.2,.55]];
