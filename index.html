@@ -2079,7 +2079,8 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   lo=lo.replace(/(\d+(?:\.\d+)?)\s*(?:sqm|sq\.?\s?m|m2|m²|square met(?:re|er)s?|sq\.?\s?ft|sqft|square feet)\b/g,' floor-area ').replace(/\b(\d+)\s*(?:-|to)\s*(\d+)\s*(units|rooms|keys|apartments|flats)\b/g,'$3 $1 to $2');
   // percentages (ROCE, yield, ROI) aren't prices
   lo=lo.replace(/(\d+(?:\.\d+)?)\s*(?:%|per ?cent\b)/g,' percent ');
-  lo=lo.replace(/\bhouse (tenants|people|families|residents|clients|them)\b/g,'accommodate $1');/* "to house tenants" isn't a property type */
+  lo=lo.replace(/\bhouse (tenants|people|families|residents|clients|them)\b/g,'accommodate $1');
+  lo=lo.replace(/\b(?:city|town) cent(?:re|er)\b/g,'centre');/* "Manchester city centre" is Manchester *//* "to house tenants" isn't a property type */
   // amounts relative to something else ("£100-200 over the LHA rate", "£20k below asking") aren't a budget
   lo=lo.replace(/£?\s?\d+(?:\.\d+)?\s*k?(?:\s*(?:-|to)\s*£?\s?\d+(?:\.\d+)?\s*k?)?\s*(?:a month\s*|per month\s*|pcm\s*|a week\s*|pw\s*)?(?:above|over|more than|on top of|below|under|less than)\s+(?:it\b|the\s+|their\s+)?(?:lha|local housing|asking|market|valuation|rate|the rate)?/g,m=>/above|over|more than|on top|below|under|less than/.test(m)&&/(it\b|lha|local housing|asking|market|valuation|rate)\s*$/.test(m)?' relative-amount ':m);
   const money=(n,k)=>Math.round(+n*(k?1000:1));
