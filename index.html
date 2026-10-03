@@ -749,7 +749,13 @@ td.t{text-align:right;color:var(--ink-2)}
 #bgfx .o3{width:44vmax;height:44vmax;left:28vw;bottom:-26vmax;background:radial-gradient(circle,rgba(224,20,43,.18),rgba(224,20,43,0) 62%);animation:orb3 50s ease-in-out infinite alternate}
 #bgfx .grid{position:absolute;inset:-64px;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(ellipse 75% 60% at 50% 35%,#000 20%,transparent 75%);mask-image:radial-gradient(ellipse 75% 60% at 50% 35%,#000 20%,transparent 75%);animation:gridpan 40s linear infinite}
 #bgfx .spot{position:absolute;inset:0;background:radial-gradient(520px circle at var(--mx,70%) var(--my,20%),rgba(224,20,43,.07),transparent 60%)}
-#bgfx #sky{position:absolute;inset:0;width:100%;height:100%;opacity:.85}
+#bgfx .orb{display:none}
+#bgfx .city{position:absolute;inset:0;background:#0b0b0c url(/assets/bg/london.jpg) center 62%/cover no-repeat}
+#bgfx .city video{width:100%;height:100%;object-fit:cover;object-position:center 62%;display:block;opacity:0;transition:opacity 1.2s ease}
+#bgfx .city video.on{opacity:1}
+#bgfx .shade{position:absolute;inset:0;background:linear-gradient(180deg,rgba(9,8,11,.82) 0%,rgba(9,8,11,.55) 28%,rgba(9,8,11,.28) 52%,rgba(9,8,11,.5) 78%,rgba(9,8,11,.82) 100%),radial-gradient(ellipse at 50% 55%,transparent 40%,rgba(9,8,11,.55))}
+@media (max-width:760px){#bgfx .city{background-image:url(/assets/bg/london-sm.jpg)}}
+#bgfx #sky{position:absolute;inset:0;width:100%;height:100%}
 @keyframes orb1{to{transform:translate(14vmax,10vmax) scale(1.15)}}
 @keyframes orb2{to{transform:translate(-12vmax,-8vmax) scale(.9)}}
 @keyframes orb3{to{transform:translate(-10vmax,-12vmax) scale(1.2)}}
@@ -774,7 +780,8 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
 /* ---------- hero: see-through, so the animated city shows behind it ---------- */
 .hero{background:transparent;border-bottom-color:rgba(255,255,255,.06)}
 .hero canvas{display:none}
-.hero::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 60% 70% at 18% 45%,rgba(9,8,11,.72),transparent 70%);pointer-events:none}
+.hero::before{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(9,8,11,.82) 0%,rgba(9,8,11,.62) 38%,rgba(9,8,11,.15) 62%,transparent 80%);pointer-events:none}
+@media (max-width:1099px){.hero::before{background:rgba(9,8,11,.6)}}
 .hero-preview .dcard{background:rgba(19,19,21,.55);-webkit-backdrop-filter:blur(14px) saturate(1.2);backdrop-filter:blur(14px) saturate(1.2);border-color:rgba(255,255,255,.09)}
 .hero-preview .strip.mini{background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.09);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 .hero-preview .strip.mini .fig{background:rgba(19,19,21,.55)}
@@ -918,7 +925,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
 </section>
 
 
-<div id="bgfx" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="grid"></div><canvas id="sky"></canvas><div class="spot"></div></div>
+<div id="bgfx" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="city"><video id="bgvid" muted loop playsinline preload="none" poster="/assets/bg/london.jpg" aria-hidden="true"></video></div><div class="shade"></div><canvas id="sky"></canvas><div class="spot"></div></div>
 <div class="app">
   <aside class="side">
     <button class="brand" data-go="home" aria-label="Deal Pro home">
@@ -2702,118 +2709,37 @@ if(hero.c){try{hero.x=hero.c.getContext('2d')}catch(e){}
   new MutationObserver(ms=>{for(const m of ms)if(m.attributeName==='hidden'&&!m.target.hidden)revealIn(m.target)}).observe(document.querySelector('.content')||document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
 })();
 
-/* ---------- animated city skyline: buildings, lit windows and deal pins ---------- */
-(function(){const cv=document.getElementById('sky');if(!cv||!cv.getContext)return;const ctx=cv.getContext('2d');
-  const still=reduced(),mobile=matchMedia('(max-width:760px),(pointer:coarse)').matches,DPR=Math.min(mobile?1.25:1.5,devicePixelRatio||1);
-  let W=0,H=0,layers=[],stars=[],pins=[],cars=[],last=0,nextPin=1.2,t0=performance.now();
-  let seed=7;const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646};
-  // One layer = a strip of real-looking buildings drawn once to its own canvas (twice the screen
-  // width, so it can scroll and wrap). Front: Victorian terraces. Middle: apartment blocks. Back: glass towers.
-  const shade=(hex,k)=>{const n=parseInt(hex.slice(1),16),f=v=>Math.max(0,Math.min(255,Math.round(v*k)));return `rgb(${f(n>>16)},${f(n>>8&255)},${f(n&255)})`};
-  function warm(g,x,y,w,h,on){if(on){const gr=g.createLinearGradient(x,y,x,y+h);gr.addColorStop(0,'rgba(255,214,150,.85)');gr.addColorStop(1,'rgba(255,170,90,.6)');g.fillStyle=gr}else g.fillStyle='rgba(120,130,160,.10)';g.fillRect(x,y,w,h)}
-  function terraceRow(g,x0,ground,n,u,col,flick,roofs,lamps){let x=x0;const storeys=2+(rnd()<.45?1:0),sh=u*1.15,hw=u*2.4,body=storeys*sh+u*.35;
-    for(let i=0;i<n;i++){const top=ground-body,brick=shade(col,.92+rnd()*.25);
-      const fg=g.createLinearGradient(x,top,x,ground);fg.addColorStop(0,shade(brick.startsWith('rgb')?col:col,1.05));fg.addColorStop(1,shade(col,.8));g.fillStyle=fg;g.fillRect(x,top,hw,body);
-      g.fillStyle='rgba(255,255,255,.035)';for(let yy=top+3;yy<ground;yy+=3)g.fillRect(x,yy,hw,.6); // brick courses
-      // slate roof and ridge
-      const rh=u*.85;g.fillStyle=shade('#1d1b26',1);g.beginPath();g.moveTo(x-1,top);g.lineTo(x+hw*.12,top-rh);g.lineTo(x+hw*.88,top-rh);g.lineTo(x+hw+1,top);g.closePath();g.fill();
-      g.strokeStyle='rgba(224,20,43,.28)';g.lineWidth=1;g.beginPath();g.moveTo(x+hw*.12,top-rh);g.lineTo(x+hw*.88,top-rh);g.stroke();
-      if(i%2===0){const cx=x+hw-u*.2;g.fillStyle=shade(col,.95);g.fillRect(cx-u*.32,top-rh-u*.55,u*.64,u*.55+2);g.fillStyle=shade(col,.7);for(let k=0;k<3;k++)g.fillRect(cx-u*.28+k*u*.2,top-rh-u*.75,u*.12,u*.22)}
-      roofs.push([x+hw/2,top-rh]);
-      // upper floors: sash windows with frames and sills
-      for(let f=0;f<storeys-1;f++){const wy=top+u*.35+f*sh;for(let k=0;k<2;k++){const wx=x+hw*(.18+k*.42),ww=hw*.24,wh=sh*.55,on=rnd()<.42;
-        g.fillStyle='rgba(230,225,215,.18)';g.fillRect(wx-1,wy-1,ww+2,wh+2);warm(g,wx,wy,ww,wh,on);g.fillStyle='rgba(0,0,0,.35)';g.fillRect(wx+ww/2-.5,wy,1,wh);g.fillRect(wx,wy+wh/2-.5,ww,1);
-        g.fillStyle='rgba(230,225,215,.25)';g.fillRect(wx-2,wy+wh,ww+4,1.5);if(!on&&flick.length<70&&rnd()<.25)flick.push({x:wx,y:wy,w:ww,h:wh,p:rnd()*20,s:3+rnd()*8})}}
-      // ground floor: bay window with its own roof, and a door with a fanlight and steps
-      const gy=ground-sh*.95,bx=x+hw*.08,bw=hw*.46;g.fillStyle=shade(col,1.15);g.beginPath();g.moveTo(bx,ground);g.lineTo(bx,gy);g.lineTo(bx+bw*.15,gy-u*.25);g.lineTo(bx+bw*.85,gy-u*.25);g.lineTo(bx+bw,gy);g.lineTo(bx+bw,ground);g.closePath();g.fill();
-      const bon=rnd()<.55;for(let k=0;k<3;k++){const wx=bx+bw*(.08+k*.31),ww=bw*.24;warm(g,wx,gy+u*.12,ww,sh*.55,bon);if(!bon&&flick.length<70&&rnd()<.2)flick.push({x:wx,y:gy+u*.12,w:ww,h:sh*.55,p:rnd()*20,s:3+rnd()*8})}
-      const dx=x+hw*.68,dw=hw*.2,dh=sh*.8;g.fillStyle=['#3a1418','#152238','#1d2b1f','#141416'][Math.floor(rnd()*4)];g.fillRect(dx,ground-dh,dw,dh);g.fillStyle='rgba(255,200,130,.5)';g.beginPath();g.arc(dx+dw/2,ground-dh,dw/2,Math.PI,0);g.fill();
-      g.fillStyle='rgba(200,200,210,.12)';g.fillRect(dx-2,ground-2,dw+4,2);
-      g.fillStyle='rgba(0,0,0,.25)';g.fillRect(x+hw-1,top,1,body); // party wall line
-      x+=hw}
-    if(rnd()<.6)lamps.push(x+u*.4);return x+u*(.8+rnd()*1.2)}
-  function block(g,x,ground,bw,floors,u,col,flick,roofs){const fh=u*1.05,bh=floors*fh+u*.5,top=ground-bh;
-    const fg=g.createLinearGradient(x,0,x+bw,0);fg.addColorStop(0,shade(col,1.18));fg.addColorStop(.7,shade(col,1));fg.addColorStop(1,shade(col,.78));g.fillStyle=fg;g.fillRect(x,top,bw,bh);
-    g.fillStyle=shade(col,.62);g.beginPath();g.moveTo(x+bw,top);g.lineTo(x+bw+u*.6,top+u*.35);g.lineTo(x+bw+u*.6,ground);g.lineTo(x+bw,ground);g.closePath();g.fill(); // side wall
-    g.fillStyle=shade(col,1.3);g.fillRect(x-1,top-u*.25,bw+2,u*.25); // parapet
-    if(rnd()<.6){g.fillStyle=shade(col,.9);const tx=x+bw*(.2+rnd()*.5);g.fillRect(tx,top-u*.9,u*1.1,u*.65);g.fillRect(tx+u*.15,top-u*.25,u*.12,u*.3);g.fillRect(tx+u*.85,top-u*.25,u*.12,u*.3)} // water tank
-    const cols=Math.max(2,Math.floor(bw/(u*.95))),cw=bw/cols,balc=rnd()<.5;
-    for(let f=0;f<floors;f++){const wy=top+u*.45+f*fh;for(let k=0;k<cols;k++){const wx=x+k*cw+cw*.22,ww=cw*.56,wh=fh*.55,on=rnd()<.3;
-      warm(g,wx,wy,ww,wh,on);g.fillStyle='rgba(220,220,230,.18)';g.fillRect(wx-1,wy+wh,ww+2,1);
-      if(!on&&flick.length<70&&rnd()<.12)flick.push({x:wx,y:wy,w:ww,h:wh,p:rnd()*20,s:3+rnd()*8})}
-      if(balc&&f>0&&f%1===0){g.fillStyle='rgba(200,205,220,.16)';for(let k=0;k<cols;k+=2){const bx=x+k*cw+cw*.1;g.fillRect(bx,wy+fh*.55,cw*.8,1.2);for(let r=0;r<5;r++)g.fillRect(bx+r*cw*.2,wy+fh*.55,.8,fh*.25)}}}
-    g.fillStyle='rgba(255,210,150,.35)';g.fillRect(x+bw*.4,ground-fh*.8,bw*.2,fh*.8); // lit entrance
-    roofs.push([x+bw/2,top-u*.25])}
-  function tower(g,x,ground,bw,bh,u,col,flick,roofs,beacons){const top=ground-bh,glass=g.createLinearGradient(x,top,x+bw,ground);
-    glass.addColorStop(0,shade(col,1.55));glass.addColorStop(.45,shade(col,1.05));glass.addColorStop(1,shade(col,.7));
-    const spire=rnd()<.18,step=!spire&&rnd()<.4;
-    g.fillStyle=glass;if(spire){g.beginPath();g.moveTo(x,ground);g.lineTo(x+bw*.18,top);g.lineTo(x+bw*.5,top-bh*.18);g.lineTo(x+bw*.82,top+bh*.04);g.lineTo(x+bw,ground);g.closePath();g.fill()}
-    else{g.fillRect(x,top,bw,bh);if(step){g.fillRect(x+bw*.15,top-bh*.12,bw*.7,bh*.12+1);g.fillRect(x+bw*.32,top-bh*.2,bw*.36,bh*.08+1)}}
-    g.save();if(spire){g.beginPath();g.moveTo(x,ground);g.lineTo(x+bw*.18,top);g.lineTo(x+bw*.5,top-bh*.18);g.lineTo(x+bw*.82,top+bh*.04);g.lineTo(x+bw,ground);g.closePath();g.clip()}else{g.beginPath();g.rect(x,top-(step?bh*.2:0),bw,bh+(step?bh*.2:0));g.clip()}
-    g.fillStyle='rgba(255,255,255,.07)';for(let mx=x+u*.45;mx<x+bw;mx+=u*.45)g.fillRect(mx,top-bh*.2,.7,bh*1.2); // mullions
-    const fl=u*.42;for(let fy=top-bh*.2;fy<ground;fy+=fl){g.fillStyle='rgba(0,0,0,.18)';g.fillRect(x,fy,bw,1);
-      if(rnd()<.22){g.fillStyle=`rgba(200,225,255,${.18+rnd()*.25})`;const sx=x+rnd()*bw*.5;g.fillRect(sx,fy+2,bw*(.2+rnd()*.5),fl-3)}}
-    for(let k=0;k<6&&flick.length<70;k++){const fy=top+rnd()*bh*.9,wx=x+rnd()*bw*.6;flick.push({x:wx,y:fy,w:bw*.25,h:fl-3,p:rnd()*20,s:4+rnd()*9,cool:1})}
-    g.restore();
-    g.fillStyle='rgba(255,255,255,.12)';g.fillRect(x,top,1.2,bh); // lit edge
-    const ty=spire?top-bh*.18:(step?top-bh*.2:top);if(!spire&&rnd()<.7){g.fillStyle=shade(col,1.2);g.fillRect(x+bw/2-1,ty-u*1.6,2,u*1.6)}
-    beacons.push([x+(spire?bw*.5:bw/2),ty-(spire?2:(u*1.6)),rnd()*2]);roofs.push([x+bw/2,ty])}
-  function makeLayer(kind,h0,h1,speed,col,alpha){const w=Math.ceil(W*2),h=Math.ceil(H),c=document.createElement('canvas');c.width=w*DPR;c.height=h*DPR;const g=c.getContext('2d');g.scale(DPR,DPR);
-    const flick=[],roofs=[],beacons=[],lamps=[],ground=H,u=Math.max(9,Math.min(16,H/62))*(kind==='terrace'?1.75:1);let x=-20;
-    while(x<w){if(kind==='terrace'){x=terraceRow(g,x,ground,3+Math.floor(rnd()*5),u,col,flick,roofs,lamps)}
-      else if(kind==='block'){const bw=u*(4+rnd()*6),fl=Math.round((h0+rnd()*(h1-h0))/(u*1.05));block(g,x,ground,bw,Math.max(3,fl),u,col,flick,roofs);x+=bw+u*(.8+rnd()*2.5)}
-      else{const bw=u*(3+rnd()*4.5),bh=(h0+rnd()*(h1-h0))*(rnd()<.2?1.35:1);tower(g,x,ground,bw,bh,u,col,flick,roofs,beacons);x+=bw+u*(.5+rnd()*2)}}
-    // street lamps along the terraces
-    for(const lx of lamps){g.fillStyle='#0d0c10';g.fillRect(lx,ground-u*3,1.6,u*3);g.fillRect(lx-u*.35,ground-u*3,u*.5,1.6);
-      const lg=g.createRadialGradient(lx-u*.2,ground-u*2.9,0,lx-u*.2,ground-u*2.9,u*1.6);lg.addColorStop(0,'rgba(255,200,120,.55)');lg.addColorStop(1,'rgba(255,200,120,0)');g.fillStyle=lg;g.fillRect(lx-u*2,ground-u*4.5,u*3.6,u*3.2)}
-    return {c,w,speed,alpha,flick,roofs,beacons,off:rnd()*w}}
-  function build(){W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR;seed=7;
-    const s=Math.max(.6,Math.min(1.2,H/900));
-    layers=[makeLayer('tower',H*.2*s,H*.4*s,5,'#1a1a2e',.85),makeLayer('block',H*.1*s,H*.22*s,10,'#1a1520',.95),makeLayer('terrace',0,0,18,'#231518',1)];
-    cars=Array.from({length:mobile?3:6},()=>({x:rnd()*W,v:(rnd()<.5?-1:1)*(40+rnd()*50),lane:rnd()<.5?0:1}));
-    stars=Array.from({length:mobile?40:90},()=>({x:rnd()*W,y:rnd()*H*.5,r:rnd()*1.2+.2,p:rnd()*6}))}
-  const TAGS=['NEW','+£320/mo','✓ Live','8.6% yield','BMV','£115k','HMO','R2SA','+£410/mo','Just listed'];
-  // drop a pin on a rooftop that is on screen now (away from the edges)
-  function spawnPin(){const L=rnd()<.6?2:1,ly=layers[L];if(!ly)return;const sx=r=>{let x=r[0]-ly.off;while(x<0)x+=ly.w;return x};
-    // skip rooftops hidden behind a panel, the sidebar or text, so every pin can be seen
-    const open=(x,y)=>{const el=document.elementFromPoint(x,y);return !el||!el.closest('.panel,.side,.hero-preview,.dcard,.plan,.qp-badge,.public-auth-nav,a,button,input,textarea,select,h1,h2,h3,p,li,table,label')};
-    const vis=ly.roofs.filter(r=>{const x=sx(r);return x>60&&x<W-60&&open(x,r[1]-12)&&open(x,r[1]-40)});if(!vis.length)return;const pick=vis[Math.floor(rnd()*vis.length)];
-    pins.push({L,rx:pick[0],y:pick[1],t:0,tag:TAGS[Math.floor(rnd()*TAGS.length)]})}
-  function frame(now){const t=(now-t0)/1000,dt=Math.min(.1,(now-last)/1000||0);last=now;
-    ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
-    // stars
-    for(const st of stars){const a=.25+.35*Math.sin(t*1.3+st.p);ctx.fillStyle=`rgba(255,255,255,${a})`;ctx.fillRect(st.x,st.y,st.r,st.r)}
-    // horizon glow
-    const hg=ctx.createLinearGradient(0,H*.45,0,H);hg.addColorStop(0,'rgba(224,20,43,0)');hg.addColorStop(1,'rgba(224,20,43,.10)');ctx.fillStyle=hg;ctx.fillRect(0,H*.45,W,H*.55);
-    for(const [i,ly] of layers.entries()){if(!still)ly.off=(ly.off+ly.speed*dt)%ly.w;const o=-(ly.off);
-      ctx.globalAlpha=ly.alpha;ctx.drawImage(ly.c,0,0,ly.c.width,ly.c.height,o,0,ly.w,H);ctx.drawImage(ly.c,0,0,ly.c.width,ly.c.height,o+ly.w,0,ly.w,H);ctx.globalAlpha=1;
-      // windows switching on and off
-      for(const f of ly.flick){if(Math.sin(t/f.s*2+f.p)>.35){let x=f.x+o;if(x<-10)x+=ly.w;ctx.fillStyle=f.cool?'rgba(200,225,255,.35)':'rgba(255,214,140,.55)';ctx.fillRect(x,f.y,f.w,f.h)}}
-      // red aviation lights blinking on the towers
-      for(const b of ly.beacons||[]){if(Math.sin(t*2.4+b[2]*3)>.55){let x=b[0]+o;if(x<-10)x+=ly.w;if(x>-10&&x<W+10){ctx.fillStyle='rgba(255,40,50,.95)';ctx.beginPath();ctx.arc(x,b[1],2,0,7);ctx.fill();ctx.fillStyle='rgba(255,40,50,.25)';ctx.beginPath();ctx.arc(x,b[1],6,0,7);ctx.fill()}}}
-      // pins on this layer
-      for(const p of pins)if(p.L===i){let x=p.rx+o;while(x<-20)x+=ly.w;const k=p.t,drop=Math.min(1,k/.5),b=k<.5?(1-Math.pow(1-drop,3)):1+Math.sin((k-.5)*9)*Math.exp(-(k-.5)*5)*.12;
-        const y=p.y-60*(1-b)-6,fade=k<2.6?1:Math.max(0,1-(k-2.6)/.8);ctx.globalAlpha=fade;
-        ctx.fillStyle='rgba(224,20,43,.25)';ctx.beginPath();ctx.ellipse(x,p.y,8*Math.min(1,k*2),2.5,0,0,7);ctx.fill();
-        ctx.shadowColor='rgba(224,20,43,.8)';ctx.shadowBlur=12;ctx.fillStyle='#E0142B';ctx.beginPath();ctx.arc(x,y-13,9,Math.PI*.85,Math.PI*2.15);ctx.lineTo(x,y);ctx.closePath();ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y-13,3.3,0,7);ctx.fill();
-        if(k>.6){const ta=Math.min(1,(k-.6)/.3)*fade,ty=y-32-(k-.6)*10;ctx.globalAlpha=ta;ctx.font='600 12px Geist,system-ui,sans-serif';const tw=ctx.measureText(p.tag).width+16;
-          ctx.fillStyle='rgba(20,20,24,.92)';ctx.beginPath();ctx.roundRect?ctx.roundRect(x-tw/2,ty-17,tw,22,11):ctx.rect(x-tw/2,ty-17,tw,22);ctx.fill();ctx.strokeStyle='rgba(224,20,43,.7)';ctx.stroke();
-          ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(p.tag,x,ty-2);ctx.textAlign='left'}
-        ctx.globalAlpha=1}}
-    // road with passing car lights
-    ctx.fillStyle='rgba(8,7,10,.9)';ctx.fillRect(0,H-5,W,5);
-    for(const car of cars){if(!still)car.x+=car.v*dt;if(car.x<-40)car.x=W+40;if(car.x>W+40)car.x=-40;const y=H-3.5+car.lane*1.6,dir=Math.sign(car.v);
-      ctx.fillStyle=dir>0?'rgba(255,240,200,.9)':'rgba(255,40,40,.85)';ctx.fillRect(car.x,y,3,1.4);ctx.fillRect(car.x-dir*9,y,3,1.4);
-      const gl=ctx.createLinearGradient(car.x,0,car.x+dir*40,0);gl.addColorStop(0,dir>0?'rgba(255,240,200,.25)':'rgba(255,40,40,.2)');gl.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=gl;ctx.fillRect(dir>0?car.x:car.x-40,y-1,40,3)}
-    if(still)return;
-    for(const p of pins)p.t+=dt;pins=pins.filter(p=>p.t<3.5);
-    nextPin-=dt;if(nextPin<=0){spawnPin();nextPin=(mobile?3.2:1.8)+rnd()*1.6}
+/* ---------- real London skyline (OpenArt video loop) with deal pins dropping onto its buildings ---------- */
+(function(){const v=document.getElementById('bgvid'),cv=document.getElementById('sky');if(!cv||!cv.getContext)return;const ctx=cv.getContext('2d');
+  const still=reduced(),mobile=matchMedia('(max-width:760px),(pointer:coarse)').matches,DPR=Math.min(1.5,devicePixelRatio||1);
+  // the moving video only for full-motion visitors; the still photo shows meanwhile (and for reduced motion)
+  if(v&&!still){v.src='/assets/bg/london-loop.mp4';v.preload='auto';v.addEventListener('playing',()=>v.classList.add('on'),{once:true});
+    const play=()=>{const p=v.play();if(p&&p.catch)p.catch(()=>{})};play();document.addEventListener('visibilitychange',()=>{if(document.hidden)v.pause();else play()})}
+  // rooftops in the picture, as fractions of the image (2752 x 1536)
+  const IW=2752,IH=1536,ROOFS=[[.114,.378],[.27,.384],[.467,.352],[.658,.237],[.698,.323],[.781,.352],[.82,.38],[.596,.449],[.741,.527],[.901,.51],[.43,.53],[.2,.55]];
+  const TAGS=['NEW','+£320/mo','✓ Live','8.6% yield','BMV','£415k','HMO','R2SA','+£410/mo','Just listed','2 bed · E1','BRRR'];
+  let W=0,H=0,pins=[],last=0,next=1.5;
+  const size=()=>{W=innerWidth;H=innerHeight;cv.width=W*DPR;cv.height=H*DPR};
+  // where an image point lands on screen with background-size:cover and position center 62%
+  const map=([fx,fy])=>{const sc=Math.max(W/IW,H/IH),dw=IW*sc,dh=IH*sc;return [(W-dw)/2+fx*dw,(H-dh)*.62+fy*dh]};
+  const open=(x,y)=>{const el=document.elementFromPoint(x,y);return !el||!el.closest('.panel,.side,.hero-preview,.dcard,.plan,.qp-badge,.public-auth-nav,a,button,input,textarea,select,h1,h2,h3,p,li,table,label')};
+  function spawn(){const sd=document.querySelector('.side'),sr=sd?sd.getBoundingClientRect():null,minX=(sr&&sr.height>H*.5?sr.right:0)+60;
+    const free=ROOFS.map(map).filter(([x,y])=>x>minX&&x<W-60&&y>60&&y<H-20&&open(x,y-14)&&open(x,y-44)&&!pins.some(p=>Math.abs(p.x-x)<60));
+    if(!free.length)return;const [x,y]=free[Math.floor(Math.random()*free.length)];pins.push({x,y,t:0,tag:TAGS[Math.floor(Math.random()*TAGS.length)]})}
+  function frame(now){const dt=Math.min(.1,(now-last)/1000||0);last=now;ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
+    for(const p of pins){p.t+=dt;const k=p.t,drop=Math.min(1,k/.5),b=k<.5?(1-Math.pow(1-drop,3)):1+Math.sin((k-.5)*9)*Math.exp(-(k-.5)*5)*.12,
+      y=p.y-60*(1-b)-4,x=p.x,fade=k<3.2?1:Math.max(0,1-(k-3.2)/.8);ctx.globalAlpha=fade;
+      ctx.fillStyle='rgba(224,20,43,.3)';ctx.beginPath();ctx.ellipse(x,p.y,9*Math.min(1,k*2),3,0,0,7);ctx.fill();
+      ctx.shadowColor='rgba(224,20,43,.9)';ctx.shadowBlur=14;ctx.fillStyle='#E0142B';ctx.beginPath();ctx.arc(x,y-13,9,Math.PI*.85,Math.PI*2.15);ctx.lineTo(x,y);ctx.closePath();ctx.fill();ctx.shadowBlur=0;
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y-13,3.3,0,7);ctx.fill();
+      if(k>.6){const ta=Math.min(1,(k-.6)/.3)*fade,ty=y-32-(k-.6)*8;ctx.globalAlpha=ta;ctx.font='600 12px Geist,system-ui,sans-serif';const tw=ctx.measureText(p.tag).width+16;
+        ctx.fillStyle='rgba(16,16,20,.9)';ctx.beginPath();ctx.roundRect?ctx.roundRect(x-tw/2,ty-17,tw,22,11):ctx.rect(x-tw/2,ty-17,tw,22);ctx.fill();ctx.strokeStyle='rgba(224,20,43,.75)';ctx.stroke();
+        ctx.fillStyle='#fff';ctx.textAlign='center';ctx.fillText(p.tag,x,ty-2);ctx.textAlign='left'}
+      ctx.globalAlpha=1}
+    pins=pins.filter(p=>p.t<4);next-=dt;if(next<=0){spawn();next=(mobile?3.4:2)+Math.random()*1.5}
     requestAnimationFrame(frame)}
-  let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{build();if(still)frame(performance.now())},200)});
-  build();if(still){frame(performance.now())}else{requestAnimationFrame(frame);
-    document.addEventListener('visibilitychange',()=>{if(!document.hidden){last=performance.now()}})}
+  size();addEventListener('resize',size);if(!still)requestAnimationFrame(frame);
 })();
-
 /* ---------- hero motion: word-by-word headline, tilting card, counting figures ---------- */
 (function(){const h=document.querySelector('.hero .display');if(!h||h.dataset.split)return;h.dataset.split='1';
   const intro=document.getElementById('siteIntro'),delay=intro?2.9:0.15;document.querySelector('.hero').style.setProperty('--hd',delay+'s');
