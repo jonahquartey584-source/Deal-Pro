@@ -717,6 +717,39 @@ td.t{text-align:right;color:var(--ink-2)}
 .toast{position:fixed;right:24px;bottom:24px;max-width:360px;background:#F4F4F5;color:#0B0B0C;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:500;box-shadow:var(--shadow-pop);opacity:0;transform:translateY(10px);transition:opacity .28s var(--ease),transform .28s var(--ease);pointer-events:none;z-index:60}
 .toast.on{opacity:1;transform:none}
 @media (max-width:899px){.toast{left:16px;right:16px;max-width:none;bottom:calc(16px + env(safe-area-inset-bottom,0px))}}
+/* ---------- animated background and motion ---------- */
+#bgfx{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;contain:strict}
+#bgfx .orb{position:absolute;border-radius:50%;filter:blur(60px);will-change:transform}
+#bgfx .o1{width:58vmax;height:58vmax;left:-18vmax;top:-22vmax;background:radial-gradient(circle,rgba(224,20,43,.30),rgba(224,20,43,0) 62%);animation:orb1 34s ease-in-out infinite alternate}
+#bgfx .o2{width:50vmax;height:50vmax;right:-20vmax;top:18vh;background:radial-gradient(circle,rgba(110,48,210,.16),rgba(110,48,210,0) 62%);animation:orb2 42s ease-in-out infinite alternate}
+#bgfx .o3{width:44vmax;height:44vmax;left:28vw;bottom:-26vmax;background:radial-gradient(circle,rgba(224,20,43,.18),rgba(224,20,43,0) 62%);animation:orb3 50s ease-in-out infinite alternate}
+#bgfx .grid{position:absolute;inset:-64px;background-image:linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);background-size:64px 64px;-webkit-mask-image:radial-gradient(ellipse 75% 60% at 50% 35%,#000 20%,transparent 75%);mask-image:radial-gradient(ellipse 75% 60% at 50% 35%,#000 20%,transparent 75%);animation:gridpan 40s linear infinite}
+#bgfx .spot{position:absolute;inset:0;background:radial-gradient(520px circle at var(--mx,70%) var(--my,20%),rgba(224,20,43,.07),transparent 60%)}
+#bgfx .beam{position:absolute;top:-20%;left:-30%;width:28%;height:140%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.035),transparent);transform:rotate(18deg);animation:beam 16s ease-in-out infinite}
+#bgfx .spark{position:absolute;bottom:-12px;width:3px;height:3px;border-radius:50%;background:rgba(255,90,100,.55);box-shadow:0 0 8px rgba(224,20,43,.8);animation:rise linear infinite;opacity:0}
+@keyframes orb1{to{transform:translate(14vmax,10vmax) scale(1.15)}}
+@keyframes orb2{to{transform:translate(-12vmax,-8vmax) scale(.9)}}
+@keyframes orb3{to{transform:translate(-10vmax,-12vmax) scale(1.2)}}
+@keyframes gridpan{to{transform:translate(64px,64px)}}
+@keyframes beam{0%,55%{left:-30%}100%{left:130%}}
+@keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.8}90%{opacity:.5}100%{transform:translateY(-105vh) translateX(var(--dx,20px));opacity:0}}
+.app{position:relative;z-index:1}
+.side{background:rgba(14,14,16,.8);-webkit-backdrop-filter:blur(16px) saturate(1.2);backdrop-filter:blur(16px) saturate(1.2)}
+.brand svg{animation:markglow 5s ease-in-out infinite}
+@keyframes markglow{50%{filter:drop-shadow(0 0 7px rgba(224,20,43,.55))}}
+.tab[aria-current="page"]::before{box-shadow:0 0 10px rgba(224,20,43,.8)}
+.btn.primary{position:relative;overflow:hidden;isolation:isolate}
+.btn.primary::after{content:"";position:absolute;top:0;bottom:0;left:-70%;width:45%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.3),transparent);transform:skewX(-20deg);transition:left .7s var(--ease);pointer-events:none;z-index:-1}
+.btn.primary:hover{transform:translateY(-1px);box-shadow:0 10px 26px -10px rgba(224,20,43,.75)}
+.btn.primary:hover::after{left:135%}
+.btn:not(.primary):hover{transform:translateY(-1px)}
+.panel{transition:border-color .35s var(--ease),box-shadow .35s var(--ease)}
+.panel:hover{border-color:var(--line-2);box-shadow:0 18px 40px -28px rgba(0,0,0,.9)}
+input:not([type=checkbox]):not([type=radio]),select,textarea{transition:border-color .2s var(--ease),box-shadow .25s var(--ease)}
+input:not([type=checkbox]):not([type=radio]):focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(224,20,43,.16)}
+html.fx .rv{opacity:0;transform:translateY(16px)}
+html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(--d,0ms),transform .7s var(--ease) var(--d,0ms)}
+@media (max-width:760px),(pointer:coarse){#bgfx .spark,#bgfx .beam{display:none}#bgfx .orb{filter:blur(40px)}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}.site-intro{display:none!important}::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}.dcard:hover{transform:none}}
 
 /* real accounts */
@@ -830,6 +863,7 @@ td.t{text-align:right;color:var(--ink-2)}
 </section>
 
 
+<div id="bgfx" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div><div class="orb o3"></div><div class="grid"></div><div class="beam"></div><div class="spot"></div></div>
 <div class="app">
   <aside class="side">
     <button class="brand" data-go="home" aria-label="Deal Pro home">
@@ -2601,6 +2635,18 @@ if(hero.c){try{hero.x=hero.c.getContext('2d')}catch(e){}
   addEventListener('resize',()=>{heroSize();heroDraw(hero.last||40000)});
   try{matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',()=>{hero.staticDrawn=false;heroUpdate()})}catch(e){}}
 
+
+/* ---------- motion: sparks, cursor glow and reveal-on-scroll (off when reduced motion is on) ---------- */
+(function(){const fx=document.getElementById('bgfx');if(!fx||reduced())return;document.documentElement.classList.add('fx');
+  for(let i=0;i<14;i++){const sp=document.createElement('span');sp.className='spark';sp.style.left=(Math.random()*100)+'%';sp.style.animationDuration=(16+Math.random()*16)+'s';sp.style.animationDelay=(-Math.random()*30)+'s';sp.style.setProperty('--dx',(Math.random()*80-40)+'px');const z=1+Math.random()*2;sp.style.width=sp.style.height=z+'px';fx.appendChild(sp)}
+  if(matchMedia('(pointer:fine)').matches){let raf=0,x=0,y=0;addEventListener('pointermove',e=>{x=e.clientX;y=e.clientY;if(!raf)raf=requestAnimationFrame(()=>{raf=0;fx.style.setProperty('--mx',x+'px');fx.style.setProperty('--my',y+'px')})},{passive:true})}
+  const seen=new WeakSet(),io='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{rootMargin:'0px 0px -6% 0px'}):null;
+  // Only elements on screen when a page opens are animated, so results that redraw later never flicker.
+  window.revealIn=root=>{if(!io||!root)return;let n=0;root.querySelectorAll('.panel,.plan,.hero-copy,.hero-preview,.pl-card,.limit-note').forEach(el=>{if(seen.has(el)||el.closest('.rv'))return;seen.add(el);el.classList.add('rv');el.style.setProperty('--d',Math.min(n++,8)*70+'ms');io.observe(el)});
+    setTimeout(()=>root.querySelectorAll('.rv:not(.in)').forEach(el=>{const r=el.getBoundingClientRect();if(r.top<innerHeight)el.classList.add('in')}),1500)};
+  const cur=()=>document.querySelector('[data-view]:not([hidden])');revealIn(cur());
+  new MutationObserver(ms=>{for(const m of ms)if(m.attributeName==='hidden'&&!m.target.hidden)revealIn(m.target)}).observe(document.querySelector('.content')||document.body,{subtree:true,attributes:true,attributeFilter:['hidden']});
+})();
 /* ---------- first-visit explainer ---------- */
 $('#fIntro').hidden=!!store.get('introDismissed',false);
 $('#fIntroX').addEventListener('click',()=>{store.set('introDismissed',true);$('#fIntro').hidden=true});
