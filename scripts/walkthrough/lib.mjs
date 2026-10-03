@@ -149,6 +149,19 @@ export async function start({ state, signedIn = false, api }) {
   async function shoot() {
     await page.clock.runFor(Math.round(DT * 1000));
     t += DT;
+    // CSS animations and transitions run on real time, not the virtual clock: step them by hand
+    // so the intro and fades play at their true speed in the video.
+    await page.evaluate(([ms, first]) => {
+      for (const a of document.getAnimations()) {
+        // View transitions finish on their own; pausing them would hold the page frozen.
+        if (a.__done || String(a.effect?.pseudoElement || "").startsWith("::view-transition")) continue;
+        // Anything already running when recording starts (the intro) restarts from its beginning.
+        if (a.__v0 === undefined) { a.__v0 = first ? ms : ms - (a.currentTime || 0); a.pause(); }
+        const at = ms - a.__v0, end = a.effect?.getComputedTiming().endTime;
+        // Once it has run its course, finish it properly so end events fire (the intro removes itself on one).
+        if (Number.isFinite(end) && at >= end) { a.__done = true; a.finish(); } else a.currentTime = at;
+      }
+    }, [t * 1000, frame === 0]);
     if (PREVIEW && frame % Math.round(FPS / PREVIEW)) { frame++; return; }
     await page.screenshot({ path: path.join(FRAMES, `${String(frame).padStart(5, "0")}.jpg`), type: "jpeg", quality: 92 });
     frame++;

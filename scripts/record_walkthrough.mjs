@@ -105,7 +105,7 @@ function searchPoll() {
 // 0:00 Welcome
 await until(1.2);
 await move({ x: 640, y: 300 }, 1.2);
-await until(3.0);
+await until(4.8);
 await move(".hero-copy h1", 1.2);
 await until(10.8);
 await move("#homePreview", 1.4);
@@ -149,12 +149,14 @@ await move("#aiCredits", 0.8);
 await until(78.3);
 await moveClick('.tab[data-v="find"]', 0.8);
 await until(80.3);
-await moveClick('label[for="fModeRent"]', 0.7);
+await scroll('label[for="fModeRent"]', 0.6, 160);
+await moveClick('label[for="fModeRent"]', 0.6);
 await move('label[for="fBedsAny"]', 0.7);
 await move("#fMin", 0.6);
 await move("#fMax", 0.6);
 await until(85.4);
-await moveClick("#fLoc", 0.6);
+await scroll("#fLoc", 0.5, 260);
+await moveClick("#fLoc", 0.5);
 await type("W2", 0.4);
 await until(89.6);
 await move("#fFurn", 0.7);
@@ -183,7 +185,7 @@ await move("#fResults .fprog li:nth-child(4)", 0.9);
 await until(126.0);
 await move("#fResults .fprog-t", 0.9);
 await until(136.0);
-await move("#fResults .fprog .fnote:last-child", 0.9);
+await move("#fResults .fprog .fnote b", 0.9);
 
 // 2:23 Results and AI picks
 await until(143.2);
@@ -299,4 +301,4 @@ await scroll(".home-foot", 1.8, 440);
 await move(".home-foot p", 0.9);
 await until(audioSeconds(AUDIO) + 0.4);
 
-await finish({ audio: AUDIO, video: "deal-pro-tutorial.mp4", poster: "deal-pro-tutorial-poster.png", posterAt: 3.2 });
+await finish({ audio: AUDIO, video: "deal-pro-tutorial.mp4", poster: "deal-pro-tutorial-poster.png", posterAt: 3.75 });
