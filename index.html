@@ -16,14 +16,14 @@
 <meta property="og:locale" content="en_GB">
 <meta property="og:url" content="https://usedealpro.com/">
 <meta property="og:title" content="Deal Pro | Property Deals, Found and Analysed">
-<meta property="og:description" content="Find rent-to-rent and serviced accommodation opportunities, then use AI to turn each deal into clear numbers, risks and next steps.">
+<meta property="og:description" content="Find buy-to-let, rent-to-rent, serviced accommodation, HMO, BRRR, flip, lease option and commercial deals, then use AI to turn each deal into clear numbers, risks and next steps.">
 <meta property="og:image" content="https://usedealpro.com/assets/deal-pro-tutorial-poster.png?v=6">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="720">
 <meta property="og:image:alt" content="Deal Pro: find, assess and organise property opportunities">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Deal Pro | Property Deals, Found and Analysed">
-<meta name="twitter:description" content="Find rent-to-rent and serviced accommodation opportunities, then use AI to turn each deal into clear numbers, risks and next steps.">
+<meta name="twitter:description" content="Find buy-to-let, rent-to-rent, serviced accommodation, HMO, BRRR, flip, lease option and commercial deals, then use AI to turn each deal into clear numbers, risks and next steps.">
 <meta name="twitter:image" content="https://usedealpro.com/assets/deal-pro-tutorial-poster.png?v=6">
 <script type="application/ld+json">
 {
@@ -69,27 +69,27 @@ button,input,select,textarea{font:inherit;color:inherit}
 .num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .muted{color:var(--muted)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.site-intro{position:fixed;inset:0;z-index:9999;overflow:hidden;background:#08070b;pointer-events:none;animation:introExit .8s cubic-bezier(.7,0,.2,1) 3.45s forwards}
+.site-intro{position:fixed;inset:0;z-index:9999;overflow:hidden;background:#08070b;pointer-events:none;animation:introExit .8s cubic-bezier(.7,0,.2,1) 3.85s forwards}
 html.si-wait .site-intro,html.si-wait .site-intro *,html.si-wait .hero,html.si-wait .hero *{animation-play-state:paused!important}
 /* real UK city photos: each one pans sideways as the next fades in over it */
 .si-photos{position:absolute;inset:0}
-.si-photos i{position:absolute;top:0;left:0;height:100%;aspect-ratio:3168/1344;background:center/cover no-repeat;opacity:0;transform:translate3d(var(--x),0,0) scale(1.06);animation:siIn .35s ease calc(var(--k)*.55s) forwards,siPan 4s linear calc(var(--k)*.55s) forwards}
-.si-photos::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(8,7,11,.55),rgba(8,7,11,.15) 40%,rgba(8,7,11,.7));animation:siDim .6s ease 1.9s forwards}
-.si-glow{position:absolute;left:50%;bottom:-30vh;width:120vw;height:70vh;transform:translateX(-50%);background:radial-gradient(ellipse at 50% 100%,rgba(224,20,43,.35),transparent 65%);opacity:0;animation:siFade 1.2s ease 1.8s forwards}
+.si-photos i{position:absolute;top:0;left:0;height:100%;aspect-ratio:3168/1344;background:center/cover no-repeat;opacity:0;transform:translate3d(var(--x),0,0) scale(1.06);animation:siIn .35s ease calc(var(--k)*.5s) forwards,siPan 4.4s linear calc(var(--k)*.5s) forwards}
+.si-photos::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(8,7,11,.55),rgba(8,7,11,.15) 40%,rgba(8,7,11,.7));animation:siDim .6s ease 2.25s forwards}
+.si-glow{position:absolute;left:50%;bottom:-30vh;width:120vw;height:70vh;transform:translateX(-50%);background:radial-gradient(ellipse at 50% 100%,rgba(224,20,43,.35),transparent 65%);opacity:0;animation:siFade 1.2s ease 2.2s forwards}
 .si-names{position:absolute;left:0;right:0;top:40vh;text-align:center;color:#fff}
-.si-names small{display:block;font-size:13px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.75);opacity:0;animation:siFade .4s ease .1s forwards,siOut .3s ease 2s forwards}
+.si-names small{display:block;font-size:13px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.75);opacity:0;animation:siFade .4s ease .1s forwards,siOut .3s ease 2.35s forwards}
 .si-names small::before{content:"";display:inline-block;width:7px;height:7px;margin-right:10px;border-radius:50%;background:#E0142B;box-shadow:0 0 0 4px rgba(224,20,43,.3);vertical-align:2px}
-.si-names b{position:absolute;left:0;right:0;top:26px;font-size:clamp(40px,7vw,84px);font-weight:700;letter-spacing:-.045em;text-shadow:0 10px 40px rgba(0,0,0,.6);opacity:0;animation:siName .55s ease calc(var(--k)*.55s + .05s) forwards}
-.si-names b:last-child{animation-duration:.45s}
-.si-pin{position:absolute;left:50%;bottom:22vh;transform:translate(-50%,-80vh);opacity:0;animation:siDrop .6s cubic-bezier(.3,1.4,.5,1) 1.95s forwards;filter:drop-shadow(0 6px 16px rgba(224,20,43,.7))}
+.si-names b{position:absolute;left:0;right:0;top:26px;font-size:clamp(40px,7vw,84px);font-weight:700;letter-spacing:-.045em;text-shadow:0 10px 40px rgba(0,0,0,.6);opacity:0;animation:siName .5s ease calc(var(--k)*.5s + .05s) forwards}
+.si-names b.more{font-weight:600;font-style:italic;color:rgba(255,255,255,.92);animation-duration:.55s}
+.si-pin{position:absolute;left:50%;bottom:22vh;transform:translate(-50%,-80vh);opacity:0;animation:siDrop .6s cubic-bezier(.3,1.4,.5,1) 2.35s forwards;filter:drop-shadow(0 6px 16px rgba(224,20,43,.7))}
 .si-pin svg{display:block}
-.si-ring{position:absolute;left:50%;bottom:-6px;width:12px;height:4px;margin-left:-6px;border:2px solid rgba(224,20,43,.8);border-radius:50%;opacity:0;animation:siRing 1s ease-out 2.45s forwards}
-.si-ring.r2{animation-delay:2.7s}
-.intro-lockup{position:absolute;left:50%;top:30vh;display:flex;align-items:center;gap:16px;transform:translate(-50%,10px) scale(.92);opacity:0;animation:siLogo .7s var(--ease) 2.2s forwards}
+.si-ring{position:absolute;left:50%;bottom:-6px;width:12px;height:4px;margin-left:-6px;border:2px solid rgba(224,20,43,.8);border-radius:50%;opacity:0;animation:siRing 1s ease-out 2.85s forwards}
+.si-ring.r2{animation-delay:3.1s}
+.intro-lockup{position:absolute;left:50%;top:30vh;display:flex;align-items:center;gap:16px;transform:translate(-50%,10px) scale(.92);opacity:0;animation:siLogo .7s var(--ease) 2.6s forwards}
 .intro-mark{display:block;width:56px;height:56px;filter:drop-shadow(0 14px 26px rgba(224,20,43,.45));flex:none}
 .intro-wordmark{font-size:40px;font-weight:700;letter-spacing:-.04em;color:#fff;text-shadow:0 8px 30px rgba(0,0,0,.6)}
 .si-tag{position:absolute;left:0;right:0;top:calc(30vh + 86px);margin:0;text-align:center;font-size:18px;color:rgba(255,255,255,.9);letter-spacing:-.01em;text-shadow:0 4px 20px rgba(0,0,0,.8)}
-.si-tag span{display:inline-block;overflow:hidden;white-space:nowrap;width:0;border-right:2px solid #E0142B;vertical-align:bottom;animation:siType .85s steps(34,end) 2.45s forwards,siCaret .5s step-end 2.45s 4}
+.si-tag span{display:inline-block;overflow:hidden;white-space:nowrap;width:0;border-right:2px solid #E0142B;vertical-align:bottom;animation:siType .85s steps(34,end) 2.85s forwards,siCaret .5s step-end 2.85s 4}
 @keyframes siIn{to{opacity:1}}
 @keyframes siPan{to{transform:translate3d(calc(var(--x) - 9%),0,0) scale(1)}}
 @keyframes siDim{to{background:linear-gradient(rgba(8,7,11,.75),rgba(8,7,11,.55) 40%,rgba(8,7,11,.85))}}
@@ -587,6 +587,8 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .lede{margin-top:22px;font-size:16.5px;line-height:1.55;color:var(--ink-2);max-width:52ch}
 .hero-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:32px}
 .hero-foot{margin-top:18px;font-size:12.5px;color:var(--muted)}
+.hero-strats+.hero-cta{margin-top:24px}
+.hero-strats{display:flex;flex-wrap:wrap;gap:7px;margin:18px 0 0;padding:0;list-style:none;max-width:620px}.hero-strats li{padding:5px 11px;border-radius:999px;font-size:12.5px;font-weight:500;color:rgba(255,255,255,.88);background:rgba(16,16,20,.55);border:1px solid rgba(255,255,255,.12);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
 .hero-preview{display:grid;gap:12px;justify-items:start;min-width:0}
 .pv-label{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
 .pv-label .dot{background:var(--brand)}
@@ -801,6 +803,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
 .hero .display .w{display:inline-block;opacity:0;transform:translateY(.45em);filter:blur(8px);animation:heroWord .8s var(--ease) calc(var(--hd,0s) + var(--i)*90ms) forwards}
 .hero .display .ul{position:relative}
 .hero .display .ul::after{content:"";position:absolute;left:0;right:.12em;bottom:.02em;height:.09em;border-radius:.05em;background:var(--brand);box-shadow:0 0 18px rgba(224,20,43,.7);transform:scaleX(0);transform-origin:left;animation:heroLine .7s var(--ease) calc(var(--hd,0s) + 1.05s) forwards}
+.hero-strats li{opacity:0;transform:translateY(8px) scale(.96);animation:heroUp .5s var(--ease) calc(var(--hd,0s) + .62s + var(--s)*55ms) forwards}
 .hero .eyebrow,.hero .lede,.hero-cta,.hero-foot{opacity:0;transform:translateY(12px);animation:heroUp .8s var(--ease) forwards}
 .hero .eyebrow{animation-delay:calc(var(--hd,0s) + .05s)}.hero .lede{animation-delay:calc(var(--hd,0s) + .55s)}.hero-cta{animation-delay:calc(var(--hd,0s) + .7s)}.hero-foot{animation-delay:calc(var(--hd,0s) + .85s)}
 .eb-dot{animation:ebPulse 2s ease-in-out infinite}
@@ -815,7 +818,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
 @keyframes ebPulse{50%{box-shadow:0 0 0 5px rgba(224,20,43,.25)}}
 @keyframes ctaGlow{50%{box-shadow:0 0 0 6px rgba(224,20,43,.16),0 10px 30px -8px rgba(224,20,43,.7)}}
 @keyframes cardFloat{50%{translate:0 -8px}}
-@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}.hero .display .w,.hero .display .ul::after,.hero .eyebrow,.hero .lede,.hero-cta,.hero-foot,.hero-preview .dcard li,.hero-preview .dcard .dc-row{opacity:1!important;transform:none!important;filter:none!important}.site-intro{display:none!important}::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}.dcard:hover{transform:none}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}.hero .display .w,.hero .display .ul::after,.hero .eyebrow,.hero .lede,.hero-strats li,.hero-cta,.hero-foot,.hero-preview .dcard li,.hero-preview .dcard .dc-row{opacity:1!important;transform:none!important;filter:none!important}.site-intro{display:none!important}::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important}.dcard:hover{transform:none}}
 
 /* real accounts */
 .auth-pending .app{display:none}
@@ -921,7 +924,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
  if(innerWidth<760)C=[['London','london',-.42],['Manchester','manchester',-.55],['Birmingham','birmingham',-.5],['Newcastle','newcastle',-.18]];
  for(var i=0;i<C.length;i++){var src='/assets/bg/'+C[i][1]+'-pano-sm.jpg';new Image().src=src;
   ph+='<i style="--k:'+i+';--x:'+(C[i][2]*100)+'%;background-image:url('+src+')"></i>';nm+='<b style="--k:'+i+'">'+C[i][0]+'</b>'}
- document.getElementById('siPhotos').innerHTML=ph;document.getElementById('siNames').insertAdjacentHTML('beforeend',nm);
+ document.getElementById('siPhotos').innerHTML=ph;document.getElementById('siNames').insertAdjacentHTML('beforeend',nm+'<b class="more" style="--k:'+C.length+'">and more</b>');
  /* hold the intro (and the hero after it) until the first photo has loaded, for at most 0.9s */
  root.classList.add('si-wait');var go=function(){if(started)return;started=true;root.classList.remove('si-wait')};
  var first=new Image();first.onload=first.onerror=go;first.src='/assets/bg/'+C[0][1]+'-pano-sm.jpg';setTimeout(go,900);
@@ -984,9 +987,10 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
       <canvas id="heroCanvas" aria-hidden="true"></canvas>
       <div class="hero-grid">
         <div class="hero-copy">
-          <p class="eyebrow"><span class="eb-dot" aria-hidden="true"></span>For UK rent-to-rent and serviced accommodation sourcers</p>
+          <p class="eyebrow"><span class="eb-dot" aria-hidden="true"></span>For UK property investors and deal sourcers</p>
           <h1 class="display">Property deals, found and analysed.</h1>
-          <p class="lede">Find rent-to-rent and serviced accommodation opportunities with the full details and a link to each listing, then use AI to turn each deal into clear numbers, risks and next steps.</p>
+          <p class="lede">Find deals for any strategy, anywhere in the UK, with the full details and a link to each listing, then use AI to turn each deal into clear numbers, risks and next steps.</p>
+          <ul class="hero-strats" aria-label="Property strategies"><li style="--s:0">Buy-to-let</li><li style="--s:1">Rent-to-rent</li><li style="--s:2">Rent-to-SA</li><li style="--s:3">HMO</li><li style="--s:4">BRRR</li><li style="--s:5">Flips</li><li style="--s:6">Lease options</li><li style="--s:7">Serviced accommodation</li><li style="--s:8">Commercial</li></ul>
           <div class="hero-cta"><button class="btn primary lg" data-go="find">Open Deal Finder</button><button class="btn outline lg" data-go="analyser">Analyse a deal</button><a class="btn ghost lg" href="#tutorial">▶ Watch tutorial</a></div>
           <p class="hero-foot">Every deal is free to view. Post and find ready-contacted deals in the Deal Community.</p>
         </div>
@@ -2777,7 +2781,7 @@ if(hero.c){try{hero.x=hero.c.getContext('2d')}catch(e){}
 })();
 /* ---------- hero motion: word-by-word headline, tilting card, counting figures ---------- */
 (function(){const h=document.querySelector('.hero .display');if(!h||h.dataset.split)return;h.dataset.split='1';
-  const intro=document.getElementById('siteIntro'),delay=intro?3.8:0.15;document.querySelector('.hero').style.setProperty('--hd',delay+'s');
+  const intro=document.getElementById('siteIntro'),delay=intro?4.2:0.15;document.querySelector('.hero').style.setProperty('--hd',delay+'s');
   const words=h.textContent.trim().split(/\s+/);h.setAttribute('aria-label',h.textContent.trim());
   h.innerHTML=words.map((w,i)=>`<span class="w${i===words.length-1?' ul':''}" aria-hidden="true" style="--i:${i}">${w}</span>`).join(' ');
   const pv=document.querySelector('.hero-preview');if(!pv||reduced())return;
