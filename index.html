@@ -486,6 +486,12 @@ fieldset.fg{border:0;margin:0;padding:0;min-width:0}
 dialog.drawer{margin:0 0 0 auto;padding:0;border:0;border-left:1px solid var(--line);width:min(560px,100%);max-width:100%;height:100%;max-height:100%;background:var(--surface);color:var(--ink);box-shadow:var(--shadow-pop)}
 dialog.drawer[open]{display:flex;flex-direction:column}
 dialog.drawer::backdrop{background:rgba(0,0,0,.62)}
+.hs-list{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.hs-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:9px;background:var(--surface-2,rgba(255,255,255,.03))}
+.hs-item.cur{border-color:var(--brand)}
+.hs-item h3{margin:0;font-size:14px;font-weight:600;overflow-wrap:anywhere}.hs-item p{margin:0;font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
+.hs-acts{display:flex;gap:6px;grid-row:span 2;align-self:center}
+.hs-score{font-family:var(--mono,monospace);color:var(--ink);font-weight:600}
 dialog.drawer[open]{animation:dr-in .32s var(--ease)}
 dialog.drawer[open]::backdrop{animation:fade-in .32s var(--ease)}
 .dr-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}
@@ -1043,6 +1049,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
         <p class="ph-desc">Search property listings on Gumtree, SpareRoom, OpenRent, Rightmove, Zoopla and Facebook Marketplace, plus commercial sites, then analyse any of them in the Deal Analyser.</p>
         <p class="ph-meta">Free on every plan. Every deal shows the full property details and a link to the original listing.</p>
       </div>
+      <div class="ph-actions"><button class="btn" id="fHistory" type="button">Previous searches</button></div>
     </header>
     <div class="limit-note" id="nFind" role="status" hidden></div>
     <div class="find">
@@ -1113,7 +1120,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
         <h1 id="dealTitle">Finsbury Park Studio Pair</h1>
         <p class="ph-meta" id="dealMeta"></p>
       </div>
-      <div class="ph-actions"><button class="btn primary" id="saveDealTop">Save deal</button></div>
+      <div class="ph-actions"><button class="btn" id="aiHistory" type="button">Previous analyses</button><button class="btn primary" id="saveDealTop">Save deal</button></div>
     </header>
     <div class="ai-simple">
       <div class="ai-entry">
@@ -1445,6 +1452,13 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
 </div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <a class="qp-badge" href="https://qp-digital.co.uk" target="_blank" rel="noopener" aria-label="Powered by Qp Digital (opens in a new tab)"><img class="qp-mark" src="/assets/qp-digital-logo.png" alt="" width="26" height="26"><span><span class="qp-by">Powered by </span><b>Qp Digital</b></span></a>
+<dialog class="drawer" id="histPanel" aria-labelledby="hsTitle">
+  <div class="dr-head">
+    <div><p class="dr-kicker" id="hsKicker">Deal Finder</p><h2 id="hsTitle" tabindex="-1">Previous searches</h2><p class="dr-sub" id="hsSub"></p></div>
+    <button class="btn ghost sm" id="hsClose" type="button">Close</button>
+  </div>
+  <div class="dr-body"><p class="note" id="hsStatus" role="status"></p><ul class="hs-list" id="hsList"></ul></div>
+</dialog>
 <dialog class="drawer" id="payWall" aria-labelledby="pwTitle">
   <div class="dr-head">
     <div><p class="dr-kicker">Free plan</p><h2 id="pwTitle" tabindex="-1">You've used your 2 free deal analyses</h2><p class="dr-sub">Subscribe to keep analysing deals. Your saved deals stay available.</p></div>
@@ -2472,6 +2486,7 @@ async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LE
     const missed=Object.entries(res.sites||{}).filter(([,v])=>v.status==='error').map(([k])=>SITE_LABEL(k));
     const live=LIVE.filter(confirmedLive).length;FS.showUnconfirmed=false;
     const rf=res.refreshed;if(!LIVE.length){toast(`No listings found${S.find.f.loc?` in ${S.find.f.loc}`:''}, even after searching nearby areas. Try a wider price range, more sites or Analyst.`);return}
+    saveFindHistory(lv,p.sites.length);
     toast(rf?`Refreshed: ${rf.gone} listing${rf.gone===1?' has':'s have'} gone and ${rf.gone===1?'was':'were'} removed, ${rf.added} new one${rf.added===1?'':'s'} found. ${live} live now.${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`
       :`${live} live listing${live===1?'':'s'} across ${p.sites.length} site${p.sites.length>1?'s':''}, every link checked.${res.removed?` Removed ${res.removed} dead or taken link${res.removed===1?'':'s'}.`:''}${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
   catch(e){if(e.cancelled||gone())return;keep=!!e.resume;findError(netMsg(e)||'The search failed. Please try again.',keep)}
@@ -2871,11 +2886,54 @@ $('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInp
       if(!p.ok)throw new Error(data.error||'Analysis failed.');if(data.credits){AIC.info=data.credits;renderAILevels()}
       if(data.status==='done')break;if(data.status==='error')throw new Error(data.error||'Analysis failed.');
       {const el=Math.round((Date.now()-t0)/1000);status.textContent=`${lv.name} ${hasLink&&el<25?'is reading the listing':'analysis in progress'}… ${el}s · ${leftTxt(estSecs('analyse',lv.id)+extraS,el,0)}`}if(Date.now()-t0>17*60e3)throw new Error('The analysis is taking too long. Please try again.')}
-    S.deal.aiAnalysis=Object.assign({},data.analysis,{_level:lv.id,_strategy:aiStrat()});S.deal.sourceText=input;save();renderAIAnalysis(S.deal.aiAnalysis);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
+    S.deal.aiAnalysis=Object.assign({},data.analysis,{_level:lv.id,_strategy:aiStrat()});S.deal.sourceText=input;save();renderAIAnalysis(S.deal.aiAnalysis);saveAIHistory(input,lv);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
   catch(e){status.textContent=e.message||'The analysis could not be completed. Please try again.'}finally{btn.disabled=false;btn.textContent='Analyse with AI'}});
 $('#advancedToggle').addEventListener('click',e=>{const on=document.body.classList.toggle('advanced-mode');e.currentTarget.setAttribute('aria-expanded',String(on));e.currentTarget.textContent=on?'Hide advanced controls':'Show advanced controls'});
 window.addEventListener('dealpro:save-error',()=>toast('Your latest change could not be saved. Check your connection and try again.'));
 $('#contactForm').addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget,status=$('#contactStatus'),button=form.querySelector('button[type="submit"]');button.disabled=true;status.textContent='Sending your enquiry…';try{const body=new URLSearchParams(new FormData(form));const r=await fetch('/',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:body.toString()});if(!r.ok)throw new Error();form.reset();status.textContent='Thank you. Your enquiry has been sent.'}catch(err){status.textContent='Your enquiry could not be sent. Please email jonahquartey584@gmail.com.'}finally{button.disabled=false}});
+
+/* ---------- history: every finished search and analysis is saved to the account so it can be reopened ---------- */
+const HS={kind:'finder',items:[]};
+const hsWhen=at=>{const d=new Date(at);return isNaN(d)?'':d.toLocaleString('en-GB',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})};
+async function histPost(kind,summary,data){try{const r=await fetch('/api/history?kind='+kind,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({summary,data})});if(!r.ok)throw 0}catch(e){console.warn('Could not save to history')}}
+function saveFindHistory(lv,nSites){const f=S.find.f,buy=f.mode==='buy',live=(LIVE||[]).filter(confirmedLive).length;
+  const beds=Array.isArray(f.beds)&&f.beds.length?` · ${f.beds.join(', ')} bed`:'',price=f.min||f.max?` · ${f.min?'£'+(+f.min).toLocaleString('en-GB'):'Any'}–${f.max?'£'+(+f.max).toLocaleString('en-GB'):'any'}${buy?'':' pcm'}`:'';
+  const st=f.strategy&&f.strategy!=='auto'?` · ${STRAT_NAME[f.strategy]||f.strategy}`:'';
+  histPost('finder',{title:`${f.loc||'Anywhere in the UK'} · ${buy?'Buy':'Rent'}${beds}${price}`,detail:`${lv.name} · ${live} live listing${live===1?'':'s'} · ${nSites} site${nSites===1?'':'s'}${st}${f.notes?` · “${f.notes.slice(0,90)}”`:''}`,count:live},
+    {f,live:LIVE,liveAt:S.find.liveAt,liveSites:S.find.liveSites||{},rank:S.find.rank||null,removed:S.find.removed||0})}
+function saveAIHistory(input,lv){const a=S.deal.aiAnalysis||{},first=(input.split('\n').map(x=>x.trim()).find(Boolean)||'Deal').slice(0,120);
+  histPost('analyser',{title:first,detail:`${String(a.verdict||'Analysis')} · ${lv.name} · ${stratName(aiStrat())==='auto'?'Strategy chosen by AI':(STRAT_OPTS.find(x=>x[0]===aiStrat())||[,''])[1]}`,score:+a.score},
+    {input,analysis:a,strategy:aiStrat(),area:S.deal.area||''})}
+function drawHistory(){const L=$('#hsList'),finder=HS.kind==='finder';
+  L.innerHTML=HS.items.map(x=>`<li class="hs-item"><div><h3>${esc(x.title)}</h3><p>${esc(hsWhen(x.at))}${x.score!=null&&!finder?` · <span class="hs-score">${x.score}/100</span>`:''}</p></div>
+    <div class="hs-acts"><button class="btn sm primary" type="button" data-hs-open="${esc(x.id)}">Open</button><button class="btn ghost sm" type="button" data-hs-del="${esc(x.id)}" aria-label="Delete">Delete</button></div><p style="grid-column:1">${esc(x.detail)}</p></li>`).join('')}
+async function openHistory(kind){HS.kind=kind;HS.items=[];const d=$('#histPanel'),st=$('#hsStatus'),finder=kind==='finder';
+  $('#hsKicker').textContent=finder?'Deal Finder':'Deal Analyser';$('#hsTitle').textContent=finder?'Previous searches':'Previous analyses';
+  $('#hsSub').textContent=finder?'Your last 30 searches are saved to your account. Open one to see what came up.':'Your last 50 analyses are saved to your account. Open one to see the full result again.';
+  drawHistory();st.textContent='Loading…';try{d.showModal()}catch(e){d.setAttribute('open','')}
+  try{const r=await fetch('/api/history?kind='+kind,{credentials:'same-origin'});const j=await r.json().catch(()=>({}));
+    if(r.status===401){st.textContent=`Sign in to see your previous ${finder?'searches':'analyses'}.`;return}if(!r.ok)throw new Error(j.error);
+    HS.items=j.items||[];st.textContent=HS.items.length?'':finder?'No searches saved yet. Every search you run from now on appears here.':'No analyses saved yet. Every analysis you run from now on appears here.';drawHistory()}
+  catch(e){st.textContent=netMsg(e)||'Could not load your history. Check your connection and try again.'}}
+function closeHistory(){const d=$('#histPanel');try{d.close()}catch(e){d.removeAttribute('open')}}
+async function loadHistory(id){const st=$('#hsStatus'),finder=HS.kind==='finder',item=HS.items.find(x=>x.id===id)||{};
+  if(finder&&FS.busy){st.textContent='Wait for the current search to finish, or cancel it, before opening a previous one.';return}
+  st.textContent='Opening…';
+  try{const r=await fetch(`/api/history?kind=${HS.kind}&id=${encodeURIComponent(id)}`,{credentials:'same-origin'});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error);const e=j.entry||{};
+    if(finder){S.find.f=Object.assign(FIND_DEF(),e.f||{});S.find.f.sites=Object.assign(FIND_DEF().sites,(e.f||{}).sites||{});
+      LIVE=(Array.isArray(e.live)?e.live:[]).filter(r=>listingLink(r.url));S.find.live=LIVE;S.find.liveAt=e.liveAt||item.at;S.find.liveSites=e.liveSites||{};S.find.rank=e.rank||null;S.find.removed=e.removed||0;S.find.searched=true;
+      FS.sel.clear();FS.rank=null;FS.showUnconfirmed=false;restoreRank();bindFind();save();closeHistory();go('find');renderFind();
+      toast(`Showing your search from ${hsWhen(item.at)}. Refresh it to check which listings are still live.`);const res=$('#fResults');if(res)res.scrollIntoView({behavior:reduced()?'auto':'smooth',block:'start'})}
+    else{S.deal.aiAnalysis=e.analysis||null;S.deal.sourceText=e.input||'';$('#aiDealInput').value=e.input||'';if(e.strategy){S.deal.aiStrategy=e.strategy;renderStratOpts()}
+      save();closeHistory();go('analyser');renderAIAnalysis(S.deal.aiAnalysis);$('#aiDealStatus').textContent=`Showing your analysis from ${hsWhen(item.at)}. Analyse again for up-to-date figures.`;
+      const out=$('#aiDealOutput');if(out)out.scrollIntoView({behavior:reduced()?'auto':'smooth',block:'start'})}}
+  catch(err){st.textContent=netMsg(err)||err.message||'Could not open that entry. Please try again.'}}
+async function deleteHistory(id){const st=$('#hsStatus');
+  try{const r=await fetch(`/api/history?kind=${HS.kind}&id=${encodeURIComponent(id)}`,{method:'DELETE',credentials:'same-origin'});const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error);
+    HS.items=j.items||[];drawHistory();st.textContent=HS.items.length?'Deleted.':'Deleted. Nothing else is saved.'}
+  catch(err){st.textContent=netMsg(err)||'Could not delete that entry. Please try again.'}}
+$('#fHistory').addEventListener('click',()=>openHistory('finder'));$('#aiHistory').addEventListener('click',()=>openHistory('analyser'));$('#hsClose').addEventListener('click',closeHistory);
+$('#histPanel').addEventListener('click',e=>{const o=e.target.closest('[data-hs-open]'),d=e.target.closest('[data-hs-del]');if(o)loadHistory(o.dataset.hsOpen);else if(d)deleteHistory(d.dataset.hsDel);else if(e.target.id==='histPanel')closeHistory()});
 
 /* ---------- deal community ---------- */
 const CM={posts:null,loading:false,error:''};
