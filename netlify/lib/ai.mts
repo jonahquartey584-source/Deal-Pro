@@ -197,7 +197,52 @@ better_strategy (string: if another strategy clearly suits this property better,
 // else, or a site that blocks the request, is read through OpenAI's web search instead.
 const propertyHosts = () => [...new Set(Object.values(SITES).flatMap((s) => s.domains)), "onthemarket.com", "primelocation.com", "zoopla.co.uk", "purplebricks.co.uk", "home.co.uk", "idealflatmate.co.uk", "roomgo.co.uk", "openrent.com"];/* SITES is defined further down */
 const MAX_LINKS = 3;
-export type LinkRead = { url: string; ok: boolean; via: "page" | "search" | "none"; note?: string };
+export type LinkRead = { url: string; ok: boolean; via: "page" | "search" | "none"; note?: string; photos?: string[] };
+
+// The advert's own photos, for the deal pack: the share image, the listing's structured data, and
+// pictures served from the site's image hosts. Logos, icons, maps and agent branding are left out,
+// and size variants of the same picture are kept once.
+const NOT_PHOTO = /logo|icon|sprite|avatar|favicon|placeholder|brand|badge|map|staticmap|floorplan|floor-plan|flp|epc|banner|qr|pixel|tracking|\.svg/i;
+function listingPhotos(html: string, pageUrl: string) {
+  const out: string[] = [];
+  const add = (raw: unknown) => {
+    if (typeof raw !== "string") return;
+    let u: URL;
+    try { u = new URL(decode(raw.trim()), pageUrl); } catch { return; }
+    if (u.protocol !== "https:" || NOT_PHOTO.test(u.pathname) || !/\.(jpe?g|png|webp)$/i.test(u.pathname) && !/zoocdn|rightmove|openrent|spareroom|gumtree|ebayimg|fbcdn|onthemarket|imagedelivery/i.test(u.hostname)) return;
+    out.push(u.href);
+  };
+  for (const m of html.matchAll(/<meta[^>]+(?:property|name)=["'](?:og:image(?::secure_url)?|twitter:image)["'][^>]*content=["']([^"']+)["']/gi)) add(m[1]);
+  for (const m of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const walk = (v: unknown, depth = 0): void => {
+        if (depth > 6 || !v) return;
+        if (Array.isArray(v)) { v.forEach((x) => walk(x, depth + 1)); return; }
+        if (typeof v !== "object") return;
+        const o = v as Record<string, unknown>;
+        for (const k of ["image", "photo", "photos", "images"]) {
+          const x = o[k];
+          if (typeof x === "string") add(x);
+          else if (Array.isArray(x)) x.forEach((y) => typeof y === "string" ? add(y) : y && typeof y === "object" && add((y as Record<string, unknown>).url || (y as Record<string, unknown>).contentUrl));
+          else if (x && typeof x === "object") add((x as Record<string, unknown>).url || (x as Record<string, unknown>).contentUrl);
+        }
+        Object.values(o).forEach((x) => typeof x === "object" && walk(x, depth + 1));
+      };
+      walk(JSON.parse(m[1]));
+    } catch { /* not valid JSON */ }
+  }
+  // Rightmove, Zoopla, OpenRent and others also list the gallery as plain image URLs in the page data.
+  for (const m of html.matchAll(/https:\\?\/\\?\/(?:media\.rightmove\.co\.uk|lid\.zoocdn\.com|[a-z0-9.-]*openrent\.co\.uk|[a-z0-9.-]*spareroom\.co\.uk|[a-z0-9.-]*onthemarket\.com|i\.ebayimg\.com|imagedelivery\.net)[^"'\s<>)]*?\.(?:jpe?g|png|webp)/gi)) add(m[0].replace(/\\\//g, "/"));
+  // One entry per picture (matched on its file name), keeping the largest version seen.
+  const size = (u: string) => (/_max_|\/crop\//i.test(u) ? 0 : 1e6) + Math.max(0, ...[...u.matchAll(/(\d{3,4})(?:x|\/)(\d{3,4})/g)].map((m) => +m[1] * +m[2]));
+  const best = new Map<string, string>();
+  for (const u of out) {
+    const key = (u.split(/[?#]/)[0].split("/").pop() || u).replace(/_max_\d+x\d+/i, "").toLowerCase();
+    const cur = best.get(key);
+    if (!cur || size(u) > size(cur)) best.set(key, u);
+  }
+  return [...best.values()].slice(0, 16);
+}
 
 const decode = (t: string) => t.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&pound;/g, "£").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
 function pageText(html: string) {
@@ -228,8 +273,8 @@ async function fetchPage(url: string) {
     const finalHost = new URL(r.url || url).hostname.toLowerCase();
     if (!propertyHosts().some((d) => finalHost === d || finalHost.endsWith(`.${d}`))) return null;
     if (!r.ok || !/html/i.test(r.headers.get("content-type") || "")) return null;
-    const text = pageText((await r.text()).slice(0, 1_500_000));
-    return text.length > 400 && !BLOCKED.test(text.slice(0, 1500)) ? text : null;
+    const html = (await r.text()).slice(0, 1_500_000), text = pageText(html);
+    return text.length > 400 && !BLOCKED.test(text.slice(0, 1500)) ? { text, photos: listingPhotos(html, r.url || url) } : null;
   } catch { return null; } finally { clearTimeout(timer); }
 }
 
@@ -251,12 +296,13 @@ export async function readLinks(input: string, level: LevelId) {
   const reads: LinkRead[] = [];
   const parts: string[] = [];
   for (const url of urls) {
-    let text = await fetchPage(url);
+    const page = await fetchPage(url);
+    let text = page?.text || null;
     let via: LinkRead["via"] = text ? "page" : "none";
     if (!text) {
       try { text = await searchPage(url, level); if (text) via = "search"; } catch (error) { console.warn("Could not read listing", url, errText(error)); }
     }
-    reads.push({ url, ok: !!text, via, ...(text ? {} : { note: "The page couldn't be opened" }) });
+    reads.push({ url, ok: !!text, via, ...(text ? {} : { note: "The page couldn't be opened" }), ...(page?.photos.length ? { photos: page.photos } : {}) });
     parts.push(text
       ? `--- Listing details read from ${url} ---\n${text}`
       : `--- ${url} could not be opened. Say so plainly and ask the user to paste the advert text; don't treat the link as missing information about the deal itself. ---`);

@@ -324,6 +324,14 @@ td.lb{border-bottom:0}
 .pk-top b{color:#C8102E;font-weight:600;font-size:11.5px}
 .pack h2{font-size:24px;letter-spacing:-.02em;color:#14161A;overflow-wrap:anywhere}
 .pack .ps{color:#5E636E;font-size:12.5px;margin:3px 0 4px}
+.pack .pk-photos{display:grid;grid-template-columns:2fr 1fr;gap:6px;margin:14px 0 6px}.pack .pk-photos.one{grid-template-columns:1fr}
+.pack .pk-photos img{display:block;width:100%;height:100%;object-fit:cover;border-radius:3px;background:#ECEDEF}
+.pack .pk-main{aspect-ratio:3/2}.pack .pk-thumbs{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:6px}.pack .pk-thumbs img:last-child:nth-child(odd){grid-column:span 2}
+.ph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:6px;margin:4px 0 8px}
+.ph-t{position:relative;padding:0;border:2px solid var(--line);border-radius:6px;overflow:hidden;aspect-ratio:4/3;background:#111;cursor:pointer}
+.ph-t img{display:block;width:100%;height:100%;object-fit:cover}.ph-t.on{border-color:var(--brand)}.ph-t:not(.on) img{opacity:.3;filter:grayscale(1)}
+.ph-t i{position:absolute;right:4px;top:4px;min-width:18px;height:18px;padding:0 4px;border-radius:9px;background:var(--brand);color:#fff;font:600 11px/18px var(--mono,monospace);font-style:normal}.ph-t:not(.on) i{display:none}
+.ph-add{display:flex;gap:6px}.ph-add .inp{flex:1;min-width:0}
 .pack h3{font-size:12.5px;color:#0B0B0C;margin:22px 0 8px;padding-bottom:6px;border-bottom:1px solid #E3E5EA}
 .pack p{margin:0 0 8px}
 .kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px 24px;margin-top:12px}
@@ -1211,6 +1219,13 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
           </div>
         </div>
         <div class="fs">
+          <div class="fs-h"><h2>Listing photos</h2></div>
+          <p class="note" id="pPhotoNote"></p>
+          <div class="ph-grid" id="pPhotos"></div>
+          <div class="ph-add"><input class="inp" id="pPhotoUrl" placeholder="Add a photo link (https://…)" inputmode="url"><button class="btn sm" id="pPhotoAdd" type="button">Add</button></div>
+          <p class="note">Tap a photo to include or leave it out. Photos of the outside can let an investor find the advert, so consider leaving them out of the pre-NDA version.</p>
+        </div>
+        <div class="fs">
           <div class="alert warn">Only send packs through a sourcer who is in a redress scheme, or once you are in one yourself. Keep the numbers labelled as illustrative.</div>
           <p class="note">In the full version this exports a branded PDF. In the demo, generating removes the preview watermark.</p>
         </div>
@@ -1905,7 +1920,16 @@ function bindPack(){const p=S.deal.pack;$('#pBiz').value=p.biz;$('#pRedress').va
 [['#pBiz','biz'],['#pRedress','redress'],['#pFee','fee']].forEach(([s,k])=>$(s).addEventListener('input',e=>{S.deal.pack[k]=e.target.value;save();renderPack()}));
 $('#pNDA').addEventListener('change',e=>{S.deal.pack.nda=e.target.checked;save();renderPack()});
 $('#genPack').addEventListener('click',()=>{if(S.deal.pack.final){toast('Pack already generated');return}if(!feature('pack','#nPack')||!spend(COST.pack,'Deal pack','#nPack'))return;S.deal.pack.final=true;toast('Final pack generated');save();renderPack()});
-function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();
+// Photos taken from the listing when it's analysed, or added by link; the ticked ones go on the pack.
+const dealPhotos=()=>Array.isArray(S.deal.photos)?S.deal.photos.filter(x=>x&&/^https:\/\//.test(x.url)):[];
+function renderPackPhotos(){const P=dealPhotos(),on=P.filter(x=>x.on!==false).length;
+  $('#pPhotoNote').textContent=P.length?`${on} of ${P.length} photo${P.length===1?'':'s'} on the pack. The first ticked photo is the main one.`:'Analyse a listing link in the Deal Analyser and its photos appear here. You can also add a photo link.';
+  let n=0;$('#pPhotos').innerHTML=P.map((x,i)=>`<button type="button" class="ph-t${x.on!==false?' on':''}" data-ph="${i}" aria-pressed="${x.on!==false}" aria-label="Photo ${i+1}"><img src="${esc(x.url)}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.hidden=true"><i>${x.on!==false?++n:''}</i></button>`).join('')}
+$('#pPhotos').addEventListener('click',e=>{const b=e.target.closest('[data-ph]');if(!b)return;const x=dealPhotos()[+b.dataset.ph];if(!x)return;x.on=x.on===false;save();renderPack()});
+$('#pPhotoAdd').addEventListener('click',()=>{const i=$('#pPhotoUrl'),u=i.value.trim();if(!/^https:\/\/\S+$/.test(u)){toast('Paste a photo link that starts with https://');return}
+  S.deal.photos=dealPhotos();if(!S.deal.photos.some(x=>x.url===u))S.deal.photos.push({url:u,on:true,added:true});i.value='';save();renderPack()});
+$('#pPhotoUrl').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('#pPhotoAdd').click()}});
+function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();renderPackPhotos();
   $('#genPack').textContent=p.final?'Pack generated':'Generate final pack';
   const rent=U.reduce((s,u)=>s+u.rent,0),dep=U.reduce((s,u)=>s+u.dep,0);
   const area=p.nda?(d.area||'').replace(/,?\s*[A-Z]{1,2}\d[\dA-Z]?\s*\d[A-Z]{2}\b/i,''):(d.send.addr||d.area);
@@ -1919,6 +1943,8 @@ function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();
   <article class="pack">${p.final?'':'<div class="wm" aria-hidden="true"><span>PREVIEW</span></div>'}
     <div class="pk-top"><b>Investment summary</b><span>${p.nda?'Pre-NDA':'Full'} · ${today}</span></div>
     <h2>${esc(d.name||'Untitled deal')}</h2><div class="ps">${esc(area)} | ${esc(d.strat)} opportunity | ${U.length} unit${U.length>1?'s':''}</div>
+    ${(()=>{const ph=dealPhotos().filter(x=>x.on!==false).slice(0,5),img=(x,c)=>`<img class="${c}" src="${esc(x.url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`;
+      return ph.length?`<div class="pk-photos${ph.length===1?' one':''}">${img(ph[0],'pk-main')}${ph.length>1?`<div class="pk-thumbs">${ph.slice(1).map(x=>img(x,'')).join('')}</div>`:''}</div>`:''})()}
     <h3>The deal</h3><p>A rental business opportunity, not a purchase of the property. Terms are as advertised by the landlord and need written confirmation.</p>
     <div class="kv">${cols}</div>
     <h3>Illustrative monthly surplus</h3>
@@ -2870,6 +2896,9 @@ renderAILevels();window.addEventListener('dealpro:signed-in',loadAICredits);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 /* strategy to analyse for: 'auto' lets the AI pick */
 const STRAT_OPTS=[['auto','Let AI decide','The AI works out which strategy the details describe or suit best.']].concat(STRATS);
+// Photos the listing reader found go to the deal, for its deal pack (ones the user added by link are kept).
+function takePhotos(a){const found=[...new Set(((a&&a.links_read)||[]).flatMap(l=>Array.isArray(l.photos)?l.photos:[]))].filter(u=>/^https:\/\//.test(u));if(!found.length)return;
+  const prev=dealPhotos(),was=new Map(prev.map(x=>[x.url,x.on]));S.deal.photos=found.map(url=>({url,on:was.has(url)?was.get(url):true})).concat(prev.filter(x=>x.added&&!found.includes(x.url)))}
 const aiStrat=()=>STRAT_OPTS.some(x=>x[0]===S.deal.aiStrategy)?S.deal.aiStrategy:'auto';
 function renderStratOpts(){const cur=aiStrat();
   $('#aiStratOpts').innerHTML=STRAT_OPTS.map(([k,n,d])=>`<label class="ai-strat" title="${esc(d)}"><input type="radio" name="aiStrat" value="${k}"${k===cur?' checked':''}><span>${esc(n)}</span></label>`).join('');
@@ -2886,7 +2915,7 @@ $('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInp
       if(!p.ok)throw new Error(data.error||'Analysis failed.');if(data.credits){AIC.info=data.credits;renderAILevels()}
       if(data.status==='done')break;if(data.status==='error')throw new Error(data.error||'Analysis failed.');
       {const el=Math.round((Date.now()-t0)/1000);status.textContent=`${lv.name} ${hasLink&&el<25?'is reading the listing':'analysis in progress'}… ${el}s · ${leftTxt(estSecs('analyse',lv.id)+extraS,el,0)}`}if(Date.now()-t0>17*60e3)throw new Error('The analysis is taking too long. Please try again.')}
-    S.deal.aiAnalysis=Object.assign({},data.analysis,{_level:lv.id,_strategy:aiStrat()});S.deal.sourceText=input;save();renderAIAnalysis(S.deal.aiAnalysis);saveAIHistory(input,lv);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
+    S.deal.aiAnalysis=Object.assign({},data.analysis,{_level:lv.id,_strategy:aiStrat()});S.deal.sourceText=input;takePhotos(S.deal.aiAnalysis);save();renderAIAnalysis(S.deal.aiAnalysis);saveAIHistory(input,lv);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
   catch(e){status.textContent=e.message||'The analysis could not be completed. Please try again.'}finally{btn.disabled=false;btn.textContent='Analyse with AI'}});
 $('#advancedToggle').addEventListener('click',e=>{const on=document.body.classList.toggle('advanced-mode');e.currentTarget.setAttribute('aria-expanded',String(on));e.currentTarget.textContent=on?'Hide advanced controls':'Show advanced controls'});
 window.addEventListener('dealpro:save-error',()=>toast('Your latest change could not be saved. Check your connection and try again.'));
@@ -2924,7 +2953,7 @@ async function loadHistory(id){const st=$('#hsStatus'),finder=HS.kind==='finder'
       LIVE=(Array.isArray(e.live)?e.live:[]).filter(r=>listingLink(r.url));S.find.live=LIVE;S.find.liveAt=e.liveAt||item.at;S.find.liveSites=e.liveSites||{};S.find.rank=e.rank||null;S.find.removed=e.removed||0;S.find.searched=true;
       FS.sel.clear();FS.rank=null;FS.showUnconfirmed=false;restoreRank();bindFind();save();closeHistory();go('find');renderFind();
       toast(`Showing your search from ${hsWhen(item.at)}. Refresh it to check which listings are still live.`);const res=$('#fResults');if(res)res.scrollIntoView({behavior:reduced()?'auto':'smooth',block:'start'})}
-    else{S.deal.aiAnalysis=e.analysis||null;S.deal.sourceText=e.input||'';$('#aiDealInput').value=e.input||'';if(e.strategy){S.deal.aiStrategy=e.strategy;renderStratOpts()}
+    else{S.deal.aiAnalysis=e.analysis||null;S.deal.sourceText=e.input||'';takePhotos(S.deal.aiAnalysis);$('#aiDealInput').value=e.input||'';if(e.strategy){S.deal.aiStrategy=e.strategy;renderStratOpts()}
       save();closeHistory();go('analyser');renderAIAnalysis(S.deal.aiAnalysis);$('#aiDealStatus').textContent=`Showing your analysis from ${hsWhen(item.at)}. Analyse again for up-to-date figures.`;
       const out=$('#aiDealOutput');if(out)out.scrollIntoView({behavior:reduced()?'auto':'smooth',block:'start'})}}
   catch(err){st.textContent=netMsg(err)||err.message||'Could not open that entry. Please try again.'}}
