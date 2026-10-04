@@ -136,6 +136,13 @@ export async function start({ state, signedIn = false, api }) {
   });
   await page.addInitScript(`try{localStorage.setItem("dealpro:state",${JSON.stringify(JSON.stringify(state))});localStorage.setItem("dealpro:ai-level","quick");sessionStorage.clear()}catch(e){}`);
   await page.addInitScript(CURSOR);
+  // Hold every CSS animation still from the first paint: the recorder steps them on its own clock,
+  // so the intro can't play out (in real time) while the page loads.
+  await page.addInitScript(() => {
+    const hold = () => { const s = document.createElement("style"); s.textContent = "*,*::before,*::after{animation-play-state:paused!important}"; document.documentElement.appendChild(s); };
+    if (document.documentElement) hold();
+    else new MutationObserver((_, o) => { if (document.documentElement) { o.disconnect(); hold(); } }).observe(document, { childList: true });
+  });
   await page.clock.install({ time: new Date("2026-09-26T10:00:00") });
   await page.goto(BASE + "/");
   await page.evaluate(() => document.fonts.ready);
@@ -156,7 +163,8 @@ export async function start({ state, signedIn = false, api }) {
         // View transitions finish on their own; pausing them would hold the page frozen.
         if (a.__done || String(a.effect?.pseudoElement || "").startsWith("::view-transition")) continue;
         // Anything already running when recording starts (the intro) restarts from its beginning.
-        if (a.__v0 === undefined) { a.__v0 = first ? ms : ms - (a.currentTime || 0); a.pause(); }
+        if (a.__v0 === undefined) a.__v0 = first ? ms : ms - (a.currentTime || 0);
+        a.pause(); // again every frame: a CSS play-state change (the intro's photo wait) resumes it
         const at = ms - a.__v0, end = a.effect?.getComputedTiming().endTime;
         // Once it has run its course, finish it properly so end events fire (the intro removes itself on one).
         if (Number.isFinite(end) && at >= end) { a.__done = true; a.finish(); } else a.currentTime = at;
@@ -224,7 +232,7 @@ export async function start({ state, signedIn = false, api }) {
     execFileSync(FFMPEG, ["-y", "-loglevel", "error", "-i", posterFrame, "-vf", `scale=${W}:${H}:flags=lanczos`, path.join(OUT, poster)]);
     execFileSync(FFMPEG, [
       "-y", "-loglevel", "error", "-framerate", String(FPS), "-i", path.join(FRAMES, "%05d.jpg"), "-i", audio,
-      "-c:v", "libx264", "-preset", "slow", "-crf", "24", "-pix_fmt", "yuv420p",
+      "-c:v", "libx264", "-preset", "slow", "-crf", "26", "-maxrate", "900k", "-bufsize", "1800k", "-pix_fmt", "yuv420p",
       "-c:a", "aac", "-b:a", "128k", "-shortest", "-movflags", "+faststart", path.join(OUT, video),
     ], { stdio: "inherit" });
     console.log(path.join(OUT, video));
