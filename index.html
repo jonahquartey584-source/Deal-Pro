@@ -2394,7 +2394,7 @@ const CARD_SORTS=[['','Listing order'],['price:1','Rent, low to high'],['price:-
 function dealCard(r,i,o={}){const SF=o.preview?null:stratFigures(r),open=!o.preview&&isOpen(r),u={rent:r.price,rate:RATE_EST(r.beds,r.area+' '+r.postcode)},occ=OCC.map(x=>month(u,x,null,DEF_A).surplus);
   const li=(em,txt)=>`<li>${o.plain?'<span class="em-dot" aria-hidden="true"></span>':`<span class="em" aria-hidden="true">${em}</span>`}<span>${txt}</span></li>`;
   const act=o.preview?`<button class="btn sm" data-go="find">Open in Deal Finder</button>`
-    :open?`<button class="btn sm primary" data-build="${r.k}">Analyse deal</button><a class="btn sm" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a>`
+    :open?`<button class="btn sm primary" data-build="${r.k}">Analyse deal</button><a class="btn sm" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a>${r.pack?`<a class="btn sm" href="/pack/${esc(r.pack.id)}" target="_blank" rel="noopener">Deal pack ↗</a>`:''}`
     :`<button class="btn sm" data-unlock="${r.k}" data-n="${i+1}">${LOCK}Unlock this deal · ${gbp(dealFee())}</button>`;
   return `<article class="dcard${open?' is-open':''}${FS.justOpened===r.k&&open?' just-open':''}" data-k="${r.k}" aria-label="Deal ${i+1}">
     <h3>Deal ${i+1} (${gbp(r.price)} ${bedWord(r.beds)})${r.ai>=0?` <span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="AI score · ${esc(r.aiv||'')}">${r.ai}</span>`:''}</h3>${o.preview?'':`<p class="dc-live">${liveTag(r)}${ageDays(r)!=null?` <span class="muted">· listed ${ageTxt(ageDays(r)).toLowerCase()}</span>`:''} ${freshTags(r)}</p>`}
@@ -2421,9 +2421,9 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   const th=(k,lab,cls='')=>{const on=so&&so.k===k;return `<th class="${cls}" aria-sort="${on?(so.dir>0?'ascending':'descending'):'none'}"><button class="sort" data-sort="${k}">${lab}<span class="sa" aria-hidden="true">${on?(so.dir>0?'↑':'↓'):''}</span></button></th>`};
   const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
   const acts=view==='cards'
-    ?(m?`<button class="btn sm primary" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${CARD_SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${CARD_SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
+    ?(m?`<button class="btn sm primary" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button>${packBtn(nOpen)}<label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${CARD_SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${CARD_SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
       <button class="btn sm car-arrow" id="fPrev" aria-label="Previous deals">${CHEV(-1)}</button><button class="btn sm car-arrow" id="fNext" aria-label="Next deals">${CHEV(1)}</button>`:'')
-    :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
+    :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button>${packBtn(nOpen)}<label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
   const L=`<span class="lockc">${LOCK}Locked</span>`;
   let body;
   if(!m)body=`<div class="fempty"><h2>${hidden?'No listings confirmed live':'No listings match these filters'}</h2><p>${hidden?'Every listing found either had a dead link or its site blocked the check. Try Analyst or Expert, which open more listings to confirm them, or show the unconfirmed ones.':'Try a wider price range, a different location or more sites.'}</p></div>`;
@@ -2433,7 +2433,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
       ${SC.size?th('ai','AI score','nr'):''}${th('site','Site')}${th('title','Listing')}${th('type','Type')}${th('beds','Beds','nr')}${th('area','Area')}${th('postcode','Postcode')}${th('price',S.find.f.mode==='buy'?'Price':'Rent pcm','nr')}<th class="nr" title="The main figure for your strategy (estimate)">${esc(keyHead)}</th><th>Furnished</th>${th('listedTs','Listed')}<th>Checked</th><th>Link</th><th>Action</th></tr></thead>
       <tbody>${rows.map((r,i)=>{const o=isOpen(r);return `<tr data-k="${r.k}"><td class="rn">${i+1}</td><td class="ck">${o?`<input type="checkbox" id="fsel${r.k}" data-sel="${r.k}" aria-label="Select ${esc(r.type)}, ${esc(r.area)}"${FS.sel.has(r.k)?' checked':''}>`:''}</td>
         ${SC.size?`<td class="nr">${r.ai>=0?`<span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="${esc(r.aiv)}">${r.ai}</span>`:'<span class="muted">–</span>'}</td>`:''}<td>${esc(SITE_LABEL(r.site))}</td><td class="clip" title="${esc(r.title||'')}">${esc(r.title||'')}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td>${(()=>{const k=stratFigures(r).key;return `<td class="nr mono${k[2]?' neg':''}" title="${esc(k[0])} (estimate)">${esc(k[1])}</td>`})()}<td class="muted">${esc(r.furnished)}</td><td class="fr-cell"><span class="muted">${ageTxt(ageDays(r))||'–'}</span>${freshTags(r)}</td><td>${liveTag(r)}</td>
-        <td>${o?`<a class="xlink" href="${esc(r.url)}" target="_blank" rel="noopener">Open ↗</a>`:L}</td><td>${o?`<button class="btn xs" data-build="${r.k}">Analyse deal</button>`:`<button class="btn xs" data-unlock="${r.k}" data-n="${i+1}">Unlock · ${gbp(dealFee())}</button>`}</td></tr>`}).join('')}</tbody></table></div>`;
+        <td>${o?`<a class="xlink" href="${esc(r.url)}" target="_blank" rel="noopener">Open ↗</a>${r.pack?` <a class="xlink" href="/pack/${esc(r.pack.id)}" target="_blank" rel="noopener">Pack ↗</a>`:''}`:L}</td><td>${o?`<button class="btn xs" data-build="${r.k}">Analyse deal</button>`:`<button class="btn xs" data-unlock="${r.k}" data-n="${i+1}">Unlock · ${gbp(dealFee())}</button>`}</td></tr>`}).join('')}</tbody></table></div>`;
   const ageH=S.find.liveAt?(Date.now()-Date.parse(S.find.liveAt))/36e5:0,stale=ageH>=24,nNew=rows.filter(isFreshNew).length;
   const fresh=`<div class="fresh-bar${stale?' stale':''}"><span>${stale?`These results are from ${ageH<48?'yesterday':Math.round(ageH/24)+' days ago'}. Some listings may have gone.`:`Searched ${ageH<1?'just now':Math.round(ageH)+'h ago'}.`}${nNew?` <b>${nNew} new</b> in the last 3 days.`:''}</span><button class="btn sm ghost" type="button" id="fEditSearch" title="Change the criteria for this search">Edit search</button><button class="btn sm${stale?' primary':''}" type="button" id="fRefresh" title="Re-check every listing, remove ones that have gone, and look for new ones">Refresh &amp; find new</button></div>`;
   box.innerHTML=rankHTML()+fresh+`<div class="ftool"><div><div class="fsum" id="fSummary">${sum}</div>${unc}${view==='sheet'?'<div class="fsub">Copy, then paste into cell A1 of a Google Sheet.</div>':''}</div>
@@ -2442,7 +2442,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
     const upd=()=>{const p=$('#fPrev'),n=$('#fNext');if(p)p.disabled=c.scrollLeft<=2;if(n)n.disabled=c.scrollLeft+c.clientWidth>=c.scrollWidth-2};c.addEventListener('scroll',upd,{passive:true});upd()}
   FS.justOpened=null;syncSel()}
 function syncSel(){const n=FS.sel.size,b=$('#fBuildSel');if(b){b.disabled=!n;b.textContent=n?`Analyse selected (${n})`:'Analyse selected'}
-  const cc=$('#fCopyCards');if(cc)cc.textContent=cardsLabel((FS.lastRows||[]).filter(isOpen).length);
+  const cc=$('#fCopyCards');if(cc)cc.textContent=cardsLabel((FS.lastRows||[]).filter(isOpen).length);syncPackBtn();
   $$('#fResults tr[data-k]').forEach(tr=>tr.classList.toggle('is-sel',FS.sel.has(+tr.dataset.k)));
   const all=$('#fSelAll');if(all){const cb=$$('#fResults [data-sel]');all.checked=cb.length>0&&cb.every(c=>c.checked);all.indeterminate=!all.checked&&cb.some(c=>c.checked)}}
 function syncFee(){$$('.js-fee').forEach(e=>e.textContent=gbp(dealFee()))}
@@ -2606,7 +2606,7 @@ function cardFacts(r,i){const buy=r.mode==='buy',town=String(r.area||'').replace
     ...SF.lines,
     ...(r.ai>=0?[['⭐',`AI score ${r.ai}/100${r.aiv?' · '+r.aiv:''}`]]:[]),
     ...(ageDays(r)!=null?[['🆕',`Listed ${ageTxt(ageDays(r)).toLowerCase()}${r.hot?' · going fast':''}`]]:r.hot?[['🔥','Going fast']]:[]),
-    ...(live?[['✅',`Listing checked live ${live}`]]:[]),...(preNDA()?[]:[['🔗',r.url]])]}}
+    ...(live?[['✅',`Listing checked live ${live}`]]:[]),...(r.pack?[['📊',`Analysed: ${r.pack.verdict||'see pack'}${r.pack.score!=null?` · ${r.pack.score}/100`:''}`],['📄',`Deal pack: ${location.origin}/pack/${r.pack.id}`]]:[]),...(preNDA()?[]:[['🔗',r.url]])]}}
 function copyCards(){const rows=cardRows();if(!rows.length){toast('No deals to copy.');return}
   const f=S.find.f,today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   const title=`${rows.length} property deal${rows.length===1?'':'s'}${f.loc?` · ${f.loc}`:''} · ${today}${preNDA()?' · Pre-NDA summary':''}`;
@@ -2620,6 +2620,49 @@ function copyCards(){const rows=cardRows();if(!rows.length){toast('No deals to c
   const done=()=>toast(`Copied ${lab}${preNDA()?' (pre-NDA, no links)':''}. Paste into WhatsApp, an email or a message.`);
   try{if(window.ClipboardItem&&navigator.clipboard.write){navigator.clipboard.write([new ClipboardItem({'text/plain':new Blob([text],{type:'text/plain'}),'text/html':new Blob([html],{type:'text/html'})})]).then(done).catch(()=>navigator.clipboard.writeText(text).then(done).catch(fb))}
     else navigator.clipboard.writeText(text).then(done).catch(fb)}catch(e){fb()}}
+/* ---------- Analyse & package (Premium and Max): analyse every deal card and publish a shareable pre-NDA pack for each ---------- */
+const PACK_PLANS=['Pro','Max5','Max20'],canPack=()=>!!S.admin||PACK_PLANS.includes(S.plan);
+const FP={busy:false,done:0,total:0,failed:0};
+const packLabel=n=>FP.busy?`Packaging ${Math.min(FP.done+1,FP.total)} of ${FP.total}…`:FS.sel.size?`Analyse & package ${FS.sel.size}`:`Analyse & package all ${n}`;
+const packBtn=n=>`<button class="btn sm" id="fPackAll"${n&&!FP.busy?'':' disabled'} title="Analyse every deal and create a shareable deal pack for each. Premium and Max.">${canPack()?'':LOCK}${packLabel(n)}</button>`;
+function syncPackBtn(){const b=$('#fPackAll');if(!b)return;const n=(FS.lastRows||[]).filter(isOpen).length;b.disabled=!n||FP.busy;b.innerHTML=(canPack()?'':LOCK)+esc(packLabel(n))}
+const postcodeArea=pc=>String(pc||'').trim().split(/\s+/)[0].toUpperCase();
+// The shared pack is pre-NDA: town and postcode district only, no listing link, site or advertiser.
+function packFrom(r,a,strat){const buy=r.mode==='buy',pp=S.deal&&S.deal.pack||{},district=postcodeArea(r.postcode);
+  // Areas read "Street, Town" or "Street, W2": leave the street out, keep the town and postcode district.
+  const parts=String(r.area||'').replace(/\s*\(.*?\)/g,'').split(',').map(t=>t.trim()).filter(Boolean),rest=parts.length>1?parts.slice(1):parts;
+  let where=rest.join(', ');if(district&&!where.toUpperCase().includes(district))where=[where,district].filter(Boolean).join(' ');
+  const town=rest.filter(t=>!/^[A-Z]{1,2}\d/i.test(t)).map(t=>t.replace(/\s+[A-Z]{1,2}\d[\dA-Z]?\b.*$/i,'')).pop()||district;
+  const photos=[...new Set(((a&&a.links_read)||[]).flatMap(l=>Array.isArray(l.photos)?l.photos:[]))];
+  const kv=(label,value)=>value!=null&&String(value).trim()?{label,value:String(value)}:null;
+  return {title:`${r.type||'Property'}${town?` in ${town}`:''}`,location:where,strategy:STRAT_NAME[strat]||strat,
+    facts:[kv(buy?'Asking price':'Rent',buy?gbp(r.price):`${gbp(r.price)} a month`),kv('Property',r.type),kv('Bedrooms',r.beds===0?'Studio':r.beds),kv('Furnished',r.furnished&&r.furnished!=='Not stated'?r.furnished:'')].filter(Boolean),
+    verdict:a.verdict,score:a.score,summary:a.summary,
+    metrics:[kv('Monthly profit',a.monthly_profit),kv('Upfront cash',a.upfront_cash),kv('Break-even',a.break_even),...(Array.isArray(a.strategy_metrics)?a.strategy_metrics.map(m=>kv(m&&m.label,m&&m.value)):[])].filter(Boolean),
+    scenarios:(Array.isArray(a.occupancy_scenarios)?a.occupancy_scenarios:[]).map(o=>kv(`At ${o.occupancy}`,o.monthly_profit)).filter(Boolean),
+    risks:Array.isArray(a.risks)?a.risks:[],photos,biz:pp.biz||'',redress:pp.redress||'',fee:pp.fee||''}}
+async function packOne(r,lv){const st=stratFor(r),strat=st==='none'?(r.mode==='buy'?'BTL':'R2SA'):st;
+  const res=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'analyse',deal:listingBrief([r]),level:lv.id,strategy:strat})});
+  const d=await res.json().catch(()=>({}));if(!res.ok)throw Object.assign(new Error(d.error||'The analysis could not be started.'),{stop:[401,402,403].includes(res.status)});
+  if(d.credits){AIC.info=d.credits;renderAILevels()}
+  const a=await pollJob(d.jobId);
+  const pr=await fetch('/api/packs',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({pack:packFrom(r,a||{},strat)})});
+  const pj=await pr.json().catch(()=>({}));if(!pr.ok)throw Object.assign(new Error(pj.error||'The deal pack could not be saved.'),{stop:[401,402,403].includes(pr.status)});
+  const pk={id:pj.id,score:Number.isFinite(+a.score)?Math.round(+a.score):null,verdict:String(a.verdict||'').slice(0,60),at:new Date().toISOString()};
+  // Rows are copies of the search results: store the pack on the saved listing too, so it stays after a reload.
+  r.pack=pk;const src=SRC()[r.k];if(src&&src.url===r.url)src.pack=pk;save()}
+async function packageAll(){if(FP.busy)return;
+  if(!canPack()){toast('Analyse & package is included with Premium and Max. Upgrade to analyse every deal at once and share a deal pack link with each card.');go('plans');return}
+  const rows=cardRows(),todo=rows.filter(r=>!r.pack);if(!rows.length){toast('No deals to package.');return}
+  if(!todo.length){toast('These deals are already packaged. Copy the deal cards to share them with their pack links.');return}
+  const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];
+  if(!confirm(`Analyse and package ${todo.length} deal${todo.length===1?'':'s'} at ${lv.name}?\n\nEach deal gets a full AI analysis, which uses credits just like analysing it on its own, and a shareable pre-NDA deal pack (no listing link or exact address).${rows.length>todo.length?`\n\n${rows.length-todo.length} already packaged will be skipped.`:''}`))return;
+  Object.assign(FP,{busy:true,done:0,total:todo.length,failed:0});syncPackBtn();toast(`Packaging ${todo.length} deal${todo.length===1?'':'s'}. You can keep working; leave this page open.`);
+  const q=todo.slice();let stop='';
+  const worker=async()=>{while(q.length&&!stop){const r=q.shift();try{await packOne(r,lv)}catch(e){FP.failed++;if(e.stop)stop=e.message;console.warn('Packaging failed',e)}FP.done++;syncPackBtn()}};
+  await Promise.all([worker(),worker(),worker()]);
+  const ok=FP.done-FP.failed;FP.busy=false;save();renderFind();
+  toast(stop?`${stop}${ok?` ${ok} deal${ok===1?' was':'s were'} packaged first.`:''}`:`Packaged ${ok} of ${FP.total} deal${FP.total===1?'':'s'}.${FP.failed?` ${FP.failed} couldn't be analysed; try those again.`:''} Copy the deal cards to share them with their pack links.`)}
 // Start a new deal from pasted or posted text and run the AI analysis on it straight away.
 function analyseText(text,name){text=String(text||'').trim();if(!text){toast('Paste the deal details first.');return}
   startAnalysis(()=>{const d=freshDeal();d.name=String(name||'').trim().slice(0,80)||'Pasted deal';S.deal=d;markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
@@ -2645,7 +2688,7 @@ $('#fResults').addEventListener('click',e=>{
   if(e.target.closest('#fViewSheet')){S.find.view='sheet';save();renderFind();$('#fViewSheet').focus();return}
   const ar=e.target.closest('#fPrev,#fNext');if(ar){const c=$('#fCards');if(c){const step=312*Math.max(1,Math.floor(c.clientWidth/312));c.scrollBy({left:(ar.id==='fPrev'?-1:1)*step,behavior:reduced()?'auto':'smooth'})}return}
   if(e.target.closest('#fBuildSel')){buildDeal($$('#fResults [data-sel]').filter(c=>c.checked).map(c=>SRC()[+c.dataset.sel]));return}
-  if(e.target.closest('#fCopy'))copyTsv();if(e.target.closest('#fCopyCards'))copyCards()});
+  if(e.target.closest('#fCopy'))copyTsv();if(e.target.closest('#fCopyCards'))copyCards();if(e.target.closest('#fPackAll'))packageAll()});
 $('#fResults').addEventListener('change',e=>{const t=e.target;
   if(t.id==='fSortSel'){const v=t.value;S.find.sort=v?{k:v.split(':')[0],dir:+v.split(':')[1]}:null;save();renderFind();const s=$('#fSortSel');if(s)s.focus();return}
   if(t.id==='fSelAll'){$$('#fResults [data-sel]').forEach(c=>{c.checked=t.checked;const k=+c.dataset.sel;if(t.checked)FS.sel.add(k);else FS.sel.delete(k)});syncSel();return}
