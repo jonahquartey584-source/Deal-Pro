@@ -144,6 +144,9 @@ export async function start({ state, signedIn = false, api }) {
     else new MutationObserver((_, o) => { if (document.documentElement) { o.disconnect(); hold(); } }).observe(document, { childList: true });
   });
   await page.clock.install({ time: new Date("2026-09-26T10:00:00") });
+  // Stop the page clock flowing in real time: capturing a frame is slow, so real time would pile
+  // up and fire the page's timers (the intro's safety timeout, say) far too early.
+  await page.clock.pauseAt(new Date("2026-09-26T10:00:00.010"));
   await page.goto(BASE + "/");
   await page.evaluate(() => document.fonts.ready);
 
