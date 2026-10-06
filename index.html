@@ -2296,8 +2296,10 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
     for(const t of mm[1].matchAll(/\b[a-z]{1,2}\b/g)){const a=t[0].toUpperCase();if(!PC_AREAS.has(a)||(/^(me|so)$/.test(t[0])&&mm[1].trim()!==t[0]))continue;
       hits.push({pos:pos+t.index,name:`${a} (${PC_NAME[a]})`})}}
   // keep each place once, prefer the longer name ("Newcastle upon Tyne" over "Newcastle"), in typed order
+  // "contains" means whole words, so Newcastle is covered by Newcastle upon Tyne but Cambridge is not swallowed by South Cambridgeshire
+  const wc=(x,y)=>(' '+x.replace(/-/g,' ')+' ').includes(' '+y.replace(/-/g,' ')+' ');
   const places=[];hits.filter(h=>h.pos>=0).sort((x,y)=>x.pos-y.pos||y.name.length-x.name.length).forEach(h=>{const k=h.name.toLowerCase();
-    if(places.some(p=>p.toLowerCase().includes(k)||k.includes(p.toLowerCase())&&p.length<k.length&&(places[places.indexOf(p)]=h.name)))return;places.push(h.name)});
+    if(places.some(p=>wc(p.toLowerCase(),k)||wc(k,p.toLowerCase())&&p.length<k.length&&(places[places.indexOf(p)]=h.name)))return;places.push(h.name)});
   const loc=[...new Set(places)].slice(0,6).join(', ');
   if(loc){out.loc=loc;got.push(loc)}
   return {f:out,got}}
