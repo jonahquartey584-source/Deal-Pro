@@ -27,6 +27,7 @@ const cookieJar = { get: () => undefined, set() {}, delete() {} };
 // ---- accounts (online mode): set ADMIN_PASSWORD to turn on sign-in for clients ----
 const ADMIN_EMAIL = "jonahquartey584@gmail.com";
 const MULTI = !!process.env.ADMIN_PASSWORD;
+if (process.env.RENDER && !MULTI) { console.error("Set ADMIN_PASSWORD in the Environment settings first. Not starting, so nobody can get in without a password."); process.exit(1); }
 const { AsyncLocalStorage } = await import("node:async_hooks");
 const crypto = await import("node:crypto");
 const als = (globalThis.__dpUser = new AsyncLocalStorage());
