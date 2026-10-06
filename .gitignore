@@ -2,3 +2,6 @@ node_modules/
 .netlify/
 .tutorial-build/
 .DS_Store
+.local-data/
+.local-build/
+.env

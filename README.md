@@ -16,6 +16,25 @@ npm install
 netlify deploy --prod
 ```
 
+## Run it on your own computer
+
+`npm run local` runs a copy of the whole site, with the same pages and the same `/api`
+functions, on http://localhost:8888. It needs no Netlify account and spends no Netlify credits.
+
+```sh
+npm install
+cp .env.example .env     # then put your own OpenAI key in OPENAI_API_KEY
+npm run local
+```
+
+- You're signed in automatically as the admin (`LOCAL_USER_EMAIL` in `.env` changes who).
+- Accounts, deals, the Deal Community and saved searches are kept as plain files in
+  `.local-data/`, separate from the live site. Delete that folder to start fresh.
+- The AI searches and analyses are billed to your OpenAI account, not Netlify.
+- Stripe billing, the refunds page and the webhook are the live site's: they need
+  `STRIPE_SECRET_KEY` and so on in `.env` if you want them.
+- Edit `index.html` or anything under `netlify/` and restart to pick it up.
+
 ## Tutorial videos
 
 Two videos are recorded walkthroughs of the site: a headless browser clicks

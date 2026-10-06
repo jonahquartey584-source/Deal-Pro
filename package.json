@@ -3,7 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild src/auth.js --bundle --format=esm --minify --outfile=assets/auth.js && esbuild src/admin.js --bundle --format=esm --minify --outfile=assets/admin.js"
+    "build": "esbuild src/auth.js --bundle --format=esm --minify --outfile=assets/auth.js && esbuild src/admin.js --bundle --format=esm --minify --outfile=assets/admin.js",
+    "local": "node local/server.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "latest",
