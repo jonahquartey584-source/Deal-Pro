@@ -2,6 +2,17 @@
   publish = "."
   command = "npm run build"
   functions = "netlify/functions"
+  # Every build costs Netlify credits, so skip it when nothing the site serves has changed
+  # (README, the local copy, scripts and docs aren't deployed). Exit 0 skips the build.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- . ':(exclude)local' ':(exclude)README.md' ':(exclude).env.example' ':(exclude).gitignore' ':(exclude)scripts' ':(exclude)docs'"
+
+# Only the live site is built. Branch deploys and deploy previews would each cost credits too;
+# delete these two blocks to get them back.
+[context.branch-deploy]
+  ignore = "exit 0"
+
+[context.deploy-preview]
+  ignore = "exit 0"
 
 [functions]
   node_bundler = "esbuild"
