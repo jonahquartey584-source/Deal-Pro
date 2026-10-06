@@ -69,6 +69,8 @@ export default async (request: Request, _context: Context) => {
       analysis: job.status === "done" ? job.analysis : undefined,
       progress: job.progress,
       error: job.error,
+      // True when the failure was a service problem, so the page can try again by itself.
+      retryable: job.status === "error" ? !!job.retryable : undefined,
       // The underlying AI error, for the admin only, to diagnose failures.
       detail: isAdmin ? job.errorDetail : undefined,
       credits: creditSummary(isAdmin, plan, (await store.get(`users/${user.id}/ai-usage`, { type: "json" }) as Usage | null) || {}),

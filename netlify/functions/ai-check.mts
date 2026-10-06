@@ -17,6 +17,8 @@ export default async (_request: Request, _context: Context) => {
   const base = process.env.OPENAI_BASE_URL;
   const setup = {
     openaiKeySet: !!process.env.OPENAI_API_KEY,
+    // A backup route straight to OpenAI, used automatically if the main one fails.
+    fallbackKeySet: !!process.env.OPENAI_FALLBACK_API_KEY,
     // Netlify's AI Gateway sets its own base URL; only the host is shown.
     endpoint: base ? (() => { try { return new URL(base).host; } catch { return "custom"; } })() : "api.openai.com (default)",
     modelOverrides: { quick: process.env.AI_MODEL_QUICK || null, standard: process.env.AI_MODEL_STANDARD || null, deep: process.env.AI_MODEL_DEEP || null },

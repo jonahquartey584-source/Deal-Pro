@@ -63,7 +63,9 @@ export default async (request: Request, _context: Context) => {
 
     const detail = String((error as Error)?.message || error).slice(0, 1500);
     const offline = /Connection error|ECONN|ETIMEDOUT|ENOTFOUND|fetch failed|socket/i.test(detail) && !/\b[45]\d\d\b/.test(detail);
-    await refundJob(jobId, { ...(latest || job), errorDetail: detail }, offline
+    // A service problem (outage, gateway block, rate limit, timeout) is worth trying again; the page does that by itself.
+    const temporary = offline || /\b(5\d\d|403|408|429)\b/.test(detail);
+    await refundJob(jobId, { ...(latest || job), errorDetail: detail, retryable: temporary }, offline
       ? "Deal Pro couldn't complete that just now. Your credits have not been used; please try again in a minute."
       : job.kind === "search"
       ? "The search could not be completed. Your credits have not been used; please try again."

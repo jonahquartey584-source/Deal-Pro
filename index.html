@@ -2194,7 +2194,7 @@ const SITE_LABEL=s=>({Facebook:'Facebook Marketplace',RightmoveCommercial:'Right
 const FIND_DEF=()=>({strategy:'auto',fresh:'any',notes:'',mode:'rent',beds:[],min:1200,max:5000,loc:'',priv:false,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false}});
 if(!S.find||!S.find.f)S.find={f:FIND_DEF(),searched:false,sort:null};
 S.find.f=Object.assign(FIND_DEF(),S.find.f);S.find.f.sites=Object.assign(FIND_DEF().sites,S.find.f.sites);
-const FS={busy:false,sel:new Set(),showUnconfirmed:false};
+const FS={busy:false,sel:new Set(),showUnconfirmed:false,auto:0,lastRefresh:false};
 document.addEventListener('click',e=>{if(e.target.closest('#fShowUnc')){FS.showUnconfirmed=!FS.showUnconfirmed;renderFind()}});
 // Live search results (saved to the account). The LISTINGS sample above only feeds the home page preview.
 // Results saved before listing links were checked can include search-results pages; hide those.
@@ -2473,14 +2473,21 @@ async function pollJob(jobId,onTick,onProgress,maxMs=17*60e3){const t0=Date.now(
     if(d.credits){AIC.info=d.credits;renderAILevels()}
     if(d.progress&&onProgress)onProgress(d.progress);
     if(d.status==='done'||d.status==='error')fetch(url,{method:'DELETE',credentials:'same-origin'}).catch(()=>{});
-    if(d.status==='done')return d.analysis;if(d.status==='error')throw new Error((d.error||'It could not finish. Please try again.')+(d.detail?` (Admin detail: ${d.detail})`:''));
+    if(d.status==='done')return d.analysis;if(d.status==='error')throw Object.assign(new Error((d.error||'It could not finish. Please try again.')+(d.detail?` (Admin detail: ${d.detail})`:'')),{retry:!!d.retryable});
     if(onTick)onTick(Math.round((Date.now()-t0)/1000));if(Date.now()-t0>maxMs)throw new Error('This is taking too long. Please try again.')}}
+/* A search that fails because of a service problem (an outage, a block, a rate limit) is tried again by itself:
+   its credits were already given back, so waiting and re-running is safe. Up to 3 more tries, a little longer each time. */
+const AUTO_TRIES=3,autoWait=n=>window.DP_AUTO_WAIT||[20,45,90][n]||90;
+function stopAuto(){if(FS.autoT){clearInterval(FS.autoT);FS.autoT=null}}
+function autoRetry(why){stopAuto();const n=$('#fErr');let left=autoWait(FS.auto);FS.auto++;FS.err={msg:why,at:new Date().toISOString(),resume:false};if(!n){return}
+  const draw=()=>{n.innerHTML=`<div><b>The service is busy</b></div><div>Trying your search again automatically in ${left}s (attempt ${FS.auto+1} of ${AUTO_TRIES+1}). Your credits haven't been used.</div><div class="ln-a"><button class="btn sm primary" type="button" data-ferr="retry">Try now</button><button class="btn sm" type="button" data-ferr="copy">Copy error details</button><button class="btn sm ghost" type="button" data-ferr="close">Stop</button></div>`;n.hidden=false};
+  draw();n.scrollIntoView({block:'nearest',behavior:reduced()?'auto':'smooth'});FS.autoT=setInterval(()=>{left--;if(left<=0){stopAuto();clearFindError();startSearch(FS.lastRefresh,true)}else draw()},1000)}
 // Deal Finder errors stay on screen until dismissed, with details to copy and send to support.
 function findError(msg,resume){const at=new Date(),n=$('#fErr');FS.err={msg,at:at.toISOString(),resume:!!resume};if(!n)return;
   n.innerHTML=`<div><b>${resume?'The search lost touch with Deal Pro':'The search hit a problem'}</b> <span class="muted">${at.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}</span></div><div>${esc(msg)}</div>
     <div class="ln-a">${resume?'<button class="btn sm primary" type="button" data-ferr="resume">Reconnect</button>':'<button class="btn sm primary" type="button" data-ferr="retry">Try again</button>'}<button class="btn sm" type="button" data-ferr="copy">Copy error details</button><button class="btn sm ghost" type="button" data-ferr="close">Dismiss</button></div>`;
   n.hidden=false;n.scrollIntoView({block:'nearest',behavior:reduced()?'auto':'smooth'})}
-function clearFindError(){FS.err=null;const n=$('#fErr');if(n){n.hidden=true;n.innerHTML=''}}
+function clearFindError(){stopAuto();FS.err=null;const n=$('#fErr');if(n){n.hidden=true;n.innerHTML=''}}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-ferr]');if(!b)return;const E=FS.err||{},a=b.dataset.ferr;
   if(a==='close')clearFindError();
   else if(a==='retry'){clearFindError();startSearch(false)}
@@ -2517,7 +2524,7 @@ async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LE
     saveFindHistory(lv,p.sites.length);
     toast(rf?`Refreshed: ${rf.gone} listing${rf.gone===1?' has':'s have'} gone and ${rf.gone===1?'was':'were'} removed, ${rf.added} new one${rf.added===1?'':'s'} found. ${live} live now.${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`
       :`${live} live listing${live===1?'':'s'} across ${p.sites.length} site${p.sites.length>1?'s':''}, every link checked.${res.removed?` Removed ${res.removed} dead or taken link${res.removed===1?'':'s'}.`:''}${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
-  catch(e){if(e.cancelled||gone())return;keep=!!e.resume;findError(netMsg(e)||'The search failed. Please try again.',keep)}
+  catch(e){if(e.cancelled||gone())return;keep=!!e.resume;if(e.retry&&!keep&&FS.auto<AUTO_TRIES)autoRetry(netMsg(e)||e.message);else findError(netMsg(e)||'The search failed. Please try again.',keep)}
   finally{if(!gone()){if(!keep)delete S.find.pending;save();FS.busy=false;btn.disabled=false;renderFind()}}}
 // Cancel the running search (credits refunded); "Edit" also takes you back to the criteria to change them.
 async function cancelSearch(edit){const p=S.find.pending;if(!p)return;FS.cancelled=p.id;delete S.find.pending;save();FS.busy=false;$('#fSearch').disabled=false;renderFind();
@@ -2527,7 +2534,7 @@ function editSearch(){const panel=$('#fPanel');if(!panel)return;panel.scrollInto
 document.addEventListener('click',e=>{if(e.target.closest('#fCancel'))cancelSearch(false);else if(e.target.closest('#fEditRun'))cancelSearch(true);else if(e.target.closest('#fEditSearch'))editSearch()});
 // refresh: re-check the current results, drop the ones that have gone, and look for new listings
 const RENT_ONLY_SITES=['OpenRent','SpareRoom'];
-async function startSearch(refresh=false){if(FS.busy)return;readFind();let sites=SITES.filter(s=>S.find.f.sites[s]);
+async function startSearch(refresh=false,auto=false){if(FS.busy)return;if(!auto)FS.auto=0;FS.lastRefresh=refresh;readFind();let sites=SITES.filter(s=>S.find.f.sites[s]);
   // OpenRent and SpareRoom only list homes to rent, so they're left out of a search for property to buy.
   if(S.find.f.mode==='buy'&&sites.some(s=>!RENT_ONLY_SITES.includes(s))){const skip=sites.filter(s=>RENT_ONLY_SITES.includes(s));sites=sites.filter(s=>!RENT_ONLY_SITES.includes(s));if(skip.length)toast(`${skip.map(SITE_LABEL).join(' and ')} only list rentals, so they're left out of this purchase search.`)}
   if(!sites.length){toast('Tick at least one site to search');return}
@@ -2661,7 +2668,7 @@ async function packageAll(){if(FP.busy)return;
   if(!confirm(`Analyse and package ${todo.length} deal${todo.length===1?'':'s'} at ${lv.name}?\n\nEach deal gets a full analysis, which uses credits just like analysing it on its own, and a shareable pre-NDA deal pack (no listing link or exact address).${rows.length>todo.length?`\n\n${rows.length-todo.length} already packaged will be skipped.`:''}`))return;
   Object.assign(FP,{busy:true,done:0,total:todo.length,failed:0});syncPackBtn();toast(`Packaging ${todo.length} deal${todo.length===1?'':'s'}. You can keep working; leave this page open.`);
   const q=todo.slice();let stop='';
-  const worker=async()=>{while(q.length&&!stop){const r=q.shift();try{await packOne(r,lv)}catch(e){FP.failed++;if(e.stop)stop=e.message;console.warn('Packaging failed',e)}FP.done++;syncPackBtn()}};
+  const worker=async()=>{while(q.length&&!stop){const r=q.shift();try{try{await packOne(r,lv)}catch(e){if(!e.retry)throw e;await sleep(25000);await packOne(r,lv)}}catch(e){FP.failed++;if(e.stop)stop=e.message;console.warn('Packaging failed',e)}FP.done++;syncPackBtn()}};
   await Promise.all([worker(),worker(),worker()]);
   const ok=FP.done-FP.failed;FP.busy=false;save();renderFind();
   toast(stop?`${stop}${ok?` ${ok} deal${ok===1?' was':'s were'} packaged first.`:''}`:`Packaged ${ok} of ${FP.total} deal${FP.total===1?'':'s'}.${FP.failed?` ${FP.failed} couldn't be analysed; try those again.`:''} Copy the deal cards to share them with their pack links.`)}

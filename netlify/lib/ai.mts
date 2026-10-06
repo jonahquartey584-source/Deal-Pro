@@ -127,11 +127,20 @@ const errText = (error: unknown) => {
 };
 // Worth waiting out and trying again: no HTTP status (the request never got an answer, a network
 // problem), a server error such as 503 Service Unavailable (a brief outage at the provider), a
-// timeout or a rate limit. Anything else (a bad request, a rejected key) won't get better by waiting.
-const isConnectionError = (error: unknown) => { const st = (error as { status?: number }).status; return !st || st >= 500 || st === 408 || st === 429; };
+// 403 with no explanation (a gateway or firewall blocking for a moment), a timeout or a rate limit. Anything else (a bad request, a rejected key) won't get better by waiting.
+const isConnectionError = (error: unknown) => { const st = (error as { status?: number }).status; return !st || st >= 500 || st === 403 || st === 408 || st === 429; };
 // One OpenAI client with generous retries and a timeout, shared by every AI call.
 let openaiClient: OpenAI | null = null;
 export const ai = () => (openaiClient ||= new OpenAI({ maxRetries: 3, timeout: 180_000 }));
+// A second route, used only if the main one keeps failing (the gateway is down, over its limit or
+// blocking requests). Set OPENAI_FALLBACK_API_KEY in the site's environment variables to turn it on;
+// it talks to api.openai.com directly (or OPENAI_FALLBACK_BASE_URL). Without the key nothing changes.
+let fallbackClient: OpenAI | null | undefined;
+export const fallbackAi = () => (fallbackClient === undefined
+  ? (fallbackClient = process.env.OPENAI_FALLBACK_API_KEY
+    ? new OpenAI({ apiKey: process.env.OPENAI_FALLBACK_API_KEY, baseURL: process.env.OPENAI_FALLBACK_BASE_URL || "https://api.openai.com/v1", maxRetries: 2, timeout: 180_000 })
+    : null)
+  : fallbackClient);
 // Errors worth retrying with another model or setup (bad request, unknown model, unsupported feature).
 const retryable = (error: unknown) => { const st = (error as { status?: number }).status; return !st || st >= 500 || (st >= 400 && st < 500 && st !== 401 && st !== 429); };
 
@@ -160,19 +169,24 @@ async function complete(system: string, user: string, level: LevelId) {
   const client = ai();
   const { model, effort } = LEVELS[level];
   const messages = [{ role: "system" as const, content: system }, { role: "user" as const, content: user }];
-  const withModel = (m: string, reasoning: boolean) => async () => {
-    const completion = await client.chat.completions.create({
+  const withModel = (m: string, reasoning: boolean, c: OpenAI = client) => async () => {
+    const completion = await c.chat.completions.create({
       model: m, messages, response_format: { type: "json_object" }, ...(reasoning ? { reasoning_effort: effort } : {}),
     });
     const content = completion.choices[0]?.message?.content;
     if (!content) throw new Error("Empty AI response");
     return JSON.parse(content) as Record<string, unknown>;
   };
+  const direct = fallbackAi();
   return tryEach("AI analysis", [
     [model, withModel(model, true)],
     [FALLBACK_MODEL, withModel(FALLBACK_MODEL, true)],
     [`${FALLBACK_MODEL} (no reasoning setting)`, withModel(FALLBACK_MODEL, false)],
     ["gpt-4.1-mini", withModel("gpt-4.1-mini", false)],
+    ...(direct ? [
+      [`${model} (direct)`, withModel(model, true, direct)] as [string, () => Promise<Record<string, unknown>>],
+      ["gpt-4.1-mini (direct)", withModel("gpt-4.1-mini", false, direct)] as [string, () => Promise<Record<string, unknown>>],
+    ] : []),
   ]);
 }
 
@@ -542,8 +556,8 @@ async function webJson(prompt: string, domains: string[], level: LevelId, contex
   // With no domains the search is open to the whole web (used for due diligence research).
   const site = domains.length ? `Only use ${domains.join(" or ")} (for example search "site:${domains[0]} ...").` : "";
   // The most capable setup first, then simpler ones for accounts or gateways that don't support every option.
-  const call = (model: string, opts: { tool: "web_search" | "web_search_preview"; filters: boolean; json: boolean; reasoning: boolean }) => () =>
-    client.responses.create({
+  const call = (model: string, opts: { tool: "web_search" | "web_search_preview"; filters: boolean; json: boolean; reasoning: boolean }, c: OpenAI = client) => () =>
+    c.responses.create({
       model,
       ...(opts.reasoning ? { reasoning: { effort } } : {}),
       tools: [opts.tool === "web_search"
@@ -553,11 +567,17 @@ async function webJson(prompt: string, domains: string[], level: LevelId, contex
       ...(opts.json ? { text: { format: { type: "json_object" as const } } } : {}),
       input: opts.filters ? prompt : `${prompt}\n${site}\nReply with the JSON only.`,
     });
+  const direct = fallbackAi();
+  type Resp = Awaited<ReturnType<ReturnType<typeof call>>>;
   const response = await tryEach("Web search", [
     [LEVELS[level].model, call(LEVELS[level].model, { tool: "web_search", filters: true, json: true, reasoning: true })],
     [FALLBACK_MODEL, call(FALLBACK_MODEL, { tool: "web_search", filters: true, json: true, reasoning: true })],
     [`${FALLBACK_MODEL} (plain)`, call(FALLBACK_MODEL, { tool: "web_search", filters: false, json: false, reasoning: false })],
     ["gpt-4.1-mini (preview search)", call("gpt-4.1-mini", { tool: "web_search_preview", filters: false, json: false, reasoning: false })],
+    ...(direct ? [
+      [`${LEVELS[level].model} (direct)`, call(LEVELS[level].model, { tool: "web_search", filters: true, json: true, reasoning: true }, direct)] as [string, () => Promise<Resp>],
+      [`${FALLBACK_MODEL} (direct, plain)`, call(FALLBACK_MODEL, { tool: "web_search", filters: false, json: false, reasoning: false }, direct)] as [string, () => Promise<Resp>],
+    ] : []),
   ]);
   // URLs the web search really returned.
   const seen = new Set<string>();
