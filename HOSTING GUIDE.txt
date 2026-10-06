@@ -1,0 +1,18 @@
+PUTTING DEAL PRO ONLINE FOR CLIENTS (Render, Railway, or any host that runs Node or Docker)
+
+SETTINGS (type these into the host's Environment settings, never into chat or into files you share):
+  ADMIN_PASSWORD   the password for jonahquartey584@gmail.com (admin). Setting this turns on client sign-in.
+  OPENAI_API_KEY   your OpenAI key (searches and analysis are billed to that account)
+  DEALPRO_DATA     /data   (the folder where accounts, history and packs are kept - see below)
+  SESSION_SECRET   optional, any long random text
+
+CLIENTS
+  They open your web address, press Create account, and start on the Free plan (the same limits as the live site).
+  You sign in as admin, open Admin, and set each client's plan (Lite / Pro / Max) or suspend them.
+  Stripe payments and password-reset emails are not part of this copy: you set plans by hand, and if
+  a client forgets their password, tell me and I'll add a reset for you.
+
+KEEP DATA: the host must keep the /data folder. On Render add a "Disk" mounted at /data (paid, a few pounds a month).
+  Without a disk, accounts and history are wiped every time the site restarts.
+
+STEPS (Render): New > Web Service > connect your GitHub repo with these files > Runtime: Docker > add the settings above > Create.
