@@ -21,6 +21,7 @@ export default async (_request: Request, _context: Context) => {
     endpoint: base ? (() => { try { return new URL(base).host; } catch { return "custom"; } })() : "api.openai.com (default)",
     modelOverrides: { quick: process.env.AI_MODEL_QUICK || null, standard: process.env.AI_MODEL_STANDARD || null, deep: process.env.AI_MODEL_DEEP || null },
   };
+  if (base && !/(^|\.)openai\.com$/i.test(setup.endpoint)) return Response.json({ setup, results: [], summary: "OPENAI_API_KEY is Netlify's AI Gateway key, so the AI is switched off to avoid using Netlify credits. Add your own OpenAI key as OPENAI_API_KEY in the Netlify environment variables." });
   if (!setup.openaiKeySet) return Response.json({ setup, results: [], summary: "OPENAI_API_KEY is not set, so no AI features can work." });
 
   const client = new OpenAI();
