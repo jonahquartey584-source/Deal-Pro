@@ -125,21 +125,23 @@ const errText = (error: unknown) => {
   const cause = e.cause ? ` (${[e.cause.code || e.cause.cause?.code, e.cause.message].filter(Boolean).join(": ").slice(0, 160)})` : "";
   return `${e.status ? `${e.status} ` : ""}${String(e.message || error).slice(0, 300)}${cause}`;
 };
-// No HTTP status means the request never got an answer: a network problem, not the request itself.
-const isConnectionError = (error: unknown) => !(error as { status?: number }).status;
+// Worth waiting out and trying again: no HTTP status (the request never got an answer, a network
+// problem), a server error such as 503 Service Unavailable (a brief outage at the provider), a
+// timeout or a rate limit. Anything else (a bad request, a rejected key) won't get better by waiting.
+const isConnectionError = (error: unknown) => { const st = (error as { status?: number }).status; return !st || st >= 500 || st === 408 || st === 429; };
 // One OpenAI client with generous retries and a timeout, shared by every AI call.
 let openaiClient: OpenAI | null = null;
 export const ai = () => (openaiClient ||= new OpenAI({ maxRetries: 3, timeout: 180_000 }));
 // Errors worth retrying with another model or setup (bad request, unknown model, unsupported feature).
-const retryable = (error: unknown) => { const st = (error as { status?: number }).status; return !st || (st >= 400 && st < 500 && st !== 401 && st !== 429); };
+const retryable = (error: unknown) => { const st = (error as { status?: number }).status; return !st || st >= 500 || (st >= 400 && st < 500 && st !== 401 && st !== 429); };
 
 // Tries each attempt in turn. If every one failed only because OpenAI couldn't be reached,
 // waits and goes round again (a brief outage or network blip), then throws one error listing
 // every failure.
 async function tryEach<T>(label: string, attempts: Array<[string, () => Promise<T>]>): Promise<T> {
   const failures: string[] = [];
-  for (const wait of [0, 10_000, 30_000]) {
-    if (wait) { console.warn(`${label}: OpenAI unreachable, trying again in ${wait / 1000}s`); await new Promise((r) => setTimeout(r, wait)); }
+  for (const wait of [0, 10_000, 30_000, 60_000]) {
+    if (wait) { console.warn(`${label}: OpenAI unavailable, trying again in ${wait / 1000}s`); await new Promise((r) => setTimeout(r, wait)); }
     let networkOnly = true;
     for (const [name, run] of attempts) {
       try { return await run(); } catch (error) {
