@@ -79,7 +79,7 @@ ul{margin:0;padding-left:20px}li{margin:3px 0;color:var(--ink2)}
         '<p>Sourcing fee: <b>'+esc(p.fee||'on request')+'</b>. Reply to the person who sent you this link to reserve it. The full address and landlord details are shared once you have signed the terms of business.</p>'+
         (p.contact?'<p>Contact: <b>'+esc(p.contact)+'</b></p>':'')+
         (p.biz||p.redress?'<p>'+(p.biz?'Offered by <b>'+esc(p.biz)+'</b>':'')+(p.redress?(p.biz?' · ':'')+'Redress: '+esc(p.redress):'')+'</p>':'')+'</div>'+
-      '<p class="small">Figures come from an AI analysis of the advert and local market data. They are estimates, not a forecast, and need checking before you commit. This summary is not financial, legal or investment advice.</p>'+
+      '<p class="small">Figures come from an analysis of the advert and local market data. They are estimates, not a forecast, and need checking before you commit. This summary is not financial, legal or investment advice.</p>'+
       '<div class="foot"><span>PRE-NDA DEAL PACK</span><span>Made with <a href="/">Deal Pro</a></span></div></article>';
     var main=app.querySelector('.gal .main');
     app.addEventListener('click',function(e){var b=e.target.closest('[data-u]');if(b&&main)main.src=b.getAttribute('data-u')});

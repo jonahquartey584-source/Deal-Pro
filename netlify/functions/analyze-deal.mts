@@ -126,14 +126,14 @@ export default async (request: Request, _context: Context) => {
   }
   if (!process.env.OPENAI_API_KEY) {
     console.error("OPENAI_API_KEY is not set");
-    return json({ error: "The AI is temporarily unavailable. Please try again later." }, 503);
+    return json({ error: "This is temporarily unavailable. Please try again later." }, 503);
   }
 
   // Limits are checked and credits reserved here, where the browser can't change them.
   const next: Usage = { ...usage };
   const reserved: Reserved = {};
   if (!isAdmin && plan === "Free") {
-    if (kind === "dd") return json({ error: "Upgrade to run AI due diligence research." }, 402);
+    if (kind === "dd") return json({ error: "Upgrade to run due diligence research." }, 402);
     if (level !== "quick") return json({ error: "Upgrade to use Analyst and Expert." }, 402);
     if (kind === "analyse") {
       if ((Number(usage.count) || 0) >= FREE_ANALYSES) {

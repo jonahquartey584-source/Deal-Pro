@@ -64,7 +64,7 @@ export default async (request: Request, _context: Context) => {
     const detail = String((error as Error)?.message || error).slice(0, 1500);
     const offline = /Connection error|ECONN|ETIMEDOUT|ENOTFOUND|fetch failed|socket/i.test(detail) && !/\b[45]\d\d\b/.test(detail);
     await refundJob(jobId, { ...(latest || job), errorDetail: detail }, offline
-      ? "Deal Pro couldn't reach the AI service just now. Your credits have not been used; please try again in a minute."
+      ? "Deal Pro couldn't complete that just now. Your credits have not been used; please try again in a minute."
       : job.kind === "search"
       ? "The search could not be completed. Your credits have not been used; please try again."
       : job.kind === "dd" ? "The research could not be completed. Your credits have not been used; please try again."
