@@ -5,7 +5,7 @@
 //                                          middle over a blurred copy, with a caption and the brand
 //
 //   npm i -g playwright geist @fontsource/instrument-serif && pip3 install imageio-ffmpeg
-//   node scripts/record_motion.mjs [narration.mp3] [--caption "Deal Pro cooked 😮‍💨"]
+//   node scripts/record_motion.mjs [narration.mp3] [--caption "The numbers, done for you ✅"]
 //
 // PREVIEW=1 writes two frames a second to .tutorial-build/frames and skips the videos.
 import { createServer } from "node:http";
@@ -23,7 +23,7 @@ const WORK = path.join(ROOT, ".tutorial-build");
 const FRAMES = path.join(WORK, "frames");
 const args = process.argv.slice(2);
 const capIdx = args.indexOf("--caption");
-const CAPTION = capIdx >= 0 ? args.splice(capIdx, 2)[1] : "Deal Pro cooked 😮‍💨";
+const CAPTION = capIdx >= 0 ? args.splice(capIdx, 2)[1] : "The numbers, done for you ✅";
 const AUDIO = path.resolve(args[0] || path.join(ROOT, "scripts", "overview-narration.mp3"));
 const FPS = 30, PREVIEW = +process.env.PREVIEW || 0;
 
@@ -99,7 +99,7 @@ server.close();
 
 if (PREVIEW) { console.log(`Preview frames in ${FRAMES}`); process.exit(0); }
 
-const posterAt = 13.9; // the strategy words
+const posterAt = 20.6; // the strategy tiles
 execFileSync(FFMPEG, ["-y", "-loglevel", "error", "-i", path.join(FRAMES, `${String(Math.round(posterAt * FPS)).padStart(5, "0")}.jpg`), "-vf", "scale=1280:720:flags=lanczos", path.join(OUT, "deal-pro-overview-poster.png")]);
 const frames = ["-framerate", String(FPS), "-i", path.join(FRAMES, "%05d.jpg")];
 const enc = ["-c:v", "libx264", "-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart"];
