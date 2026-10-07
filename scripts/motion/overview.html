@@ -213,7 +213,6 @@ body{font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
     <div class="slam" id="w1" style="top:340px">Every deal.</div>
     <div class="slam" id="w2" style="top:510px">Every strategy.</div>
     <div class="slam" id="w3" style="top:680px">Numbers <span class="serif" style="font-weight:400;letter-spacing:0;font-size:170px">done.</span></div>
-    <div class="abs" id="s11cta" style="right:150px;top:860px;text-align:right"><span class="chip" style="background:#fff;color:#E0142B;font-size:46px;padding:20px 44px;box-shadow:0 20px 50px rgba(0,0,0,.25)">usedealpro.com</span><div style="margin-top:16px;font-size:30px;color:#ffd7dc;font-weight:600">Try it free</div></div>
   </div>
 </div>
 
@@ -399,8 +398,7 @@ window.render = (t) => {
     const lx = 610 + (150 - 610) * moveK, ly = 440 + (110 - 440) * moveK, sc = 1 - 0.45 * moveK;
     set($("s11logo"), T(t, 50.3, 50.5), `translate(${lx}px, ${ly}px) scale(${pop(t, 50.3, 0.45) * sc})`); $("s11logo").style.transformOrigin = "0 0";
     [["w1", 51.35], ["w2", 52.3], ["w3", 53.5]].forEach(([id, a]) => set($(id), T(t, a, a + 0.08), `scale(${1.5 - 0.5 * out3(T(t, a, a + 0.22))})`));
-    ["w1", "w2", "w3"].forEach((id) => ($(id).style.transformOrigin = "0 50%"));
-    set($("s11cta"), T(t, 54.1, 54.3), `scale(${pop(t, 54.1, 0.45)})`); }
+    ["w1", "w2", "w3"].forEach((id) => ($(id).style.transformOrigin = "0 50%")); }
 };
 window.render(0);
 </script>
