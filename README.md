@@ -18,7 +18,7 @@ netlify deploy --prod
 
 ## Tutorial videos
 
-Two videos are recorded walkthroughs of the site: a headless browser clicks
+The videos are recorded walkthroughs of the site: a headless browser clicks
 through each feature in time with an ElevenLabs narration ("George" voice).
 Sign-in and the `/api` calls use demo data, so no account or API key is needed.
 
@@ -26,11 +26,13 @@ Sign-in and the `/api` calls use demo data, so no account or API key is needed.
 | --- | --- | --- |
 | `assets/deal-pro-tutorial.mp4` (home page) | `scripts/tutorial-narration.mp3` | `scripts/record_walkthrough.mjs` |
 | `assets/deal-community-tutorial.mp4` (Deal Community page) | `scripts/community-narration.mp3` | `scripts/record_community.mjs` |
+| `assets/deal-pro-overview.mp4` (home page, "What Deal Pro does") | `scripts/overview-narration.mp3` | `scripts/record_overview.mjs` |
 
 ```sh
 npm i -g playwright geist && pip3 install imageio-ffmpeg
 node scripts/record_walkthrough.mjs
 node scripts/record_community.mjs
+node scripts/record_overview.mjs
 ```
 
 The shared recorder is `scripts/walkthrough/lib.mjs`. If you change a narration,
