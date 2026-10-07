@@ -1,0 +1,377 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Deal Pro overview (motion)</title>
+<!--
+  The one-minute "What Deal Pro does" video as motion graphics. window.render(t)
+  draws the frame at t seconds, so scripts/record_motion.mjs can step through it
+  frame by frame. Scene times follow scripts/overview-narration.mp3.
+  Fonts (Geist, Instrument Serif) are served by the recorder under /__fonts/.
+-->
+<style>
+@font-face{font-family:Geist;font-weight:100 900;src:url(/__fonts/Geist-Variable.woff2) format("woff2")}
+@font-face{font-family:Serif;font-style:italic;src:url(/__fonts/instrument-serif-latin-400-italic.woff2) format("woff2")}
+:root{--red:#E0142B;--ink:#111114;--grey:#6B6B76;--light:#FBF8F8}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#000}
+body{font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+#stage{position:relative;width:1920px;height:1080px;overflow:hidden}
+.layer{position:absolute;inset:0}
+.abs{position:absolute}
+.c{position:absolute;left:0;right:0;text-align:center}
+.serif{font-family:Serif,Georgia,serif;font-style:italic;font-weight:400}
+#bgLight{background:radial-gradient(ellipse at 50% 45%,#fff 0%,var(--light) 55%,#F4EEEE 100%)}
+#bgDark{background:radial-gradient(circle at 50% 46%,#4a0911 0%,#1a070b 28%,#0A0A10 62%)}
+.dot{position:absolute;border-radius:50%;background:#F28A97}
+.card{position:absolute;background:#fff;border-radius:22px;box-shadow:0 30px 70px rgba(30,10,15,.13),0 2px 6px rgba(30,10,15,.06);border:1px solid #F0E6E7}
+.pill{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:8px 18px;font-weight:600}
+.mark{display:block}
+/* scenes */
+#s1 .clock{left:860px;top:330px;width:200px;height:200px;border-radius:50%;background:#fff;display:grid;place-items:center;font-weight:800;font-size:62px;color:#111;box-shadow:0 0 0 14px rgba(255,255,255,.06),0 0 80px rgba(255,255,255,.18)}
+#s2 .big{top:450px;font-size:200px;line-height:1;font-weight:900;letter-spacing:-.04em;color:#FF2E45}
+#s2 .big .serif{color:#fff;font-size:180px;letter-spacing:0;margin-left:18px}
+#s2 .tab{position:absolute;height:46px;padding:0 18px;border-radius:10px;background:#1A1B26;border:1px solid #2E3040;color:#A7A9BA;font-size:20px;font-weight:500;display:flex;align-items:center;white-space:nowrap}
+.stamp{position:absolute;border:6px solid #FF2E45;color:#FF2E45;font-weight:900;border-radius:12px;padding:6px 20px;letter-spacing:.06em}
+#s3 .ball{left:810px;top:330px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff5a6b,#E0142B 55%,#a30a1c);box-shadow:0 30px 70px rgba(224,20,43,.35);display:grid;place-items:center;color:#fff;font-weight:800;font-size:84px}
+#s3 .lying{top:330px;font-size:330px;font-weight:900;letter-spacing:-.03em;color:#cfc6c8}
+.ded{position:absolute;top:750px;width:240px;text-align:center}
+.ded i{display:block;margin:0 auto 14px;width:12px;height:56px;border-radius:6px;background:var(--red)}
+.ded b{display:block;font-size:40px;color:var(--red)}
+.ded span{font-size:24px;color:var(--grey)}
+.lockup{display:flex;align-items:center;gap:30px;justify-content:center;color:#fff;font-weight:700;font-size:140px;letter-spacing:-.035em}
+#s5 .search{left:510px;top:120px;width:900px;height:96px;border-radius:20px;background:#fff;border:3px solid var(--red);box-shadow:0 20px 50px rgba(224,20,43,.15);display:flex;align-items:center;gap:22px;padding:0 30px;font-size:36px;color:#222;font-weight:500}
+.caret{display:inline-block;width:3px;height:40px;background:var(--red);vertical-align:middle;margin-left:4px}
+.city{position:absolute;display:flex;align-items:center;gap:10px;font-size:24px;color:#77707a;font-weight:500;white-space:nowrap}
+.city.l{flex-direction:row-reverse}.city i{width:16px;height:16px;border-radius:50%;background:var(--red);box-shadow:0 0 0 6px rgba(224,20,43,.15)}
+.word{position:absolute;white-space:nowrap;font-weight:800;letter-spacing:-.03em;transform-origin:center}
+.chip{display:inline-block;padding:10px 20px;border-radius:999px;background:#F6F1F2;color:#3b3640;font-size:24px;font-weight:600;margin:0 10px 12px 0}
+.live{color:#15803D;font-weight:700}
+.btn{display:inline-flex;align-items:center;gap:10px;border-radius:14px;padding:16px 28px;font-size:28px;font-weight:700}
+.score{display:grid;place-items:center;border-radius:14px;color:#fff;font-weight:800}
+.tile{position:absolute;top:0;width:330px;height:170px;border-radius:18px;background:#F7F3F4;border:2px solid transparent;padding:22px 26px}
+.tile small{display:block;font-size:22px;color:var(--grey);font-weight:500}
+.tile b{display:block;font-size:56px;font-weight:800;color:#111;margin-top:10px;letter-spacing:-.02em}
+.tile em{font-style:normal;font-size:20px;color:var(--grey)}
+.srow{position:absolute;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-radius:12px;background:#F5FBF7;font-size:26px;color:#222}
+.srow b{color:#15803D}
+.vcard{position:absolute;top:290px;width:440px;height:500px;border-radius:26px;background:#fff;border:1px solid #F0E6E7;box-shadow:0 30px 70px rgba(30,10,15,.12);text-align:center;padding-top:50px}
+.vcard .ring{margin:0 auto;width:150px;height:150px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:64px;font-weight:800}
+.vcard h3{margin-top:34px;font-size:56px;font-weight:800;letter-spacing:-.02em}
+.vcard p{margin-top:12px;font-size:30px;color:var(--grey)}
+.step{position:absolute;left:250px;display:flex;align-items:center;gap:26px;font-size:60px;font-weight:800;color:#111;letter-spacing:-.02em}
+.step i{width:74px;height:74px;border-radius:50%;background:var(--red);color:#fff;font-style:normal;font-size:40px;display:grid;place-items:center}
+.step small{font-size:26px;color:var(--grey);font-weight:500;letter-spacing:0}
+.doc{position:absolute;left:1080px;top:150px;width:560px;height:760px;background:#fff;border-radius:16px;box-shadow:0 40px 90px rgba(30,10,15,.18);padding:46px 46px}
+.doc .ln{height:14px;border-radius:7px;background:#EFE9EA;margin-top:16px}
+.tag{font-size:56px;color:#d9d6dd;font-weight:500;letter-spacing:-.01em}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="layer" id="bgLight"></div>
+  <div class="layer" id="bgDark"></div>
+  <div class="layer" id="dots"></div>
+
+  <!-- S1: still scrolling at midnight -->
+  <div class="layer" id="s1">
+    <div class="c" style="top:230px;font-size:34px;color:#8f8fa3;font-weight:500" id="s1a">Still scrolling at</div>
+    <div class="abs clock" id="s1clock">11:47</div>
+    <div class="c serif" style="top:560px;font-size:96px;color:#fff" id="s1b">midnight.</div>
+  </div>
+
+  <!-- S2: 14 tabs open -->
+  <div class="layer" id="s2">
+    <div id="s2tabs"></div>
+    <div class="c big" id="s2big"><span id="s2n">14</span> TABS<span class="serif">open.</span></div>
+    <div class="stamp" id="st1" style="left:330px;top:760px;font-size:54px">LET AGREED</div>
+    <div class="stamp" id="st2" style="left:1380px;top:740px;font-size:80px">404</div>
+  </div>
+
+  <!-- S3: the deal's claim vs the real costs -->
+  <div class="layer" id="s3">
+    <div class="c lying" id="s3lying">LYING.</div>
+    <div class="c" style="top:240px;font-size:34px;color:#77707a;font-weight:500" id="s3label">This deal says you'll make</div>
+    <div class="abs ball" id="s3ball"><span id="s3n">£612</span></div>
+    <div class="c serif" style="top:660px;font-size:70px;color:var(--red)" id="s3month">a month.</div>
+    <div class="ded" id="d1" style="left:520px"><i></i><b>−£180</b><span>fees</span></div>
+    <div class="ded" id="d2" style="left:840px"><i></i><b>−£153</b><span>bills</span></div>
+    <div class="ded" id="d3" style="left:1160px"><i></i><b>−£199</b><span>quiet month</span></div>
+    <div class="c serif" style="top:945px;font-size:64px;color:#111" id="s3verdict">Not worth it.</div>
+  </div>
+
+  <!-- S4: Deal Pro does the work -->
+  <div class="layer" id="s4">
+    <div class="abs" style="left:0;right:0;top:380px"><div class="lockup" id="s4lock"><svg class="mark" id="s4mark" width="170" height="170" viewBox="0 0 20 20"><rect width="20" height="20" rx="4" fill="#E0142B"/><path d="M6 5h3.6a5 5 0 0 1 0 10H6z" fill="#fff"/><rect x="6" y="9" width="4" height="2" fill="#E0142B"/></svg><span id="s4word">Deal Pro</span></div></div>
+    <div class="c" style="top:640px;font-size:46px;color:#d6d6de;font-weight:500" id="s4sub">Does the <span class="serif" style="color:#FF3B50;font-size:58px">work</span> for you.</div>
+  </div>
+
+  <!-- S5: search + UK map -->
+  <div class="layer" id="s5">
+    <div class="abs search" id="s5search"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#E0142B" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span id="s5text"></span><span class="caret" id="s5caret"></span></div>
+    <div id="s5cities"></div>
+    <div class="abs serif" style="left:90px;top:520px;font-size:68px;line-height:1.05;color:var(--red)" id="s5any">On the market.<br>Anywhere in the UK.</div>
+  </div>
+
+  <!-- S6: every strategy -->
+  <div class="layer" id="s6"></div>
+
+  <!-- S7: a listing with full details -->
+  <div class="layer" id="s7">
+    <div class="card" id="s7back1" style="left:470px;top:240px;width:1000px;height:560px"></div>
+    <div class="card" id="s7back2" style="left:450px;top:250px;width:1000px;height:560px"></div>
+    <div class="card" id="s7card" style="left:400px;top:230px;width:1120px;height:600px;overflow:hidden">
+      <div class="abs" style="left:0;top:0;width:440px;height:600px;background:linear-gradient(160deg,#f7d9de,#f3eaec 45%,#e9e4ee)">
+        <svg class="abs" style="left:60px;top:150px" width="320" height="300" viewBox="0 0 320 300"><rect x="20" y="300" width="280" height="0" fill="#000"/><g fill="#b8a2a8"><rect x="30" y="110" width="260" height="190" rx="4"/></g><polygon points="20,118 160,30 300,118" fill="#9c7f87"/><g fill="#fff"><rect x="60" y="150" width="60" height="50" rx="3"/><rect x="200" y="150" width="60" height="50" rx="3"/><rect x="60" y="225" width="60" height="50" rx="3"/></g><rect x="200" y="215" width="58" height="85" rx="3" fill="#E0142B"/><rect x="230" y="40" width="26" height="60" fill="#9c7f87"/></svg>
+      </div>
+      <div class="abs" style="left:490px;top:46px;right:46px">
+        <div id="s7live" style="font-size:24px"><span class="live">✓ Live</span> <span style="color:#8a8590">· link checked · listed 2 days ago</span></div>
+        <div style="font-size:50px;font-weight:800;letter-spacing:-.02em;margin-top:18px;color:#111">3 bed terraced house</div>
+        <div style="font-size:30px;color:#6b6b76;margin-top:6px">Anfield, Liverpool L4</div>
+        <div style="font-size:64px;font-weight:800;margin-top:22px;color:#111;letter-spacing:-.02em">£115,000</div>
+        <div style="margin-top:26px" id="s7chips"><span class="chip">3 bed</span><span class="chip">2 reception</span><span class="chip">Garden</span><span class="chip">Freehold</span><span class="chip">Est. rent £825 pcm</span></div>
+        <div class="btn" id="s7btn" style="margin-top:20px;border:3px solid var(--red);color:var(--red)">View listing ↗</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S8: best deals first -->
+  <div class="layer" id="s8">
+    <div class="abs" style="left:200px;top:200px;font-size:60px;font-weight:800;color:#111;letter-spacing:-.02em" id="s8h">Best deals first</div>
+    <div id="s8cards"></div>
+  </div>
+
+  <!-- S9: the numbers -->
+  <div class="layer" id="s9">
+    <div class="card" id="s9card" style="left:190px;top:150px;width:1540px;height:780px">
+      <div class="abs" style="left:56px;top:46px;font-size:60px;font-weight:800;letter-spacing:-.025em;color:#111">Strong buy-to-let</div>
+      <div class="abs" style="left:56px;top:124px;font-size:26px;color:#6b6b76">3 bed house · Anfield, Liverpool · £115,000 · checked against local figures</div>
+      <div class="abs" style="right:56px;top:36px;font-size:120px;font-weight:800;letter-spacing:-.04em;color:#111"><span id="s9score">0</span><span style="font-size:40px;color:#9a95a0;letter-spacing:0">/100</span></div>
+      <div class="abs" style="left:56px;top:200px;right:56px;height:170px" id="s9tiles">
+        <div class="tile" style="left:0"><small>Monthly profit</small><b id="v1">£247</b></div>
+        <div class="tile" style="left:357px"><small>Cash needed</small><b id="v2">£36,500</b></div>
+        <div class="tile" style="left:714px"><small>Return on cash</small><b id="v3">8.1%</b><em>8.6% gross yield</em></div>
+        <div class="tile" style="left:1071px;width:357px"><small>Breaks even at</small><b id="v4">£577</b><em>rent a month</em></div>
+      </div>
+      <div class="abs" style="left:56px;right:56px;top:400px;height:260px" id="s9stress">
+        <div style="font-size:28px;font-weight:700;color:#111" id="s9sh">Stress tests</div>
+        <div class="srow" style="top:50px">Mortgage rate rises to 7.5%<b>£103 a month ✓</b></div>
+        <div class="srow" style="top:118px">One empty month a year<b>£178 a month ✓</b></div>
+        <div class="srow" style="top:186px">Repairs up £1,500 a year<b>£122 a month ✓</b></div>
+      </div>
+      <div class="abs" id="s9flag" style="left:56px;right:56px;top:672px;height:66px;border-radius:12px;background:#FDECEE;color:#B4121F;font-size:26px;display:flex;align-items:center;padding:0 24px;gap:12px"><b>⚠ Red flag:</b> older terrace, so budget for a damp and roof survey</div>
+    </div>
+  </div>
+
+  <!-- S10: a clear verdict -->
+  <div class="layer" id="s10">
+    <div class="c" style="top:150px;font-size:60px;font-weight:800;color:#111;letter-spacing:-.02em" id="s10h">A clear verdict on every deal</div>
+    <div class="vcard" id="vc1" style="left:250px"><div class="ring" style="background:#E0142B">78</div><h3>Strong</h3><p>Worth your time</p></div>
+    <div class="vcard" id="vc2" style="left:740px"><div class="ring" style="background:#F59E0B">66</div><h3>Potential</h3><p>Negotiate first</p></div>
+    <div class="vcard" id="vc3" style="left:1230px"><div class="ring" style="background:#A8A3AC">38</div><h3>Weak</h3><p>Walk away</p></div>
+  </div>
+
+  <!-- S11: save, check, deal pack -->
+  <div class="layer" id="s11">
+    <div class="step" id="p1" style="top:290px"><i>✓</i>Save it</div>
+    <div class="step" id="p2" style="top:450px"><i>✓</i><span>Check it <small>8 of 8 checks</small></span></div>
+    <div class="step" id="p3" style="top:610px"><i>✓</i>Deal pack</div>
+    <div class="doc" id="s11doc">
+      <div style="font-size:22px;color:var(--red);font-weight:700;letter-spacing:.04em">INVESTMENT SUMMARY</div>
+      <div style="font-size:40px;font-weight:800;margin-top:18px;color:#111;letter-spacing:-.02em">3 bed house, Anfield</div>
+      <div style="font-size:22px;color:#77707a;margin-top:6px">Buy-to-let · £115,000 · Liverpool L4</div>
+      <div style="display:flex;gap:14px;margin-top:30px">
+        <div style="flex:1;background:#F7F3F4;border-radius:12px;padding:16px"><div style="font-size:18px;color:#77707a">Monthly profit</div><div style="font-size:34px;font-weight:800">£247</div></div>
+        <div style="flex:1;background:#F7F3F4;border-radius:12px;padding:16px"><div style="font-size:18px;color:#77707a">Return on cash</div><div style="font-size:34px;font-weight:800">8.1%</div></div>
+      </div>
+      <div class="ln" style="width:92%;margin-top:34px"></div><div class="ln" style="width:84%"></div><div class="ln" style="width:88%"></div><div class="ln" style="width:60%"></div>
+      <div class="ln" style="width:90%;margin-top:34px"></div><div class="ln" style="width:76%"></div><div class="ln" style="width:82%"></div>
+      <div style="position:absolute;left:46px;right:46px;bottom:46px;height:120px;border-radius:12px;background:linear-gradient(135deg,#f7d9de,#efe7ea)"></div>
+    </div>
+    <div class="abs pill" id="s11share" style="left:1185px;top:935px;background:#111;color:#fff;font-size:28px;padding:16px 30px">🔗 Share link copied</div>
+  </div>
+
+  <!-- S12: end card -->
+  <div class="layer" id="s12">
+    <div class="abs" style="left:0;right:0;top:250px"><div class="lockup"><svg class="mark" width="150" height="150" viewBox="0 0 20 20"><rect width="20" height="20" rx="4" fill="#E0142B"/><path d="M6 5h3.6a5 5 0 0 1 0 10H6z" fill="#fff"/><rect x="6" y="9" width="4" height="2" fill="#E0142B"/></svg>Deal Pro</div></div>
+    <div class="c" style="top:500px;font-size:56px;font-weight:600;color:#fff;letter-spacing:-.01em;line-height:1.25"><div id="t1">Every deal,</div><div id="t2">every strategy,</div><div id="t3">with the <span class="serif" style="color:#FF3B50;font-size:70px">numbers</span> done for you.</div></div>
+    <div class="c" style="top:760px" id="s12cta"><span class="pill" style="background:var(--red);color:#fff;font-size:44px;padding:18px 44px;box-shadow:0 20px 50px rgba(224,20,43,.4)">usedealpro.com</span><div style="margin-top:22px;font-size:28px;color:#9b9bab">Try it free</div></div>
+  </div>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const T = (t, a, b) => clamp((t - a) / (b - a));
+const out3 = (x) => 1 - Math.pow(1 - x, 3);
+const inOut = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+const back = (x) => { const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+// Visibility of a scene shown from a to b, with a quick fade at each end.
+const vis = (t, a, b, f = 0.3) => Math.min(out3(T(t, a, a + f)), 1 - inOut(T(t, b - f, b)));
+const pop = (t, a, d = 0.35) => back(T(t, a, a + d));
+const set = (el, o, tf = "") => { el.style.opacity = o; el.style.transform = tf; el.style.visibility = o <= 0.001 ? "hidden" : "visible"; };
+const gbp = (n) => "£" + Math.round(n).toLocaleString("en-GB");
+
+/* scene times (seconds), lined up with the narration */
+const S = {
+  s1: [0, 2.25], s2: [2.15, 4.25], s3: [4.15, 6.95], s4: [6.85, 9.45], s5: [9.35, 13.4], s6: [13.3, 21.75],
+  s7: [21.65, 25.75], s8: [25.65, 28.3], s9: [28.2, 40.7], s10: [40.6, 45.85], s11: [45.75, 50.25], s12: [50.15, 99],
+};
+const DARK = new Set(["s1", "s2", "s4", "s12"]);
+
+/* deterministic floating dots for the light scenes */
+const rnd = (() => { let s = 7; return () => (s = (s * 16807) % 2147483647) / 2147483647; })();
+const DOTS = Array.from({ length: 26 }, () => ({ x: rnd() * 1920, y: rnd() * 1080, r: 6 + rnd() * 12, p: rnd() * 6.28, o: 0.25 + rnd() * 0.45 }));
+$("dots").innerHTML = DOTS.map(() => '<i class="dot"></i>').join("");
+
+/* S2 tab chips */
+const TABS = ["3 bed house · Leeds", "Studio · Bayswater", "2 bed flat · Salford", "HMO · Headingley", "Terrace · Anfield", "1 bed · Cardiff", "Google Sheets · deals", "4 bed · Nottingham", "Flat · Glasgow", "Comparables · page 3", "2 bed · Bristol", "Studio · Manchester", "Mortgage calculator", "3 bed · Sheffield"];
+$("s2tabs").innerHTML = TABS.map((l, i) => `<div class="tab" style="left:${110 + (i % 5) * 345 + (Math.floor(i / 5) % 2) * 120}px;top:${70 + Math.floor(i / 5) * 66}px">${l}</div>`).join("");
+
+/* S5 cities, placed on a simple projection of the UK */
+const CITIES = [["Inverness", -4.22, 57.48], ["Aberdeen", -2.1, 57.15], ["Glasgow", -4.25, 55.86], ["Edinburgh", -3.19, 55.95], ["Belfast", -5.93, 54.6], ["Newcastle", -1.61, 54.97], ["Leeds", -1.55, 53.8], ["Manchester", -2.24, 53.48], ["Liverpool", -2.98, 53.41], ["Nottingham", -1.15, 52.95], ["Birmingham", -1.9, 52.49], ["Norwich", 1.3, 52.63], ["Cardiff", -3.18, 51.48], ["Bristol", -2.59, 51.45], ["London", -0.13, 51.5], ["Southampton", -1.4, 50.9], ["Plymouth", -4.14, 50.38]];
+const LEFT = new Set(["Liverpool", "Glasgow", "Cardiff", "Belfast", "Plymouth", "Inverness"]);
+$("s5cities").innerHTML = CITIES.map(([n, lon, lat]) => { const x = Math.round(1180 + (lon + 3.2) * 135), y = Math.round(1035 - (lat - 50) * 100) - 12;
+  return LEFT.has(n) ? `<div class="city l" style="right:${1920 - x - 8}px;top:${y}px"><i></i>${n}</div>` : `<div class="city" style="left:${x - 8}px;top:${y}px"><i></i>${n}</div>`; }).join("");
+const QUERY = "3 bed houses in Liverpool under £120k";
+
+/* S6 strategies: [label, time it's said, resting spot in the cloud] */
+const STRATS = [["Rent-to-rent", 13.5, 330, 190], ["Serviced accommodation", 14.5, 1300, 170], ["Buy-to-let", 15.85, 250, 880], ["HMOs", 16.8, 1580, 880], ["BRRR", 17.45, 760, 120], ["Flips", 18.15, 1660, 520], ["Lease options", 19.05, 230, 530], ["Commercial", 20.3, 960, 940]];
+$("s6").innerHTML = STRATS.map(([w]) => `<div class="word">${w}</div>`).join("");
+
+/* S8 cards: start unsorted, then sort best first */
+const DEALS = [["Walton, Liverpool", "3 bed house · £109,950", 66, "Potential", "#F59E0B"], ["Old Swan, Liverpool", "3 bed house · £118,000", 38, "Weak", "#A8A3AC"], ["Anfield, Liverpool", "3 bed house · £115,000", 78, "Strong", "#E0142B"]];
+$("s8cards").innerHTML = DEALS.map(([a, b, s, v, c]) => `<div class="card" style="left:0;top:0;width:470px;height:300px;padding:34px">
+  <div style="font-size:22px"><span class="live">✓ Live</span> <span style="color:#8a8590">· listed 2 days ago</span></div>
+  <div style="font-size:38px;font-weight:800;margin-top:16px;color:#111;letter-spacing:-.02em">${a}</div>
+  <div style="font-size:24px;color:#6b6b76;margin-top:4px">${b}</div>
+  <div style="display:flex;align-items:center;gap:16px;margin-top:28px"><div class="score" style="width:76px;height:64px;background:${c};font-size:34px">${s}</div><b style="font-size:30px;color:#111">${v}</b></div></div>`).join("");
+
+window.render = (t) => {
+  // backgrounds: crossfade between light and dark by which scene is on screen
+  let dark = 0, light = 0;
+  for (const [k, [a, b]] of Object.entries(S)) { const v = vis(t, a, b); if (DARK.has(k)) dark = Math.max(dark, v); else light = Math.max(light, v); }
+  set($("bgDark"), dark / Math.max(1e-6, dark + light));
+  set($("bgLight"), light / Math.max(1e-6, dark + light));
+  $("dots").style.opacity = light;
+  [...$("dots").children].forEach((d, i) => { const D = DOTS[i]; d.style.cssText = `left:${D.x + Math.sin(t * 0.4 + D.p) * 18}px;top:${D.y + Math.cos(t * 0.35 + D.p) * 14}px;width:${D.r}px;height:${D.r}px;opacity:${D.o}`; });
+
+  // S1 clock
+  { const v = vis(t, ...S.s1); set($("s1"), v);
+    set($("s1a"), T(t, 0.15, 0.6), `translateY(${(1 - out3(T(t, 0.15, 0.6))) * 20}px)`);
+    set($("s1clock"), T(t, 0, 0.25), `scale(${pop(t, 0, 0.45)})`);
+    $("s1clock").textContent = t < 1.3 ? "11:47" : "11:48";
+    set($("s1b"), T(t, 0.4, 0.8), `translateY(${(1 - out3(T(t, 0.4, 0.8))) * 24}px)`); }
+
+  // S2 tabs
+  { const v = vis(t, ...S.s2); set($("s2"), v);
+    $("s2n").textContent = Math.max(1, Math.min(14, Math.round(1 + 13 * T(t, 2.25, 3.0))));
+    set($("s2big"), T(t, 2.2, 2.45), `scale(${0.92 + 0.08 * out3(T(t, 2.2, 2.6))})`);
+    [...$("s2tabs").children].forEach((el, i) => { const a = 2.25 + i * 0.055; set(el, T(t, a, a + 0.15), `translateY(${(1 - out3(T(t, a, a + 0.3))) * -30}px)`); });
+    for (const [id, a, r] of [["st1", 3.25, -8], ["st2", 3.6, 7]]) { const k = T(t, a, a + 0.18); set($(id), k, `rotate(${r}deg) scale(${1.7 - 0.7 * out3(k)})`); } }
+
+  // S3 the claim vs the real costs
+  { const v = vis(t, ...S.s3); set($("s3"), v);
+    const ly = T(t, 4.4, 4.5) * (1 - T(t, 4.75, 4.9)); set($("s3lying"), ly * 0.85, `scale(${1.05 - 0.05 * ly})`);
+    $("s3label").textContent = t < 4.75 ? "This deal says you'll make" : "After the real costs";
+    set($("s3label"), T(t, 4.2, 4.45));
+    const val = t < 4.75 ? 612 : t < 5.15 ? 612 - 180 * out3(T(t, 4.75, 5.05)) : t < 5.55 ? 432 - 153 * out3(T(t, 5.15, 5.45)) : 279 - 199 * out3(T(t, 5.55, 5.85));
+    $("s3n").textContent = gbp(val);
+    const grey = T(t, 6.0, 6.3);
+    $("s3ball").style.filter = `grayscale(${grey})`;
+    set($("s3ball"), T(t, 4.15, 4.35), `scale(${pop(t, 4.15, 0.45) * (0.62 + 0.38 * val / 612)})`);
+    set($("s3month"), T(t, 4.3, 4.55));
+    for (const [id, a] of [["d1", 4.75], ["d2", 5.15], ["d3", 5.55]]) set($(id), T(t, a, a + 0.15), `translateY(${(1 - out3(T(t, a, a + 0.3))) * -40}px)`);
+    set($("s3verdict"), T(t, 6.0, 6.3), `translateY(${(1 - out3(T(t, 6.0, 6.35))) * 16}px)`); }
+
+  // S4 logo reveal
+  { const v = vis(t, ...S.s4); set($("s4"), v);
+    const k = out3(T(t, 7.0, 7.6));
+    set($("s4mark"), T(t, 6.9, 7.1), `scale(${pop(t, 6.9, 0.5)}) translateX(${(1 - k) * 290}px)`);
+    set($("s4word"), k, `translateX(${(1 - k) * 60}px)`);
+    set($("s4sub"), T(t, 7.7, 8.1), `translateY(${(1 - out3(T(t, 7.7, 8.1))) * 20}px)`); }
+
+  // S5 search and the UK map
+  { const v = vis(t, ...S.s5); set($("s5"), v);
+    set($("s5search"), T(t, 9.4, 9.65), `translateY(${(1 - out3(T(t, 9.4, 9.8))) * -30}px)`);
+    $("s5text").textContent = QUERY.slice(0, Math.round(QUERY.length * T(t, 9.7, 11.0)));
+    $("s5caret").style.opacity = t > 11.2 ? 0 : (Math.floor(t * 3) % 2 ? 1 : 0.2);
+    [...$("s5cities").children].forEach((el, i) => { const a = 11.0 + i * 0.09; set(el, T(t, a, a + 0.15), `scale(${pop(t, a, 0.4)})`); const dot = el.firstChild; dot.style.boxShadow = CITIES[i][0] === "Liverpool" && t > 12.6 ? `0 0 0 ${8 + 10 * (0.5 + 0.5 * Math.sin(t * 7))}px rgba(224,20,43,.22)` : ""; });
+    set($("s5any"), T(t, 12.2, 12.6), `translateY(${(1 - out3(T(t, 12.2, 12.6))) * 16}px)`); }
+
+  // S6 strategies: each word big in the middle as it's said, then off to the cloud
+  { const v = vis(t, ...S.s6); set($("s6"), v);
+    [...$("s6").children].forEach((el, i) => {
+      const [w, at, cx, cy] = STRATS[i], next = STRATS[i + 1] ? STRATS[i + 1][1] : 99, last = i === STRATS.length - 1;
+      const inK = out3(T(t, at - 0.05, at + 0.25)), moveK = last ? 0 : inOut(T(t, next - 0.05, next + 0.35));
+      const big = w === "Serviced accommodation" ? 120 : 150, small = 40;
+      const size = big + (small - big) * moveK;
+      el.style.fontSize = size + "px";
+      el.style.color = moveK > 0.5 ? (i % 2 ? "#E0142B" : "#77707a") : (w === "Flips" ? "#E0142B" : "#111");
+      const x = 960 + (cx - 960) * moveK, y = 540 + (cy - 540) * moveK + (1 - inK) * 40;
+      set(el, t < at - 0.05 ? 0 : inK * (moveK > 0 ? 1 - 0.35 * moveK : 1), `translate(${x}px, ${y}px) translate(-50%, -50%)`);
+      el.style.left = "0"; el.style.top = "0";
+    }); }
+
+  // S7 listing card
+  { const v = vis(t, ...S.s7); set($("s7"), v);
+    const k = out3(T(t, 21.7, 22.2));
+    set($("s7card"), T(t, 21.7, 21.9), `translateY(${(1 - k) * 60}px) scale(${0.96 + 0.04 * k})`);
+    set($("s7back1"), 0.7 * T(t, 22.0, 22.3), "rotate(4deg)"); set($("s7back2"), 0.7 * T(t, 22.1, 22.4), "rotate(-3deg)");
+    set($("s7live"), T(t, 22.5, 22.8));
+    [...$("s7chips").children].forEach((el, i) => { const a = 22.9 + i * 0.12; set(el, T(t, a, a + 0.15), `scale(${pop(t, a, 0.35)})`); el.style.display = "inline-block"; });
+    const glow = T(t, 23.9, 24.2);
+    $("s7btn").style.background = glow ? `rgba(224,20,43,${glow})` : "transparent";
+    $("s7btn").style.color = glow > 0.5 ? "#fff" : "var(--red)";
+    $("s7btn").style.transform = `scale(${1 + 0.06 * glow * (1 - T(t, 24.6, 25.0))})`; }
+
+  // S8 best deals first: three cards, then re-sorted by score
+  { const v = vis(t, ...S.s8); set($("s8"), v);
+    set($("s8h"), T(t, 25.7, 26.0));
+    const sortK = inOut(T(t, 26.5, 27.1));
+    const before = [0, 1, 2], after = [1, 2, 0]; // positions: Walton, Old Swan, Anfield -> Anfield first
+    [...$("s8cards").children].forEach((el, i) => {
+      const pos = before[i] + (after[i] - before[i]) * sortK, a = 25.75 + i * 0.12;
+      const lift = Math.sin(Math.PI * sortK) * (i === 2 ? -60 : 30);
+      set(el, T(t, a, a + 0.2), `translate(${200 + pos * 520}px, ${390 + lift + (1 - out3(T(t, a, a + 0.35))) * 40}px)`);
+      el.style.boxShadow = i === 2 && sortK > 0.9 ? "0 0 0 4px rgba(224,20,43,.5),0 30px 70px rgba(224,20,43,.2)" : "";
+    }); }
+
+  // S9 the numbers
+  { const v = vis(t, ...S.s9); set($("s9"), v);
+    const k = out3(T(t, 28.25, 28.8));
+    set($("s9card"), T(t, 28.25, 28.5), `translateY(${(1 - k) * 50}px) scale(${0.97 + 0.03 * k})`);
+    $("s9score").textContent = Math.round(78 * out3(T(t, 28.6, 29.8)));
+    const tiles = [...$("s9tiles").children], hl = [[31.9, 33.6], [33.6, 35.25], [35.25, 37.65], [35.25, 37.65]];
+    const vals = [[247, (n) => gbp(n)], [36500, (n) => gbp(n)], [8.1, (n) => n.toFixed(1) + "%"], [577, (n) => gbp(n)]];
+    tiles.forEach((el, i) => { const a = 28.7 + i * 0.15; set(el, T(t, a, a + 0.2), `translateY(${(1 - out3(T(t, a, a + 0.35))) * 26}px) scale(${1 + 0.05 * Math.min(T(t, hl[i][0], hl[i][0] + 0.2), 1 - T(t, hl[i][1] - 0.1, hl[i][1] + 0.1))})`);
+      const on = t >= hl[i][0] && t < hl[i][1] + 0.1;
+      el.style.borderColor = on ? "#E0142B" : "transparent"; el.style.background = on ? "#fff" : "#F7F3F4"; el.style.boxShadow = on ? "0 20px 40px rgba(224,20,43,.18)" : "";
+      const [n, f] = vals[i]; el.querySelector("b").textContent = f(n * out3(T(t, a, a + 0.9))); });
+    set($("s9sh"), T(t, 37.6, 37.85));
+    [...$("s9stress").querySelectorAll(".srow")].forEach((el, i) => { const a = 37.75 + i * 0.55; set(el, T(t, a, a + 0.2), `translateX(${(1 - out3(T(t, a, a + 0.35))) * -30}px)`); });
+    set($("s9flag"), T(t, 39.5, 39.75), `scale(${pop(t, 39.5, 0.4)})`); }
+
+  // S10 verdicts
+  { const v = vis(t, ...S.s10); set($("s10"), v);
+    set($("s10h"), T(t, 40.65, 40.95));
+    ["vc1", "vc2", "vc3"].forEach((id, i) => { const a = 40.8 + i * 0.35, el = $(id);
+      const good = i === 0 ? T(t, 43.3, 43.6) : 0, bad = i === 2 ? T(t, 44.3, 44.6) : 0;
+      set(el, T(t, a, a + 0.2) * (1 - 0.55 * bad), `translateY(${(1 - out3(T(t, a, a + 0.4))) * 50}px) scale(${1 + 0.07 * good - 0.05 * bad})`);
+      el.style.boxShadow = good ? `0 0 0 ${5 * good}px rgba(224,20,43,.6),0 40px 90px rgba(224,20,43,${0.25 * good})` : ""; }); }
+
+  // S11 save, check, deal pack
+  { const v = vis(t, ...S.s11); set($("s11"), v);
+    for (const [id, a] of [["p1", 45.9], ["p2", 46.55], ["p3", 47.1]]) set($(id), T(t, a, a + 0.18), `translateX(${(1 - out3(T(t, a, a + 0.35))) * -40}px)`);
+    const k = out3(T(t, 47.2, 47.8)); set($("s11doc"), T(t, 47.2, 47.4), `translateY(${(1 - k) * 120}px) rotate(${(1 - k) * 4}deg)`);
+    set($("s11share"), T(t, 48.5, 48.7), `scale(${pop(t, 48.5, 0.4)})`); }
+
+  // S12 end card
+  { const v = vis(t, ...S.s12); set($("s12"), v);
+    for (const [id, a] of [["t1", 51.35], ["t2", 52.3], ["t3", 53.5]]) set($(id), T(t, a, a + 0.25), `translateY(${(1 - out3(T(t, a, a + 0.35))) * 18}px)`);
+    set($("s12cta"), T(t, 54.2, 54.5), `scale(${pop(t, 54.2, 0.45)})`); }
+};
+window.render(0);
+</script>
+</body>
+</html>

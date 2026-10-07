@@ -26,13 +26,13 @@ Sign-in and the `/api` calls use demo data, so no account or API key is needed.
 | --- | --- | --- |
 | `assets/deal-pro-tutorial.mp4` (home page) | `scripts/tutorial-narration.mp3` | `scripts/record_walkthrough.mjs` |
 | `assets/deal-community-tutorial.mp4` (Deal Community page) | `scripts/community-narration.mp3` | `scripts/record_community.mjs` |
-| `assets/deal-pro-overview.mp4` (home page, "What Deal Pro does") | `scripts/overview-narration.mp3` | `scripts/record_overview.mjs` |
+| `assets/deal-pro-overview.mp4` (home page, "What Deal Pro does") and `assets/deal-pro-overview-vertical.mp4` (9:16 for TikTok, Reels and Shorts) | `scripts/overview-narration.mp3` | `scripts/record_motion.mjs` |
 
 ```sh
-npm i -g playwright geist && pip3 install imageio-ffmpeg
+npm i -g playwright geist @fontsource/instrument-serif && pip3 install imageio-ffmpeg
 node scripts/record_walkthrough.mjs
 node scripts/record_community.mjs
-node scripts/record_overview.mjs
+node scripts/record_motion.mjs   # motion graphics, from scripts/motion/overview.html
 ```
 
 The shared recorder is `scripts/walkthrough/lib.mjs`. If you change a narration,
