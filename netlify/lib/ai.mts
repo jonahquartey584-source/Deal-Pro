@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import { getStore } from "@netlify/blobs";
+import { mismatch as screenMismatch, type Kind } from "./screen.mts";
 
 export const ADMIN_EMAIL = "jonahquartey584@gmail.com";
 export const FREE_ANALYSES = 1;
@@ -445,6 +446,8 @@ export type Listing = {
   // "unknown": the site blocked the check, so the AI has to open it instead.
   link?: "live" | "gone" | "unknown";
   confirmed?: boolean;
+  // Why the advert doesn't fit the search (a room, commercial, wrong area, ruled out by its description); such listings are dropped.
+  mismatch?: string;
   details?: { deposit: string; availableFrom: string; listed?: string; highlights: string[] };
 };
 
@@ -601,13 +604,14 @@ Prefer the newest listings. Only include listings you actually found in the sear
 }
 
 // Expert only: open listing pages to confirm they're still available and fill in details.
-async function verifyBatch(batch: Listing[], level: LevelId) {
+async function verifyBatch(batch: Listing[], level: LevelId, f: Filters = {}) {
   const domains = [...new Set(batch.flatMap((l) => SITES[l.site].domains))];
   const prompt = `Open each of these property listing pages and check them:
 ${batch.map((l, i) => `${i + 1}. ${l.url}`).join("\n")}
 For each, confirm the page opens (not a 404 or "page not found"), is a single property advert (not a search-results or area page), and whether it is still available (not let agreed, under offer, sold STC, expired or removed), and read the details from the page itself.
-Return JSON: {"checks": [{"url": string (exactly as given), "opened": true | false (false if you could not open this exact page), "is_listing": true | false, "available": true | false | null, "title": string (the advert's own title), "type": string (e.g. "2 bed flat"), "area": string (street/area and town as the advert shows), "listed": string (the date it was added or last updated, if shown), "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not]}]}.
-Only report what the pages actually say. Use null or "" when a detail isn't shown.`;
+Return JSON: {"checks": [{"url": string (exactly as given), "opened": true | false (false if you could not open this exact page), "is_listing": true | false, "available": true | false | null, "title": string (the advert's own title), "type": string (e.g. "2 bed flat"), "area": string (street/area and town as the advert shows), "listed": string (the date it was added or last updated, if shown), "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not], "property_kind": "whole_property" | "single_room" (one room in a shared home, so the price is for the room) | "commercial" | "other", "postcode": string (the full postcode or district the advert shows), "in_requested_area": true | false | null (is it in or within a few miles of: ${f.loc?.trim() || "no area given"}; null if no area was given), "rules_out_strategy": string (a short quote from the advert's description that rules out the member's plan, for example "no sharers", "no subletting", "no short lets", "single family only"; "" if nothing does)}]}.
+The member's plan: ${describe(f)}.
+Read the whole description, not just the title. Only report what the pages actually say. Use null or "" when a detail isn't shown.`;
   const { parsed } = await webJson(prompt, domains, level, level === "quick" ? "medium" : "high", level === "quick" ? "low" : "medium");
   const byUrl = new Map(batch.map((l) => [normalise(l.url), l]));
   for (const c of (parsed.checks || []) as Array<Record<string, any>>) {
@@ -637,6 +641,10 @@ Only report what the pages actually say. Use null or "" when a detail isn't show
       highlights: Array.isArray(c.highlights) ? c.highlights.slice(0, 8).map((h: unknown) => String(h).slice(0, 120)) : [],
     };
     if (!l.listedAt && parseListed(String(c.listed || ""))) l.listedAt = parseListed(String(c.listed || ""));
+    if (c.postcode && !l.postcode) l.postcode = String(c.postcode).toUpperCase().slice(0, 8);
+    const kind: Kind = c.property_kind === "single_room" ? "room" : c.property_kind === "commercial" ? "commercial" : c.property_kind === "whole_property" ? "whole" : "unknown";
+    const why = screenMismatch(l, f, { kind, inArea: typeof c.in_requested_area === "boolean" ? c.in_requested_area : null, restriction: String(c.rules_out_strategy || "").slice(0, 120) }, l.details.highlights.join(" "));
+    if (why) l.mismatch = why;
     if (HOT_TEXT.test(l.details.highlights.join(" "))) l.hot = true;
   }
 }
@@ -646,7 +654,7 @@ Only report what the pages actually say. Use null or "" when a detail isn't show
 // and the runner starts another run to continue.
 export type SearchState = {
   filters: Filters; sites: string[]; phase: "search" | "check" | "verify" | "rank" | "done";
-  round: number; checkAt?: number; verifyAt: number; listings: Listing[]; removed?: number;
+  round: number; checkAt?: number; verifyAt: number; listings: Listing[]; removed?: number; ruledOut?: number; ruledOutWhy?: Record<string, number>;
   // A refresh starts from the member's current results: they are re-checked and new ones added.
   previous?: string[];
   widened?: boolean;
@@ -681,7 +689,7 @@ export function newSearch(input: string, level: LevelId): SearchState {
   };
 }
 
-export const searchProgress = (st: SearchState) => ({ phase: st.phase, sites: st.sites_status, found: st.listings.length, checked: st.checkAt || 0, verified: st.verifyAt, removed: st.removed || 0 });
+export const searchProgress = (st: SearchState) => ({ phase: st.phase, sites: st.sites_status, found: st.listings.length, checked: st.checkAt || 0, verified: st.verifyAt, removed: st.removed || 0, ruledOut: st.ruledOut || 0 });
 
 // ---------- link checks ----------
 // Every listing's link is opened before it is shown. Pages that 404, bounce to a search or home
@@ -690,7 +698,7 @@ export const searchProgress = (st: SearchState) => ({ phase: st.phase, sites: st
 const GONE_TEXT = /(no longer available|no longer on the market|no longer listed|has been removed|been taken down|advert has expired|ad has expired|listing (?:has )?expired|listing not found|property not found|advert not found|page not found|page (?:you|you're|you are) looking for|couldn['’]t find (?:that|the|this) page|this (?:ad|advert|listing|property) is no longer|\b404\b\W{0,3}(?:error|not found|page))/i;
 const HOT_TEXT = /high demand|multiple (?:offers|applications|enquiries)|viewings? (?:are )?(?:now )?(?:fully )?booked|closing date|best and final|limited viewings|lots of interest/i;
 const TAKEN_TITLE = /\b(let agreed|under offer|sold stc|sold subject to contract|reserved)\b/i;
-export async function checkLink(l: Listing): Promise<"live" | "gone" | "unknown"> {
+export async function checkLink(l: Listing, f: Filters = {}): Promise<"live" | "gone" | "unknown"> {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 9000);
   try {
@@ -709,6 +717,9 @@ export async function checkLink(l: Listing): Promise<"live" | "gone" | "unknown"
     const added = text.match(/\b(?:added|listed|posted|reduced|updated)\b[^.\n]{0,30}?(?:today|yesterday|\d+\s*(?:hours?|days?|weeks?|months?)\s+ago|\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}|\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}\.?,?\s+\d{4})/i)?.[0];
     if (added) { const at = parseListed(added); if (at) l.listedAt = at; }
     if (HOT_TEXT.test(text.slice(0, 6000))) l.hot = true;
+    // Read the advert itself: is it a room, commercial, in the wrong area, or ruled out by its description?
+    const why = screenMismatch(l, f, {}, text);
+    if (why) l.mismatch = why;
     if (title && !/rightmove|zoopla|openrent|spareroom|gumtree|facebook/i.test(title.replace(/[|\-–].*$/, "").trim())) l.title = title.replace(/\s*[|–-]\s*(Rightmove|Zoopla|OpenRent|SpareRoom|Gumtree|Facebook).*$/i, "").slice(0, 140);
     return "live";
   } catch { return "unknown"; } finally { clearTimeout(timer); }
@@ -719,6 +730,9 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
   const min = Number(st.filters.min) || 0, max = Number(st.filters.max) || Infinity;
   const known = () => new Set(st.listings.map((l) => l.id));
   const timeLeft = () => deadline - Date.now();
+  // Listings that don't fit the search are counted by reason and dropped, so they are never shown or ranked.
+  const noteRuledOut = (why: string) => { st.ruledOut = (st.ruledOut || 0) + 1; const k = why.replace(/\s*[("].*$/, ""); st.ruledOutWhy = { ...(st.ruledOutWhy || {}), [k]: ((st.ruledOutWhy || {})[k] || 0) + 1 }; };
+  const dropMismatches = () => { st.listings = st.listings.filter((l) => { if (!l.mismatch) return true; noteRuledOut(l.mismatch); return false; }); };
 
   // Rounds: every site is searched in parallel, each round from a new angle.
   while (st.phase === "search") {
@@ -739,7 +753,12 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
         if (!ok.length) throw (runs[0] as PromiseRejectedResult).reason;
         const found = ok.flatMap((r) => r.value).filter((l) => l.price >= min && l.price <= max);
         const have = known();
-        for (const l of found) if (!have.has(l.id) && st.listings.length < 500) { st.listings.push(l); have.add(l.id); }
+        for (const l of found) {
+          if (have.has(l.id) || st.listings.length >= 500) continue;
+          const why = screenMismatch(l, st.filters);
+          if (why) { noteRuledOut(why); have.add(l.id); continue; }
+          st.listings.push(l); have.add(l.id);
+        }
         const count = st.listings.filter((l) => l.site === site).length;
         st.sites_status[site] = { status: round + 1 >= lv.passes ? "done" : "searching", found: count, round: round + 1, rounds: lv.passes };
       } catch (error) {
@@ -765,13 +784,14 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
     while (st.checkAt < st.listings.length) {
       if (timeLeft() < 4 * 60_000) return st;
       const group = st.listings.slice(st.checkAt, st.checkAt + 8);
-      await Promise.all(group.map(async (l) => { l.link = await checkLink(l); if (l.link === "live") { l.verified = "available"; l.checkedAt = new Date().toISOString(); } }));
+      await Promise.all(group.map(async (l) => { l.link = await checkLink(l, st.filters); if (l.link === "live") { l.verified = "available"; l.checkedAt = new Date().toISOString(); } }));
       st.checkAt += group.length;
       if (st.checkAt % 24 === 0 || st.checkAt >= st.listings.length) await save(st);
     }
     const before = st.listings.length;
     st.listings = st.listings.filter((l) => l.link !== "gone");
     st.removed = (st.removed || 0) + before - st.listings.length;
+    dropMismatches();
     st.phase = "verify";
     await save(st);
   }
@@ -792,7 +812,7 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
       if (timeLeft() < 4 * 60_000) return st;
       const group = targets.slice(st.verifyAt, st.verifyAt + 20);
       const batches = Array.from({ length: Math.ceil(group.length / 5) }, (_, i) => group.slice(i * 5, i * 5 + 5));
-      await Promise.all(batches.map((batch) => verifyBatch(batch, level).catch((error) => console.error("Verify failed", error))));
+      await Promise.all(batches.map((batch) => verifyBatch(batch, level, st.filters).catch((error) => console.error("Verify failed", error))));
       st.verifyAt += group.length;
       await save(st);
     }
@@ -800,6 +820,7 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
     const before = st.listings.length;
     st.listings = st.listings.filter((l) => l.verified !== "unavailable");
     st.removed = (st.removed || 0) + before - st.listings.length;
+    dropMismatches();
     for (const l of st.listings) l.confirmed = l.verified === "available";
     st.listings.sort((a, b) => Number(!!b.confirmed) - Number(!!a.confirmed));
     st.phase = "rank";

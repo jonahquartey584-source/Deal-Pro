@@ -2360,7 +2360,7 @@ async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LE
     LIVE=(res.listings||[]).slice(0,500);/* the server only returns single-listing links */
     // After a refresh, mark listings that weren't in the previous results as new.
     if(p.prev){const prev=new Set(p.prev),now=new Date().toISOString();LIVE.forEach(x=>{if(!prev.has(x.url))x.newAt=now;else if(p.prevNew&&p.prevNew[x.url])x.newAt=p.prevNew[x.url]})}S.find.live=LIVE;S.find.liveAt=new Date().toISOString();S.find.liveSites=res.sites||{};S.find.searched=true;FS.sel.clear();
-    FS.rank=res.ranking?{status:'done',level:lv,data:res.ranking}:null;S.find.rank=res.ranking?{level:lv.id,data:res.ranking}:null;S.find.removed=res.removed||0;
+    FS.rank=res.ranking?{status:'done',level:lv,data:res.ranking}:null;S.find.rank=res.ranking?{level:lv.id,data:res.ranking}:null;S.find.removed=res.removed||0;S.find.ruledOut=res.ruledOut||0;S.find.ruledOutWhy=res.ruledOutWhy||{};
     const missed=Object.entries(res.sites||{}).filter(([,v])=>v.status==='error').map(([k])=>SITE_LABEL(k));
     const live=LIVE.filter(confirmedLive).length;FS.showUnconfirmed=false;
     const rf=res.refreshed;if(!LIVE.length){toast(`No listings found${S.find.f.loc?` in ${S.find.f.loc}`:''}, even after searching nearby areas. Try a wider price range, more sites or Analyst.`);return}
@@ -2430,9 +2430,9 @@ function rankHTML(){restoreRank();const R=FS.rank;
       <p>${esc(rankText(p.reason))}${p.key_figure?` <span class="muted">${esc(String(p.key_figure))}</span>`:p.monthly_profit_80?` <span class="muted">Est. at 80%: ${esc(String(p.monthly_profit_80))}</span>`:''}</p>${notes}
       <div class="rank-act"><button class="btn xs primary" data-build="${+p.id}">Analyse deal</button><a class="btn xs" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a></div></li>`};
   const hl=Array.isArray(a.highlights)?a.highlights.filter(Boolean).slice(0,6):[];
-  const conf=SRC().filter(confirmedLive).length,unc=SRC().length-conf,rem=S.find.removed||0;
+  const conf=SRC().filter(confirmedLive).length,unc=SRC().length-conf,rem=S.find.removed||0,ro=S.find.ruledOut||0,why=Object.entries(S.find.ruledOutWhy||{}).map(([k,n])=>`${n} ${k.charAt(0).toLowerCase()+k.slice(1)}`).join(', ');
   return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>What ${esc(lv.name)} found</b></div>
-    <p class="rank-stats">${conf} confirmed live listing${conf===1?'':'s'}${rem?` · ${rem} dead or taken link${rem===1?'':'s'} removed`:''}${unc?` · ${unc} couldn't be confirmed`:''} · every listing below is scored and sorted, best first</p>
+    <p class="rank-stats">${conf} confirmed live listing${conf===1?'':'s'}${rem?` · ${rem} dead or taken link${rem===1?'':'s'} removed`:''}${ro?` · ${ro} left out after reading the advert (${esc(why)})`:''}${unc?` · ${unc} couldn't be confirmed`:''} · every listing below is scored and sorted, best first</p>
     ${a.explanation?`<p class="rank-exp">${esc(rankText(a.explanation))}</p>`:a.summary?`<p class="rank-exp">${esc(rankText(a.summary))}</p>`:''}
     ${hl.length?`<ul class="rank-hl">${hl.map(h=>`<li>${esc(rankText(h))}</li>`).join('')}</ul>`:''}
     ${picks.length?`<h3 class="rank-sub">Top picks</h3>${a.explanation&&a.summary?`<p>${esc(rankText(a.summary))}</p>`:''}<ol class="rank-list">${picks.map(li).join('')}</ol>`:''}

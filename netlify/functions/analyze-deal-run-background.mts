@@ -45,7 +45,7 @@ export default async (request: Request, _context: Context) => {
       }
       const prev = new Set(st.previous || []);
       analysis = {
-        listings: st.listings, sites: st.sites_status, ranking: st.ranking ?? null, removed: st.removed || 0,
+        listings: st.listings, sites: st.sites_status, ranking: st.ranking ?? null, removed: st.removed || 0, ruledOut: st.ruledOut || 0, ruledOutWhy: st.ruledOutWhy || {},
         ...(st.previous ? { refreshed: { rechecked: prev.size, gone: [...prev].filter((id) => !st.listings.some((l) => l.id === id)).length, added: st.listings.filter((l) => !prev.has(l.id) && l.confirmed).length } } : {}),
       };
     } else {
