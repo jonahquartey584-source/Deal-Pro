@@ -68,6 +68,7 @@ export default async (request: Request, _context: Context) => {
       if (stored.accountEnabled === false) return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
       nextState.admin = false;
       nextState.plan = stored.plan || "Free";
+      if (stored.profile) nextState.profile = stored.profile; else delete nextState.profile; // set only through /api/profile
       if (stored.planExpiresAt) nextState.planExpiresAt = stored.planExpiresAt; else delete nextState.planExpiresAt;
       nextState.accountEnabled = true;
       nextState.unlocked = Array.isArray(stored.unlocked) ? stored.unlocked : [];

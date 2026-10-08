@@ -168,19 +168,29 @@ function showMessage(text, error = false) {
 function setMode(next) {
   mode = next;
   const settingPassword = mode === "reset" || mode === "invite";
-  $("#authNameWrap").hidden = mode !== "signup";
-  $("#authEmailWrap").hidden = settingPassword;
-  $("#authEmail").required = !settingPassword;
+  const profileStep = mode === "profile"; // shown after sign-in until name, company and strategy are given
+  $("#authNameWrap").hidden = mode !== "signup" && !profileStep;
+  $("#authNameLabel").textContent = profileStep ? "Full name" : "Your name";
+  $("#authName").required = profileStep;
+  $("#authCompanyWrap").hidden = !profileStep;
+  $("#authCompany").required = profileStep;
+  $("#authStrategyWrap").hidden = !profileStep;
+  $("#authStrategy").required = profileStep;
+  $("#authPasswordWrap").hidden = profileStep;
+  $("#authPassword").required = !profileStep;
+  $("#authSubmit").disabled = false;
+  $("#authEmailWrap").hidden = settingPassword || profileStep;
+  $("#authEmail").required = !settingPassword && !profileStep;
   $("#authConfirmWrap").hidden = !settingPassword;
   $("#authConfirm").required = settingPassword;
   $("#forgotPassword").hidden = mode !== "login";
-  $("#authSwitch").hidden = settingPassword;
-  $("#authClose").hidden = settingPassword;
-  $("#authOauth").hidden = settingPassword || !googleEnabled;
+  $("#authSwitch").hidden = settingPassword || profileStep;
+  $("#authClose").hidden = settingPassword || profileStep;
+  $("#authOauth").hidden = settingPassword || profileStep || !googleEnabled;
   $("#authPassword").autocomplete = mode === "login" ? "current-password" : "new-password";
   $("#authPasswordLabel").textContent = settingPassword ? "New password" : "Password";
-  $("#authSubmit").textContent = { signup: "Create account", reset: "Save new password", invite: "Set password" }[mode] || "Sign in";
-  $("#authTitle").textContent = { signup: "Create your account", reset: "Set a new password", invite: "Accept your invitation" }[mode] || "Welcome back";
+  $("#authSubmit").textContent = { signup: "Create account", reset: "Save new password", invite: "Set password", profile: "Continue" }[mode] || "Sign in";
+  $("#authTitle").textContent = { signup: "Create your account", reset: "Set a new password", invite: "Accept your invitation", profile: "Tell us about you" }[mode] || "Welcome back";
   $("#authSwitch").textContent = mode === "signup" ? "Already have an account? Sign in" : "New to Deal Pro? Create an account";
   $("#authPassword").value = "";
   $("#authConfirm").value = "";
@@ -209,12 +219,31 @@ async function api(path, options = {}) {
   return data;
 }
 
+// Every customer gives their full name, company and the strategy they are looking for once, after signing in.
+const ADMIN_EMAIL = "jonahquartey584@gmail.com";
+const profileDone = (p) => !!(p && p.fullName && p.company && p.strategy);
+let profileResolve = null;
+function collectProfile(user, existing) {
+  document.body.classList.remove("auth-pending");
+  openAccount("profile");
+  $("#authName").value = existing?.fullName || user.name || "";
+  $("#authCompany").value = existing?.company || "";
+  $("#authStrategy").value = existing?.strategy || "";
+  setTimeout(() => $(existing?.fullName || user.name ? "#authCompany" : "#authName")?.focus(), 0);
+  return new Promise((resolve) => { profileResolve = resolve; });
+}
+
 async function prepareAccount(user) {
   signedInUser = user;
   const accountKey = "dealpremium:active-user";
   const current = localStorage.getItem(accountKey);
   const remote = await api("/api/account-state");
   const remoteState = remote.state;
+  if (remoteState && user.email?.toLowerCase() !== ADMIN_EMAIL && !profileDone(remoteState.profile)) {
+    remoteState.profile = await collectProfile(user, remoteState.profile);
+    user = { ...user, name: remoteState.profile.fullName };
+    signedInUser = user;
+  }
   const localState = localStorage.getItem("dealpro:state");
   const remoteText = remoteState ? JSON.stringify(remoteState) : null;
 
@@ -319,6 +348,22 @@ form.addEventListener("submit", async (event) => {
   const button = $("#authSubmit");
   button.disabled = true;
   try {
+    if (mode === "profile") {
+      showMessage("Saving…");
+      let saved;
+      try {
+        saved = await api("/api/profile", { method: "PUT", body: JSON.stringify({ fullName: $("#authName").value, company: $("#authCompany").value, strategy: $("#authStrategy").value }) });
+      } catch (error) {
+        showMessage(error.message, true);
+        return;
+      }
+      updateUser({ data: { full_name: saved.profile.fullName, company: saved.profile.company, strategy: saved.profile.strategy } }).catch(() => {});
+      showMessage("");
+      const done = profileResolve;
+      profileResolve = null;
+      done?.(saved.profile);
+      return;
+    }
     const email = $("#authEmail").value.trim();
     const password = $("#authPassword").value;
     if (mode === "reset" || mode === "invite") {
@@ -356,7 +401,7 @@ $("#authSwitch").addEventListener("click", () => setMode(mode === "login" ? "sig
 $("#authClose").addEventListener("click", closeAccount);
 $("#homeSignIn").addEventListener("click", () => openAccount("login"));
 $("#homeCreateAccount").addEventListener("click", () => openAccount("signup"));
-const canClose = () => mode !== "reset" && mode !== "invite";
+const canClose = () => mode !== "reset" && mode !== "invite" && mode !== "profile";
 gate.addEventListener("click", (event) => { if (event.target === gate && canClose()) closeAccount(); });
 document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !gate.hidden && canClose()) closeAccount(); });
 document.addEventListener("click", (event) => {

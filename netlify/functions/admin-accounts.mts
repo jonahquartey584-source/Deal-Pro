@@ -18,7 +18,7 @@ export default async (request: Request, _context: Context) => {
       if (state) applyPlanExpiry(state);
       const metadata = (await store.getMetadata(blob.key))?.metadata as Record<string, unknown> | undefined;
       return {
-        userId: blob.key.split("/")[1], name: metadata?.name || "", createdAt: metadata?.createdAt || null, email: metadata?.email || "Email unavailable",
+        userId: blob.key.split("/")[1], name: (state?.profile as Record<string, unknown> | undefined)?.fullName || metadata?.name || "", company: (state?.profile as Record<string, unknown> | undefined)?.company || "", strategy: (state?.profile as Record<string, unknown> | undefined)?.strategy || "", createdAt: metadata?.createdAt || null, email: metadata?.email || "Email unavailable",
         plan: state?.plan || "Free", expiresAt: state?.planExpiresAt || null, subscribed: !!(state?.stripe as Record<string, unknown> | undefined)?.subscription && state?.plan !== "Free", enabled: state?.accountEnabled !== false,
         savedDeals: Array.isArray(state?.saved) ? state.saved.length : 0, updatedAt: metadata?.updatedAt || null,
       };
