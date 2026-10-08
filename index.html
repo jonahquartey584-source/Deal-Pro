@@ -389,7 +389,7 @@ pre.notice{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--surface-
 }
 
 /* pricing */
-.plans{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.plans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
 .plan{background:var(--surface);padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .plan.feat{box-shadow:inset 0 2px 0 var(--brand)}
 .plan-h{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:20px}
@@ -628,7 +628,7 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .how-n{font-size:12px;color:var(--accent)}
 .how h3{font-size:16px;margin:10px 0 6px}
 .how p{color:var(--ink-2);font-size:13.5px}
-.hplans{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.hplans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .hplan{background:var(--surface);padding:22px;display:grid;gap:8px;align-content:start;min-width:0}
 .hplan h3{font-size:15px}
 .hplan .price .mono{font-size:30px}
@@ -672,7 +672,7 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .switch .knob{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#F4F4F5;box-shadow:0 1px 2px rgba(0,0,0,.4);transition:transform .26s var(--ease)}
 .switch[aria-checked="true"]{background:var(--brand)}
 .switch[aria-checked="true"] .knob{transform:translateX(16px)}
-.plans.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.plans.two{grid-template-columns:repeat(2,minmax(0,1fr))}.plans .dcm-hint{grid-column:1/-1;background:var(--surface);padding:12px 20px;font-size:12.5px;color:var(--muted)}.plans .dcm-card{grid-column:1/-1;min-height:0}.plans .dcm-card ul{padding-top:8px}
 .plan-from{font-size:12.5px;color:var(--muted);margin-top:-6px}
 .plan .bill-note{font-size:12px;color:var(--muted);margin-top:-8px;min-height:18px}
 .plan .lead{font-size:12.5px;color:var(--ink);font-weight:500;padding-top:12px;border-top:1px solid var(--line)}
@@ -1578,7 +1578,7 @@ function secondDeal(){const d=sampleDeal();Object.assign(d,{id:'d2',name:'Isling
   units:[{label:'Studio 1',rent:1700,dep:1700,rate:180},{label:'Studio 2',rent:1700,dep:1569,rate:180},{label:'Studio 3',rent:1700,dep:1700,rate:180}]});return d}
 function freshDeal(){const d=sampleDeal();Object.assign(d,{id:'d'+Date.now(),name:'New deal',area:'',london:false,status:'Analysing',units:[{label:'Unit 1',rent:0,dep:0,rate:0}]});return d}
 
-const PLAN_DEFS={Free:{name:'Free',s:6,w:6},Lite:{name:'Lite',s:12,w:75},Pro:{name:'Premium',s:30,w:300},Max5:{name:'Max 5x',s:150,w:1500},Max20:{name:'Max 20x',s:600,w:6000}};
+const PLAN_DEFS={Free:{name:'Free',s:6,w:6},Lite:{name:'Deal Community',s:12,w:75},Pro:{name:'Premium',s:30,w:300},Max5:{name:'Max 5x',s:150,w:1500},Max20:{name:'Max 20x',s:600,w:6000}};
 // Stripe payment links. A plan with no link here can't be bought online yet, so its
 // button asks the customer to get in touch instead of opening the wrong checkout.
 const CHECKOUT={
@@ -1628,7 +1628,7 @@ function fmtLeft(ms){const m=Math.max(1,Math.ceil(ms/60000)),hr=Math.floor(m/60)
 function nextMonth(t){const d=new Date(t);return new Date(d.getFullYear(),d.getMonth()+1,1)}
 const FEAT_NAME={import:'Advert import',dd:'Due diligence research',pack:'Deal packs'};
 function limitNote(where,kind,feat){const el=$(where);const u=S.usage;let msg;
-  if(kind==='feature')msg=`${FEAT_NAME[feat]} ${feat==='pack'?'are':'is'} included with every paid plan, from Lite at £9.99 a month.`;
+  if(kind==='feature')msg=`${FEAT_NAME[feat]} ${feat==='pack'?'are':'is'} included with Premium and Max, from £39 a month.`;
   else if(kind==='weekly')msg=`You've reached your weekly limit. It resets ${wkday(u.wStart+WEEK)}.`;
   else if(kind==='cap')msg=`You've reached your extra usage cap for this month. Raise the cap in Usage, or wait until it resets on ${nextMonth(now()).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}.`;
   else msg=`You've reached your session limit. It resets at ${hhmm(u.sStart+SESSION)}.`;
@@ -2086,17 +2086,18 @@ function renderPlans(){
     box.innerHTML=`<div class="plan"><div class="plan-h"><h3>Free</h3></div><p class="plan-from">Try Deal Pro</p>
       <div class="price"><span class="mono">£0</span><span class="per">per month</span></div><div class="bill-note">Free forever</div>
       <div class="lead">Limited usage</div>${feats(['3 Deal Finder searches a week','2 Scout deal analyses','Browse the Deal Community, reply and chat','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
-    <div class="plan"><div class="plan-h"><h3>Lite</h3></div><p class="plan-from">A bit more room to work</p>
-      <div class="price"><span class="mono">£9.99</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
-      <div class="lead">Everything in Free, plus:</div>${feats(['15 credits a week (Scout)','Post 3 deals a month in the Deal Community','Due diligence research','Deal packs','Unlimited saved deals'])}${planBtn('Lite')}</div>
     <div class="plan feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div><p class="plan-from">For everyday sourcing</p>
       <div class="price"><span class="mono">£${ann?33:39}</span><span class="per">per month</span></div><div class="bill-note">${ann?'Billed annually (£396 upfront)':'Billed monthly'}</div>
-      <div class="lead">Everything in Lite, plus:</div>${feats(['Analyst and Expert power levels','60 credits a week for searches and analyses','Post 10 deals a month in the Deal Community','Due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
+      <div class="lead">Everything in Free, plus:</div>${feats(['Analyst and Expert power levels','60 credits a week for searches and analyses','Post 10 deals a month in the Deal Community','Due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
     <div class="plan"><div class="plan-h"><h3>Max</h3></div><p class="plan-from">From £100/month · For sourcers who work deals all day</p>
       <div class="seg segb tier" role="group" aria-label="Max usage tier"><button id="maxT5" data-tier="5" aria-pressed="${mt==='5'}">5x</button><button id="maxT20" data-tier="20" aria-pressed="${mt==='20'}">20x</button></div>
       <div class="price"><span class="mono">£${mt==='20'?200:100}</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
-      <div class="lead">Everything in Premium, plus:</div>${feats([`${mt}x more usage than Premium per session`,`${mt==='20'?1200:300} credits a week`,'Unlimited Deal Community posts','Higher limits','Early access to new features','Priority at peak times'])}${planBtn(mid)}</div>`}
+      <div class="lead">Everything in Premium, plus:</div>${feats([`${mt}x more usage than Premium per session`,`${mt==='20'?1200:300} credits a week`,'Unlimited Deal Community posts','Higher limits','Early access to new features','Priority at peak times'])}${planBtn(mid)}</div>
+    ${S.dcOpen||S.plan==='Lite'?`<div class="plan dcm-card"><div class="plan-h"><h3>Deal Community membership</h3></div><p class="plan-from">Only for posting your deals in the Deal Community</p>
+      <div class="price"><span class="mono">£9.99</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
+      ${feats(['Post up to 5 deals a day, off market or on market','Reply and chat across the Deal Community'])}${planBtn('Lite')}</div>`:`<div class="dcm-hint">Only want to post your deals in the Deal Community? <button type="button" class="linkbtn" data-dcm-open>See the Deal Community membership</button></div>`}`}
   renderUsage()}
+$('#plans').addEventListener('click',e=>{if(e.target.closest('[data-dcm-open]')){S.dcOpen=true;renderPlans()}});
 $('#ptInd').addEventListener('click',()=>{S.plansTab='individual';save();renderPlans()});
 
 $('#billSw').addEventListener('click',()=>{S.billing=S.billing==='annual'?'monthly':'annual';save();renderPlans()});
@@ -2788,7 +2789,7 @@ function renderHome(){syncFee();
     <div class="pv-nums"><div class="pv-label">Deal Analyser · ${esc(S.deal.name||'Untitled deal')}</div>
       <div class="strip mini">${fig('Upfront cash',gbp(f.up))}${fig('Surplus at 60%',gbp(f.t60),f.t60<0?' neg':'')}${fig('Surplus at 80%',gbp(f.t80),f.t80<0?' neg':'')}${fig('Break-even',isFinite(f.be)?pct(f.be):'Never')}</div></div>`;
   const hp=(n,pr,per,sub,feat)=>`<div class="hplan${feat?' feat':''}"><div class="plan-h"><h3>${n}</h3>${feat?'<span class="tag">Most popular</span>':''}</div><div class="price"><span class="mono">${pr}</span><span class="per">${per}</span></div><div class="sub">${sub}</div></div>`;
-  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 2 deal analyses.')+hp('Lite','£9.99','per month','15 Scout credits a week and 3 Deal Community posts a month.')+hp('Premium','£39','per month','For everyday sourcing. Searches and analyses at every power level, billed monthly.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
+  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 2 deal analyses.')+hp('Premium','£39','per month','For everyday sourcing. Searches and analyses at every power level, billed monthly.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
 
 
 /* ---------- hero: slow liquid field, paused offscreen, static under reduced motion ---------- */
@@ -3034,11 +3035,11 @@ async function cApi({url='',...opts}={}){const r=await fetch('/api/community'+ur
 function loadCommunity(){if(CM.loading)return CM.loading;CM.error='';
   CM.loading=(async()=>{try{const d=await cApi();CM.posts=d.posts||[];CM.posting=d.posting||null;renderPostNote()}catch(e){CM.error=e.message}finally{CM.loading=null}renderCommunityList();renderCNewBadge()})();
   return CM.loading}
-// Posting deals needs Lite or Premium (a monthly allowance) or Max (unlimited); Free can browse, reply and chat.
-function renderPostNote(){const p=CM.posting,n=$('#cPostNote');if(!n)return;n.textContent=!p?'':p.left==null?'':p.allowed?`${p.left} of ${p.limit} posts left this month`:p.limit?'Monthly posts used':'Paid plans'}
+// Posting deals needs the Deal Community membership (5 a day), Premium (a monthly allowance) or Max (unlimited); Free can browse, reply and chat.
+function renderPostNote(){const p=CM.posting,n=$('#cPostNote');if(!n)return;n.textContent=!p?'':p.left==null?'':p.allowed?`${p.left} of ${p.limit} posts left ${p.period==='day'?'today':'this month'}`:p.limit?(p.period==='day'?'Daily posts used':'Monthly posts used'):'Paid plans'}
 function postingBlocked(){const p=CM.posting;if(!p||p.allowed)return false;
   const n=$('#nCommunity')||(()=>{const d=document.createElement('div');d.className='limit-note';d.id='nCommunity';d.setAttribute('role','status');$('#cForm').before(d);return d})();
-  n.innerHTML=`<div>${p.limit?`You've posted your ${p.limit} deals for this month. ${p.plan==='Lite'?'Upgrade to Premium for 10 a month, or Max for unlimited posts.':'Upgrade to Max for unlimited posts.'}`:'Posting deals needs a paid plan: Lite (3 a month, £9.99), Premium (10 a month) or Max (unlimited). You can still browse deals, reply and use the region chat for free.'}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false;return true}
+  n.innerHTML=`<div>${p.limit?p.period==='day'?`You've posted your ${p.limit} deals for today. You can post more tomorrow.`:`You've posted your ${p.limit} deals for this month. Upgrade to Max for unlimited posts.`:'Posting deals needs a paid plan: the Deal Community membership (5 a day, £9.99), Premium (10 a month) or Max (unlimited). You can still browse deals, reply and use the region chat for free.'}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false;return true}
 function renderCommunity(){cMarkSeen();const f=$('#cForm');const em=document.body.dataset.userEmail||'';
   if(f&&!f.elements.contactEmail.value)f.elements.contactEmail.value=em;const nm=($('.ws-name')||{}).textContent||'';if(f&&!f.elements.contactName.value&&nm&&nm!==em)f.elements.contactName.value=nm;
   if(CM.posts)renderCommunityList();loadCommunity();if(CH.on)openRoom(CH.room)}

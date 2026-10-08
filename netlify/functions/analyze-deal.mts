@@ -156,7 +156,7 @@ export default async (request: Request, _context: Context) => {
       reserved.searches = 1;
     }
   } else if (!isAdmin) {
-    if (SCOUT_ONLY_PLANS.has(plan) && level !== "quick") return json({ error: "Lite includes Scout. Upgrade to Premium for Analyst and Expert." }, 402);
+    if (SCOUT_ONLY_PLANS.has(plan) && level !== "quick") return json({ error: "Your plan includes Scout. Upgrade to Premium for Analyst and Expert." }, 402);
     const cost = LEVELS[level].credits;
     const week = currentWeek(usage);
     if (week.weekUsed + cost > (WEEKLY_CREDITS[plan] ?? 0)) {

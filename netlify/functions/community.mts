@@ -8,11 +8,16 @@ const STRATEGIES = ["R2SA", "R2R", "BTL", "HMO", "BRRR", "Lease option", "Flip",
 const PROPERTY_TYPES = ["Flat", "House", "Studio", "HMO", "Commercial", "Other"];
 const CONTACTED = ["Landlord", "Agent"];
 const MAX_POSTS_PER_USER = 20;
-// Posting deals needs a paid plan: Lite and Premium can post a set number a month, Max is unlimited.
+// Posting deals needs a paid plan: the Deal Community membership (stored as "Lite") can post 5 a day, on or off market,
+// Premium can post a set number a month, Max is unlimited.
 // Everyone signed in can browse, reply and use the region chat.
-const MONTHLY_POSTS: Record<string, number> = { Lite: 3, Pro: 10 };
+const MONTHLY_POSTS: Record<string, number> = { Pro: 10 };
+const DAILY_POSTS: Record<string, number> = { Lite: 5 };
 const UNLIMITED_PLANS = new Set(["Max5", "Max20"]);
 const monthKey = () => new Date().toISOString().slice(0, 7);
+// Daily allowances reset at midnight UK time.
+const dayKey = () => new Date().toLocaleDateString("en-CA", { timeZone: "Europe/London" });
+const countKey = (userId: string, plan: string) => plan in DAILY_POSTS ? `postcount/${userId}/day-${dayKey()}` : `postcount/${userId}/${monthKey()}`;
 // Regions for deals and the region chat rooms. Keep in sync with REGIONS in index.html.
 const REGIONS = ["London", "South East", "East of England", "South West", "Midlands", "North West", "North East", "Yorkshire and Humber", "Scotland", "Wales", "Northern Ireland", "Other"];
 const slug = (region: string) => region.toLowerCase().replace(/[^a-z]+/g, "-");
@@ -119,13 +124,14 @@ export default async (request: Request, _context: Context) => {
     applyPlanExpiry(state);
     return state;
   };
-  // What this member may post this month.
+  // What this member may post today (Deal Community membership) or this month (Premium).
   const posting = async (state: Record<string, unknown> | null) => {
     const plan = isAdmin ? "Admin" : String(state?.plan || "Free");
-    const used = Number(await store.get(`postcount/${user.id}/${monthKey()}`)) || 0;
-    if (isAdmin || UNLIMITED_PLANS.has(plan)) return { plan, allowed: true, limit: null as number | null, used, left: null as number | null };
-    const limit = MONTHLY_POSTS[plan] ?? 0;
-    return { plan, allowed: limit > 0 && used < limit, limit, used, left: Math.max(0, limit - used) };
+    const used = Number(await store.get(countKey(user.id, plan))) || 0;
+    if (isAdmin || UNLIMITED_PLANS.has(plan)) return { plan, allowed: true, limit: null as number | null, used, left: null as number | null, period: "month" };
+    const period = plan in DAILY_POSTS ? "day" : "month";
+    const limit = DAILY_POSTS[plan] ?? MONTHLY_POSTS[plan] ?? 0;
+    return { plan, allowed: limit > 0 && used < limit, limit, used, left: Math.max(0, limit - used), period };
   };
 
   if (request.method === "GET") {
@@ -185,8 +191,8 @@ export default async (request: Request, _context: Context) => {
     const allowance = await posting(state);
     if (!allowance.allowed) {
       return json(allowance.limit
-        ? { error: `You've posted your ${allowance.limit} deals for this month. Upgrade to Max for unlimited posts.`, posting: allowance }
-        : { error: "Posting deals needs a paid plan (Lite, Premium or Max). You can still browse deals, reply and use the region chat.", posting: allowance }, 402);
+        ? { error: allowance.period === "day" ? `You've posted your ${allowance.limit} deals for today. You can post more tomorrow.` : `You've posted your ${allowance.limit} deals for this month. Upgrade to Max for unlimited posts.`, posting: allowance }
+        : { error: "Posting deals needs a paid plan (Deal Community membership, Premium or Max). You can still browse deals, reply and use the region chat.", posting: allowance }, 402);
     }
     if (!isAdmin) {
       const { blobs } = await store.list({ prefix: `posts/` });
@@ -200,7 +206,7 @@ export default async (request: Request, _context: Context) => {
     const record: Post = { id, authorId: user.id, createdAt, ...post };
     await store.setJSON(`posts/${id}`, record, { metadata: { authorId: user.id } });
     // Count it against this month's allowance (deleting a post doesn't give it back).
-    await store.set(`postcount/${user.id}/${monthKey()}`, String(allowance.used + 1));
+    await store.set(countKey(user.id, allowance.plan), String(allowance.used + 1));
     // Posted from the region chat: also share it in that region's room.
     let message;
     if (body.announce === true) {
