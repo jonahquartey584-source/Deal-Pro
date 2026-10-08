@@ -2,7 +2,7 @@ import OpenAI from "openai";
 import { getStore } from "@netlify/blobs";
 
 export const ADMIN_EMAIL = "jonahquartey584@gmail.com";
-export const FREE_ANALYSES = 2;
+export const FREE_ANALYSES = 1;
 export const FREE_SEARCHES_PER_WEEK = 3;
 export const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 

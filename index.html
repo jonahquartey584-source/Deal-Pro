@@ -849,7 +849,7 @@ td.t{text-align:right;color:var(--ink-2)}
       <div class="ws-head"><span class="ws-name">Your workspace</span><span class="ws-plan" id="planPill">Free plan</span></div>
       <div class="ws-use ws-old-meter"><span id="wsUseTxt">0% of session used</span><button class="linkbtn" data-go="usage">Usage</button></div>
       <div class="meter ws-old-meter" aria-hidden="true"><span id="wsUseBar" style="width:0%"></span></div>
-      <div class="ws-free" id="wsFree" hidden><div class="ws-use"><span id="wsFreeTxt">0 of 2 free analyses used</span></div><div class="meter" aria-hidden="true"><span id="wsFreeBar" style="width:0%"></span></div></div>
+      <div class="ws-free" id="wsFree" hidden><div class="ws-use"><span id="wsFreeTxt">0 of 1 free analysis used</span></div><div class="meter" aria-hidden="true"><span id="wsFreeBar" style="width:0%"></span></div></div>
       <span class="ws-pct" id="wsPct">0% used</span>
       <p class="ws-note">Your work is saved securely to your account.</p>
       <button class="btn sm block" id="managePlan" type="button">Manage plan</button>
@@ -1327,7 +1327,7 @@ td.t{text-align:right;color:var(--ink-2)}
 <a class="qp-badge" href="https://qp-digital.co.uk" target="_blank" rel="noopener" aria-label="Powered by Qp Digital (opens in a new tab)"><img class="qp-mark" src="/assets/qp-digital-logo.png" alt="" width="26" height="26"><span><span class="qp-by">Powered by </span><b>Qp Digital</b></span></a>
 <dialog class="drawer" id="payWall" aria-labelledby="pwTitle">
   <div class="dr-head">
-    <div><p class="dr-kicker">Free plan</p><h2 id="pwTitle" tabindex="-1">You've used your 2 free deal analyses</h2><p class="dr-sub">Subscribe to keep analysing deals. Your saved deals stay available.</p></div>
+    <div><p class="dr-kicker">Free plan</p><h2 id="pwTitle" tabindex="-1">You've used your free deal analysis</h2><p class="dr-sub">Subscribe to keep analysing deals. Your saved deals stay available.</p></div>
     <button class="btn ghost sm" id="pwClose">Close</button>
   </div>
   <div class="dr-body">
@@ -1503,13 +1503,13 @@ const OCC=[.6,.8,1];
 
 /* ---------- shell / nav ---------- */
 function renderTop(){$('#planPill').textContent=limits().name+' plan';renderUsage();renderFreeCounter()}
-/* ---------- free plan: 2 lifetime deal analyses ---------- */
-const FREE_ANALYSES=2;
+/* ---------- free plan: 1 lifetime deal analysis ---------- */
+const FREE_ANALYSES=1;
 const isExample=d=>!!d&&d.id==='d1';// the preloaded Finsbury Park example never counts
 const analysesUsed=()=>S.analysedDealIds.length;
 const canAnalyseNew=()=>S.plan!=='Free'||analysesUsed()<FREE_ANALYSES;
 function renderFreeCounter(){const box=$('#wsFree');if(!box)return;const free=S.plan==='Free',n=Math.min(analysesUsed(),FREE_ANALYSES);box.hidden=!free;
-  $('#wsFreeTxt').textContent=`${n} of ${FREE_ANALYSES} free analyses used`;const b=$('#wsFreeBar');b.style.width=(n/FREE_ANALYSES*100)+'%';b.classList.toggle('full',n>=FREE_ANALYSES);
+  $('#wsFreeTxt').textContent=`${n} of ${FREE_ANALYSES} free ${FREE_ANALYSES===1?'analysis':'analyses'} used`;const b=$('#wsFreeBar');b.style.width=(n/FREE_ANALYSES*100)+'%';b.classList.toggle('full',n>=FREE_ANALYSES);
   if($('#dealMeta')&&S.deal&&S.deal.units)renderMeta()}
 function markAnalysed(id){if(!isExample({id})&&!S.analysedDealIds.includes(id))S.analysedDealIds.push(id);save();renderFreeCounter()}
 // every path that creates a new analysis goes through here; a 3rd one on Free opens the paywall instead
@@ -1921,7 +1921,7 @@ function renderPlans(){
   if(!team){const mt=S.maxTier==='20'?'20':'5',mid='Max'+mt;
     box.innerHTML=`<div class="plan"><div class="plan-h"><h3>Free</h3></div><p class="plan-from">Try Deal Pro</p>
       <div class="price"><span class="mono">£0</span><span class="per">per month</span></div><div class="bill-note">Free forever</div>
-      <div class="lead">Limited usage</div>${feats(['3 Deal Finder searches a week','2 Scout AI deal analyses','Browse the Deal Community, reply and chat','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
+      <div class="lead">Limited usage</div>${feats(['3 Deal Finder searches a week','1 Scout AI deal analysis','Browse the Deal Community, reply and chat','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
     <div class="plan"><div class="plan-h"><h3>Lite</h3></div><p class="plan-from">A bit more room to work</p>
       <div class="price"><span class="mono">£9.99</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
       <div class="lead">Everything in Free, plus:</div>${feats(['15 AI credits a week (Scout)','Post 3 deals a month in the Deal Community','AI due diligence research','Deal packs','Unlimited saved deals'])}${planBtn('Lite')}</div>
@@ -2579,7 +2579,7 @@ function renderHome(){syncFee();
     <div class="pv-nums"><div class="pv-label">Deal Analyser · ${esc(S.deal.name||'Untitled deal')}</div>
       <div class="strip mini">${fig('Upfront cash',gbp(f.up))}${fig('Surplus at 60%',gbp(f.t60),f.t60<0?' neg':'')}${fig('Surplus at 80%',gbp(f.t80),f.t80<0?' neg':'')}${fig('Break-even',isFinite(f.be)?pct(f.be):'Never')}</div></div>`;
   const hp=(n,pr,per,sub,feat)=>`<div class="hplan${feat?' feat':''}"><div class="plan-h"><h3>${n}</h3>${feat?'<span class="tag">Most popular</span>':''}</div><div class="price"><span class="mono">${pr}</span><span class="per">${per}</span></div><div class="sub">${sub}</div></div>`;
-  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 2 AI deal analyses.')+hp('Lite','£9.99','per month','15 Scout credits a week and 3 Deal Community posts a month.')+hp('Premium','£39','per month','For everyday sourcing. AI searches and analyses at every power level, billed monthly.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
+  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 1 AI deal analysis.')+hp('Lite','£9.99','per month','15 Scout credits a week and 3 Deal Community posts a month.')+hp('Premium','£39','per month','For everyday sourcing. AI searches and analyses at every power level, billed monthly.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
 
 
 /* ---------- hero: slow liquid field, paused offscreen, static under reduced motion ---------- */
@@ -2659,7 +2659,7 @@ function levelOpts(name){const i=AIC.info,free=!i||i.free||i.scoutOnly;// locked
 function renderAILevels(){const i=AIC.info,free=!i||i.free||i.scoutOnly;if(free&&AIC.level!=='quick')AIC.level='quick';
   $('#aiLevelOpts').innerHTML=levelOpts('aiLevel');$('#fLevelOpts').innerHTML=levelOpts('fLevel');$('#ddLevelOpts').innerHTML=levelOpts('ddLevel');
   const paid=i?(i.plan==='Admin'?'Admin: unlimited credits.':`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}.${i.scoutOnly?' Upgrade to Premium for Analyst and Expert.':''}`):'';
-  $('#aiCredits').textContent=!i?'':i.free?`Free plan: ${i.freeLeft} of 2 free analyses left. Upgrade for Analyst and Expert.`:paid;
+  $('#aiCredits').textContent=!i?'':i.free?`Free plan: ${i.freeLeft} of 1 free analysis left. Upgrade for Analyst and Expert.`:paid;
   $('#fCredits').textContent=!i?'':i.free?`Free plan: ${i.freeSearchesLeft} of 3 searches left this week. Upgrade for Analyst and Expert.`:paid}
 async function loadAICredits(){if(!document.body.dataset.userId)return;try{const r=await fetch('/api/analyze-deal',{credentials:'same-origin'});if(r.ok){AIC.info=await r.json();renderAILevels()}}catch(e){}}
 ['#aiLevelOpts','#fLevelOpts','#ddLevelOpts'].forEach(id=>$(id).addEventListener('change',e=>{if(e.target.type==='radio'){AIC.level=e.target.value;try{localStorage.setItem('dealpro:ai-level',AIC.level)}catch(err){}renderAILevels()}}));

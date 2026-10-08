@@ -137,7 +137,7 @@ export default async (request: Request, _context: Context) => {
     if (level !== "quick") return json({ error: "Upgrade to use Analyst and Expert." }, 402);
     if (kind === "analyse") {
       if ((Number(usage.count) || 0) >= FREE_ANALYSES) {
-        return json({ error: `You've used your ${FREE_ANALYSES} free analyses. Subscribe to keep analysing deals.` }, 402);
+        return json({ error: "You've used your free deal analysis. Upgrade to keep analysing deals." }, 402);
       }
       next.count = (Number(usage.count) || 0) + 1;
       reserved.count = 1;
