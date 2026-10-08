@@ -30,12 +30,18 @@ export default async (request: Request, _context: Context) => {
   const store = getStore({ name: "deal-premium-accounts", consistency: "strong" });
   const key = `users/${user.id}/state`;
   const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
+  // The name the customer signed up with, shown to the administrator next to their email.
+  const meta = (updatedAt: string) => ({ userId: user.id, email: user.email ?? "", name: user.name ?? "", updatedAt });
 
   if (request.method === "GET") {
     let state = await store.get(key, { type: "json" }) as Record<string, unknown> | null;
     if (!state) {
       state = defaultState(isAdmin);
-      await store.setJSON(key, state, { metadata: { userId: user.id, email: user.email ?? "", updatedAt: new Date().toISOString() } });
+      await store.setJSON(key, state, { metadata: meta(new Date().toISOString()) });
+    } else if (user.name) {
+      // Accounts created before names were stored pick theirs up the next time they sign in.
+      const oldMeta = (await store.getMetadata(key))?.metadata as Record<string, unknown> | undefined;
+      if (oldMeta?.name !== user.name) await store.setJSON(key, state, { metadata: { ...(oldMeta || {}), ...meta(String(oldMeta?.updatedAt || new Date().toISOString())) } });
     }
     if (state.accountEnabled === false && !isAdmin) return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
     if (isAdmin) { state.admin = true; state.plan = "Max20"; state.accountEnabled = true; }
@@ -64,7 +70,7 @@ export default async (request: Request, _context: Context) => {
       if (stored.stripe) nextState.stripe = stored.stripe; else delete nextState.stripe;
     }
     await store.setJSON(key, nextState, {
-      metadata: { userId: user.id, email: user.email ?? "", updatedAt: new Date().toISOString() },
+      metadata: meta(new Date().toISOString()),
     });
     return json({ saved: true });
   }
