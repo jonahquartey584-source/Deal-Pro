@@ -579,7 +579,7 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .how-n{font-size:12px;color:var(--accent)}
 .how h3{font-size:16px;margin:10px 0 6px}
 .how p{color:var(--ink-2);font-size:13.5px}
-.hplans{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.hplans{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden}
 .hplan{background:var(--surface);padding:22px;display:grid;gap:8px;align-content:start;min-width:0}
 .hplan h3{font-size:15px}
 .hplan .price .mono{font-size:30px}
@@ -608,7 +608,7 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .own-acts{display:flex;gap:8px;flex-wrap:wrap}
 @media (max-width:1099px){.hero-grid{grid-template-columns:minmax(0,1fr);gap:40px}.how{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:899px){.hero{margin:-18px -16px 0;padding:48px 16px 48px}}
-@media (max-width:1100px){.hplans{grid-template-columns:repeat(2,minmax(0,1fr))}}@media (max-width:760px){.prods,.hplans{grid-template-columns:minmax(0,1fr)}.own{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){.hplans{grid-template-columns:minmax(0,1fr)}}@media (max-width:760px){.prods,.hplans{grid-template-columns:minmax(0,1fr)}.own{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:560px){.how{grid-template-columns:minmax(0,1fr)}.strip.mini{grid-template-columns:repeat(2,minmax(0,1fr))}.hsec{margin-top:64px}}
 
 /* plans and usage */
@@ -624,6 +624,10 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .switch[aria-checked="true"]{background:var(--brand)}
 .switch[aria-checked="true"] .knob{transform:translateX(16px)}
 .plans.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.plans.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.plan-lite{grid-column:1/-1;background:var(--surface);padding:12px 20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px;font-size:12.5px;color:var(--muted)}
+.plan-lite b{font-weight:500}
+.plan-quiet{margin-top:10px;font-size:12.5px;color:var(--muted)}
 .plan-from{font-size:12.5px;color:var(--muted);margin-top:-6px}
 .plan .bill-note{font-size:12px;color:var(--muted);margin-top:-8px;min-height:18px}
 .plan .lead{font-size:12.5px;color:var(--ink);font-weight:500;padding-top:12px;border-top:1px solid var(--line)}
@@ -694,6 +698,7 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .fs .limit-note{margin:10px 0 0}
 .limit-note.ferr{border-left-color:var(--bad);font-size:14px}
 .ln-a{display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:980px){.plans.three{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:640px){.plans.two{grid-template-columns:minmax(0,1fr)}}
 
 td.t{text-align:right;color:var(--ink-2)}
@@ -907,8 +912,9 @@ td.t{text-align:right;color:var(--ink-2)}
       <div class="tutorial-copy"><p class="eyebrow"><span class="eb-dot" aria-hidden="true"></span>AI-guided tutorial</p><h2 class="h2" id="tutorialTitle">Learn Deal Pro</h2><p>Watch the complete workflow, or jump straight to the part you need.</p><ol class="chap-list" id="tutorialChapters"></ol><button class="btn primary" data-go="find">Start with Deal Finder</button></div>
     </section>
     <section class="hsec" aria-labelledby="hPlans">
-      <div class="hsec-h"><h2 class="h2" id="hPlans">Plans</h2><p>Start free with 2 deal analyses, then subscribe for unlimited analyses and more usage.</p></div>
+      <div class="hsec-h"><h2 class="h2" id="hPlans">Plans</h2><p>Start free with 1 deal analysis, then subscribe for unlimited analyses and more usage.</p></div>
       <div class="hplans" id="homePlans"></div>
+      <p class="plan-quiet">Only want the Deal Community? <button class="linkbtn" type="button" data-go="plans">See Lite, £9.99 a month</button></p>
     </section>
     <section class="hsec contact-grid" aria-labelledby="contactTitle"><div class="contact-copy"><p class="eyebrow"><span class="eb-dot"></span>Contact Deal Pro</p><h2 class="h2" id="contactTitle">Have a question?</h2><p>Send an enquiry about Deal Pro, subscriptions or your account. We will use your details only to respond unless you separately choose to receive marketing.</p></div><form class="contact-form" id="contactForm" name="deal-pro-enquiry" method="POST" data-netlify="true" netlify-honeypot="bot-field"><input type="hidden" name="form-name" value="deal-pro-enquiry"><input type="hidden" name="subject" value="New Deal Pro enquiry"><label class="bot-field">Do not complete this field <input name="bot-field"></label><label class="f"><span>Name</span><input class="inp" name="name" autocomplete="name" required></label><label class="f"><span>Email</span><input class="inp" name="email" type="email" autocomplete="email" required></label><label class="f"><span>Enquiry</span><textarea class="inp" name="message" rows="6" required></textarea></label><label class="check"><input type="checkbox" name="marketing" value="yes"><span>I would like to receive Deal Pro marketing emails. This is optional and I can unsubscribe at any time.</span></label><button class="btn primary" type="submit">Send enquiry</button><p class="contact-status" id="contactStatus" role="status">Read how we use your information in our <a href="/privacy.html">Privacy Notice</a>.</p></form></section>
     <div class="home-foot"><p>AI results are decision-support only. Always verify legal, planning, licensing and financial information independently.</p><nav class="legal-links" aria-label="Legal"><a href="/privacy.html">Privacy</a><a href="/terms.html">Terms</a><a href="/cookies.html">Cookies</a><a href="mailto:jonahquartey584@gmail.com">Contact</a></nav></div>
@@ -1310,7 +1316,7 @@ td.t{text-align:right;color:var(--ink-2)}
       <div class="tw"><table>
         <thead><tr><th>Action</th><th>Usage</th></tr></thead>
         <tbody>
-          <tr><td>Deal analyses (numbers, sensitivity, break-even, 90-night check)</td><td class="t">2 on Free, unlimited on paid plans</td></tr>
+          <tr><td>Deal analyses (numbers, sensitivity, break-even, 90-night check)</td><td class="t">1 on Free, unlimited on paid plans</td></tr>
           <tr><td>AI deal analysis</td><td class="t">Included</td></tr>
           <tr><td>Import from advert</td><td class="t">Light</td></tr>
           <tr><td>Final deal pack</td><td class="t">Medium</td></tr>
@@ -1475,7 +1481,7 @@ function fmtLeft(ms){const m=Math.max(1,Math.ceil(ms/60000)),hr=Math.floor(m/60)
 function nextMonth(t){const d=new Date(t);return new Date(d.getFullYear(),d.getMonth()+1,1)}
 const FEAT_NAME={import:'Advert import',dd:'AI due diligence',pack:'Deal packs'};
 function limitNote(where,kind,feat){const el=$(where);const u=S.usage;let msg;
-  if(kind==='feature')msg=`${FEAT_NAME[feat]} ${feat==='pack'?'are':'is'} included with every paid plan, from Lite at £9.99 a month.`;
+  if(kind==='feature')msg=`${FEAT_NAME[feat]} ${feat==='pack'?'are':'is'} included with paid plans.`;
   else if(kind==='weekly')msg=`You've reached your weekly limit. It resets ${wkday(u.wStart+WEEK)}.`;
   else if(kind==='cap')msg=`You've reached your extra usage cap for this month. Raise the cap in Usage, or wait until it resets on ${nextMonth(now()).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}.`;
   else msg=`You've reached your session limit. It resets at ${hhmm(u.sStart+SESSION)}.`;
@@ -1512,7 +1518,7 @@ function renderFreeCounter(){const box=$('#wsFree');if(!box)return;const free=S.
   $('#wsFreeTxt').textContent=`${n} of ${FREE_ANALYSES} free ${FREE_ANALYSES===1?'analysis':'analyses'} used`;const b=$('#wsFreeBar');b.style.width=(n/FREE_ANALYSES*100)+'%';b.classList.toggle('full',n>=FREE_ANALYSES);
   if($('#dealMeta')&&S.deal&&S.deal.units)renderMeta()}
 function markAnalysed(id){if(!isExample({id})&&!S.analysedDealIds.includes(id))S.analysedDealIds.push(id);save();renderFreeCounter()}
-// every path that creates a new analysis goes through here; a 3rd one on Free opens the paywall instead
+// every path that creates a new analysis goes through here; a 2nd one on Free opens the paywall instead
 function startAnalysis(run){if(canAnalyseNew()){run();return true}openPaywall(run);return false}
 function renderUsage(){rollWindows();const L=limits(),u=S.usage,t=now();
   const sp=Math.min(100,Math.round(u.sUsed/L.s*100)),wp=Math.min(100,Math.round(u.wUsed/L.w*100));
@@ -1917,21 +1923,19 @@ function renderPlans(){
   const ann=S.billing==='annual',team=S.plansTab==='team';
   $('#ptInd').setAttribute('aria-pressed',String(!team));$('#ptTeam').setAttribute('aria-pressed',String(team));
   $('#billSw').setAttribute('aria-checked',String(ann));$('#billM').classList.toggle('on',!ann);$('#billA').classList.toggle('on',ann);
-  const box=$('#plans');box.classList.toggle('two',team);
+  const box=$('#plans');box.classList.toggle('two',team);box.classList.toggle('three',!team);
   if(!team){const mt=S.maxTier==='20'?'20':'5',mid='Max'+mt;
     box.innerHTML=`<div class="plan"><div class="plan-h"><h3>Free</h3></div><p class="plan-from">Try Deal Pro</p>
       <div class="price"><span class="mono">£0</span><span class="per">per month</span></div><div class="bill-note">Free forever</div>
       <div class="lead">Limited usage</div>${feats(['3 Deal Finder searches a week','1 Scout AI deal analysis','Browse the Deal Community, reply and chat','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
-    <div class="plan"><div class="plan-h"><h3>Lite</h3></div><p class="plan-from">A bit more room to work</p>
-      <div class="price"><span class="mono">£9.99</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
-      <div class="lead">Everything in Free, plus:</div>${feats(['15 AI credits a week (Scout)','Post 3 deals a month in the Deal Community','AI due diligence research','Deal packs','Unlimited saved deals'])}${planBtn('Lite')}</div>
     <div class="plan feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div><p class="plan-from">For everyday sourcing</p>
       <div class="price"><span class="mono">£${ann?33:39}</span><span class="per">per month</span></div><div class="bill-note">${ann?'Billed annually (£396 upfront)':'Billed monthly'}</div>
-      <div class="lead">Everything in Lite, plus:</div>${feats(['Analyst and Expert power levels','60 AI credits a week for searches and analyses','Post 10 deals a month in the Deal Community','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
+      <div class="lead">Everything in Free, plus:</div>${feats(['Analyst and Expert power levels','60 AI credits a week for searches and analyses','Post 10 deals a month in the Deal Community','AI due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
     <div class="plan"><div class="plan-h"><h3>Max</h3></div><p class="plan-from">From £100/month · For sourcers who work deals all day</p>
       <div class="seg segb tier" role="group" aria-label="Max usage tier"><button id="maxT5" data-tier="5" aria-pressed="${mt==='5'}">5x</button><button id="maxT20" data-tier="20" aria-pressed="${mt==='20'}">20x</button></div>
       <div class="price"><span class="mono">£${mt==='20'?200:100}</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
-      <div class="lead">Everything in Premium, plus:</div>${feats([`${mt}x more usage than Premium per session`,`${mt==='20'?1200:300} AI credits a week`,'Unlimited Deal Community posts','Higher limits','Early access to new features','Priority at peak times'])}${planBtn(mid)}</div>`}
+      <div class="lead">Everything in Premium, plus:</div>${feats([`${mt}x more usage than Premium per session`,`${mt==='20'?1200:300} AI credits a week`,'Unlimited Deal Community posts','Higher limits','Early access to new features','Priority at peak times'])}${planBtn(mid)}</div>
+    <div class="plan-lite"><span><b>Only want the Deal Community?</b> Lite is £9.99 a month: post 3 deals a month, AI due diligence and deal packs, with 15 Scout credits a week.</span>${S.plan==='Lite'?'<span class="cur"><span class="dot good"></span>Current plan</span>':'<button class="btn sm" data-plan="Lite">Choose Lite</button>'}</div>`}
   renderUsage()}
 $('#ptInd').addEventListener('click',()=>{S.plansTab='individual';save();renderPlans()});
 
@@ -2579,7 +2583,7 @@ function renderHome(){syncFee();
     <div class="pv-nums"><div class="pv-label">Deal Analyser · ${esc(S.deal.name||'Untitled deal')}</div>
       <div class="strip mini">${fig('Upfront cash',gbp(f.up))}${fig('Surplus at 60%',gbp(f.t60),f.t60<0?' neg':'')}${fig('Surplus at 80%',gbp(f.t80),f.t80<0?' neg':'')}${fig('Break-even',isFinite(f.be)?pct(f.be):'Never')}</div></div>`;
   const hp=(n,pr,per,sub,feat)=>`<div class="hplan${feat?' feat':''}"><div class="plan-h"><h3>${n}</h3>${feat?'<span class="tag">Most popular</span>':''}</div><div class="price"><span class="mono">${pr}</span><span class="per">${per}</span></div><div class="sub">${sub}</div></div>`;
-  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 1 AI deal analysis.')+hp('Lite','£9.99','per month','15 Scout credits a week and 3 Deal Community posts a month.')+hp('Premium','£39','per month','For everyday sourcing. AI searches and analyses at every power level, billed monthly.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
+  $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 1 AI deal analysis.')+hp('Premium','£39','per month','For everyday sourcing. AI searches and analyses at every power level, billed monthly.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
 
 
 /* ---------- hero: slow liquid field, paused offscreen, static under reduced motion ---------- */
