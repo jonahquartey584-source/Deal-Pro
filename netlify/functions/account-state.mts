@@ -31,18 +31,18 @@ export default async (request: Request, _context: Context) => {
   const store = getStore({ name: "deal-premium-accounts", consistency: "strong" });
   const key = `users/${user.id}/state`;
   const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
-  // The name the customer signed up with, shown to the administrator next to their email.
-  const meta = (updatedAt: string) => ({ userId: user.id, email: user.email ?? "", name: user.name ?? "", updatedAt });
+  // The name and sign-up date shown to the administrator next to the email.
+  const meta = (updatedAt: string) => ({ userId: user.id, email: user.email ?? "", name: user.name ?? "", createdAt: user.createdAt ?? "", updatedAt });
 
   if (request.method === "GET") {
     let state = await store.get(key, { type: "json" }) as Record<string, unknown> | null;
     if (!state) {
       state = defaultState(isAdmin);
       await store.setJSON(key, state, { metadata: meta(new Date().toISOString()) });
-    } else if (user.name) {
-      // Accounts created before names were stored pick theirs up the next time they sign in.
+    } else if (user.name || user.createdAt) {
+      // Accounts created before names and sign-up dates were stored pick them up the next time they sign in.
       const oldMeta = (await store.getMetadata(key))?.metadata as Record<string, unknown> | undefined;
-      if (oldMeta?.name !== user.name) await store.setJSON(key, state, { metadata: { ...(oldMeta || {}), ...meta(String(oldMeta?.updatedAt || new Date().toISOString())) } });
+      if (oldMeta?.name !== (user.name ?? "") || oldMeta?.createdAt !== (user.createdAt ?? "")) await store.setJSON(key, state, { metadata: { ...(oldMeta || {}), ...meta(String(oldMeta?.updatedAt || new Date().toISOString())) } });
     }
     if (applyPlanExpiry(state)) await store.setJSON(key, state, { metadata: { ...((await store.getMetadata(key))?.metadata || {}), updatedAt: new Date().toISOString() } });
     if (state.accountEnabled === false && !isAdmin) return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
