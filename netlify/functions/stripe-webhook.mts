@@ -49,6 +49,7 @@ async function setPlan(userId: string, plan: string, stripe: Record<string, unkn
   const state = (await store.get(key, { type: "json" }) as Record<string, unknown> | null) || { plan: "Free", saved: [] };
   const meta = (await store.getMetadata(key))?.metadata || {};
   state.plan = plan;
+  delete state.planExpiresAt; // a real subscription replaces any complimentary plan
   state.stripe = { ...(state.stripe as Record<string, unknown> || {}), ...stripe, updatedAt: new Date().toISOString() };
   await store.setJSON(key, state, { metadata: { ...meta, userId, updatedAt: new Date().toISOString() } });
 }

@@ -1,6 +1,7 @@
 import { getStore } from "@netlify/blobs";
 import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
+import { applyPlanExpiry } from "../lib/plan.mts";
 
 const ADMIN_EMAIL = "jonahquartey584@gmail.com";
 const STRATEGIES = ["R2SA", "R2R", "BTL", "HMO", "BRRR", "Lease option", "Flip", "Other"];
@@ -112,8 +113,12 @@ export default async (request: Request, _context: Context) => {
   const authorName = text(u.name, 80) || text(u.email?.split("@")[0], 80) || "Member";
   const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
   const store = getStore({ name: "deal-community", consistency: "strong" });
-  const accountState = async () => (await getStore({ name: "deal-premium-accounts", consistency: "strong" })
-    .get(`users/${user.id}/state`, { type: "json" })) as Record<string, unknown> | null;
+  const accountState = async () => {
+    const state = (await getStore({ name: "deal-premium-accounts", consistency: "strong" })
+      .get(`users/${user.id}/state`, { type: "json" })) as Record<string, unknown> | null;
+    applyPlanExpiry(state);
+    return state;
+  };
   // What this member may post this month.
   const posting = async (state: Record<string, unknown> | null) => {
     const plan = isAdmin ? "Admin" : String(state?.plan || "Free");

@@ -1,5 +1,6 @@
 import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
+import { applyPlanExpiry } from "../lib/plan.mts";
 import { accounts, jobs, currentWeek, currentSearchWeek, refundJob, ADMIN_EMAIL, FREE_ANALYSES, FREE_SEARCHES_PER_WEEK, LEVELS, WEEK_MS, WEEKLY_CREDITS, SCOUT_ONLY_PLANS, SITES, STRATEGIES, type LevelId, type Reserved, type Usage } from "../lib/ai.mts";
 
 const json = (data: unknown, status = 200) => Response.json(data, {
@@ -10,6 +11,7 @@ const json = (data: unknown, status = 200) => Response.json(data, {
 async function loadAccount(userId: string) {
   const store = accounts();
   const state = await store.get(`users/${userId}/state`, { type: "json" }) as Record<string, unknown> | null;
+  applyPlanExpiry(state);
   const usage = (await store.get(`users/${userId}/ai-usage`, { type: "json" }) as Usage | null) || {};
   return { store, state, usage };
 }

@@ -1,6 +1,7 @@
 import { getStore } from "@netlify/blobs";
 import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
+import { applyPlanExpiry } from "../lib/plan.mts";
 
 // Refund requests. Members ask for a refund of their subscription; the admin approves or
 // declines. Approving refunds the customer's latest Stripe payment, cancels the
@@ -52,6 +53,7 @@ export default async (request: Request, _context: Context) => {
     const reason = String(body?.reason || "").trim().slice(0, 1000);
     if (reason.length < 5) return json({ error: "Tell us briefly why you'd like a refund." }, 400);
     const state = await accounts().get(`users/${user.id}/state`, { type: "json" }) as Record<string, any> | null;
+    applyPlanExpiry(state);
     const plan = String(state?.plan || "Free");
     if (plan === "Free" && !state?.stripe?.customer) return json({ error: "There's no paid subscription on this account to refund." }, 400);
     const mine = (await all()).filter((r) => r.userId === user.id);

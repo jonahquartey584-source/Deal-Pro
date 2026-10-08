@@ -1,6 +1,7 @@
 import { getStore } from "@netlify/blobs";
 import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
+import { applyPlanExpiry } from "../lib/plan.mts";
 
 const json = (data: unknown, status = 200) => Response.json(data, {
   status,
@@ -43,6 +44,7 @@ export default async (request: Request, _context: Context) => {
       const oldMeta = (await store.getMetadata(key))?.metadata as Record<string, unknown> | undefined;
       if (oldMeta?.name !== user.name) await store.setJSON(key, state, { metadata: { ...(oldMeta || {}), ...meta(String(oldMeta?.updatedAt || new Date().toISOString())) } });
     }
+    if (applyPlanExpiry(state)) await store.setJSON(key, state, { metadata: { ...((await store.getMetadata(key))?.metadata || {}), updatedAt: new Date().toISOString() } });
     if (state.accountEnabled === false && !isAdmin) return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
     if (isAdmin) { state.admin = true; state.plan = "Max20"; state.accountEnabled = true; }
     return json({ user: { id: user.id, email: user.email, name: user.name }, state });
@@ -62,9 +64,11 @@ export default async (request: Request, _context: Context) => {
       // Membership, suspension and paid unlocks are only changed by the server or an administrator,
       // never by the browser, so keep the stored values.
       const stored = ((await store.get(key, { type: "json" }) as Record<string, unknown> | null) || defaultState(false)) as Record<string, unknown>;
+      applyPlanExpiry(stored);
       if (stored.accountEnabled === false) return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
       nextState.admin = false;
       nextState.plan = stored.plan || "Free";
+      if (stored.planExpiresAt) nextState.planExpiresAt = stored.planExpiresAt; else delete nextState.planExpiresAt;
       nextState.accountEnabled = true;
       nextState.unlocked = Array.isArray(stored.unlocked) ? stored.unlocked : [];
       if (stored.stripe) nextState.stripe = stored.stripe; else delete nextState.stripe;

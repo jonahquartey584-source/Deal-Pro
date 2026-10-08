@@ -1,6 +1,7 @@
 import { getStore } from "@netlify/blobs";
 import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
+import { applyPlanExpiry } from "../lib/plan.mts";
 import { accounts, ADMIN_EMAIL } from "../lib/ai.mts";
 
 // Shareable deal packs. Premium and Max members create them from Deal Finder ("Analyse & package"),
@@ -58,6 +59,7 @@ export default async (request: Request, _context: Context) => {
   if (!user) return json({ error: "Please sign in." }, 401);
   const isAdmin = user.email?.toLowerCase() === ADMIN_EMAIL;
   const state = await accounts().get(`users/${user.id}/state`, { type: "json" }) as Record<string, unknown> | null;
+  applyPlanExpiry(state);
   if (!isAdmin && state?.accountEnabled === false) return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
 
   if (request.method === "DELETE") {
