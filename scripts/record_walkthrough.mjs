@@ -183,7 +183,7 @@ await move("#fResults .fprog li:nth-child(4)", 0.9);
 await until(126.0);
 await move("#fResults .fprog-t", 0.9);
 await until(136.0);
-await move("#fResults .fprog .fnote:last-child", 0.9);
+await move("#fResults .fprog p.fnote:last-of-type", 0.9);
 
 // 2:23 Results and AI picks
 await until(143.2);

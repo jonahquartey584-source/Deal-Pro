@@ -93,7 +93,7 @@ In the Deal Community, you can post deals where you've already spoken to the lan
 ## 9. Plans, credits and refunds (3:25)
 
 **Voiceover:**
-The Free plan gives you three Scout searches a week and two Scout analyses. Premium, at thirty-nine pounds a month, gives you sixty credits a week and every power level. Max gives you three hundred or twelve hundred credits a week, for sourcers who work deals all day. Credits reset every week.
+The Free plan gives you three Scout searches a week and one Scout analysis. Premium, at thirty-nine pounds a month, gives you sixty credits a week and every power level. Max gives you three hundred or twelve hundred credits a week, for sourcers who work deals all day. Credits reset every week.
 You can cancel any time. And if Deal Pro isn't right for you, you can request a refund within fourteen days, from the Refunds section on the Plans page.
 
 **On screen:** Open **Plans**. Hover Free, Premium and Max (switch between 5x and 20x). Scroll to the **Refunds** section.
