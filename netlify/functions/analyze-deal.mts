@@ -1,6 +1,6 @@
 import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
-import { accounts, jobs, currentWeek, currentSearchWeek, refundJob, usingNetlifyGateway, ADMIN_EMAIL, FREE_ANALYSES, FREE_SEARCHES_PER_WEEK, LEVELS, WEEK_MS, WEEKLY_CREDITS, SCOUT_ONLY_PLANS, SITES, STRATEGIES, type LevelId, type Reserved, type Usage } from "../lib/ai.mts";
+import { accounts, jobs, currentWeek, currentSearchWeek, refundJob, ADMIN_EMAIL, FREE_ANALYSES, FREE_SEARCHES_PER_WEEK, LEVELS, WEEK_MS, WEEKLY_CREDITS, SCOUT_ONLY_PLANS, SITES, STRATEGIES, type LevelId, type Reserved, type Usage } from "../lib/ai.mts";
 
 const json = (data: unknown, status = 200) => Response.json(data, {
   status,
@@ -124,8 +124,8 @@ export default async (request: Request, _context: Context) => {
     input = JSON.stringify({ filters: body?.filters ?? {}, listings });
     if (input.length > 60_000) return json({ error: "Too many results to rank. Narrow your filters." }, 413);
   }
-  if (!process.env.OPENAI_API_KEY || usingNetlifyGateway()) {
-    console.error(process.env.OPENAI_API_KEY ? "OPENAI_API_KEY is Netlify's AI Gateway key, not your own OpenAI key" : "OPENAI_API_KEY is not set");
+  if (!process.env.OPENAI_API_KEY) {
+    console.error("OPENAI_API_KEY is not set");
     return json({ error: "The AI is temporarily unavailable. Please try again later." }, 503);
   }
 

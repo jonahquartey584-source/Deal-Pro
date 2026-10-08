@@ -130,18 +130,10 @@ const errText = (error: unknown) => {
 const isConnectionError = (error: unknown) => !(error as { status?: number }).status;
 // One OpenAI client with generous retries and a timeout, shared by every AI call.
 let openaiClient: OpenAI | null = null;
-// Netlify's AI Gateway fills in OPENAI_API_KEY and OPENAI_BASE_URL when no key of our own is set, and bills the
-// calls to Netlify credits. Refuse to run on it: only an OPENAI_API_KEY added by hand in Netlify is used, so
-// the usage is billed to the OpenAI account instead.
-export const usingNetlifyGateway = () => {
-  const base = process.env.OPENAI_BASE_URL;
-  if (!base) return false;
-  try { return !/(^|\.)openai\.com$/i.test(new URL(base).hostname); } catch { return true; }
-};
-export const ai = () => {
-  if (usingNetlifyGateway()) throw new Error("OPENAI_API_KEY is not set to your own OpenAI key, so Netlify's AI Gateway would be used and billed to Netlify credits. Add your own key in the Netlify environment variables.");
-  return (openaiClient ||= new OpenAI({ maxRetries: 3, timeout: 180_000 }));
-};
+// With no OPENAI_API_KEY of our own, Netlify's AI Gateway fills in the key and base URL and bills the
+// calls to Netlify credits. Adding an OPENAI_API_KEY in Netlify's environment variables switches the calls
+// to that OpenAI account instead; nothing here needs to change.
+export const ai = () => (openaiClient ||= new OpenAI({ maxRetries: 3, timeout: 180_000 }));
 // Errors worth retrying with another model or setup (bad request, unknown model, unsupported feature).
 const retryable = (error: unknown) => { const st = (error as { status?: number }).status; return !st || (st >= 400 && st < 500 && st !== 401 && st !== 429); };
 
