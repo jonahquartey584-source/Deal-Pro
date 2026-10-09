@@ -418,7 +418,7 @@ fieldset.fg{border:0;margin:0;padding:0;min-width:0}
 .seg input:checked+label{background:var(--hover);color:var(--ink);box-shadow:0 0 0 1px var(--line-2),var(--shadow-sm)}
 .seg input:focus-visible+label{outline:2px solid var(--accent);outline-offset:1px}
 .ix.both .inp{padding-left:24px;padding-right:40px}
-.fpanel[data-mode="buy"] .js-pcm{display:none}
+.fpanel[data-mode="buy"] .js-pcm{display:none}.fpanel:not([data-mode="buy"]) .js-buyonly{display:none}
 .fpanel[data-mode="buy"] .ix.both .inp{padding-right:10px}
 .checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px}
 .fnote{font-size:12px;color:var(--muted);border-left:2px solid var(--line-2);padding-left:8px;margin-top:8px}
@@ -1090,6 +1090,9 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
             <label class="f"><span>Strategy</span><select class="inp" id="fStrategy"><option value="auto">Auto (R2SA for rentals, BTL for purchases)</option><option value="R2SA">R2SA · serviced accommodation</option><option value="R2R">R2R · rent to rent by the room</option><option value="BTL">BTL · buy to let</option><option value="HMO">HMO · buy and let by the room</option><option value="BRRR">BRRR · buy, refurbish, refinance</option><option value="Flip">Flip · buy, refurbish, sell</option><option value="SA">Owned serviced accommodation</option><option value="LeaseOption">Lease option</option><option value="Commercial">Commercial</option><option value="none">Just show prices</option></select></label>
             <label class="f"><span>Listed within</span><select class="inp" id="fFresh"><option value="any">Any time</option><option value="1">Last 24 hours</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option><option value="14">Last 14 days</option></select></label>
             <label class="check"><input type="checkbox" id="fPrivate"><span>Private landlords only</span></label>
+            <label class="check js-buyonly"><input type="checkbox" id="fNoAuction"><span>Exclude auctions</span></label>
+            <label class="check"><input type="checkbox" id="fNoFlats"><span>Exclude flats</span></label>
+            <label class="check js-buyonly"><input type="checkbox" id="fNoShared"><span>Exclude shared ownership</span></label>
             <div class="row2">
               <label class="f"><span>Furnished</span><select class="inp" id="fFurn"><option value="any">Any</option><option value="furnished">Furnished</option><option value="unfurnished">Unfurnished</option></select></label>
               <label class="f"><span>Property type</span><select class="inp" id="fType"><option value="any">Any</option><option value="studio">Studio</option><option value="flat">Flat</option><option value="house">House</option><option value="commercial">Commercial</option></select></label>
@@ -2198,7 +2201,7 @@ const LISTINGS=[
 ];
 const SITES=['OpenRent','SpareRoom','Gumtree','Rightmove','Zoopla','Facebook','RightmoveCommercial','Realla','NovaLoca','LoopNet'];
 const SITE_LABEL=s=>({Facebook:'Facebook Marketplace',RightmoveCommercial:'Rightmove Commercial'})[s]||s;
-const FIND_DEF=()=>({strategy:'auto',fresh:'any',notes:'',mode:'rent',beds:[],min:1200,max:5000,loc:'',priv:false,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false}});
+const FIND_DEF=()=>({strategy:'auto',noAuction:false,noFlats:false,noShared:false,fresh:'any',notes:'',mode:'rent',beds:[],min:1200,max:5000,loc:'',priv:false,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false}});
 if(!S.find||!S.find.f)S.find={f:FIND_DEF(),searched:false,sort:null};
 S.find.f=Object.assign(FIND_DEF(),S.find.f);S.find.f.sites=Object.assign(FIND_DEF().sites,S.find.f.sites);
 const FS={busy:false,sel:new Set(),showUnconfirmed:false,auto:0,lastRefresh:false};
@@ -2281,6 +2284,9 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   if(out.type&&!(out.type==='studio'&&out.beds&&out.beds.join()==='0'))got.push(out.type[0].toUpperCase()+out.type.slice(1));
   if(/\bunfurnished\b/.test(lo))out.furn='unfurnished';else if(/\bfurnished\b/.test(lo))out.furn='furnished';if(out.furn)got.push(out.furn[0].toUpperCase()+out.furn.slice(1));
   if(/private landlords?|no agents?|direct(?:ly)? (?:from|with) (?:the )?landlord/.test(lo)){out.priv=true;got.push('Private landlords')}
+  if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+)?auctions?\b/.test(lo)){out.noAuction=true;got.push('No auctions')}
+  if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+|all\s+)?(?:flats?|apartments?)\b/.test(lo)){out.noFlats=true;got.push('No flats')}
+  if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+|all\s+)?shared[\s-]?ownerships?\b/.test(lo)){out.noShared=true;got.push('No shared ownership')}
   if((m=lo.match(/\b(?:last|past|within)\s*(24 ?h(?:ours?)?|day|\d+ days?|week|fortnight)\b|\b(new today|just listed|newly listed|brand new listings?)\b/))){const w=m[1]||'';out.fresh=m[2]?'3':/24|day\b/.test(w)&&!/\d+ days?/.test(w)?'1':/fortnight/.test(w)?'14':/week/.test(w)?'7':String(Math.min(14,Math.max(1,parseInt(w)||7))).replace(/^(2|4|5|6)$/,'7').replace(/^(8|9|10|11|12|13)$/,'14');got.push('Listed recently')}
   // locations: every place named, in the order typed: places after in/near/around (including lists
   // like "in Watford, Hemel and Luton"), known UK towns, counties and London areas, and postcode districts
@@ -2313,11 +2319,11 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
 function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';$('#fStrategy').value=f.strategy||'auto';$('#fFresh').value=f.fresh||'any';
   $(f.mode==='buy'?'#fModeBuy':'#fModeRent').checked=true;
   f.beds=bedList(f.beds);$$('input[name="fBeds"]').forEach(c=>{c.checked=f.beds.includes(c.value)});$('#fBedsAny').checked=!f.beds.length;
-  $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fFurn').value=f.furn;$('#fType').value=f.type;
+  $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fNoAuction').checked=!!f.noAuction;$('#fNoFlats').checked=!!f.noFlats;$('#fNoShared').checked=!!f.noShared;$('#fFurn').value=f.furn;$('#fType').value=f.type;
   SITES.forEach(s=>{$('#fSite'+s).checked=!!f.sites[s]});findChrome()}
 function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
   f.notes=$('#fNotes').value.slice(0,500);f.strategy=$('#fStrategy').value;f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
-  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
+  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.noAuction=$('#fNoAuction').checked;f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
   SITES.forEach(s=>{f.sites[s]=$('#fSite'+s).checked})}
 function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;
   $('#fMinL').textContent=buy?'Min price':'Min rent';$('#fMaxL').textContent=buy?'Max price':'Max rent';
@@ -2341,7 +2347,7 @@ function findRows(all=false){const f=S.find.f;
   return SRC().map((x,i)=>Object.assign({k:i,listedTs:Date.parse(x.listedAt||'')||0},x)).filter(x=>(all||FS.showUnconfirmed||FS.autoUnc||confirmedLive(x))&&freshMatch(x,f)&&x.mode===f.mode
     &&bedsMatch(bedList(f.beds),x.beds)
     &&(f.min===''||x.price>=f.min)&&(f.max===''||x.price<=f.max)
-    &&(LIVE||locMatch(x,f.loc))&&(!f.priv||x.private!==false)
+    &&(LIVE||locMatch(x,f.loc))&&(!f.priv||x.private!==false)&&(!f.noAuction||!/auction/i.test((x.title||'')+' '+(x.url||'')))&&(!f.noFlats||!/\b(?:flats?|apartments?|maisonettes?|studios?|penthouses?)\b/i.test((x.type||'')+' '+(x.title||'')))&&(!f.noShared||!/shared[\s-]?ownership|part[\s-]?buy|shared[\s-]?equity|staircasing/i.test((x.title||'')+' '+(x.type||'')))
     &&(f.furn==='any'||x.furnished==='Not stated'||x.furnished.toLowerCase()===f.furn)
     &&(f.type==='any'||(f.type==='studio'?x.beds===0:f.type==='flat'?x.beds>=1&&/flat/i.test(x.type):f.type==='commercial'?/commercial|office|retail|shop|industrial/i.test(x.type):/house/i.test(x.type)))
     &&!!f.sites[x.site])}

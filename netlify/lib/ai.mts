@@ -480,7 +480,7 @@ const ANGLES = [
 ];
 export type Filters = {
   mode?: string; beds?: string | string[]; min?: number | string; max?: number | string; loc?: string;
-  priv?: boolean; furn?: string; type?: string; notes?: string; fresh?: string; strategy?: string;
+  priv?: boolean; furn?: string; type?: string; notes?: string; fresh?: string; strategy?: string; noAuction?: boolean; noFlats?: boolean; noShared?: boolean;
 };
 
 export type Listing = {
@@ -538,7 +538,10 @@ function describe(f: Filters) {
   const notes = typeof f.notes === "string" ? f.notes.replace(/\s+/g, " ").trim().slice(0, 500) : "";
   const fresh = Number(f.fresh) > 0 ? Number(f.fresh) : 0;
   const hint = STRATEGY_SEARCH[String(f.strategy || "")];
-  if (hint) parts.push(hint);
+  if (hint) parts.push(f.noAuction ? hint.replace(/ auction,/g, "") : hint);
+  if (f.noFlats) parts.push("no flats: leave out flats, apartments, maisonettes, studios and penthouses (houses, bungalows and other non-flat property only)");
+  if (f.noShared) parts.push("no shared ownership: leave out shared ownership, part buy part rent, shared equity and staircasing properties");
+  if (f.noAuction) parts.push("no auction properties: leave out anything sold by auction, auction lots, online or timed auctions, \"modern method of auction\" and listings saying \"subject to reserve\" or \"auction guide price\"");
   if (fresh) parts.push(`only listings added or updated in the last ${fresh === 1 ? "24 hours" : `${fresh} days`} (newest first)`);
   return parts.filter(Boolean).join(", ") + (notes ? `. The user's own criteria, in their words (follow them where the listing shows it): "${notes}"` : "");
 }
@@ -627,7 +630,7 @@ async function searchSite(site: string, f: Filters, level: LevelId, pass: number
   const skip = exclude.length ? `\nYou've already found these, so don't return them again:\n${exclude.slice(-80).join("\n")}` : "";
   const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
 ${ANGLES[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only return individual listing pages: one property per URL, shaped like ${conf.example}. Never return search-results, area, category or map pages, even if they show listings; open the individual advert and use its URL. Skip adverts marked let agreed, under offer, sold STC or no longer available.${skip}
-Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "private_landlord": true | false | null, "added": string (when the advert was added, reduced or updated, exactly as the site shows it, e.g. "Added today", "Added on 28/09/2026", "3 days ago"; "" if not shown)}]}.
+Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "auction": true | false (true if the advert is a sale by auction, an auction lot, an online or timed auction or a modern method of auction), "shared_ownership": true | false (true if it is shared ownership, part buy part rent or shared equity), "private_landlord": true | false | null, "added": string (when the advert was added, reduced or updated, exactly as the site shows it, e.g. "Added today", "Added on 28/09/2026", "3 days ago"; "" if not shown)}]}.
 Prefer the newest listings. Only include listings you actually found in the search results, with the URL exactly as the search returned it. Never build or guess a URL from an ID or address, and never invent a listing or price. If you find none, return {"listings": []}.`;
   const { parsed, seen } = await webJson(prompt, conf.domains, level, lv.context, lv.effort);
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -637,6 +640,9 @@ Prefer the newest listings. Only include listings you actually found in the sear
     if (!/^https:\/\//.test(url) || !hostMatches(url, conf.domains) || !isListingUrl(site, url)) continue;
     // Listings found by reading a site's search page aren't in the search sources, so they aren't dropped
     // here: every link is opened and checked before it is shown, which removes anything made up.
+    if (f.noAuction && (x.auction === true || /auction/i.test(`${x.title || ""} ${url}`))) continue;
+    if (f.noShared && (x.shared_ownership === true || /shared[\s-]?ownership|part[\s-]?buy|shared[\s-]?equity|staircasing/i.test(`${x.title || ""} ${x.type || ""} ${url}`))) continue;
+    if (f.noFlats && /\b(?:flats?|apartments?|maisonettes?|studios?|penthouses?)\b/i.test(`${x.type || ""} ${x.title || ""}`)) continue;
     const price = Math.round(Number(x.price));
     if (!Number.isFinite(price) || price <= 0) continue;
     const beds = x.beds === null || x.beds === undefined || x.beds === "" ? null : Math.max(0, Math.round(Number(x.beds)));
