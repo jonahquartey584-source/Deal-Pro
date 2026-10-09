@@ -45,6 +45,37 @@ export function currentSearchWeek(usage: Usage, now = Date.now()) {
 }
 
 // Gives back what a failed or stalled job reserved, once.
+// Lifetime counts of finished Deal Finder searches, deal analyses and due diligence research, for the
+// admin dashboard. Accounts from before these were counted start from what was already kept: the
+// analyses allowance counter and the saved search history (the last 30 searches).
+export type Activity = { searches: number; analyses: number; research: number; lastSearchAt?: string; lastAnalysisAt?: string; lastResearchAt?: string; seeded?: boolean };
+export async function activityFor(userId: string, usage?: Usage | null): Promise<Activity> {
+  const saved = await accounts().get(`users/${userId}/activity`, { type: "json" }) as Activity | null;
+  if (saved) return saved;
+  const u = usage === undefined ? await accounts().get(`users/${userId}/ai-usage`, { type: "json" }) as Usage | null : usage;
+  const history = getStore({ name: "deal-history", consistency: "strong" });
+  const [finder, analyser] = await Promise.all(["finder", "analyser"].map((k) => history.get(`users/${userId}/${k}/index`, { type: "json" }).catch(() => null) as Promise<Array<{ at?: string }> | null>));
+  return {
+    searches: Array.isArray(finder) ? finder.length : 0,
+    analyses: Math.max(Number(u?.count) || 0, Array.isArray(analyser) ? analyser.length : 0),
+    research: 0, seeded: true,
+    ...(Array.isArray(finder) && finder[0]?.at ? { lastSearchAt: finder[0].at } : {}),
+    ...(Array.isArray(analyser) && analyser[0]?.at ? { lastAnalysisAt: analyser[0].at } : {}),
+  };
+}
+export async function recordActivity(job: Record<string, unknown>) {
+  const field = job.kind === "search" ? "searches" : job.kind === "analyse" ? "analyses" : job.kind === "dd" ? "research" : null;
+  if (!field || typeof job.userId !== "string") return;
+  const userId = job.userId;
+  const fresh = !(await accounts().get(`users/${userId}/activity`, { type: "json" }));
+  const a = await activityFor(userId);
+  // A first analysis was already added to the allowance counter when it started, so it isn't counted twice.
+  if (!(fresh && field === "analyses" && (job.reserved as Reserved | undefined)?.count)) a[field] += 1;
+  const at = new Date().toISOString();
+  if (field === "searches") a.lastSearchAt = at; else if (field === "analyses") a.lastAnalysisAt = at; else a.lastResearchAt = at;
+  await accounts().setJSON(`users/${userId}/activity`, { ...a, updatedAt: at });
+}
+
 export async function refundJob(jobId: string, job: Record<string, unknown>, error: string) {
   if (job.refunded) return;
   const r = (job.reserved || {}) as Reserved;

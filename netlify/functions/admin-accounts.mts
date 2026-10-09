@@ -2,6 +2,7 @@ import { getStore } from "@netlify/blobs";
 import { getUser, admin } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
 import { applyPlanExpiry } from "../lib/plan.mts";
+import { activityFor } from "../lib/ai.mts";
 
 const ADMIN_EMAIL = "jonahquartey584@gmail.com";
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { "Cache-Control": "no-store" } });
@@ -28,10 +29,11 @@ export default async (request: Request, _context: Context) => {
       if (state) applyPlanExpiry(state);
       const metadata = (await store.getMetadata(blob.key))?.metadata as Record<string, unknown> | undefined;
       const id = blob.key.split("/")[1], idUser = signedUp.get(id);
+      const activity = await activityFor(id).catch(() => null);
       return {
         userId: id, name: (state?.profile as Record<string, unknown> | undefined)?.fullName || metadata?.name || idUser?.name || "", company: (state?.profile as Record<string, unknown> | undefined)?.company || "", strategy: (state?.profile as Record<string, unknown> | undefined)?.strategy || "", createdAt: idUser?.createdAt || metadata?.createdAt || null, email: metadata?.email || "Email unavailable",
         plan: state?.plan || "Free", expiresAt: state?.planExpiresAt || null, subscribed: !!(state?.stripe as Record<string, unknown> | undefined)?.subscription && state?.plan !== "Free", enabled: state?.accountEnabled !== false,
-        savedDeals: Array.isArray(state?.saved) ? state.saved.length : 0, updatedAt: metadata?.updatedAt || null,
+        savedDeals: Array.isArray(state?.saved) ? state.saved.length : 0, activity, updatedAt: metadata?.updatedAt || null,
       };
     }));
     return json({ accounts });

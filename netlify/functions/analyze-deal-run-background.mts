@@ -1,5 +1,5 @@
 import type { Config, Context } from "@netlify/functions";
-import { jobs, refundJob, runAnalysis, runRank, runResearch, newSearch, searchProgress, stepSearch, type LevelId, type SearchState } from "../lib/ai.mts";
+import { jobs, recordActivity, refundJob, runAnalysis, runRank, runResearch, newSearch, searchProgress, stepSearch, type LevelId, type SearchState } from "../lib/ai.mts";
 
 // A background function can run for 15 minutes. Searches work for up to 13, save their
 // progress and start a fresh run to continue, so an Expert search can take much longer.
@@ -56,6 +56,7 @@ export default async (request: Request, _context: Context) => {
     const final = await store.get(jobId, { type: "json" }) as Record<string, unknown> | null;
     if (!final || final.cancelled || final.refunded) return; // cancelled while running
     await store.setJSON(jobId, { ...job, status: "done", analysis, search: undefined, runToken: null, finishedAt: heartbeat() });
+    await recordActivity(job).catch((error) => console.error("Couldn't count this job for the admin dashboard", error));
   } catch (error) {
     console.error("AI job failed", error);
     const latest = (await store.get(jobId, { type: "json" }) as Record<string, unknown> | null);
