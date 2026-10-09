@@ -16,8 +16,8 @@ async function api(options = {}) {
 const STRAT_NAME = { R2SA: "R2SA", R2R: "R2R", BTL: "BTL", HMO: "HMO", BRRR: "BRRR", Flip: "Flip", LeaseOption: "Lease option", SA: "Owned SA", Commercial: "Commercial", Other: "Other" };
 const DAYS = [[7, "7 days"], [14, "14 days"], [30, "30 days"], [60, "60 days"], [90, "90 days"], [180, "6 months"], [365, "1 year"]];
 const fmtDay = (iso) => new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
-// When the account was made, in UK time: "Fri, 9 Oct 2026 at 14:05".
-const fmtJoined = (iso) => { const d = new Date(iso), tz = { timeZone: "Europe/London" }; return Number.isNaN(+d) ? "" : `${d.toLocaleDateString("en-GB", { ...tz, weekday: "short", day: "numeric", month: "short", year: "numeric" })} at ${d.toLocaleTimeString("en-GB", { ...tz, hour: "2-digit", minute: "2-digit" })}`; };
+// When the account was made, in UK time, as dd/mm/yy hh:mm: "09/10/26 14:05".
+const fmtJoined = (iso) => { const d = new Date(iso); if (Number.isNaN(+d)) return ""; const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(d).map((x) => [x.type, x.value])); return `${p.day}/${p.month}/${p.year} ${p.hour}:${p.minute}`; };
 // "Referral access": how long a plan the admin has given lasts. Hidden for plans a customer pays for through Stripe.
 const expiryPicker = (a) => a.plan === "Free" || a.subscribed ? `<div class="sub">${a.subscribed ? "Paid via Stripe" : "Free plan"}</div>` : `<select data-days aria-label="How long ${esc(a.email)} keeps this plan"><option value="keep" selected>${a.expiresAt ? `Ends ${esc(fmtDay(a.expiresAt))}` : "No end date"}</option>${DAYS.map(([d, n]) => `<option value="${d}">${a.expiresAt ? "Extend to" : "Ends in"} ${n}</option>`).join("")}${a.expiresAt ? '<option value="none">Remove end date</option>' : ""}</select>`;
 function render() {

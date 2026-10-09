@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import { getUser } from "@netlify/identity";
+import { getUser, admin } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
 import { applyPlanExpiry } from "../lib/plan.mts";
 
@@ -13,12 +13,23 @@ export default async (request: Request, _context: Context) => {
 
   if (request.method === "GET") {
     const { blobs } = await store.list({ prefix: "users/" });
+    // The sign-up date (and name) come from Netlify Identity: the sign-in token the other functions see
+    // doesn't carry them. If the lookup fails, the list still loads, without join dates.
+    const signedUp = new Map<string, { createdAt?: string; name?: string }>();
+    try {
+      for (let page = 1; page <= 20; page++) {
+        const users = await admin.listUsers({ page, perPage: 100 });
+        for (const u of users) signedUp.set(u.id, { createdAt: u.createdAt, name: u.name });
+        if (users.length < 100) break;
+      }
+    } catch (error) { console.warn("Couldn't list Identity users for sign-up dates", error); }
     const accounts = await Promise.all(blobs.filter((b) => b.key.endsWith("/state")).map(async (blob) => {
       const state = await store.get(blob.key, { type: "json" }) as Record<string, unknown> | null;
       if (state) applyPlanExpiry(state);
       const metadata = (await store.getMetadata(blob.key))?.metadata as Record<string, unknown> | undefined;
+      const id = blob.key.split("/")[1], idUser = signedUp.get(id);
       return {
-        userId: blob.key.split("/")[1], name: (state?.profile as Record<string, unknown> | undefined)?.fullName || metadata?.name || "", company: (state?.profile as Record<string, unknown> | undefined)?.company || "", strategy: (state?.profile as Record<string, unknown> | undefined)?.strategy || "", createdAt: metadata?.createdAt || null, email: metadata?.email || "Email unavailable",
+        userId: id, name: (state?.profile as Record<string, unknown> | undefined)?.fullName || metadata?.name || idUser?.name || "", company: (state?.profile as Record<string, unknown> | undefined)?.company || "", strategy: (state?.profile as Record<string, unknown> | undefined)?.strategy || "", createdAt: idUser?.createdAt || metadata?.createdAt || null, email: metadata?.email || "Email unavailable",
         plan: state?.plan || "Free", expiresAt: state?.planExpiresAt || null, subscribed: !!(state?.stripe as Record<string, unknown> | undefined)?.subscription && state?.plan !== "Free", enabled: state?.accountEnabled !== false,
         savedDeals: Array.isArray(state?.saved) ? state.saved.length : 0, updatedAt: metadata?.updatedAt || null,
       };
