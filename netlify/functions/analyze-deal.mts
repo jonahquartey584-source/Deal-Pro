@@ -1,6 +1,6 @@
 import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
-import { accounts, jobs, currentWeek, currentSearchWeek, refundJob, ADMIN_EMAIL, FREE_ANALYSES, FREE_SEARCHES_PER_WEEK, LEVELS, WEEK_MS, WEEKLY_CREDITS, SCOUT_ONLY_PLANS, SITES, STRATEGIES, type LevelId, type Reserved, type Usage } from "../lib/ai.mts";
+import { accounts, jobs, currentWeek, currentSearchWeek, refundJob, ADMIN_EMAIL, FREE_ANALYSES, FREE_SEARCHES_PER_WEEK, LEVELS, WEEK_MS, WEEKLY_CREDITS, SCOUT_ONLY_PLANS, VALUATION_PLANS, SITES, STRATEGIES, type LevelId, type Reserved, type Usage } from "../lib/ai.mts";
 
 const json = (data: unknown, status = 200) => Response.json(data, {
   status,
@@ -24,6 +24,7 @@ function creditSummary(isAdmin: boolean, plan: string, usage: Usage) {
     plan: isAdmin ? "Admin" : plan,
     free,
     scoutOnly: !isAdmin && (free || SCOUT_ONLY_PLANS.has(plan)),
+    valuation: isAdmin || VALUATION_PLANS.has(plan),
     freeLeft: free ? Math.max(0, FREE_ANALYSES - (Number(usage.count) || 0)) : null,
     freeSearchesLeft: free ? Math.max(0, FREE_SEARCHES_PER_WEEK - sweek.searchWeekUsed) : null,
     searchResetsAt: free && sweek.searchWeekStart ? new Date(Date.parse(sweek.searchWeekStart) + WEEK_MS).toISOString() : null,
@@ -169,6 +170,7 @@ export default async (request: Request, _context: Context) => {
   const runToken = crypto.randomUUID();
   await jobs().setJSON(jobId, {
     userId: user.id, kind, level, input, reserved,
+    valuation: kind === "search" && (isAdmin || VALUATION_PLANS.has(plan)),
     strategy: kind === "analyse" && body?.strategy && body.strategy in STRATEGIES ? body.strategy : undefined,
     runToken, status: "queued", createdAt: new Date().toISOString(),
   });

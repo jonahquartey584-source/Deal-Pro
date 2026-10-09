@@ -35,6 +35,20 @@ npm run local
   `STRIPE_SECRET_KEY` and so on in `.env` if you want them.
 - Edit `index.html` or anything under `netlify/` and restart to pick it up.
 
+## Welcome email
+
+Everyone who creates an account gets one welcome email from `hello@qp-digital.co.uk` (sent as "Deal Pro",
+replies go to the same address). It is sent through [Resend](https://resend.com), so it needs setting up once:
+
+1. Create a Resend account and add the domain `qp-digital.co.uk` under **Domains**.
+2. Add the DNS records Resend shows (SPF and DKIM) wherever qp-digital.co.uk's DNS is managed, and wait for it to show **Verified**.
+3. Create an API key with **Sending access**.
+4. In Netlify (Project configuration, Environment variables) add `RESEND_API_KEY` with that key, then deploy again.
+
+Until `RESEND_API_KEY` is set nothing is sent and sign-up works as normal. `EMAIL_FROM` and `EMAIL_REPLY_TO` can
+override the sender and reply address. Only brand-new accounts are emailed. Netlify Identity's own confirmation
+and password-reset emails are separate and are not changed by this.
+
 ## Tutorial videos
 
 Two videos are recorded walkthroughs of the site: a headless browser clicks

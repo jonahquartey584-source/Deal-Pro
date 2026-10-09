@@ -954,6 +954,7 @@ td.t{text-align:right;color:var(--ink-2)}
             <label class="f"><span>Location <span class="muted" style="font-weight:400">· one or more, separated by commas</span></span><input class="inp" id="fLoc" placeholder="e.g. Leeds, Manchester, LS6 (up to 6)" autocomplete="off"></label>
             <label class="f"><span>Strategy</span><select class="inp" id="fStrategy"><option value="auto">Auto (R2SA for rentals, BTL for purchases)</option><option value="R2SA">R2SA · serviced accommodation</option><option value="R2R">R2R · rent to rent by the room</option><option value="BTL">BTL · buy to let</option><option value="HMO">HMO · buy and let by the room</option><option value="BRRR">BRRR · buy, refurbish, refinance</option><option value="Flip">Flip · buy, refurbish, sell</option><option value="SA">Owned serviced accommodation</option><option value="LeaseOption">Lease option</option><option value="Commercial">Commercial</option><option value="none">Just show prices</option></select></label>
             <label class="f" id="fBmvWrap" hidden><span>Minimum below market value <span class="muted" style="font-weight:400">· BMV</span></span><span class="ix both"><input class="inp num" type="number" id="fBmv" min="0" max="90" step="1" placeholder="e.g. 20"><span class="suf">%</span></span></label>
+            <p class="fnote" id="fBmvLock" hidden>Market value and the BMV filter are included with Premium and Max. <button class="linkbtn" type="button" data-go="plans">See plans</button></p>
             <p class="fnote" id="fBmvNote" hidden>Market value is an AI estimate from recent sold prices nearby. Deals it can't value are hidden while this is set.</p>
             <label class="f"><span>Listed within</span><select class="inp" id="fFresh"><option value="any">Any time</option><option value="1">Last 24 hours</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option><option value="14">Last 14 days</option></select></label>
             <label class="check"><input type="checkbox" id="fPrivate"><span>Private landlords only</span></label>
@@ -2158,11 +2159,11 @@ function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';$('#fStrateg
   SITES.forEach(s=>{$('#fSite'+s).checked=!!f.sites[s]});findChrome()}
 function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
   f.notes=$('#fNotes').value.slice(0,500);f.strategy=$('#fStrategy').value;f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
-  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.bmv=Math.min(90,n($('#fBmv').value)||0)||'';f.priv=$('#fPrivate').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
+  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.bmv=canBmv()?(Math.min(90,n($('#fBmv').value)||0)||''):'';f.priv=$('#fPrivate').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
   SITES.forEach(s=>{f.sites[s]=$('#fSite'+s).checked})}
 function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;
   $('#fMinL').textContent=buy?'Min price':'Min rent';$('#fMaxL').textContent=buy?'Max price':'Max rent';
-  $('#fBmvWrap').hidden=!buy;$('#fBmvNote').hidden=!buy||!(+f.bmv);
+  $('#fBmvWrap').hidden=!buy;$('#fBmv').disabled=!canBmv();$('#fBmvLock').hidden=!buy||canBmv();$('#fBmvNote').hidden=!buy||!canBmv()||!(+f.bmv);
   $('#fFurnNote').hidden=f.furn==='any';$('#fRmNote').hidden=!f.sites.Rightmove}
 function locMatch(x,q){q=q.trim().toLowerCase();if(!q)return true;const pc=x.postcode.toLowerCase();
   // Postcode district (SE1, W2, W1D): match the district, so SE1 does not also match SE11, but W1 matches W1D.
@@ -2171,6 +2172,8 @@ function locMatch(x,q){q=q.trim().toLowerCase();if(!q)return true;const pc=x.pos
 /* how fresh a listing is: when it was added, new since the last refresh, or likely to go soon */
 const DAY_MS=864e5;
 // Percent below the estimated market value (positive = asking price is under it); null if it couldn't be valued.
+// Market value and BMV are for Premium and Max; the server decides and sends it with the credits.
+const canBmv=()=>{try{return !!(AIC.info&&AIC.info.valuation)}catch(e){return false}};
 const bmvPct=r=>r&&r.mv&&r.mv.value>0&&r.price>0?Math.round((r.mv.value-r.price)/r.mv.value*1000)/10:null;
 const mvTip=r=>r.mv?`Estimated from ${r.mv.comps} comparable sale${r.mv.comps===1?'':'s'}, ${r.mv.confidence} confidence. ${r.mv.basis||''} Range ${gbp(r.mv.low)} to ${gbp(r.mv.high)}.`:'Not valued';
 const ageDays=r=>{const t=Date.parse(r.listedAt||'');return Number.isNaN(t)?null:Math.max(0,Math.floor((Date.now()-t)/DAY_MS))};
@@ -2184,7 +2187,7 @@ const freshMatch=(r,f)=>!f.fresh||f.fresh==='any'||(ageDays(r)!=null&&ageDays(r)
 const confirmedLive=x=>x.verified==='available';
 function findRows(all=false){const f=S.find.f;
   return SRC().map((x,i)=>Object.assign({k:i,listedTs:Date.parse(x.listedAt||'')||0,bmv:bmvPct(x),bmvS:bmvPct(x)==null?-1e9:bmvPct(x)},x)).filter(x=>(all||FS.showUnconfirmed||FS.autoUnc||confirmedLive(x))&&freshMatch(x,f)&&x.mode===f.mode
-    &&bedsMatch(bedList(f.beds),x.beds)&&(f.mode!=='buy'||!(+f.bmv)||(x.bmv!=null&&x.bmv>=+f.bmv))
+    &&bedsMatch(bedList(f.beds),x.beds)&&(f.mode!=='buy'||!canBmv()||!(+f.bmv)||(x.bmv!=null&&x.bmv>=+f.bmv))
     &&(f.min===''||x.price>=f.min)&&(f.max===''||x.price<=f.max)
     &&(LIVE||locMatch(x,f.loc))&&(!f.priv||x.private!==false)
     &&(f.furn==='any'||x.furnished==='Not stated'||x.furnished.toLowerCase()===f.furn)
@@ -2279,11 +2282,12 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   const ll=new Set(rows.map(r=>r.site)).size,buy=S.find.f.mode==='buy',so=S.find.sort,sv=so?`${so.k}:${so.dir}`:'';
   const hidden=FS.showUnconfirmed||FS.autoUnc?0:findRows(true).length-rows.length,nUnc=findRows(true).filter(x=>!confirmedLive(x)).length;
   const sum=`<b class="mono">${m}</b> ${FS.showUnconfirmed?'':'live '}listing${m===1?'':'s'} from <b class="mono">${ll}</b> site${ll===1?'':'s'}${m?` · median <b class="mono">${gbp(med)}</b>${buy?'':' pcm'}`:''}${S.find.liveAt?` · searched ${fmtDate(S.find.liveAt)}`:''}`;
-  const bmvNote=buy&&+S.find.f.bmv>0?`<div class="fsub">Showing deals at least ${+S.find.f.bmv}% below estimated market value. ${Math.max(0,SRC().filter(confirmedLive).length-SRC().filter(x=>x.mv).length)} couldn't be valued and are hidden.</div>`:'';
+  const bmvOn=buy&&canBmv();
+  const bmvNote=bmvOn&&+S.find.f.bmv>0?`<div class="fsub">Showing deals at least ${+S.find.f.bmv}% below estimated market value. ${Math.max(0,SRC().filter(confirmedLive).length-SRC().filter(x=>x.mv).length)} couldn't be valued and are hidden.</div>`:'';
   const order=m>1&&!so?`<div class="fsub">Sorted best deal first, by ${SC.size?'AI score, then ':''}${esc(bestBy(rows[0]))}.</div>`:'';
   const unc=FS.autoUnc?`<div class="fsub warn-note">These sites wouldn't let Deal Pro confirm the listings automatically, so they're shown unconfirmed. Open each link to check it's still available, or run Analyst or Expert, which confirm more.</div>`:nUnc?`<div class="fsub">${FS.showUnconfirmed?`Showing ${nUnc} listing${nUnc===1?'':'s'} that couldn't be confirmed live. Their links may not work.`:`${hidden} more couldn't be confirmed live, so they're hidden.`} <button class="linkbtn" type="button" id="fShowUnc">${FS.showUnconfirmed?'Hide them':'Show them anyway'}</button></div>`:'';
   const th=(k,lab,cls='')=>{const on=so&&so.k===k;return `<th class="${cls}" aria-sort="${on?(so.dir>0?'ascending':'descending'):'none'}"><button class="sort" data-sort="${k}">${lab}<span class="sa" aria-hidden="true">${on?(so.dir>0?'↑':'↓'):''}</span></button></th>`};
-  const SORTS=CARD_SORTS.filter(x=>buy||!/^bmv/.test(x[0]));
+  const SORTS=CARD_SORTS.filter(x=>bmvOn||!/^bmv/.test(x[0]));
   const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
   const acts=view==='cards'
     ?(m?`<button class="btn sm primary" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
@@ -2295,9 +2299,9 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   else if(view==='cards')body=`<div class="cards" id="fCards" tabindex="0" role="region" aria-label="Deal cards, scroll sideways">${rows.map((r,i)=>dealCard(r,i)).join('')}</div>`;
   else body=`<div id="fTsvWrap" hidden><label class="f"><span>Deals as tab-separated rows. Copy them, then paste into cell A1 of a Google Sheet.</span><textarea class="inp mono" id="fTsv" readonly></textarea></label></div>
     <div class="sheet" tabindex="0" role="region" aria-label="Search results"><table><thead><tr><th class="rn"><span class="sr">Row</span></th><th class="ck"><input type="checkbox" id="fSelAll" aria-label="Select all rows"${nOpen?'':' disabled'}></th>
-      ${SC.size?th('ai','AI score','nr'):''}${th('site','Site')}${th('title','Listing')}${th('type','Type')}${th('beds','Beds','nr')}${th('area','Area')}${th('postcode','Postcode')}${th('price',S.find.f.mode==='buy'?'Price':'Rent pcm','nr')}${buy?`<th class="nr" title="Estimated market value from recent sold prices">MV (est.)</th>${th('bmvS','BMV','nr')}`:''}<th class="nr" title="The main figure for your strategy (estimate)">${esc(keyHead)}</th><th>Furnished</th>${th('listedTs','Listed')}<th>Checked</th><th>Link</th><th>Action</th></tr></thead>
+      ${SC.size?th('ai','AI score','nr'):''}${th('site','Site')}${th('title','Listing')}${th('type','Type')}${th('beds','Beds','nr')}${th('area','Area')}${th('postcode','Postcode')}${th('price',S.find.f.mode==='buy'?'Price':'Rent pcm','nr')}${bmvOn?`<th class="nr" title="Estimated market value from recent sold prices">MV (est.)</th>${th('bmvS','BMV','nr')}`:''}<th class="nr" title="The main figure for your strategy (estimate)">${esc(keyHead)}</th><th>Furnished</th>${th('listedTs','Listed')}<th>Checked</th><th>Link</th><th>Action</th></tr></thead>
       <tbody>${rows.map((r,i)=>{const o=isOpen(r);return `<tr data-k="${r.k}"><td class="rn">${i+1}</td><td class="ck">${o?`<input type="checkbox" id="fsel${r.k}" data-sel="${r.k}" aria-label="Select ${esc(r.type)}, ${esc(r.area)}"${FS.sel.has(r.k)?' checked':''}>`:''}</td>
-        ${SC.size?`<td class="nr">${r.ai>=0?`<span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="${esc(r.aiv)}">${r.ai}</span>`:'<span class="muted">–</span>'}</td>`:''}<td>${esc(SITE_LABEL(r.site))}</td><td class="clip" title="${esc(r.title||'')}">${esc(r.title||'')}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td>${buy?`<td class="nr mono" title="${esc(mvTip(r))}">${r.mv?gbp(r.mv.value):'–'}</td><td class="nr mono" title="${esc(mvTip(r))}">${r.bmv==null?'–':r.bmv+'%'}</td>`:''}${(()=>{const k=stratFigures(r).key;return `<td class="nr mono${k[2]?' neg':''}" title="${esc(k[0])} (estimate)">${esc(k[1])}</td>`})()}<td class="muted">${esc(r.furnished)}</td><td class="fr-cell"><span class="muted">${ageTxt(ageDays(r))||'–'}</span>${freshTags(r)}</td><td>${liveTag(r)}</td>
+        ${SC.size?`<td class="nr">${r.ai>=0?`<span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="${esc(r.aiv)}">${r.ai}</span>`:'<span class="muted">–</span>'}</td>`:''}<td>${esc(SITE_LABEL(r.site))}</td><td class="clip" title="${esc(r.title||'')}">${esc(r.title||'')}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td>${bmvOn?`<td class="nr mono" title="${esc(mvTip(r))}">${r.mv?gbp(r.mv.value):'–'}</td><td class="nr mono" title="${esc(mvTip(r))}">${r.bmv==null?'–':r.bmv+'%'}</td>`:''}${(()=>{const k=stratFigures(r).key;return `<td class="nr mono${k[2]?' neg':''}" title="${esc(k[0])} (estimate)">${esc(k[1])}</td>`})()}<td class="muted">${esc(r.furnished)}</td><td class="fr-cell"><span class="muted">${ageTxt(ageDays(r))||'–'}</span>${freshTags(r)}</td><td>${liveTag(r)}</td>
         <td>${o?`<a class="xlink" href="${esc(r.url)}" target="_blank" rel="noopener">Open ↗</a>`:L}</td><td>${o?`<button class="btn xs" data-build="${r.k}">Analyse deal</button>`:`<button class="btn xs" data-unlock="${r.k}" data-n="${i+1}">Unlock · ${gbp(dealFee())}</button>`}</td></tr>`}).join('')}</tbody></table></div>`;
   const ageH=S.find.liveAt?(Date.now()-Date.parse(S.find.liveAt))/36e5:0,stale=ageH>=24,nNew=rows.filter(isFreshNew).length;
   const fresh=`<div class="fresh-bar${stale?' stale':''}"><span>${stale?`These results are from ${ageH<48?'yesterday':Math.round(ageH/24)+' days ago'}. Some listings may have gone.`:`Searched ${ageH<1?'just now':Math.round(ageH)+'h ago'}.`}${nNew?` <b>${nNew} new</b> in the last 3 days.`:''}</span><button class="btn sm ghost" type="button" id="fEditSearch" title="Change the criteria for this search">Edit search</button><button class="btn sm${stale?' primary':''}" type="button" id="fRefresh" title="Re-check every listing, remove ones that have gone, and look for new ones">Refresh &amp; find new</button></div>`;
@@ -2318,8 +2322,9 @@ $('#fNotesFill').addEventListener('click',()=>{const text=$('#fNotes').value.tri
   const {f,got}=parseCriteria(text);readFind();
   // No price in the text: drop the starting £1,200–£5,000 range so it doesn't hide matches.
   const d=FIND_DEF();if(f.min==null&&f.max==null&&+S.find.f.min===d.min&&+S.find.f.max===d.max){f.min='';f.max=''}
+  let locked=false;if(f.bmv&&!canBmv()){delete f.bmv;locked=true;const i=got.findIndex(x=>/below market value/.test(x));if(i>=0)got.splice(i,1)}
   Object.assign(S.find.f,f);bindFind();save();renderFind();
-  msg.textContent=got.length?`Filled in: ${got.join(' · ')}. Check the filters, then search.`:'No filters to fill in. The AI will still search with what you wrote.'});
+  msg.textContent=got.length||locked?`Filled in: ${got.join(' · ')||'nothing else'}. Check the filters, then search.${locked?' The BMV filter needs Premium.':''}`:'No filters to fill in. The AI will still search with what you wrote.'});
 const FIND_MSG=m=>{const n=$('#nFind');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
 // Checks on an AI job every 2 seconds. A dropped connection, a busy server or a sign-in being renewed
 // is retried for up to 3 minutes (the job carries on in the background), and the result is confirmed
@@ -2452,8 +2457,8 @@ function rankHTML(){restoreRank();const R=FS.rank;
     ${Array.isArray(a.watch_outs)&&a.watch_outs.length?`<p class="muted">Watch out: ${a.watch_outs.map(w=>esc(rankText(w))).join(' · ')}</p>`:''}${lv.id==='quick'?scoutMore('search'):''}</div>`}
 function openRows(){return orderRows(findRows()).filter(isOpen)}
 function findTsv(){const c=v=>{const s=String(v??'').replace(/[\t\r\n]+/g,' ');return /^[=+\-@]/.test(s)?"'"+s:s};
-  return [['Site','Listing','Type','Beds','Area','Postcode',S.find.f.mode==='buy'?'Price':'Rent pcm',...(S.find.f.mode==='buy'?['MV (est.)','BMV %']:[]),'Furnished','Checked','URL'],
-    ...openRows().map(r=>[SITE_LABEL(r.site),r.title||'',r.type,bedsTxt(r.beds),r.area,r.postcode,r.price,...(r.mode==='buy'?[r.mv?r.mv.value:'',r.bmv==null?'':r.bmv]:[]),r.furnished,r.verified==='available'?'Live '+(r.checkedAt||'').slice(0,10):r.verified==='unknown'?"Couldn't confirm":'Not checked',r.url])].map(a=>a.map(c).join('\t')).join('\n')}
+  return [['Site','Listing','Type','Beds','Area','Postcode',S.find.f.mode==='buy'?'Price':'Rent pcm',...(S.find.f.mode==='buy'&&canBmv()?['MV (est.)','BMV %']:[]),'Furnished','Checked','URL'],
+    ...openRows().map(r=>[SITE_LABEL(r.site),r.title||'',r.type,bedsTxt(r.beds),r.area,r.postcode,r.price,...(r.mode==='buy'&&canBmv()?[r.mv?r.mv.value:'',r.bmv==null?'':r.bmv]:[]),r.furnished,r.verified==='available'?'Live '+(r.checkedAt||'').slice(0,10):r.verified==='unknown'?"Couldn't confirm":'Not checked',r.url])].map(a=>a.map(c).join('\t')).join('\n')}
 function copyTsv(){const n=openRows().length;if(!n){toast('No deals to copy.');return}const t=findTsv(),lab=`${n} deal${n>1?'s':''}`;
   const fb=()=>{const w=$('#fTsvWrap'),ta=$('#fTsv');if(!w)return;w.hidden=false;ta.value=t;ta.focus();ta.select();ta.scrollTop=0;ta.scrollLeft=0;toast(`Selected ${lab}. Press Ctrl/Cmd+C, then paste into cell A1 of a Google Sheet.`)};
   try{navigator.clipboard.writeText(t).then(()=>toast(`Copied ${lab}. Paste into cell A1 of a Google Sheet.`)).catch(fb)}catch(e){fb()}}
@@ -2678,7 +2683,7 @@ function renderAILevels(){const i=AIC.info,free=!i||i.free||i.scoutOnly;if(free&
   const paid=i?(i.plan==='Admin'?'Admin: unlimited credits.':`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}.${i.scoutOnly?' Upgrade to Premium for Analyst and Expert.':''}`):'';
   $('#aiCredits').textContent=!i?'':i.free?`Free plan: ${i.freeLeft} of 1 free analysis left. Upgrade for Analyst and Expert.`:paid;
   $('#fCredits').textContent=!i?'':i.free?`Free plan: ${i.freeSearchesLeft} of 3 searches left this week. Upgrade for Analyst and Expert.`:paid}
-async function loadAICredits(){if(!document.body.dataset.userId)return;try{const r=await fetch('/api/analyze-deal',{credentials:'same-origin'});if(r.ok){AIC.info=await r.json();renderAILevels()}}catch(e){}}
+async function loadAICredits(){if(!document.body.dataset.userId)return;try{const r=await fetch('/api/analyze-deal',{credentials:'same-origin'});if(r.ok){AIC.info=await r.json();renderAILevels();if(!FS.busy&&LIVE)renderFind();findChrome()}}catch(e){}}
 ['#aiLevelOpts','#fLevelOpts','#ddLevelOpts'].forEach(id=>$(id).addEventListener('change',e=>{if(e.target.type==='radio'){AIC.level=e.target.value;try{localStorage.setItem('dealpro:ai-level',AIC.level)}catch(err){}renderAILevels()}}));
 renderAILevels();window.addEventListener('dealpro:signed-in',loadAICredits);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));

@@ -1,6 +1,7 @@
 import { getStore } from "@netlify/blobs";
 import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
+import { sendEmail, welcomeEmail } from "../lib/email.mts";
 
 const json = (data: unknown, status = 200) => Response.json(data, {
   status,
@@ -23,7 +24,7 @@ const defaultState = (admin = false) => ({
   extra: { on: false, cap: 20, spent: 0, month: null }, analysedDealIds: [], unlocked: [], agreements: [],
 });
 
-export default async (request: Request, _context: Context) => {
+export default async (request: Request, context: Context) => {
   const user = await getUser();
   if (!user) return json({ error: "Please sign in." }, 401);
 
@@ -36,6 +37,16 @@ export default async (request: Request, _context: Context) => {
     if (!state) {
       state = defaultState(isAdmin);
       await store.setJSON(key, state, { metadata: { userId: user.id, email: user.email ?? "", joinedAt: user.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() } });
+      // A brand-new account gets one welcome email from hello@qp-digital.co.uk. It never delays or blocks sign-in,
+      // and the marker stops a second request from sending it twice.
+      if (!isAdmin && user.email && !(await store.get(`users/${user.id}/welcome-email`))) {
+        await store.set(`users/${user.id}/welcome-email`, new Date().toISOString());
+        const mail = welcomeEmail(user.name);
+        const sending = sendEmail({ to: user.email, ...mail })
+          .then((r) => { if (!r.sent) console.warn(`Welcome email not sent: ${r.reason}`); })
+          .catch((error) => console.warn("Welcome email failed", error));
+        if (typeof context?.waitUntil === "function") context.waitUntil(sending); else await sending;
+      }
     }
     // Accounts created before the join date was kept get it now, from their Identity sign-up date.
     const meta = (await store.getMetadata(key))?.metadata as Record<string, unknown> | undefined;

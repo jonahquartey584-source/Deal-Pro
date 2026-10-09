@@ -22,7 +22,7 @@ export default async (request: Request, _context: Context) => {
   try {
     let analysis: unknown;
     if (job.kind === "search") {
-      let st = (job.search as SearchState | undefined) || newSearch(String(job.input), level);
+      let st = (job.search as SearchState | undefined) || newSearch(String(job.input), level, job.valuation === true);
       // Stops when the member has cancelled (the job is refunded or removed), instead of writing over it.
       const save = async (s: SearchState) => {
         const now = await store.get(jobId, { type: "json" }) as Record<string, unknown> | null;

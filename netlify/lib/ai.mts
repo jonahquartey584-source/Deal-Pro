@@ -4,8 +4,8 @@ import { mismatch as screenMismatch, type Kind } from "./screen.mts";
 import { bmvPct, readValue, type MV } from "./valuation.mts";
 
 export const ADMIN_EMAIL = "jonahquartey584@gmail.com";
-export const FREE_ANALYSES = 1;
-export const FREE_SEARCHES_PER_WEEK = 3;
+import { FREE_ANALYSES, FREE_SEARCHES_PER_WEEK } from "./plans.mts";
+export { FREE_ANALYSES, FREE_SEARCHES_PER_WEEK };
 export const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Power levels. Names shown to users live in index.html (AI_LEVELS); ids here must match.
@@ -22,6 +22,8 @@ const FALLBACK_MODEL = "gpt-5-mini";
 export const WEEKLY_CREDITS: Record<string, number> = { Lite: 15, Pro: 60, Max5: 300, Max20: 1200 };
 // Plans limited to Scout. Analyst and Expert start at Premium.
 export const SCOUT_ONLY_PLANS = new Set(["Lite"]);
+// Market value (MV) and below-market-value (BMV) estimates cost extra searches, so they are for Premium and Max.
+export const VALUATION_PLANS = new Set(["Pro", "Max5", "Max20"]);
 
 export const accounts = () => getStore({ name: "deal-premium-accounts", consistency: "strong" });
 export const jobs = () => getStore({ name: "deal-analysis-jobs", consistency: "strong" });
@@ -667,7 +669,7 @@ Only use sales you actually found. Never invent comparables or prices. If you ca
 
 export type SearchState = {
   filters: Filters; sites: string[]; phase: "search" | "check" | "verify" | "value" | "rank" | "done";
-  round: number; checkAt?: number; verifyAt: number; valueAt?: number; listings: Listing[]; removed?: number; ruledOut?: number; ruledOutWhy?: Record<string, number>;
+  round: number; checkAt?: number; verifyAt: number; valueAt?: number; canValue?: boolean; listings: Listing[]; removed?: number; ruledOut?: number; ruledOutWhy?: Record<string, number>;
   // A refresh starts from the member's current results: they are re-checked and new ones added.
   previous?: string[];
   widened?: boolean;
@@ -675,7 +677,7 @@ export type SearchState = {
   ranking?: Record<string, unknown> | null; startedAt: string;
 };
 
-export function newSearch(input: string, level: LevelId): SearchState {
+export function newSearch(input: string, level: LevelId, canValue = false): SearchState {
   const { filters = {}, sites = [], existing = [] } = JSON.parse(input) as { filters?: Filters; sites?: string[]; existing?: Array<Record<string, unknown>> };
   const ticked = sites.filter((s) => s in SITES);
   // Rental-only sites can't have property for sale; keep them out of a purchase search.
@@ -697,7 +699,7 @@ export function newSearch(input: string, level: LevelId): SearchState {
     });
   }
   return {
-    filters, sites: wanted, phase: "search", round: 0, verifyAt: 0, listings: keep, previous: keep.map((l) => l.id), startedAt: new Date().toISOString(),
+    filters, canValue, sites: wanted, phase: "search", round: 0, verifyAt: 0, listings: keep, previous: keep.map((l) => l.id), startedAt: new Date().toISOString(),
     sites_status: Object.fromEntries(wanted.map((s) => [s, { status: "searching", found: 0, round: 0, rounds: SEARCH_LEVEL[level].passes }])),
   };
 }
@@ -836,7 +838,7 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
     dropMismatches();
     for (const l of st.listings) l.confirmed = l.verified === "available";
     st.listings.sort((a, b) => Number(!!b.confirmed) - Number(!!a.confirmed));
-    st.phase = st.filters.mode === "buy" ? "value" : "rank";
+    st.phase = st.filters.mode === "buy" && st.canValue ? "value" : "rank";
     await save(st);
   }
 
