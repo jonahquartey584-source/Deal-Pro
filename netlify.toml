@@ -27,6 +27,11 @@
   from = "/pack/*"
   to = "/pack.html"
   status = 200
+# Shareable deal lists: /deals/<id> is served by deals.html, which loads the list from /api/deal-lists.
+[[redirects]]
+  from = "/deals/*"
+  to = "/deals.html"
+  status = 200
 
 # The site is published from the repo root; keep source and config files private.
 [[redirects]]

@@ -742,6 +742,7 @@ tbody tr:nth-child(even) td{background:var(--zebra)}
 .limit-note{background:var(--surface);border:1px solid var(--line-2);border-left:2px solid var(--warn);border-radius:0 6px 6px 0;padding:12px 14px;margin-bottom:16px;display:grid;gap:10px;font-size:13px;animation:vt-in .32s var(--ease)}
 .fs .limit-note{margin:10px 0 0}
 .limit-note.ferr{border-left-color:var(--bad);font-size:14px}
+.limit-note.share-note{border-left-color:var(--good,#1E9E5A)}.share-note .inp{width:100%;font-size:13px}
 .ln-a{display:flex;gap:8px;flex-wrap:wrap}
 @media (max-width:640px){.plans.two{grid-template-columns:minmax(0,1fr)}}
 
@@ -2436,9 +2437,9 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   const th=(k,lab,cls='')=>{const on=so&&so.k===k;return `<th class="${cls}" aria-sort="${on?(so.dir>0?'ascending':'descending'):'none'}"><button class="sort" data-sort="${k}">${lab}<span class="sa" aria-hidden="true">${on?(so.dir>0?'↑':'↓'):''}</span></button></th>`};
   const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
   const acts=view==='cards'
-    ?(m?`<button class="btn sm primary" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button>${packBtn(nOpen)}<label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${CARD_SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${CARD_SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
+    ?(m?`<button class="btn sm primary" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><button class="btn sm" id="fShareLink"${nOpen?'':' disabled'} title="Make a web page of these deal cards and get a link to send on WhatsApp">Share as link</button>${packBtn(nOpen)}<label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${CARD_SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${CARD_SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
       <button class="btn sm car-arrow" id="fPrev" aria-label="Previous deals">${CHEV(-1)}</button><button class="btn sm car-arrow" id="fNext" aria-label="Next deals">${CHEV(1)}</button>`:'')
-    :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button>${packBtn(nOpen)}<label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
+    :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><button class="btn sm" id="fShareLink"${nOpen?'':' disabled'} title="Make a web page of these deal cards and get a link to send on WhatsApp">Share as link</button>${packBtn(nOpen)}<label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
   const L=`<span class="lockc">${LOCK}Locked</span>`;
   let body;
   if(!m)body=`<div class="fempty"><h2>${hidden?'No listings confirmed live':'No listings match these filters'}</h2><p>${hidden?'Every listing found either had a dead link or its site blocked the check. Try Analyst or Expert, which open more listings to confirm them, or show the unconfirmed ones.':'Try a wider price range, a different location or more sites.'}</p></div>`;
@@ -2470,7 +2471,7 @@ $('#fNotesFill').addEventListener('click',()=>{const text=$('#fNotes').value.tri
   const d=FIND_DEF();if(f.min==null&&f.max==null&&+S.find.f.min===d.min&&+S.find.f.max===d.max){f.min='';f.max=''}
   Object.assign(S.find.f,f);bindFind();save();renderFind();
   msg.textContent=got.length?`Filled in: ${got.join(' · ')}. Check the filters, then search.`:'No filters to fill in. It will still search with what you wrote.'});
-const FIND_MSG=m=>{const n=$('#nFind');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
+const FIND_MSG=m=>{const n=$('#nFind');n.classList.remove('share-note');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
 // Checks on an AI job every 2 seconds. A dropped connection, a busy server or a sign-in being renewed
 // is retried for up to 3 minutes (the job carries on in the background), and the result is confirmed
 // once received so the server can delete it.
@@ -2629,10 +2630,11 @@ function cardFacts(r,i){const buy=r.mode==='buy',town=String(r.area||'').replace
     ...(r.ai>=0?[['⭐',`Deal score ${r.ai}/100${r.aiv?' · '+r.aiv:''}`]]:[]),
     ...(ageDays(r)!=null?[['🆕',`Listed ${ageTxt(ageDays(r)).toLowerCase()}${r.hot?' · going fast':''}`]]:r.hot?[['🔥','Going fast']]:[]),
     ...(live?[['✅',`Listing checked live ${live}`]]:[]),...(r.pack?[['📊',`Analysed: ${r.pack.verdict||'see pack'}${r.pack.score!=null?` · ${r.pack.score}/100`:''}`],['📄',`Deal pack: ${location.origin}/pack/${r.pack.id}`]]:[]),...(preNDA()?[]:[['🔗',r.url]])]}}
+function cardsTitle(n){const f=S.find.f,today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+  return {title:`${n} property deal${n===1?'':'s'}${f.loc?` · ${f.loc}`:''} · ${today}${preNDA()?' · Pre-NDA summary':''}`,
+    foot:(preNDA()?'Pre-NDA summary: the full address and listing details are shared once an NDA is in place. ':'')+'Figures are rough estimates for the area and are not verified. Please check all details before committing.'}}
 function copyCards(){const rows=cardRows();if(!rows.length){toast('No deals to copy.');return}
-  const f=S.find.f,today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
-  const title=`${rows.length} property deal${rows.length===1?'':'s'}${f.loc?` · ${f.loc}`:''} · ${today}${preNDA()?' · Pre-NDA summary':''}`;
-  const foot=(preNDA()?'Pre-NDA summary: the full address and listing details are shared once an NDA is in place. ':'')+'Figures are rough estimates for the area and are not verified. Please check all details before committing.';
+  const {title,foot}=cardsTitle(rows.length);
   const cards=rows.map(cardFacts);
   const text=[title,'',...cards.map(c=>[`*${c.head}*`,...c.lines.filter(l=>l[1]).map(([e,t])=>`${e} ${t}`)].join('\n')+'\n'),foot,'','Found with Deal Pro · usedealpro.com'].join('\n');
   const eh=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -2642,6 +2644,26 @@ function copyCards(){const rows=cardRows();if(!rows.length){toast('No deals to c
   const done=()=>toast(`Copied ${lab}${preNDA()?' (pre-NDA, no links)':''}. Paste into WhatsApp, an email or a message.`);
   try{if(window.ClipboardItem&&navigator.clipboard.write){navigator.clipboard.write([new ClipboardItem({'text/plain':new Blob([text],{type:'text/plain'}),'text/html':new Blob([html],{type:'text/html'})})]).then(done).catch(()=>navigator.clipboard.writeText(text).then(done).catch(fb))}
     else navigator.clipboard.writeText(text).then(done).catch(fb)}catch(e){fb()}}
+/* Share as link: publish the deal cards as one web page at /deals/<id>, to send on WhatsApp, email or text */
+let SHARING=false;
+async function shareLink(){if(SHARING)return;const rows=cardRows();if(!rows.length){toast('No deals to share.');return}
+  if(!document.body.dataset.userId){toast('Sign in to share deals as a link.');return}
+  const {title,foot}=cardsTitle(rows.length);
+  const cards=rows.map((r,i)=>{const c=cardFacts(r,i);return {head:c.head,lines:c.lines.filter(l=>l[1]),url:preNDA()?'':r.url,pack:r.pack?r.pack.id:''}});
+  const b=$('#fShareLink');SHARING=true;if(b){b.disabled=true;b.textContent='Making link…'}
+  try{const res=await fetch('/api/deal-lists',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({list:{title,foot,preNDA:preNDA(),cards}})});
+    const d=await res.json().catch(()=>({}));if(!res.ok)throw new Error(d.error||'The link could not be made. Please try again.');
+    const link=location.origin+d.url,wa='https://wa.me/?text='+encodeURIComponent(`${title}\n${link}`);
+    const n=$('#nFind');n.classList.remove('ferr');n.classList.add('share-note');
+    n.innerHTML=`<div><b>Your deals are ready to share.</b> Anyone with this link can see ${rows.length} deal${rows.length===1?'':'s'}${preNDA()?' (pre-NDA: no listing links or street names)':''}.</div>
+      <input class="inp" id="shareUrl" readonly value="${esc(link)}" aria-label="Link to the shared deals">
+      <div class="ln-a"><a class="btn sm primary" href="${esc(wa)}" target="_blank" rel="noopener">Send on WhatsApp</a><button class="btn sm" type="button" id="shareCopy">Copy link</button><a class="btn sm" href="${esc(link)}" target="_blank" rel="noopener">Open page ↗</a><button class="btn sm" type="button" data-ln-close>Dismiss</button></div>`;
+    n.hidden=false;n.scrollIntoView({block:'nearest',behavior:'smooth'});toast('Link ready. Send it on WhatsApp or copy it.')}
+  catch(e){toast(netMsg(e)||e.message)}
+  finally{SHARING=false;if(b){b.disabled=false;b.textContent='Share as link'}}}
+document.addEventListener('click',e=>{if(!e.target.closest('#shareCopy'))return;const i=$('#shareUrl');if(!i)return;
+  const sel=()=>{i.focus();i.select();toast('Link selected. Press Ctrl/Cmd+C to copy.')};
+  try{navigator.clipboard.writeText(i.value).then(()=>toast('Link copied.')).catch(sel)}catch(err){sel()}});
 /* ---------- Analyse & package (Premium and Max): analyse every deal card and publish a shareable pre-NDA pack for each ---------- */
 const PACK_PLANS=['Pro','Max5','Max20'],canPack=()=>!!S.admin||PACK_PLANS.includes(S.plan);
 const FP={busy:false,done:0,total:0,failed:0};
@@ -2710,7 +2732,7 @@ $('#fResults').addEventListener('click',e=>{
   if(e.target.closest('#fViewSheet')){S.find.view='sheet';save();renderFind();$('#fViewSheet').focus();return}
   const ar=e.target.closest('#fPrev,#fNext');if(ar){const c=$('#fCards');if(c){const step=312*Math.max(1,Math.floor(c.clientWidth/312));c.scrollBy({left:(ar.id==='fPrev'?-1:1)*step,behavior:reduced()?'auto':'smooth'})}return}
   if(e.target.closest('#fBuildSel')){buildDeal($$('#fResults [data-sel]').filter(c=>c.checked).map(c=>SRC()[+c.dataset.sel]));return}
-  if(e.target.closest('#fCopy'))copyTsv();if(e.target.closest('#fCopyCards'))copyCards();if(e.target.closest('#fPackAll'))packageAll()});
+  if(e.target.closest('#fCopy'))copyTsv();if(e.target.closest('#fCopyCards'))copyCards();if(e.target.closest('#fShareLink'))shareLink();if(e.target.closest('#fPackAll'))packageAll()});
 $('#fResults').addEventListener('change',e=>{const t=e.target;
   if(t.id==='fSortSel'){const v=t.value;S.find.sort=v?{k:v.split(':')[0],dir:+v.split(':')[1]}:null;save();renderFind();const s=$('#fSortSel');if(s)s.focus();return}
   if(t.id==='fSelAll'){$$('#fResults [data-sel]').forEach(c=>{c.checked=t.checked;const k=+c.dataset.sel;if(t.checked)FS.sel.add(k);else FS.sel.delete(k)});syncSel();return}
