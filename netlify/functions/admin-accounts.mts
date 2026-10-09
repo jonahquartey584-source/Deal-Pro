@@ -1,5 +1,5 @@
 import { getStore } from "@netlify/blobs";
-import { getUser } from "@netlify/identity";
+import { getUser, admin } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
 
 const ADMIN_EMAIL = "jonahquartey584@gmail.com";
@@ -12,11 +12,21 @@ export default async (request: Request, _context: Context) => {
 
   if (request.method === "GET") {
     const { blobs } = await store.list({ prefix: "users/" });
+    // Older accounts have no stored join date: look it up from Identity (best effort) so they show one too.
+    const signedUp = new Map<string, string>();
+    try {
+      for (let page = 1; page <= 10; page++) {
+        const users = await admin.listUsers({ page, perPage: 100 });
+        for (const u of users) if (u.createdAt) signedUp.set(u.id, u.createdAt);
+        if (users.length < 100) break;
+      }
+    } catch (error) { console.warn("Couldn't list Identity users for join dates", error); }
     const accounts = await Promise.all(blobs.filter((b) => b.key.endsWith("/state")).map(async (blob) => {
       const state = await store.get(blob.key, { type: "json" }) as Record<string, unknown> | null;
       const metadata = (await store.getMetadata(blob.key))?.metadata as Record<string, unknown> | undefined;
       return {
         userId: blob.key.split("/")[1], email: metadata?.email || "Email unavailable",
+        joinedAt: metadata?.joinedAt || signedUp.get(blob.key.split("/")[1]) || null,
         plan: state?.plan || "Free", enabled: state?.accountEnabled !== false,
         savedDeals: Array.isArray(state?.saved) ? state.saved.length : 0, updatedAt: metadata?.updatedAt || null,
       };

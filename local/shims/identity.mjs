@@ -5,3 +5,5 @@ export const LOCAL_USER = {
   name: process.env.LOCAL_USER_NAME || "You",
 };
 export const getUser = async () => LOCAL_USER;
+
+export const admin = { listUsers: async () => [{ ...LOCAL_USER, createdAt: new Date().toISOString() }] };

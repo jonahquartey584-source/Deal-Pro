@@ -35,8 +35,11 @@ export default async (request: Request, _context: Context) => {
     let state = await store.get(key, { type: "json" }) as Record<string, unknown> | null;
     if (!state) {
       state = defaultState(isAdmin);
-      await store.setJSON(key, state, { metadata: { userId: user.id, email: user.email ?? "", updatedAt: new Date().toISOString() } });
+      await store.setJSON(key, state, { metadata: { userId: user.id, email: user.email ?? "", joinedAt: user.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() } });
     }
+    // Accounts created before the join date was kept get it now, from their Identity sign-up date.
+    const meta = (await store.getMetadata(key))?.metadata as Record<string, unknown> | undefined;
+    if (meta && !meta.joinedAt && user.createdAt) await store.setJSON(key, state, { metadata: { ...meta, joinedAt: user.createdAt } }).catch(() => {});
     if (state.accountEnabled === false && !isAdmin) return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
     if (isAdmin) { state.admin = true; state.plan = "Max20"; state.accountEnabled = true; }
     return json({ user: { id: user.id, email: user.email, name: user.name }, state });
@@ -63,8 +66,10 @@ export default async (request: Request, _context: Context) => {
       nextState.unlocked = Array.isArray(stored.unlocked) ? stored.unlocked : [];
       if (stored.stripe) nextState.stripe = stored.stripe; else delete nextState.stripe;
     }
+    // Keep the date they joined: stored when the account was first saved, else the sign-up date from Identity.
+    const oldMeta = (await store.getMetadata(key))?.metadata as Record<string, unknown> | undefined;
     await store.setJSON(key, nextState, {
-      metadata: { userId: user.id, email: user.email ?? "", updatedAt: new Date().toISOString() },
+      metadata: { ...(oldMeta || {}), userId: user.id, email: user.email ?? "", joinedAt: oldMeta?.joinedAt || user.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() },
     });
     return json({ saved: true });
   }
