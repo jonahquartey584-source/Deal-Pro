@@ -476,6 +476,51 @@ fieldset.fg{border:0;margin:0;padding:0;min-width:0}
 .inp-sm{height:28px;font-size:12.5px;width:auto}
 .car-arrow{width:28px;padding:0}
 @media (max-width:899px){.car-arrow{display:none}}
+/* Photos + map: the listings' own photos in a grid beside a map with a price pin for each one */
+.pmap{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,42%);gap:16px;align-items:start}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;padding-bottom:16px;min-width:0}
+.pcard{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;min-width:0;transition:border-color .15s,transform .15s var(--ease)}
+.pcard:hover,.pcard.hl{border-color:var(--accent)}.pcard.hl{transform:translateY(-2px)}
+.pcard.flash{animation:pcFlash 1.2s var(--ease)}@keyframes pcFlash{0%,40%{box-shadow:0 0 0 3px var(--ring)}100%{box-shadow:none}}
+.pc-photo{position:relative;aspect-ratio:4/3;background:var(--surface-2);overflow:hidden}
+.pc-photo img{display:block;width:100%;height:100%;object-fit:cover}
+.pc-none{position:absolute;inset:0;display:grid;place-content:center;justify-items:center;gap:6px;color:var(--muted);font-size:12px;text-align:center;padding:10px}.pc-none svg{width:34px;height:34px;opacity:.6}
+.pc-tags{position:absolute;top:8px;left:8px;display:flex;gap:5px;flex-wrap:wrap;max-width:calc(100% - 60px)}
+.pc-chip{font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;background:rgba(11,11,12,.82);color:#fff;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.pc-score{position:absolute;top:8px;right:8px;font:600 12px var(--mono);padding:3px 7px;border-radius:5px;color:#fff;background:#3F444D}.pc-score.hi{background:#16794A}.pc-score.mid{background:#8A5A00}
+.pc-cnt{position:absolute;bottom:8px;right:8px;font:500 11px var(--mono);color:#fff;background:rgba(0,0,0,.62);padding:1px 6px;border-radius:4px}
+.pc-arr{position:absolute;top:50%;transform:translateY(-50%);width:28px;height:28px;border-radius:50%;border:0;background:rgba(255,255,255,.88);color:#111;display:grid;place-items:center;cursor:pointer;opacity:0;transition:opacity .15s}
+.pc-arr svg{width:14px;height:14px}.pc-arr.l{left:8px}.pc-arr.r{right:8px}
+.pcard:hover .pc-arr,.pc-arr:focus-visible{opacity:1}@media (hover:none){.pc-arr{opacity:.85}}
+.pc-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:3px;flex:1}
+.pc-price{font:600 16px var(--mono);color:var(--accent)}.pc-price small{font:500 12px var(--sans);color:var(--ink-2)}
+.pc-body h3{margin:0;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pc-meta{margin:0;font-size:12.5px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pc-key{margin:0;font-size:12.5px;color:var(--ink-2)}.pc-key b{font-family:var(--mono);color:var(--good)}.pc-key b.neg{color:var(--warn)}
+.pc-foot{margin:2px 0 0;font-size:11.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center}
+.pc-act{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:8px}
+.pm-side{position:sticky;top:12px;isolation:isolate;height:calc(100vh - 24px);min-height:420px;max-height:900px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#101114}
+.pm-map{position:absolute;inset:0;background:#101114}
+.pm-note{position:absolute;left:10px;bottom:24px;z-index:500;background:rgba(19,19,21,.92);border:1px solid var(--line-2);border-radius:7px;padding:5px 9px;font-size:12px;color:var(--ink-2);pointer-events:none;max-width:calc(100% - 20px)}
+.pm-note i{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--brand);margin:0 4px 0 0;vertical-align:0}.pm-note i.ap{background:transparent;border:1px dashed var(--ink-2)}
+.pm-msg{position:absolute;inset:0;display:grid;place-content:center;color:var(--ink-2);font-size:13px;padding:20px;text-align:center}
+.pm-pin{background:none;border:0}
+.pm-pin span{position:absolute;left:0;top:0;transform:translate(-50%,calc(-100% - 7px));display:block;white-space:nowrap;font:600 12px var(--mono);color:#fff;background:var(--brand);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:3px 7px;box-shadow:0 2px 8px rgba(0,0,0,.5);cursor:pointer;transition:background .12s,transform .12s}
+.pm-pin span::after{content:"";position:absolute;left:50%;bottom:-6px;margin-left:-5px;border:5px solid transparent;border-top-color:var(--brand);border-bottom:0}
+.pm-pin.approx span{background:#3A3A40;border-style:dashed}.pm-pin.approx span::after{border-top-color:#3A3A40}
+.pm-pin.hl span,.pm-pin:hover span{background:var(--accent);transform:translate(-50%,calc(-100% - 9px)) scale(1.08)}.pm-pin.hl span::after,.pm-pin:hover span::after{border-top-color:var(--accent)}
+.pm-pin.hl{z-index:1000!important}
+.pm-pop .leaflet-popup-content-wrapper{background:var(--surface);color:var(--ink);border:1px solid var(--line-2);border-radius:9px;padding:0;overflow:hidden;box-shadow:var(--shadow-pop)}
+.pm-pop .leaflet-popup-content{margin:0;width:230px!important;font:13px/1.45 var(--sans)}.pm-pop .leaflet-popup-tip{background:var(--surface)}
+.pm-pop img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:var(--surface-2)}
+.pm-pop .pp{padding:8px 10px 10px;display:grid;gap:2px}.pm-pop .pp b{font:600 15px var(--mono);color:var(--accent)}.pm-pop .pp span{color:var(--ink-2);font-size:12px}
+.pm-pop .pp a{color:var(--ink);font-weight:600;font-size:12.5px;margin-top:4px}
+.pm-pop a.leaflet-popup-close-button{color:#fff;text-shadow:0 1px 3px #000}
+.leaflet-container{font:12px var(--sans)}.leaflet-bar a{background:var(--surface-2);color:var(--ink);border-bottom-color:var(--line-2)}.leaflet-bar a:hover{background:var(--hover);color:var(--ink)}
+.leaflet-control-attribution{background:rgba(11,11,12,.75)!important;color:var(--muted)}.leaflet-control-attribution a{color:var(--ink-2)}
+@media (max-width:900px){.pmap{grid-template-columns:minmax(0,1fr)}.pm-side{position:relative;top:0;height:320px;min-height:0;order:-1}}
+@media (max-width:520px){.pgrid{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){.pcard,.pc-arr,.pm-pin span{transition:none}.pcard.flash{animation:none}}
 .cards{display:grid;grid-auto-flow:column;grid-auto-columns:300px;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:4px 2px 16px;overscroll-behavior-x:contain;scrollbar-width:thin;border-radius:6px}
 .dcard{scroll-snap-align:start;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0;transition:transform .28s var(--ease),box-shadow .28s var(--ease),border-color .28s var(--ease)}
 .dcard:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.5);border-color:var(--line-2)}
@@ -2422,7 +2467,8 @@ function dealCard(r,i,o={}){const SF=o.preview?null:stratFigures(r),open=!o.prev
   </article>`}
 function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fResults');
   if(!LIVE){box.innerHTML=`<div class="fempty"><h2>Search live property listings</h2><p>Set your filters, tick the sites and choose a power level, then run Search. Deal Pro searches every ticked site for current listings, shows them in a sheet with a link to each one, and picks out the best deals. Copy them into Google Sheets or analyse any of them in the Deal Analyser.</p></div>`;return}
-  const view=S.find.view==='cards'?'cards':'sheet',prevScroll=($('#fCards')||{}).scrollLeft||0;
+  if(S.find.viewV!==2){S.find.view='map';S.find.viewV=2}
+  const view=['cards','sheet','map'].includes(S.find.view)?S.find.view:'map',prevScroll=($('#fCards')||{}).scrollLeft||0;
   // If none of the listings could be confirmed (the sites blocked the check), show them anyway with a warning.
   {const all=findRows(true);FS.autoUnc=!FS.showUnconfirmed&&all.length>0&&!all.some(confirmedLive)}
   const SC=aiScores(),base=findRows();base.forEach(r=>{const x=SC.get(r.k);r.ai=x?x.score:-1;r.aiv=x?x.verdict:''});
@@ -2435,14 +2481,20 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   const sum=`<b class="mono">${m}</b> ${FS.showUnconfirmed?'':'live '}listing${m===1?'':'s'} from <b class="mono">${ll}</b> site${ll===1?'':'s'}${m?` · median <b class="mono">${gbp(med)}</b>${buy?'':' pcm'}`:''}${S.find.liveAt?` · searched ${fmtDate(S.find.liveAt)}`:''}`;
   const unc=FS.autoUnc?`<div class="fsub warn-note">These sites wouldn't let Deal Pro confirm the listings automatically, so they're shown unconfirmed. Open each link to check it's still available, or run Analyst or Expert, which confirm more.</div>`:nUnc?`<div class="fsub">${FS.showUnconfirmed?`Showing ${nUnc} listing${nUnc===1?'':'s'} that couldn't be confirmed live. Their links may not work.`:`${hidden} more couldn't be confirmed live, so they're hidden.`} <button class="linkbtn" type="button" id="fShowUnc">${FS.showUnconfirmed?'Hide them':'Show them anyway'}</button></div>`:'';
   const th=(k,lab,cls='')=>{const on=so&&so.k===k;return `<th class="${cls}" aria-sort="${on?(so.dir>0?'ascending':'descending'):'none'}"><button class="sort" data-sort="${k}">${lab}<span class="sa" aria-hidden="true">${on?(so.dir>0?'↑':'↓'):''}</span></button></th>`};
-  const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
-  const acts=view==='cards'
+  const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewMap" aria-pressed="${view==='map'}">Photos + map</button><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
+  const acts=view==='map'
+    ?(m?`<button class="btn sm primary" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><button class="btn sm" id="fShareLink"${nOpen?'':' disabled'} title="Make a web page of these deal cards and get a link to send on WhatsApp">Share as link</button>${packBtn(nOpen)}<label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${CARD_SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${CARD_SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>`:'')
+    :view==='cards'
     ?(m?`<button class="btn sm primary" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><button class="btn sm" id="fShareLink"${nOpen?'':' disabled'} title="Make a web page of these deal cards and get a link to send on WhatsApp">Share as link</button>${packBtn(nOpen)}<label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${CARD_SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${CARD_SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
       <button class="btn sm car-arrow" id="fPrev" aria-label="Previous deals">${CHEV(-1)}</button><button class="btn sm car-arrow" id="fNext" aria-label="Next deals">${CHEV(1)}</button>`:'')
     :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><button class="btn sm" id="fShareLink"${nOpen?'':' disabled'} title="Make a web page of these deal cards and get a link to send on WhatsApp">Share as link</button>${packBtn(nOpen)}<label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
   const L=`<span class="lockc">${LOCK}Locked</span>`;
   let body;
   if(!m)body=`<div class="fempty"><h2>${hidden?'No listings confirmed live':'No listings match these filters'}</h2><p>${hidden?'Every listing found either had a dead link or its site blocked the check. Try Analyst or Expert, which open more listings to confirm them, or show the unconfirmed ones.':'Try a wider price range, a different location or more sites.'}</p></div>`;
+  else if(view==='map'){const nPin=rows.filter(r=>Number.isFinite(r.lat)&&Number.isFinite(r.lng)).length,nAp=rows.filter(r=>Number.isFinite(r.lat)&&r.geo!=='exact').length;
+    body=`<div class="pmap"><div class="pgrid" id="fPhotos" role="list" aria-label="Listings with photos">${rows.map((r,i)=>photoCard(r,i)).join('')}</div>
+      <div class="pm-side"><div class="pm-map" id="fMap" role="region" aria-label="Map of the listings">${nPin?'':`<div class="pm-msg">${S.find.liveAt&&!rows.some(r=>'lat' in r)?'Run Refresh &amp; find new to put these listings on the map.':'These listings have no location to show on the map.'}</div>`}</div>
+      ${nPin?`<div class="pm-note">${nPin} of ${m} on the map${nAp?` · <i class="ap" aria-hidden="true"></i>${nAp} placed by postcode area`:''}</div>`:''}</div></div>`}
   else if(view==='cards')body=`<div class="cards" id="fCards" tabindex="0" role="region" aria-label="Deal cards, scroll sideways">${rows.map((r,i)=>dealCard(r,i)).join('')}</div>`;
   else body=`<div id="fTsvWrap" hidden><label class="f"><span>Deals as tab-separated rows. Copy them, then paste into cell A1 of a Google Sheet.</span><textarea class="inp mono" id="fTsv" readonly></textarea></label></div>
     <div class="sheet" tabindex="0" role="region" aria-label="Search results"><table><thead><tr><th class="rn"><span class="sr">Row</span></th><th class="ck"><input type="checkbox" id="fSelAll" aria-label="Select all rows"${nOpen?'':' disabled'}></th>
@@ -2456,6 +2508,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
     <div class="ph-actions">${acts}${toggle}</div></div>${body}`;
   const c=$('#fCards');if(c){c.style.scrollBehavior='auto';c.scrollLeft=prevScroll;c.style.scrollBehavior='';
     const upd=()=>{const p=$('#fPrev'),n=$('#fNext');if(p)p.disabled=c.scrollLeft<=2;if(n)n.disabled=c.scrollLeft+c.clientWidth>=c.scrollWidth-2};c.addEventListener('scroll',upd,{passive:true});upd()}
+  if(view==='map'&&m)drawMap(rows);else if(LMAP){LMAP.remove();LMAP=null}
   FS.justOpened=null;syncSel()}
 function syncSel(){const n=FS.sel.size,b=$('#fBuildSel');if(b){b.disabled=!n;b.textContent=n?`Analyse selected (${n})`:'Analyse selected'}
   const cc=$('#fCopyCards');if(cc)cc.textContent=cardsLabel((FS.lastRows||[]).filter(isOpen).length);syncPackBtn();
@@ -2644,12 +2697,75 @@ function copyCards(){const rows=cardRows();if(!rows.length){toast('No deals to c
   const done=()=>toast(`Copied ${lab}${preNDA()?' (pre-NDA, no links)':''}. Paste into WhatsApp, an email or a message.`);
   try{if(window.ClipboardItem&&navigator.clipboard.write){navigator.clipboard.write([new ClipboardItem({'text/plain':new Blob([text],{type:'text/plain'}),'text/html':new Blob([html],{type:'text/html'})})]).then(done).catch(()=>navigator.clipboard.writeText(text).then(done).catch(fb))}
     else navigator.clipboard.writeText(text).then(done).catch(fb)}catch(e){fb()}}
+/* ---------- Photos + map view: listing photos (copied onto Deal Pro by /listing-photo) and a pin per listing ---------- */
+const PHOTO=u=>'/listing-photo?u='+encodeURIComponent(u);
+const rowPhotos=r=>(Array.isArray(r.photos)?r.photos:[]).filter(u=>/^https:\/\//.test(u));
+// Short pin labels, never rounded up (£99,950 shows as £99.9k, not £100k).
+const kPrice=r=>{const p=r.price;if(r.mode!=='buy')return gbp(p);const t=(v,d)=>String(Math.floor(v*10**d)/10**d);return p>=1e6?'£'+t(p/1e6,2)+'m':'£'+t(p/1e3,p<1e5?1:0)+'k'};
+const NO_PHOTO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>';
+function photoCard(r,i){const ph=rowPhotos(r),SF=stratFigures(r),k=SF.key,buy=r.mode==='buy';
+  const place=[r.area,r.postcode].filter(Boolean).join(' · ');
+  return `<article class="pcard" data-k="${r.k}" id="pc${r.k}" role="listitem" aria-label="Deal ${i+1}: ${esc(r.type)}, ${esc(gbp(r.price))}">
+    <div class="pc-photo">${ph.length?`<img src="${esc(PHOTO(ph[0]))}" alt="${esc(r.type)} in ${esc(r.area||r.postcode)}, photo 1 of ${ph.length}" loading="${i<6?'eager':'lazy'}" decoding="async" referrerpolicy="no-referrer" data-i="0">`:''}
+      <div class="pc-none"${ph.length?' hidden':''}>${NO_PHOTO}<span>Photos on the listing</span></div>
+      <div class="pc-tags"><span class="pc-chip">${esc(SITE_LABEL(r.site))}</span>${SF.st&&SF.st!=='none'?`<span class="pc-chip">${esc(STRAT_NAME[SF.st]||SF.st)}</span>`:''}</div>
+      ${r.ai>=0?`<span class="pc-score ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="Deal score${r.aiv?' · '+esc(r.aiv):''}">${r.ai}</span>`:''}
+      ${ph.length>1?`<button class="pc-arr l" type="button" data-ph-step="-1" aria-label="Previous photo">${CHEV(-1)}</button><button class="pc-arr r" type="button" data-ph-step="1" aria-label="Next photo">${CHEV(1)}</button><span class="pc-cnt" aria-hidden="true">1/${ph.length}</span>`:''}</div>
+    <div class="pc-body"><div class="pc-price">${gbp(r.price)}${buy?'':' <small>pcm</small>'}</div>
+      <h3 title="${esc(r.title||r.type)}">${esc(r.type)}${r.beds!=null&&!/\d\s*bed|studio/i.test(r.type||'')?` · ${bedWord(r.beds)}`:''}</h3>
+      <p class="pc-meta" title="${esc(place)}">${esc(place)}</p>
+      <p class="pc-key">${esc(k[0])} (est.) <b class="${k[2]?'neg':''}">${esc(k[1])}</b></p>
+      <p class="pc-foot">${liveTag(r)}${ageDays(r)!=null?`<span>· listed ${ageTxt(ageDays(r)).toLowerCase()}</span>`:''}${freshTags(r)}</p>
+      <div class="pc-act"><button class="btn sm primary" data-build="${r.k}">Analyse deal</button><a class="btn sm" href="${esc(r.url)}" target="_blank" rel="noopener">Listing ↗</a>${Number.isFinite(r.lat)?`<button class="btn sm ghost" type="button" data-pin="${r.k}" aria-label="Show deal ${i+1} on the map">Map</button>`:''}${r.pack?`<a class="btn sm" href="/pack/${esc(r.pack.id)}" target="_blank" rel="noopener">Pack ↗</a>`:''}</div></div>
+  </article>`}
+const rowByK=k=>(FS.lastRows||[]).find(r=>r.k===k);
+function photoStep(k,d){const r=rowByK(k),ph=r?rowPhotos(r):[],c=$('#pc'+k),img=c&&c.querySelector('.pc-photo img');if(!img||ph.length<2)return;
+  const i=((+img.dataset.i||0)+d+ph.length)%ph.length;img.dataset.i=i;img.hidden=false;c.querySelector('.pc-none').hidden=true;img.src=PHOTO(ph[i]);img.alt=img.alt.replace(/photo \d+ of/,`photo ${i+1} of`);
+  const n=c.querySelector('.pc-cnt');if(n)n.textContent=`${i+1}/${ph.length}`}
+// A photo the site no longer serves: try the next one, then show the placeholder.
+document.addEventListener('error',e=>{const img=e.target;if(!(img instanceof HTMLImageElement))return;
+  if(img.closest('.pm-pop')){img.remove();return}
+  const c=img.closest('.pcard');if(!c||!img.closest('.pc-photo'))return;const r=rowByK(+c.dataset.k),ph=r?rowPhotos(r):[];
+  const tried=new Set((img.dataset.bad||'').split(',').filter(Boolean));tried.add(img.dataset.i);img.dataset.bad=[...tried].join(',');
+  const next=ph.findIndex((u,j)=>!tried.has(String(j)));
+  if(next>=0){img.dataset.i=next;img.src=PHOTO(ph[next]);const n=c.querySelector('.pc-cnt');if(n)n.textContent=`${next+1}/${ph.length}`}
+  else{img.hidden=true;c.querySelector('.pc-none').hidden=false;c.querySelectorAll('.pc-arr,.pc-cnt').forEach(x=>x.hidden=true)}},true);
+let LMAP=null;const LMK=new Map();
+function loadLeaflet(){if(window.L&&window.L.map)return Promise.resolve();if(loadLeaflet.p)return loadLeaflet.p;
+  return loadLeaflet.p=new Promise((ok,no)=>{const c=document.createElement('link');c.rel='stylesheet';c.href='/assets/vendor/leaflet/leaflet.css';document.head.appendChild(c);
+    const s=document.createElement('script');s.src='/assets/vendor/leaflet/leaflet.js';s.onload=()=>ok();s.onerror=()=>{loadLeaflet.p=null;no(new Error('map'))};document.head.appendChild(s)})}
+function pinPop(r){const ph=rowPhotos(r),d=document.createElement('div');
+  d.innerHTML=`${ph.length?`<img src="${esc(PHOTO(ph[0]))}" alt="" referrerpolicy="no-referrer">`:''}<div class="pp"><b>${gbp(r.price)}${r.mode==='buy'?'':' pcm'}</b><span>${esc(r.type)} · ${esc([r.area,r.postcode].filter(Boolean).join(', '))}</span>${r.geo==='exact'?'':'<span>Position: centre of the postcode area</span>'}<a href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a></div>`;return d}
+function hlPin(k,on){const m=LMK.get(k),el=m&&m.getElement();if(el)el.classList.toggle('hl',on);if(m)m.setZIndexOffset(on?1000:0)}
+function showPin(k){const m=LMK.get(k);if(!m||!LMAP)return;const side=$('.pm-side');if(side&&(side.getBoundingClientRect().bottom<0||matchMedia('(max-width:900px)').matches))side.scrollIntoView({block:'nearest',behavior:reduced()?'auto':'smooth'});
+  LMAP.setView(m.getLatLng(),Math.max(LMAP.getZoom(),14),{animate:!reduced()});m.openPopup()}
+function focusCard(k){const c=$('#pc'+k);if(!c)return;c.scrollIntoView({block:'nearest',behavior:reduced()?'auto':'smooth'});c.classList.remove('flash');void c.offsetWidth;c.classList.add('flash')}
+async function drawMap(rows){const el=$('#fMap');if(!el)return;const sig=(S.find.liveAt||'')+'|'+rows.map(r=>r.k).join(',');
+  const keep=LMAP&&FS.mapSig===sig?{c:LMAP.getCenter(),z:LMAP.getZoom()}:null;if(LMAP){LMAP.remove();LMAP=null}LMK.clear();
+  const pts=rows.filter(r=>Number.isFinite(r.lat)&&Number.isFinite(r.lng));if(!pts.length)return;
+  try{await loadLeaflet()}catch(e){el.innerHTML='<div class="pm-msg">The map couldn\'t load. Check your connection and try again.</div>';return}
+  if(!el.isConnected||$('#fMap')!==el)return;const Lf=window.L;
+  LMAP=Lf.map(el,{scrollWheelZoom:false,zoomSnap:.5});FS.mapSig=sig;LMAP.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
+  Lf.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'}).addTo(LMAP);
+  el.addEventListener('click',()=>LMAP&&LMAP.scrollWheelZoom.enable(),{once:true});
+  const seen=new Map(),ll=[];
+  pts.forEach(r=>{let lat=r.lat,lng=r.lng;const key=lat.toFixed(4)+','+lng.toFixed(4),n=seen.get(key)||0;seen.set(key,n+1);
+    // Listings placed at the same point (one postcode area) are fanned out so each pin can be clicked.
+    if(n){const a=n*2.4,d=.0022*Math.sqrt(n);lat+=d*Math.cos(a);lng+=d*Math.sin(a)*1.6}
+    const m=Lf.marker([lat,lng],{icon:Lf.divIcon({className:'pm-pin'+(r.geo==='exact'?'':' approx'),html:`<span>${esc(kPrice(r))}</span>`,iconSize:null}),title:`${r.type}, ${gbp(r.price)}${r.geo==='exact'?'':' (approximate position)'}`,riseOnHover:true,keyboard:true}).addTo(LMAP);
+    m.bindPopup(()=>pinPop(r),{className:'pm-pop',maxWidth:232,minWidth:232,autoPanPadding:[20,20]});
+    m.on('click',()=>focusCard(r.k));m.on('mouseover',()=>{const c=$('#pc'+r.k);if(c)c.classList.add('hl')});m.on('mouseout',()=>{const c=$('#pc'+r.k);if(c)c.classList.remove('hl')});
+    LMK.set(r.k,m);ll.push([lat,lng])});
+  if(keep)LMAP.setView(keep.c,keep.z,{animate:false});else LMAP.fitBounds(ll,{padding:[40,40],maxZoom:14});
+  setTimeout(()=>{if(LMAP)LMAP.invalidateSize()},80)}
+$('#fResults').addEventListener('mouseover',e=>{const c=e.target.closest('.pcard');if(c&&!c.contains(e.relatedTarget))hlPin(+c.dataset.k,true)});
+$('#fResults').addEventListener('mouseout',e=>{const c=e.target.closest('.pcard');if(c&&!c.contains(e.relatedTarget))hlPin(+c.dataset.k,false)});
 /* Share as link: publish the deal cards as one web page at /deals/<id>, to send on WhatsApp, email or text */
 let SHARING=false;
 async function shareLink(){if(SHARING)return;const rows=cardRows();if(!rows.length){toast('No deals to share.');return}
   if(!document.body.dataset.userId){toast('Sign in to share deals as a link.');return}
   const {title,foot}=cardsTitle(rows.length);
-  const cards=rows.map((r,i)=>{const c=cardFacts(r,i);return {head:c.head,lines:c.lines.filter(l=>l[1]),url:preNDA()?'':r.url,pack:r.pack?r.pack.id:''}});
+  const cards=rows.map((r,i)=>{const c=cardFacts(r,i);return {head:c.head,lines:c.lines.filter(l=>l[1]),url:preNDA()?'':r.url,pack:r.pack?r.pack.id:'',photo:preNDA()?'':rowPhotos(r)[0]||''}});
   const b=$('#fShareLink');SHARING=true;if(b){b.disabled=true;b.textContent='Making link…'}
   try{const res=await fetch('/api/deal-lists',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({list:{title,foot,preNDA:preNDA(),cards}})});
     const d=await res.json().catch(()=>({}));if(!res.ok)throw new Error(d.error||'The link could not be made. Please try again.');
@@ -2728,6 +2844,9 @@ $('#fResults').addEventListener('click',e=>{
   const s=e.target.closest('[data-sort]');if(s){const k=s.dataset.sort,c=S.find.sort;S.find.sort=c&&c.k===k?(c.dir>0?{k,dir:-1}:null):{k,dir:1};save();renderFind();const nb=$(`#fResults [data-sort="${k}"]`);if(nb)nb.focus();return}
   const u=e.target.closest('[data-unlock]');if(u){openUnlock(+u.dataset.unlock,+u.dataset.n||0);return}
   const b=e.target.closest('[data-build]');if(b){buildDeal([SRC()[+b.dataset.build]]);return}
+  if(e.target.closest('#fViewMap')){S.find.view='map';save();renderFind();$('#fViewMap').focus();return}
+  const st=e.target.closest('[data-ph-step]');if(st){photoStep(+st.closest('.pcard').dataset.k,+st.dataset.phStep);return}
+  const pin=e.target.closest('[data-pin]');if(pin){showPin(+pin.dataset.pin);return}
   if(e.target.closest('#fViewCards')){S.find.view='cards';save();renderFind();$('#fViewCards').focus();return}
   if(e.target.closest('#fViewSheet')){S.find.view='sheet';save();renderFind();$('#fViewSheet').focus();return}
   const ar=e.target.closest('#fPrev,#fNext');if(ar){const c=$('#fCards');if(c){const step=312*Math.max(1,Math.floor(c.clientWidth/312));c.scrollBy({left:(ar.id==='fPrev'?-1:1)*step,behavior:reduced()?'auto':'smooth'})}return}

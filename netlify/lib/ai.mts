@@ -1,3 +1,4 @@
+import { PHOTO_HOSTS } from "./photos.mts";
 import OpenAI from "openai";
 import { getStore } from "@netlify/blobs";
 
@@ -260,6 +261,75 @@ function listingPhotos(html: string, pageUrl: string) {
   return [...best.values()].slice(0, 16);
 }
 
+// Where the advert is: the coordinates in the page data (Rightmove, Zoopla, OnTheMarket and others put
+// the map pin there) or its structured data. Only points inside the UK are kept.
+const inUK = (lat: number, lng: number) => lat > 49.8 && lat < 60.95 && lng > -8.7 && lng < 1.9;
+export function listingCoords(html: string): { lat: number; lng: number } | null {
+  const pats = [
+    /"latitude"\s*:\s*"?(-?\d{1,2}\.\d{3,})"?\s*,\s*"longitude"\s*:\s*"?(-?\d{1,3}\.\d{3,})/i,
+    /"lat"\s*:\s*"?(-?\d{1,2}\.\d{3,})"?\s*,\s*"(?:lng|lon|long)"\s*:\s*"?(-?\d{1,3}\.\d{3,})/i,
+    /<meta[^>]+(?:property|name)=["'](?:place:location:latitude|og:latitude|geo\.position)["'][^>]*content=["'](-?\d{1,2}\.\d{3,})[;,\s"']/i,
+  ];
+  for (const re of pats) {
+    const m = html.match(re);
+    if (!m) continue;
+    let lat = Number(m[1]), lng = Number(m[2]);
+    if (!m[2]) {
+      const lo = html.match(/<meta[^>]+(?:property|name)=["'](?:place:location:longitude|og:longitude)["'][^>]*content=["'](-?\d{1,3}\.\d{3,})/i) || html.match(/geo\.position["'][^>]*content=["']-?\d{1,2}\.\d+[;,]\s*(-?\d{1,3}\.\d+)/i);
+      if (!lo) continue;
+      lng = Number(lo[1]);
+    }
+    if (inUK(lat, lng)) return { lat: Math.round(lat * 1e5) / 1e5, lng: Math.round(lng * 1e5) / 1e5 };
+  }
+  return null;
+}
+
+// Listings the page didn't place get the centre of their postcode district (or town) from postcodes.io,
+// marked as approximate. A page's own point that is far from its postcode district is treated as wrong.
+const OUTCODE = /^([A-Z]{1,2}\d[A-Z\d]?)(?:\s*\d[A-Z]{2})?$/;
+async function getJson(url: string, ms = 6000) {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), ms);
+  try { const r = await fetch(url, { signal: ctl.signal }); return r.ok ? await r.json() as Record<string, any> : null; }
+  catch { return null; } finally { clearTimeout(timer); }
+}
+const km = (a: { lat: number; lng: number }, b: { lat: number; lng: number }) => {
+  const r = Math.PI / 180, x = (b.lng - a.lng) * r * Math.cos(((a.lat + b.lat) / 2) * r), y = (b.lat - a.lat) * r;
+  return Math.sqrt(x * x + y * y) * 6371;
+};
+export async function placeListings(listings: Listing[]) {
+  const outcodes = new Map<string, { lat: number; lng: number } | null>(), towns = new Map<string, { lat: number; lng: number } | null>();
+  const town = (l: Listing) => (l.area || "").split(",").map((t) => t.trim()).filter((t) => t && !/\d/.test(t)).pop() || "";
+  for (const l of listings) {
+    const oc = (l.postcode || "").toUpperCase().trim().match(OUTCODE)?.[1];
+    if (oc) outcodes.set(oc, null); else if (!l.lat && town(l)) towns.set(town(l).toLowerCase(), null);
+  }
+  const keys = [...outcodes.keys()].slice(0, 60), tkeys = [...towns.keys()].slice(0, 40);
+  for (let i = 0; i < keys.length; i += 10) await Promise.all(keys.slice(i, i + 10).map(async (oc) => {
+    const j = await getJson(`https://api.postcodes.io/outcodes/${encodeURIComponent(oc)}`);
+    const r = j?.result;
+    if (r && Number.isFinite(r.latitude) && inUK(r.latitude, r.longitude)) outcodes.set(oc, { lat: r.latitude, lng: r.longitude });
+  }));
+  for (let i = 0; i < tkeys.length; i += 10) await Promise.all(tkeys.slice(i, i + 10).map(async (t) => {
+    const j = await getJson(`https://api.postcodes.io/places?q=${encodeURIComponent(t)}&limit=1`);
+    const r = j?.result?.[0];
+    if (r && Number.isFinite(r.latitude) && inUK(r.latitude, r.longitude)) towns.set(t, { lat: r.latitude, lng: r.longitude });
+  }));
+  for (const l of listings) {
+    const oc = (l.postcode || "").toUpperCase().trim().match(OUTCODE)?.[1];
+    const centre = (oc && outcodes.get(oc)) || (!oc && towns.get(town(l).toLowerCase())) || null;
+    if (l.lat != null && l.lng != null && l.geo === "exact") {
+      if (centre && km(centre, { lat: l.lat, lng: l.lng }) > 20) { l.lat = centre.lat; l.lng = centre.lng; l.geo = "area"; }
+      continue;
+    }
+    if (centre) { l.lat = centre.lat; l.lng = centre.lng; l.geo = "area"; }
+  }
+}
+
+const photoList = (list: unknown) => (Array.isArray(list) ? list : [])
+  .map((u) => String(u || "").trim()).filter((u) => { try { const x = new URL(u); return x.protocol === "https:" && PHOTO_HOSTS.test(x.hostname) && !NOT_PHOTO.test(x.pathname); } catch { return false; } })
+  .filter((u, i, a) => a.indexOf(u) === i).slice(0, 5);
+
 const decode = (t: string) => t.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&pound;/g, "£").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
 function pageText(html: string) {
   const meta = [...html.matchAll(/<meta[^>]+(?:property|name)=["'](?:og:title|og:description|description|twitter:description)["'][^>]*content=["']([^"']+)["']/gi)].map((m) => decode(m[1]));
@@ -497,6 +567,10 @@ export type Listing = {
   link?: "live" | "gone" | "unknown";
   confirmed?: boolean;
   details?: { deposit: string; availableFrom: string; listed?: string; highlights: string[] };
+  // The advert's own photos (shown through /listing-photo, which keeps a copy) and where it is on the map:
+  // "exact" from the advert page, "area" from its postcode district or town.
+  photos?: string[];
+  lat?: number; lng?: number; geo?: "exact" | "area";
 };
 
 // Bedrooms can be one size or several (for example studio to 2 beds); "4" means 4 or more.
@@ -669,7 +743,7 @@ async function verifyBatch(batch: Listing[], level: LevelId) {
   const prompt = `Open each of these property listing pages and check them:
 ${batch.map((l, i) => `${i + 1}. ${l.url}`).join("\n")}
 For each, confirm the page opens (not a 404 or "page not found"), is a single property advert (not a search-results or area page), and whether it is still available (not let agreed, under offer, sold STC, expired or removed), and read the details from the page itself.
-Return JSON: {"checks": [{"url": string (exactly as given), "opened": true | false (false if you could not open this exact page), "is_listing": true | false, "available": true | false | null, "title": string (the advert's own title), "type": string (e.g. "2 bed flat"), "area": string (street/area and town as the advert shows), "listed": string (the date it was added or last updated, if shown), "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not]}]}.
+Return JSON: {"checks": [{"url": string (exactly as given), "opened": true | false (false if you could not open this exact page), "is_listing": true | false, "available": true | false | null, "title": string (the advert's own title), "type": string (e.g. "2 bed flat"), "area": string (street/area and town as the advert shows), "listed": string (the date it was added or last updated, if shown), "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "postcode": string (the full postcode or postcode district shown, "" if none), "photos": [up to 5 strings: the full https URLs of the advert's own property photos exactly as the page uses them, [] if you can't see them], "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not]}]}.
 Only report what the pages actually say. Use null or "" when a detail isn't shown.`;
   const { parsed } = await webJson(prompt, domains, level, level === "quick" ? "medium" : "high", level === "quick" ? "low" : "medium");
   const byUrl = new Map(batch.map((l) => [normalise(l.url), l]));
@@ -693,6 +767,8 @@ Only report what the pages actually say. Use null or "" when a detail isn't show
     if (Number.isFinite(Number(c.beds)) && c.beds !== null) l.beds = Math.round(Number(c.beds));
     if (typeof c.private_landlord === "boolean") l.private = c.private_landlord;
     if (c.furnished) l.furnished = String(c.furnished).slice(0, 30);
+    if (!l.photos?.length) { const ph = photoList(c.photos); if (ph.length) l.photos = ph; }
+    if (!l.postcode && OUTCODE.test(String(c.postcode || "").toUpperCase().trim())) l.postcode = String(c.postcode).toUpperCase().trim().slice(0, 8);
     l.details = {
       deposit: String(c.deposit || "").slice(0, 60),
       availableFrom: String(c.available_from || "").slice(0, 60),
@@ -736,6 +812,9 @@ export function newSearch(input: string, level: LevelId): SearchState {
       price, mode: x.mode === "buy" ? "buy" : "rent", private: typeof x.private === "boolean" ? x.private : null,
       furnished: String(x.furnished || "Not stated").slice(0, 30), found: String(x.found || "").slice(0, 20),
       ...(typeof x.listedAt === "string" && !Number.isNaN(Date.parse(x.listedAt)) ? { listedAt: x.listedAt } : {}),
+      ...(photoList(x.photos).length ? { photos: photoList(x.photos) } : {}),
+      ...(Number.isFinite(Number(x.lat)) && Number.isFinite(Number(x.lng)) && inUK(Number(x.lat), Number(x.lng)) && x.lat != null && x.lng != null
+        ? { lat: Number(x.lat), lng: Number(x.lng), geo: x.geo === "exact" ? "exact" as const : "area" as const } : {}),
     });
   }
   return {
@@ -763,8 +842,13 @@ export async function checkLink(l: Listing): Promise<"live" | "gone" | "unknown"
     // A removed advert often redirects to a search or home page.
     if (normalise(final) !== normalise(l.url) && !isListingUrl(l.site, final)) return "gone";
     if (!r.ok || !/html/i.test(r.headers.get("content-type") || "")) return "unknown";
-    const text = pageText((await r.text()).slice(0, 1_500_000));
+    const html = (await r.text()).slice(0, 1_500_000), text = pageText(html);
     if (text.length < 300 || BLOCKED.test(text.slice(0, 1500))) return "unknown";
+    // The advert's photos and its pin on the map, read from the same page.
+    const photos = photoList(listingPhotos(html, final));
+    if (photos.length) l.photos = photos;
+    const at = listingCoords(html);
+    if (at) { l.lat = at.lat; l.lng = at.lng; l.geo = "exact"; }
     const head = text.slice(0, 2500);
     if (GONE_TEXT.test(head)) return "gone";
     const title = head.match(/^Title: (.*)$/m)?.[1]?.trim() || "";
@@ -865,6 +949,8 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
     st.removed = (st.removed || 0) + before - st.listings.length;
     for (const l of st.listings) l.confirmed = l.verified === "available";
     st.listings.sort((a, b) => Number(!!b.confirmed) - Number(!!a.confirmed));
+    // Put every listing on the map; a failed lookup only leaves pins off.
+    await placeListings(st.listings).catch((error) => console.error("Placing listings failed", error));
     st.phase = "rank";
     await save(st);
   }

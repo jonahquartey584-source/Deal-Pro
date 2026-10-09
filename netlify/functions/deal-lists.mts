@@ -3,6 +3,7 @@ import { getUser } from "@netlify/identity";
 import type { Config, Context } from "@netlify/functions";
 import { applyPlanExpiry } from "../lib/plan.mts";
 import { accounts, ADMIN_EMAIL } from "../lib/ai.mts";
+import { PHOTO_HOSTS } from "../lib/photos.mts";
 
 // Shareable deal lists. From the Deal Finder, "Share as link" turns the deal cards into one page at
 // /deals/<id> that anyone with the link can open (for WhatsApp, email or a text). The browser builds
@@ -26,6 +27,8 @@ function clean(list: Record<string, unknown>) {
         .filter((l) => l[1]),
       url: httpsUrl(c.url),
       pack: /^[0-9a-f-]{36}$/.test(String(c.pack ?? "")) ? String(c.pack) : "",
+      // The listing's main photo, shown through Deal Pro's copy (/listing-photo).
+      photo: (() => { const u = httpsUrl(c.photo); try { return u && PHOTO_HOSTS.test(new URL(u).hostname) ? u : ""; } catch { return ""; } })(),
     }))
     .filter((c) => c.head);
   return {
