@@ -4,6 +4,8 @@ const ADMIN_EMAIL = "jonahquartey584@gmail.com";
 const box = document.querySelector("#accounts");
 const status = document.querySelector("#status");
 const search = document.querySelector("#search");
+const joinSort = document.querySelector("#joinSort");
+const joinFilter = document.querySelector("#joinFilter");
 let accounts = [];
 
 const esc = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]);
@@ -15,13 +17,21 @@ async function api(options = {}) {
 }
 function render() {
   const query = search.value.trim().toLowerCase();
-  const list = accounts.filter((a) => String(a.email).toLowerCase().includes(query));
+  const days = Number(joinFilter.value) || 0, sort = joinSort.value, joined = (a) => Date.parse(a.joinedAt) || 0;
+  const startOfToday = new Date().setHours(0, 0, 0, 0);
+  const cutoff = days === 1 ? startOfToday : days ? Date.now() - days * 864e5 : 0;
+  const list = accounts
+    .filter((a) => String(a.email).toLowerCase().includes(query) && (!cutoff || joined(a) >= cutoff))
+    .sort((a, b) => sort === "email" ? String(a.email).localeCompare(String(b.email)) : sort === "old" ? (joined(a) || Infinity) - (joined(b) || Infinity) : joined(b) - joined(a));
+  if (accounts.length) status.textContent = list.length === accounts.length ? `${accounts.length} customer account${accounts.length === 1 ? "" : "s"}` : `${list.length} of ${accounts.length} customer accounts`;
   box.innerHTML = list.length ? list.map((a) => `<article class="row" data-user="${esc(a.userId)}"><div><div class="email">${esc(a.email)}</div><div class="sub">${esc(a.userId)} · ${a.savedDeals} saved deal${a.savedDeals === 1 ? "" : "s"} · ${a.joinedAt ? `Joined ${esc(new Date(a.joinedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }))}` : "Join date unknown"}</div></div><select data-plan aria-label="Membership for ${esc(a.email)}">${[["Free","Free"],["Lite","Lite"],["Pro","Premium"],["Max5","Max 5x"],["Max20","Max 20x"]].map(([v,n]) => `<option value="${v}"${a.plan===v?" selected":""}>${n}</option>`).join("")}</select><button class="btn" data-enabled>${a.enabled ? "Suspend" : "Reactivate"}</button><div class="status">${a.enabled ? "Active" : "Suspended"}</div><div class="actions"><button class="btn danger" data-delete>Delete data</button></div></article>`).join("") : `<div class="empty">No matching customer accounts.</div>`;
 }
-async function load() { const data = await api(); accounts = data.accounts.slice().sort((a, b) => (Date.parse(b.joinedAt) || 0) - (Date.parse(a.joinedAt) || 0)); status.textContent = `${accounts.length} customer account${accounts.length === 1 ? "" : "s"}`; render(); }
+async function load() { const data = await api(); accounts = data.accounts; status.textContent = `${accounts.length} customer account${accounts.length === 1 ? "" : "s"}`; render(); }
 box.addEventListener("change", async (event) => { const row=event.target.closest("[data-user]"); if(!row||!event.target.matches("[data-plan]"))return; await api({method:"PATCH",body:JSON.stringify({userId:row.dataset.user,plan:event.target.value})}); status.textContent="Membership updated."; await load(); });
 box.addEventListener("click", async (event) => { const row=event.target.closest("[data-user]"); if(!row)return; const item=accounts.find((a)=>a.userId===row.dataset.user); if(event.target.matches("[data-enabled]")){await api({method:"PATCH",body:JSON.stringify({userId:item.userId,enabled:!item.enabled})});await load();} if(event.target.matches("[data-delete]")&&confirm(`Delete all stored Deal Pro data for ${item.email}? This cannot be undone.`)){await api({method:"DELETE",body:JSON.stringify({userId:item.userId})});await load();} });
 search.addEventListener("input", render);
+joinSort.addEventListener("change", render);
+joinFilter.addEventListener("change", render);
 
 // ---------- refund requests ----------
 const rfBox = document.querySelector("#refundReqs");
