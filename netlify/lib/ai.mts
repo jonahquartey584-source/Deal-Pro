@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import { getStore } from "@netlify/blobs";
 import { mismatch as screenMismatch, type Kind } from "./screen.mts";
+import { bmvPct, readValue, type MV } from "./valuation.mts";
 
 export const ADMIN_EMAIL = "jonahquartey584@gmail.com";
 export const FREE_ANALYSES = 1;
@@ -354,6 +355,8 @@ Judge each listing on the user's strategy from the filters ("strategy"; "auto" m
 Never talk about occupancy or nightly rates unless the strategy is short lets. Do not use the following R2SA method for other strategies.
 For R2SA rentals, likely monthly profit at 80% occupancy (revenue = 24 nights x nightly rate, minus 15% platform fees, £45 cleaning per 3-night stay, rent and about £150 other costs), break-even occupancy, for purchases, gross yield and cash flow; price or rent level against the area, demand for short stays in that location, and compliance risk (in London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights don't count, so note when a London deal would need them; HMO and Article 4 where relevant). Treat nightly rates as estimates and say so. If the filters include "notes" (the user's own criteria in their words), rank listings that meet them higher and say which criteria each pick meets or misses. Never invent facts about a specific listing. The id is only for matching your picks to the results: never mention ids anywhere in your text. When you compare listings, name them by type and street or area (for example "the 1 bed flat on Adam & Eve Court").
 
+Purchases may include est_market_value, below_market_value_pct (positive means the asking price is below market value) and valuation_confidence: weigh a larger, well-evidenced discount in the score, and treat a low-confidence valuation cautiously.
+
 You may also get "search_summary": how many listings each site returned, how many links were removed as dead or taken, and how many couldn't be confirmed. Use it to explain the search.
 
 Return valid JSON with these keys:
@@ -401,12 +404,12 @@ export const isListingUrl = (site: string, url: string) => {
 
 // How hard each level searches. Expert runs many rounds per site from different angles,
 // then opens the best listings to confirm they're still available.
-const SEARCH_LEVEL: Record<LevelId, { passes: number; perPass: number; context: "low" | "medium" | "high"; effort: Effort; verify: number }> = {
+const SEARCH_LEVEL: Record<LevelId, { passes: number; perPass: number; context: "low" | "medium" | "high"; effort: Effort; verify: number; value: number }> = {
   // Scout: one quick look per site. Analyst: two rounds per site from different angles. Expert: eight rounds plus checks.
   // Every level opens the best listings to confirm they are still available; deeper levels check more.
-  quick: { passes: 1, perPass: 5, context: "low", effort: "low", verify: 10 },
-  standard: { passes: 2, perPass: 12, context: "medium", effort: "low", verify: 25 },
-  deep: { passes: 8, perPass: 15, context: "high", effort: "medium", verify: 60 },
+  quick: { passes: 1, perPass: 5, context: "low", effort: "low", verify: 10, value: 10 },
+  standard: { passes: 2, perPass: 12, context: "medium", effort: "low", verify: 25, value: 25 },
+  deep: { passes: 8, perPass: 15, context: "high", effort: "medium", verify: 60, value: 60 },
 };
 
 // Each round searches from a different angle so later rounds find listings earlier ones missed.
@@ -438,6 +441,8 @@ export type Listing = {
   // "unknown": the site blocked the check, so the AI has to open it instead.
   link?: "live" | "gone" | "unknown";
   confirmed?: boolean;
+  // Estimated market value for purchases, from recent sold prices nearby (with the evidence behind it).
+  mv?: MV;
   // Why the advert doesn't fit the search (a room, commercial, wrong area, ruled out by its description); such listings are dropped.
   mismatch?: string;
   details?: { deposit: string; availableFrom: string; listed?: string; highlights: string[] };
@@ -644,9 +649,25 @@ Read the whole description, not just the title. Only report what the pages actua
 // A search that can be paused and resumed, so Expert can run far longer than one
 // 15-minute background function: each run works until its deadline, saves this state,
 // and the runner starts another run to continue.
+// Purchases only: estimate each property's market value (MV) from recent sold prices of similar homes nearby,
+// so the member can filter by how far below market value (BMV) the asking price is.
+async function valueBatch(batch: Listing[], level: LevelId) {
+  const prompt = `Estimate the current market value (MV) of each of these UK properties for sale, using recent SOLD prices of similar properties nearby (same street or postcode district, same type and number of bedrooms, sold within about the last 18 months). Search sold-price sources such as Rightmove house prices, Zoopla house prices and HM Land Registry price paid data.
+${batch.map((l, i) => `${i + 1}. ${l.url}\n   ${l.type}${l.beds != null ? `, ${l.beds} bed` : ""}, ${l.area} ${l.postcode}, asking £${l.price}${l.details?.highlights?.length ? `. From the advert: ${l.details.highlights.slice(0, 5).join("; ")}` : ""}`).join("\n")}
+Return JSON: {"values": [{"url": string (exactly as given), "value": number or null (estimated market value in GBP in its current condition as advertised), "low": number, "high": number (a realistic range), "comps": number (how many comparable sales you actually found and used), "basis": string (one short line naming the comparables, e.g. "3 sold 2-bed terraces on Mill Road, £148k-£162k, last 12 months"), "confidence": "high" | "medium" | "low"}]}.
+Only use sales you actually found. Never invent comparables or prices. If you can't find enough evidence for a property, set "value" to null.`;
+  const { parsed } = await webJson(prompt, ["rightmove.co.uk", "zoopla.co.uk", "onthemarket.com", "landregistry.data.gov.uk", "propertydata.co.uk"], level, level === "quick" ? "medium" : "high", level === "quick" ? "low" : "medium");
+  const byUrl = new Map(batch.map((l) => [normalise(l.url), l]));
+  for (const c of (parsed.values || []) as Array<Record<string, unknown>>) {
+    const l = byUrl.get(normalise(String(c.url || "")));
+    const mv = l ? readValue(l.price, c) : null;
+    if (l && mv) l.mv = mv;
+  }
+}
+
 export type SearchState = {
-  filters: Filters; sites: string[]; phase: "search" | "check" | "verify" | "rank" | "done";
-  round: number; checkAt?: number; verifyAt: number; listings: Listing[]; removed?: number; ruledOut?: number; ruledOutWhy?: Record<string, number>;
+  filters: Filters; sites: string[]; phase: "search" | "check" | "verify" | "value" | "rank" | "done";
+  round: number; checkAt?: number; verifyAt: number; valueAt?: number; listings: Listing[]; removed?: number; ruledOut?: number; ruledOutWhy?: Record<string, number>;
   // A refresh starts from the member's current results: they are re-checked and new ones added.
   previous?: string[];
   widened?: boolean;
@@ -681,7 +702,7 @@ export function newSearch(input: string, level: LevelId): SearchState {
   };
 }
 
-export const searchProgress = (st: SearchState) => ({ phase: st.phase, sites: st.sites_status, found: st.listings.length, checked: st.checkAt || 0, verified: st.verifyAt, removed: st.removed || 0, ruledOut: st.ruledOut || 0 });
+export const searchProgress = (st: SearchState) => ({ phase: st.phase, sites: st.sites_status, found: st.listings.length, checked: st.checkAt || 0, verified: st.verifyAt, valued: st.valueAt || 0, removed: st.removed || 0, ruledOut: st.ruledOut || 0 });
 
 // ---------- link checks ----------
 // Every listing's link is opened before it is shown. Pages that 404, bounce to a search or home
@@ -815,6 +836,22 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
     dropMismatches();
     for (const l of st.listings) l.confirmed = l.verified === "available";
     st.listings.sort((a, b) => Number(!!b.confirmed) - Number(!!a.confirmed));
+    st.phase = st.filters.mode === "buy" ? "value" : "rank";
+    await save(st);
+  }
+
+  // Value: for purchases, estimate market value so each deal shows how far below it the price is.
+  if (st.phase === "value") {
+    st.valueAt = st.valueAt || 0;
+    const targets = st.listings.filter((l) => l.confirmed).slice(0, lv.value);
+    while (st.valueAt < targets.length) {
+      if (timeLeft() < 4 * 60_000) return st;
+      const group = targets.slice(st.valueAt, st.valueAt + 15);
+      const batches = Array.from({ length: Math.ceil(group.length / 5) }, (_, i) => group.slice(i * 5, i * 5 + 5));
+      await Promise.all(batches.map((batch) => valueBatch(batch, level).catch((error) => console.error("Valuation failed", error))));
+      st.valueAt += group.length;
+      await save(st);
+    }
     st.phase = "rank";
     await save(st);
   }
@@ -833,6 +870,7 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
           listings: st.listings.filter((l) => l.confirmed).slice(0, level === "quick" ? 40 : 120).map((l, i) => ({
             id: String(i), site: SITES[l.site].label, type: l.type, beds: l.beds, area: l.area, postcode: l.postcode,
             [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price,
+            ...(l.mv ? { est_market_value: l.mv.value, below_market_value_pct: bmvPct(l.price, l.mv), valuation_confidence: l.mv.confidence } : {}),
             ...(l.details ? { checked_details: l.details, still_available: l.verified } : {}),
           })),
         }), level);
