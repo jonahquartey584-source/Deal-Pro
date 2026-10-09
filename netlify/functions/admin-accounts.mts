@@ -13,11 +13,11 @@ export default async (request: Request, _context: Context) => {
   if (request.method === "GET") {
     const { blobs } = await store.list({ prefix: "users/" });
     // Older accounts have no stored join date: look it up from Identity (best effort) so they show one too.
-    const signedUp = new Map<string, string>();
+    const signedUp = new Map<string, { createdAt?: string; name?: string }>();
     try {
       for (let page = 1; page <= 10; page++) {
         const users = await admin.listUsers({ page, perPage: 100 });
-        for (const u of users) if (u.createdAt) signedUp.set(u.id, u.createdAt);
+        for (const u of users) signedUp.set(u.id, { createdAt: u.createdAt, name: u.name });
         if (users.length < 100) break;
       }
     } catch (error) { console.warn("Couldn't list Identity users for join dates", error); }
@@ -26,7 +26,8 @@ export default async (request: Request, _context: Context) => {
       const metadata = (await store.getMetadata(blob.key))?.metadata as Record<string, unknown> | undefined;
       return {
         userId: blob.key.split("/")[1], email: metadata?.email || "Email unavailable",
-        joinedAt: metadata?.joinedAt || signedUp.get(blob.key.split("/")[1]) || null,
+        joinedAt: metadata?.joinedAt || signedUp.get(blob.key.split("/")[1])?.createdAt || null,
+        name: String(metadata?.name || signedUp.get(blob.key.split("/")[1])?.name || ""),
         plan: state?.plan || "Free", enabled: state?.accountEnabled !== false,
         savedDeals: Array.isArray(state?.saved) ? state.saved.length : 0, updatedAt: metadata?.updatedAt || null,
       };

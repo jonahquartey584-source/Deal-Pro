@@ -36,7 +36,7 @@ export default async (request: Request, context: Context) => {
     let state = await store.get(key, { type: "json" }) as Record<string, unknown> | null;
     if (!state) {
       state = defaultState(isAdmin);
-      await store.setJSON(key, state, { metadata: { userId: user.id, email: user.email ?? "", joinedAt: user.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() } });
+      await store.setJSON(key, state, { metadata: { userId: user.id, email: user.email ?? "", name: user.name ?? "", joinedAt: user.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() } });
       // A brand-new account gets one welcome email from hello@qp-digital.co.uk. It never delays or blocks sign-in,
       // and the marker stops a second request from sending it twice.
       if (!isAdmin && user.email && !(await store.get(`users/${user.id}/welcome-email`))) {
@@ -50,7 +50,7 @@ export default async (request: Request, context: Context) => {
     }
     // Accounts created before the join date was kept get it now, from their Identity sign-up date.
     const meta = (await store.getMetadata(key))?.metadata as Record<string, unknown> | undefined;
-    if (meta && !meta.joinedAt && user.createdAt) await store.setJSON(key, state, { metadata: { ...meta, joinedAt: user.createdAt } }).catch(() => {});
+    if (meta && ((!meta.joinedAt && user.createdAt) || (!meta.name && user.name))) await store.setJSON(key, state, { metadata: { ...meta, joinedAt: meta.joinedAt || user.createdAt, name: meta.name || user.name || "" } }).catch(() => {});
     if (state.accountEnabled === false && !isAdmin) return json({ error: "This account has been suspended. Contact Deal Pro support." }, 403);
     if (isAdmin) { state.admin = true; state.plan = "Max20"; state.accountEnabled = true; }
     return json({ user: { id: user.id, email: user.email, name: user.name }, state });
@@ -80,7 +80,7 @@ export default async (request: Request, context: Context) => {
     // Keep the date they joined: stored when the account was first saved, else the sign-up date from Identity.
     const oldMeta = (await store.getMetadata(key))?.metadata as Record<string, unknown> | undefined;
     await store.setJSON(key, nextState, {
-      metadata: { ...(oldMeta || {}), userId: user.id, email: user.email ?? "", joinedAt: oldMeta?.joinedAt || user.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() },
+      metadata: { ...(oldMeta || {}), userId: user.id, email: user.email ?? "", name: oldMeta?.name || user.name || "", joinedAt: oldMeta?.joinedAt || user.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() },
     });
     return json({ saved: true });
   }
