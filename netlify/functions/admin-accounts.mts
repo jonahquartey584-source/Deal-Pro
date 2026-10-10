@@ -5,6 +5,16 @@ import { applyPlanExpiry } from "../lib/plan.mts";
 import { activityFor } from "../lib/ai.mts";
 
 const ADMIN_EMAIL = "jonahquartey584@gmail.com";
+// Midnight at the end of a UK calendar day (British Summer Time included), as a timestamp.
+function endOfUkDay(day: string) {
+  const m = day.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const next = Date.UTC(+m[1], +m[2] - 1, +m[3] + 1);
+  const check = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]));
+  if (check.getUTCMonth() !== +m[2] - 1 || check.getUTCDate() !== +m[3]) return null;
+  const londonHour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", hourCycle: "h23" }).format(new Date(next)));
+  return next - londonHour * 3_600_000;
+}
 const json = (data: unknown, status = 200) => Response.json(data, { status, headers: { "Cache-Control": "no-store" } });
 
 export default async (request: Request, _context: Context) => {
@@ -39,7 +49,7 @@ export default async (request: Request, _context: Context) => {
     return json({ accounts });
   }
 
-  const body = await request.json().catch(() => null) as { userId?: string; plan?: string; enabled?: boolean; days?: number | null } | null;
+  const body = await request.json().catch(() => null) as { userId?: string; plan?: string; enabled?: boolean; days?: number | null; until?: string } | null;
   if (!body?.userId || !/^[a-zA-Z0-9-]+$/.test(body.userId)) return json({ error: "A valid user is required." }, 400);
   const key = `users/${body.userId}/state`;
 
@@ -54,6 +64,15 @@ export default async (request: Request, _context: Context) => {
       if (!Number.isInteger(body.days) || body.days < 1 || body.days > 3650) return json({ error: "Choose between 1 and 3650 days." }, 400);
       if (state.plan === "Free") return json({ error: "Choose a paid plan before setting how long it lasts." }, 400);
       state.planExpiresAt = new Date(Date.now() + body.days * 86_400_000).toISOString();
+    }
+    // Or an exact last day ("YYYY-MM-DD"): the plan lasts to the end of that day, UK time.
+    else if (typeof body.until === "string") {
+      if (state.plan === "Free") return json({ error: "Choose a paid plan before setting how long it lasts." }, 400);
+      const ends = endOfUkDay(body.until);
+      if (!ends) return json({ error: "Choose a valid end date." }, 400);
+      if (ends <= Date.now()) return json({ error: "Choose an end date after today." }, 400);
+      if (ends > Date.now() + 3650 * 86_400_000) return json({ error: "Choose an end date within 10 years." }, 400);
+      state.planExpiresAt = new Date(ends).toISOString();
     }
     if (state.plan === "Free") delete state.planExpiresAt;
     if (typeof body.enabled === "boolean") state.accountEnabled = body.enabled;

@@ -28,15 +28,39 @@ const activityLine = (x) => {
     ...(x.research ? [plural(x.research, "due diligence check", "due diligence checks")] : []),
     ...(last && fmtJoined(last) ? [`last used ${fmtJoined(last)}`] : [])].join(" · ");
 };
-const expiryPicker = (a) => a.plan === "Free" || a.subscribed ? `<div class="sub">${a.subscribed ? "Paid via Stripe" : "Free plan"}</div>` : `<select data-days aria-label="How long ${esc(a.email)} keeps this plan"><option value="keep" selected>${a.expiresAt ? `Ends ${esc(fmtDay(a.expiresAt))}` : "No end date"}</option>${DAYS.map(([d, n]) => `<option value="${d}">${a.expiresAt ? "Extend to" : "Ends in"} ${n}</option>`).join("")}${a.expiresAt ? '<option value="none">Remove end date</option>' : ""}</select>`;
+const daysLeft = (iso) => Math.max(0, Math.ceil((Date.parse(iso) - Date.now()) / 86_400_000));
+const expiryPicker = (a) => a.plan === "Free" || a.subscribed ? `<div class="sub">${a.subscribed ? "Paid via Stripe" : "Free plan"}</div>` : `<div class="exp"><select data-days aria-label="How long ${esc(a.email)} keeps this plan"><option value="keep" selected>${a.expiresAt ? `Until ${esc(fmtJoined(new Date(Date.parse(a.expiresAt) - 1000).toISOString()).slice(0, 8))} (${daysLeft(a.expiresAt)}d left)` : "No end date"}</option>${DAYS.map(([d, n]) => `<option value="${d}">Ends in ${n}</option>`).join("")}<option value="custom">Number of days…</option><option value="date">Pick an end date…</option>${a.expiresAt ? '<option value="none">Remove end date</option>' : ""}</select><form class="exp-edit" data-exp hidden><label class="sub" data-exp-label for="exp-${esc(a.userId)}"></label><input class="exp-in" id="exp-${esc(a.userId)}" required><div class="exp-btns"><button class="btn" type="submit">Save</button><button class="btn" type="button" data-exp-cancel>Cancel</button></div></form></div>`;
 function render() {
   const query = search.value.trim().toLowerCase();
   const list = accounts.filter((a) => `${a.name} ${a.company} ${a.email}`.toLowerCase().includes(query));
   box.innerHTML = list.length ? list.map((a) => `<article class="row" data-user="${esc(a.userId)}"><div><div class="email">${esc(a.name || "No name given")}</div><div class="sub">${esc(a.email)}</div>${a.company || a.strategy ? `<div class="sub">${esc([a.company, STRAT_NAME[a.strategy] || a.strategy].filter(Boolean).join(" · "))}</div>` : ""}<div class="sub">${a.createdAt && fmtJoined(a.createdAt) ? `Joined ${esc(fmtJoined(a.createdAt))} · ` : ""}${esc(a.userId)} · ${a.savedDeals} saved deal${a.savedDeals === 1 ? "" : "s"}</div>${activityLine(a.activity) ? `<div class="sub use">${esc(activityLine(a.activity))}</div>` : ""}</div><select data-plan aria-label="Membership for ${esc(a.email)}">${[["Free","Free"],["Lite","Deal Community"],["Pro","Premium"],["Max5","Max 5x"],["Max20","Max 20x"]].map(([v,n]) => `<option value="${v}"${a.plan===v?" selected":""}>${n}</option>`).join("")}</select>${expiryPicker(a)}<button class="btn" data-enabled>${a.enabled ? "Suspend" : "Reactivate"}</button><div class="status">${a.enabled ? "Active" : "Suspended"}</div><div class="actions"><button class="btn danger" data-delete>Delete data</button></div></article>`).join("") : `<div class="empty">No matching customer accounts.</div>`;
 }
 async function load() { const data = await api(); accounts = data.accounts; status.textContent = `${accounts.length} customer account${accounts.length === 1 ? "" : "s"}`; render(); }
-box.addEventListener("change", async (event) => { if (event.target.matches("[data-days]")) { const row = event.target.closest("[data-user]"); const v = event.target.value; if (!row || v === "keep") return; try { await api({ method: "PATCH", body: JSON.stringify({ userId: row.dataset.user, days: v === "none" ? null : Number(v) }) }); status.textContent = v === "none" ? "End date removed." : "Access length updated."; await load(); } catch (error) { status.textContent = error.message; await load(); } return; } const row=event.target.closest("[data-user]"); if(!row||!event.target.matches("[data-plan]"))return; await api({method:"PATCH",body:JSON.stringify({userId:row.dataset.user,plan:event.target.value})}); status.textContent="Membership updated."; await load(); });
+box.addEventListener("change", async (event) => { if (event.target.matches("[data-days]")) { const row = event.target.closest("[data-user]"); const v = event.target.value; if (!row || v === "keep") return; if (v === "custom" || v === "date") { openExpiry(row, v); return; } try { await api({ method: "PATCH", body: JSON.stringify({ userId: row.dataset.user, days: v === "none" ? null : Number(v) }) }); await load(); status.textContent = v === "none" ? "End date removed." : "Access length updated."; } catch (error) { status.textContent = error.message; await load(); } return; } const row=event.target.closest("[data-user]"); if(!row||!event.target.matches("[data-plan]"))return; await api({method:"PATCH",body:JSON.stringify({userId:row.dataset.user,plan:event.target.value})}); status.textContent="Membership updated."; await load(); });
 box.addEventListener("click", async (event) => { const row=event.target.closest("[data-user]"); if(!row)return; const item=accounts.find((a)=>a.userId===row.dataset.user); if(event.target.matches("[data-enabled]")){await api({method:"PATCH",body:JSON.stringify({userId:item.userId,enabled:!item.enabled})});await load();} if(event.target.matches("[data-delete]")&&confirm(`Delete all stored Deal Pro data for ${item.email}? This cannot be undone.`)){await api({method:"DELETE",body:JSON.stringify({userId:item.userId})});await load();} });
+// Custom access length: a number of days from today, or the last day they keep the plan.
+const isoDay = (t) => new Date(t).toLocaleDateString("en-CA", { timeZone: "Europe/London" });
+function openExpiry(row, mode) {
+  const form = row.querySelector("[data-exp]"), input = form.querySelector("input"), label = form.querySelector("[data-exp-label]");
+  const item = accounts.find((a) => a.userId === row.dataset.user);
+  form.dataset.mode = mode; form.hidden = false;
+  if (mode === "date") {
+    label.textContent = "Last day of access"; input.type = "date"; input.min = isoDay(Date.now() + 86_400_000); input.max = isoDay(Date.now() + 3650 * 86_400_000);
+    input.value = item?.expiresAt ? isoDay(Date.parse(item.expiresAt) - 1000) : isoDay(Date.now() + 30 * 86_400_000);
+  } else {
+    label.textContent = "Days from today"; input.type = "number"; input.min = "1"; input.max = "3650"; input.step = "1"; input.inputMode = "numeric";
+    input.value = item?.expiresAt ? String(Math.max(1, daysLeft(item.expiresAt))) : "30";
+  }
+  input.focus();
+}
+box.addEventListener("submit", async (event) => {
+  const form = event.target.closest("[data-exp]"); if (!form) return; event.preventDefault();
+  const row = form.closest("[data-user]"), v = form.querySelector("input").value;
+  const body = form.dataset.mode === "date" ? { userId: row.dataset.user, until: v } : { userId: row.dataset.user, days: Number(v) };
+  try { await api({ method: "PATCH", body: JSON.stringify(body) }); await load(); status.textContent = form.dataset.mode === "date" ? `Access now lasts until the end of ${v.split("-").reverse().join("/").replace(/\/(\d\d)(\d\d)$/, "/$2")}.` : `Access now ends in ${v} day${v === "1" ? "" : "s"}.`; }
+  catch (error) { status.textContent = error.message; }
+});
+box.addEventListener("click", (event) => { const c = event.target.closest("[data-exp-cancel]"); if (!c) return; const form = c.closest("[data-exp]"); form.hidden = true; const sel = form.closest(".exp").querySelector("[data-days]"); sel.value = "keep"; });
 search.addEventListener("input", render);
 
 // ---------- refund requests ----------
