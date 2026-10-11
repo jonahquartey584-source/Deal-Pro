@@ -45,7 +45,7 @@ export function audioSeconds(audio) {
   return +m[1] * 3600 + +m[2] * 60 + +m[3];
 }
 
-export const LISTINGS = JSON.parse((await readFile(path.join(ROOT, "index.html"), "utf8")).match(/const LISTINGS=(\[[\s\S]*?\n\]);/)[1]);
+export const LISTINGS = JSON.parse((await readFile(path.join(ROOT, "assets", "app.js"), "utf8")).match(/const LISTINGS=(\[[\s\S]*?\n\]);/)[1]);
 
 // Stand-in for assets/auth.js. Signed out, the sign-in form signs straight in.
 const authStub = (signedIn) => `
