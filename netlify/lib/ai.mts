@@ -197,20 +197,22 @@ async function tryEach<T>(label: string, attempts: Array<[string, () => Promise<
   throw new Error(`${label} failed. ${failures.slice(-8).join(" | ")}`);
 }
 
+// Members never see the word "AI" anywhere on Deal Pro, including in what the model writes.
+const NO_AI_WORD = 'Never use the word "AI" (or "artificial intelligence") in any text you write.';
 async function complete(system: string, user: string, level: LevelId) {
   const client = ai();
   const { model, effort } = LEVELS[level];
-  const messages = [{ role: "system" as const, content: system }, { role: "user" as const, content: user }];
+  const messages = [{ role: "system" as const, content: `${system}\n\n${NO_AI_WORD}` }, { role: "user" as const, content: user }];
   const withModel = (m: string, reasoning: boolean, c: OpenAI = client) => async () => {
     const completion = await c.chat.completions.create({
       model: m, messages, response_format: { type: "json_object" }, ...(reasoning ? { reasoning_effort: effort } : {}),
     });
     const content = completion.choices[0]?.message?.content;
-    if (!content) throw new Error("Empty AI response");
+    if (!content) throw new Error("Empty model response");
     return JSON.parse(content) as Record<string, unknown>;
   };
   const direct = fallbackAi();
-  return tryEach("AI analysis", [
+  return tryEach("Analysis", [
     [model, withModel(model, true)],
     [FALLBACK_MODEL, withModel(FALLBACK_MODEL, true)],
     [`${FALLBACK_MODEL} (no reasoning setting)`, withModel(FALLBACK_MODEL, false)],
@@ -674,7 +676,7 @@ async function webJson(prompt: string, domains: string[], level: LevelId, contex
         : { type: "web_search_preview", search_context_size: context }],
       ...(opts.filters ? { include: ["web_search_call.action.sources" as const] } : {}),
       ...(opts.json ? { text: { format: { type: "json_object" as const } } } : {}),
-      input: opts.filters ? prompt : `${prompt}\n${site}\nReply with the JSON only.`,
+      input: opts.filters ? `${prompt}\n${NO_AI_WORD}` : `${prompt}\n${site}\n${NO_AI_WORD}\nReply with the JSON only.`,
     });
   const direct = fallbackAi();
   type Resp = Awaited<ReturnType<ReturnType<typeof call>>>;

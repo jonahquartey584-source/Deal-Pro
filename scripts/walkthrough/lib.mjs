@@ -66,16 +66,15 @@ $("#authOauth").hidden = false;
 $("#homeSignIn").addEventListener("click", () => { $("#authGate").hidden = false; });
 $("#authForm").addEventListener("submit", (e) => { e.preventDefault(); signIn(); });`}`;
 
-// The cursor drawn over the page, with a small "AI" tag and a ring on each click.
+// The cursor drawn over the page, with a ring on each click.
 const CURSOR = `
 addEventListener("DOMContentLoaded", () => {
   const c = document.createElement("div");
   c.id = "demoCursor";
-  c.innerHTML = '<svg width="26" height="26" viewBox="0 0 26 26"><path d="M4 2.5v18.2l4.6-4.4 3 6.9 3.3-1.4-3-6.8h6.4z" fill="#fff" stroke="#0B0B0C" stroke-width="1.6" stroke-linejoin="round"/></svg><span>AI</span><i></i>';
+  c.innerHTML = '<svg width="26" height="26" viewBox="0 0 26 26"><path d="M4 2.5v18.2l4.6-4.4 3 6.9 3.3-1.4-3-6.8h6.4z" fill="#fff" stroke="#0B0B0C" stroke-width="1.6" stroke-linejoin="round"/></svg><i></i>';
   const s = document.createElement("style");
   s.textContent = "#demoCursor{position:fixed;left:0;top:0;z-index:2147483647;pointer-events:none;view-transition-name:demo-cursor;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}" +
     "#demoCursor svg{display:block;transform-origin:4px 3px;transition:transform .12s}#demoCursor.down svg{transform:scale(.86)}" +
-    "#demoCursor span{position:absolute;left:21px;top:19px;font:600 10px/1 Geist,system-ui,sans-serif;letter-spacing:.04em;color:#fff;background:#E0142B;border-radius:5px;padding:3px 5px}" +
     "#demoCursor i{position:absolute;left:-14px;top:-15px;width:36px;height:36px;border-radius:50%;border:2px solid #E0142B;opacity:0;transform:scale(.3)}" +
     "#demoCursor.ring i{animation:demoRing .5s ease-out}@keyframes demoRing{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(1.4)}}" +
     "::-webkit-scrollbar{display:none}";
