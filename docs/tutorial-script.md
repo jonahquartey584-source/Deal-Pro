@@ -1,6 +1,6 @@
 # Deal Pro homepage tutorial: narration script
 
-Voice: ElevenLabs "Adam". Length: about 5 minutes.
+Voice: ElevenLabs "Adam". Length: 2 minutes 30 seconds (about 385 words at Adam's pace).
 Each scene lists what the voiceover says, then what should be on screen.
 The Deal Community has its own tutorial, so it is only introduced here.
 
@@ -9,120 +9,105 @@ The Deal Community has its own tutorial, so it is only introduced here.
 ## 1. Welcome (0:00)
 
 **Voiceover:**
-Hi, and welcome to Deal Pro. Deal Pro helps you find UK property deals, check whether the numbers really work for your strategy, and share the best ones. In the next few minutes I'll show you how to find live deals, see them on a map, analyse them properly, and send them to investors.
+Welcome to Deal Pro. Deal Pro finds UK property deals, checks whether the numbers work for your strategy, and helps you share the best ones. Here's how it works.
 
-**On screen:** Home page. Cursor rests on the headline "Property deals, found and analysed", then the Deal Analyser preview.
-
----
-
-## 2. Signing in (0:20)
-
-**Voiceover:**
-Click Sign in at the top right. You can continue with Google in one click, or use your email and a password. The first time, we'll ask for your name, your company and the strategy you're looking for, so your results fit how you invest. You'll stay signed in on that device for thirty days.
-
-**On screen:** Click **Sign in**. Hover **Continue with Google**. Type an email and password, click **Sign in**. Show the short profile form: full name, company, strategy.
+**On screen:** Home page. Cursor rests on the headline, then the Deal Analyser preview.
 
 ---
 
-## 3. Power levels (0:40)
+## 2. Signing in (0:11)
 
 **Voiceover:**
-Before you search or analyse, choose a power level.
-Scout, in green, is a fast first look and uses the least credits.
-Analyst, in orange, is a full analysis.
-Expert, in red, is the most thorough. It searches deeper, checks the details and stress-tests the numbers.
-On the Free plan you can use Scout. Analyst and Expert come with Premium and Max. Your credits left this week are shown just below.
+Click Sign in. Continue with Google or use your email, then tell us your name, your company and the strategy you're looking for.
 
-**On screen:** Open **Deal Analyser**. Click **Scout**, **Analyst**, then **Expert**, pausing on each. Hover the "credits left this week" line.
+**On screen:** Click **Sign in**. Hover **Continue with Google**. Show the short profile form: full name, company, strategy.
 
 ---
 
-## 4. Telling Deal Finder what you want (1:05)
+## 3. Power levels (0:20)
 
 **Voiceover:**
-Now open Deal Finder. The quickest way to start is to describe what you want in your own words, like "three-bed houses under a hundred thousand pounds within thirty miles of Manchester, no auctions", then click Fill in the filters.
-Check the filters it sets: rent or buy, your strategies, bedrooms, price range and location. You can tick more than one strategy, for example buy-to-let and HMO, and each deal will show the key figure for both.
-You can also choose how recently a listing was added, and leave out auctions, flats and shared ownership.
-Then tick the sites to search: Rightmove, Zoopla, OpenRent, SpareRoom, Gumtree and Facebook Marketplace, plus the commercial sites if you need them.
+Next, choose a power level. Scout is a quick first look, Analyst is a full analysis, and Expert is the most thorough. The Free plan includes Scout, and Premium and Max unlock all three.
 
-**On screen:** Open **Deal Finder**. Type the description, click **Fill in the filters**. Show **Buy** selected, tick **BTL** and **HMO**, hover bedrooms, price and location. Tick **Exclude auctions**, **flats** and **shared ownership**. Scroll to the site checkboxes.
+**On screen:** Open **Deal Analyser**. Click **Scout**, **Analyst**, then **Expert**.
 
 ---
 
-## 5. Searching (1:50)
+## 4. Deal Finder (0:33)
 
 **Voiceover:**
-Pick your power level and click Search. Deal Pro searches every site you've ticked for listings that are live right now, and you can watch each site's progress as it goes. Every link is opened and checked, so listings that have gone are removed before you see them.
-Scout usually takes under a minute. Expert goes back to each site round after round, then checks the best listings in detail. That can take ten to thirty minutes, and you can leave the page and come back.
+Open Deal Finder and describe what you want, like three-bed houses under a hundred thousand pounds near Manchester. Click Fill in the filters, tick one or more strategies, leave out auctions or flats if you want, and pick the sites to search.
 
-**On screen:** Choose **Expert**, click **Search**. Show the per-site progress list and the "checking listings" stage.
+**On screen:** Open **Deal Finder**. Type the description, click **Fill in the filters**. Tick **BTL** and **HMO**. Tick **Exclude auctions** and **flats**. Scroll to the site checkboxes.
 
 ---
 
-## 6. Photos and the map (2:20)
+## 5. Searching (0:49)
 
 **Voiceover:**
-Your results open in Photos and map. Each deal shows the listing's own photos, so flick through them with the arrows. Next to them, every deal has a pin on the map with its price. Hover over a deal and its pin lights up, or click a pin to preview it.
-Each card shows the price, the area, the key figure for your strategy, and when it was listed. At the top, the AI picks the best deals and gives each a score and a reason.
-Prefer a list? Switch to Cards or Sheet, sort by price, or copy everything into Google Sheets. And when you come back another day, click Refresh and find new to check what's gone and what's new.
+Click Search. Deal Pro opens and checks every link, so you only see listings that are live right now.
 
-**On screen:** Results in **Photos + map**. Click a photo arrow, hover a card so its pin highlights, click a pin to open its preview. Scroll up to the top picks, hover a score. Click **Cards**, then **Sheet**. Hover **Refresh & find new**.
+**On screen:** Click **Search**. Show the per-site progress list.
 
 ---
 
-## 7. Sharing deals (3:00)
+## 6. Photos and the map (0:57)
 
 **Voiceover:**
-Found something good? Click Share as link. Deal Pro turns your deals into one web page, with photos and a link to each listing, and you can send it straight to WhatsApp. Untick Include links for a pre-NDA version, with no street names or listing links.
-On Premium and Max, Analyse and package analyses every deal at once and gives each one its own deal pack link.
+Your results open with the listing's own photos next to a map. Hover a deal to light up its pin. The best deals are picked and scored for you at the top, and you can switch to Cards or Sheet.
 
-**On screen:** Click **Share as link**, then **Send on WhatsApp** in the box that appears. Untick **Include links**. Hover **Analyse & package**.
+**On screen:** Results in **Photos + map**. Click a photo arrow, hover a card so its pin highlights. Scroll up to the top picks. Click **Cards**, then **Sheet**.
 
 ---
 
-## 8. Analysing a deal (3:25)
+## 7. Sharing deals (1:12)
 
 **Voiceover:**
-Click Analyse deal on any listing, or paste an advert, a landlord's message or your own notes into the Deal Analyser. Choose the strategy you want it judged on, pick a power level, and click Analyse.
-You'll get a clear verdict and a score, the key numbers for that strategy, the risks, anything that's still missing, and your next steps. On Expert, it also stress-tests the deal. Deal Pro never simply guesses. If it has to estimate something, it tells you.
+Click Share as link to turn your deals into one page you can send on WhatsApp. Untick Include links for a pre-NDA version.
 
-**On screen:** Click **Analyse deal** on a card, or paste a sample advert. Choose **BTL**, choose **Analyst**, click **Analyse**. Scroll the result: verdict and score, key figures, risks, missing information, next steps.
+**On screen:** Click **Share as link**, then **Send on WhatsApp**. Untick **Include links**.
 
 ---
 
-## 9. Numbers, due diligence and deal packs (3:55)
+## 8. Analysing a deal (1:21)
 
 **Voiceover:**
-Click Show advanced controls to work through the full model. The numbers follow your strategy. For buy-to-let you'll see the cash you need, the monthly cash flow after the mortgage, the yield and a rate-rise check. HMOs show room income and bills, BRRR shows what's left in after refinancing, and flips show your profit and margin. You can change the deposit, mortgage rate and running costs.
-Then tick off the due diligence checks, generate a deal pack, and click Save to keep the deal in My deals, where you can track it from lead to completion.
+Click Analyse deal, or paste an advert into the Deal Analyser. You'll get a clear verdict, a score, the key numbers for your strategy, the risks, and your next steps.
 
-**On screen:** Click **Show advanced controls**. On the **Numbers** step, switch the strategy between **BTL**, **HMO** and **BRRR** so the figures change. Change the deposit in **Assumptions**. Click **Due diligence**, then **Deal pack**. Click **Save**, then open **My deals**.
+**On screen:** Click **Analyse deal** on a card. Choose **BTL** and **Analyst**, click **Analyse**. Scroll the result: verdict and score, key figures, risks, next steps.
 
 ---
 
-## 10. Deal Community (4:30)
+## 9. Numbers and deal packs (1:32)
 
 **Voiceover:**
-In the Deal Community, you can find deals other sourcers have already contacted, post your own, and chat with sourcers in your region. If you only want to post deals, there's a Deal Community membership just for that.
+Click Show advanced controls to see the full numbers for your strategy and change your assumptions. Then run due diligence, make a deal pack, and save it to My deals.
 
-**On screen:** Open **Deal Community**. Scroll past a few deal cards, hover **Post a deal**.
+**On screen:** Click **Show advanced controls**. On the **Numbers** step, switch between **BTL** and **BRRR**. Click **Deal pack**, then **Save**, then open **My deals**.
 
 ---
 
-## 11. Plans, referrals and refunds (4:45)
+## 10. Deal Community (1:44)
 
 **Voiceover:**
-The Free plan gives you three Scout searches a week and two analyses. Premium, at thirty-nine pounds a month, gives you sixty credits a week and every power level. Max gives you three hundred or twelve hundred credits a week, for sourcers who work deals all day.
-And here's the best part: give half price, get half price. Click Refer a friend in the sidebar to get your own link, and send it on WhatsApp or anywhere else. When your friend signs up with your link and buys their first upgraded plan, you both get three months at half price. That takes Premium from thirty-nine pounds a month down to nineteen pounds fifty, and Max from a hundred pounds down to fifty.
-You can cancel any time, and if Deal Pro isn't right for you, you can ask for a refund within fourteen days.
+In the Deal Community, you can find deals other sourcers have already contacted, post your own, and chat with sourcers near you.
 
-**On screen:** Open **Plans**. Hover Free, Premium and Max (switch between 5x and 20x). Click **Refer a friend** (the red button with the **50% off** badge in the sidebar). Hover your link, click **Copy**, then hover **Send on WhatsApp**. Scroll to **Refunds**.
+**On screen:** Open **Deal Community**. Scroll past a few deal cards.
 
 ---
 
-## 12. Close (5:25)
+## 11. Plans and referrals (1:52)
 
 **Voiceover:**
-And remember, Deal Pro supports your decisions, but it doesn't replace professional advice. Always check legal, planning, licensing and financial information yourself before you commit to a deal. Happy sourcing.
+Premium is thirty-nine pounds a month, and Max gives you five or twenty times more. And here's the best part: give half price, get half price. Click Refer a friend to get your own link. When your friend signs up and upgrades, you both get three months at half price. That takes Premium down to nineteen pounds fifty a month, and Max from a hundred pounds to fifty. You can cancel any time, with refunds within fourteen days.
+
+**On screen:** Open **Plans** and hover Premium and Max. Click **Refer a friend** (the red button with the **50% off** badge). Hover the before and after prices, click **Copy**, hover **Send on WhatsApp**.
+
+---
+
+## 12. Close (2:22)
+
+**Voiceover:**
+Deal Pro supports your decisions, but it doesn't replace professional advice, so always check the details yourself. Happy sourcing.
 
 **On screen:** Return to **Home** and scroll to the footer disclaimer.
