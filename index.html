@@ -852,6 +852,11 @@ td.t{text-align:right;color:var(--ink-2)}
 .pw-note{font-size:12.5px;color:var(--muted);margin-top:-6px}
 .pw-opt .ticks{gap:7px;font-size:13px}
 #payWall{width:min(480px,100%)}
+#payWall .dr-body{grid-auto-rows:max-content}
+.pw-ref{display:grid;gap:10px;padding:16px 18px;border-radius:10px;border:1px solid rgba(255,77,94,.4);background:radial-gradient(120% 140% at 100% 0%,rgba(224,20,43,.2),rgba(224,20,43,0) 60%),var(--surface-2)}
+.pw-ref-h{display:flex;align-items:center;gap:8px;font-size:15px}.pw-ref p{margin:0;font-size:13px;color:var(--ink-2)}.pw-ref .ref-prices{margin:0}
+.ai-credits.out{display:block;margin-top:10px;padding:10px 12px;border:1px solid var(--accent);background:var(--brand-soft);border-radius:8px;color:var(--ink);font-size:13px;line-height:1.5}
+.ai-credits.out b{color:var(--ink)}.ai-credits.out .linkbtn{font-size:13px;text-decoration:underline;text-underline-offset:2px}
 
 /* toast */
 .toast{position:fixed;right:24px;bottom:24px;max-width:360px;background:#F4F4F5;color:#0B0B0C;padding:10px 14px;border-radius:6px;font-size:13px;font-weight:500;box-shadow:var(--shadow-pop);opacity:0;transform:translateY(10px);transition:opacity .28s var(--ease),transform .28s var(--ease);pointer-events:none;z-index:60}
@@ -1623,18 +1628,24 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
 </dialog>
 <dialog class="drawer" id="payWall" aria-labelledby="pwTitle">
   <div class="dr-head">
-    <div><p class="dr-kicker">Free plan</p><h2 id="pwTitle" tabindex="-1">You've used your 2 free deal analyses</h2><p class="dr-sub">Subscribe to keep analysing deals. Your saved deals stay available.</p></div>
+    <div><p class="dr-kicker" id="pwKicker">Free plan</p><h2 id="pwTitle" tabindex="-1">You've used your 2 free deal analyses</h2><p class="dr-sub" id="pwSub">Subscribe to keep analysing deals. Your saved deals stay available.</p></div>
     <button class="btn ghost sm" id="pwClose">Close</button>
   </div>
   <div class="dr-body">
-    <div class="pw-opts">
-      <div class="pw-opt feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div>
+    <div class="pw-opts" id="pwOpts">
+      <div class="pw-opt feat" id="pwOptPro"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div>
         <div class="price"><span class="mono" id="pwProPrice">£39</span><span class="per">per month</span></div><div class="pw-note" id="pwProNote">Billed monthly. Cancel any time.</div>
         <ul class="ticks"><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>Unlimited deal analyses</span></li><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>More usage</span></li><li><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 6.2l2.2 2.2 4.8-4.9"/></svg><span>Due diligence and deal packs</span></li></ul>
         <button class="btn primary block" id="pwPro">Subscribe to Premium</button></div>
       <div class="pw-opt"><div class="plan-h"><h3>Max</h3></div>
         <div class="price"><span class="per">From</span><span class="mono">£100</span><span class="per">per month</span></div><div class="pw-note">5x or 20x more usage than Premium, for sourcers who work deals all day.</div>
         <button class="btn block" id="pwMax">Subscribe to Max 5x</button></div>
+    </div>
+    <div class="pw-ref">
+      <div class="pw-ref-h"><span class="rp-badge">50% off</span><b>Or get half price with a friend</b></div>
+      <p>Share your referral link. When a friend signs up and upgrades, you both get 3 months at half price.</p>
+      <div class="ref-prices"><span>Premium <s>£39</s> <b>£19.50</b>/mo</span><span>Max 5x <s>£100</s> <b>£50</b>/mo</span><span>Max 20x <s>£200</s> <b>£100</b>/mo</span></div>
+      <button class="btn block rp-side" id="pwRefer" type="button">Get your referral link</button>
     </div>
     <p class="note" style="margin:0">Subscriptions are completed securely through Stripe Checkout.</p>
   </div>
@@ -1679,7 +1690,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
   <div class="dr-foot"><span class="hint" id="sgHint" aria-live="polite"></span><button class="btn" id="ulBack" type="button" hidden>Back</button><button class="btn" id="sgCancel" type="button">Cancel</button><button class="btn primary" id="sgSign" type="button" disabled>Continue to payment</button><button class="btn primary" id="payBtn" type="button" hidden>Pay £500</button></div>
 </dialog>
 
-<script src="/assets/app.js?v=5" defer></script>
+<script src="/assets/app.js?v=6" defer></script>
 <script type="module" src="/assets/auth.js"></script>
 
 </body>

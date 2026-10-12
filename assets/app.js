@@ -518,7 +518,7 @@ $('#runAI').addEventListener('click',async()=>{if(!feature('dd','#nDD'))return;c
   if(!(d.area||'').trim()&&!(d.send&&d.send.addr)&&!d.sourceText){st.textContent='Add the area or address in Numbers first, so the research knows where to look.';return}
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];b.disabled=true;
   try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'dd',level:lv.id,deal:ddDealText(d),checks:DD_TEMPLATE})});
-    const x=await r.json().catch(()=>({}));if(!r.ok)throw new Error(x.error||'The research could not be started.');if(x.credits){AIC.info=x.credits;renderAILevels()}
+    const x=await r.json().catch(()=>({}));if(!r.ok){limitHit(r.status,x.error);throw new Error(x.error||'The research could not be started.')}if(x.credits){AIC.info=x.credits;renderAILevels()}
     S.ddJob={id:x.jobId,level:lv.id,dealId:d.id,at:Date.now()};save();followResearch(S.ddJob)}
   catch(e){b.disabled=false;st.textContent=e.message}});
 window.addEventListener('dealpro:signed-in',()=>{if(S.ddJob&&S.ddJob.id)followResearch(S.ddJob)});
@@ -1185,7 +1185,7 @@ async function startSearch(refresh=false,auto=false){if(FS.busy)return;if(!auto)
     // Remember the running search so it can be picked up again after leaving the page.
     S.find.pending={id:d.jobId,level:lv.id,sites,at:new Date().toISOString(),...(refresh?{prev:existing.map(x=>x.url),prevNew:Object.fromEntries((LIVE||[]).filter(x=>x.newAt).map(x=>[x.url,x.newAt]))}:{})};save();
     FS.busy=false;followSearch(S.find.pending)}
-  catch(e){FS.busy=false;btn.disabled=false;if(e.limit)FIND_MSG(e.message);else findError(netMsg(e)||'The search could not be started. Please try again.');renderFind()}}
+  catch(e){FS.busy=false;btn.disabled=false;if(e.limit){FIND_MSG(e.message);outOfCredits(e.message)}else findError(netMsg(e)||'The search could not be started. Please try again.');renderFind()}}
 $('#fSearch').addEventListener('click',()=>startSearch(false));
 document.addEventListener('click',e=>{if(e.target.closest('#fRefresh'))startSearch(true)});
 window.addEventListener('dealpro:signed-in',()=>{if(S.find.pending&&!FS.busy)followSearch(S.find.pending)});
@@ -1209,7 +1209,7 @@ async function rankNow(){const conf=SRC().map((r,i)=>({r,i})).filter(x=>confirme
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];FS.rank={status:'loading',level:lv};renderFind();
   try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'rank',level:lv.id,filters:S.find.f,
       listings:conf.slice(0,80).map(({r,i})=>({id:String(i),site:SITE_LABEL(r.site),type:r.type,beds:r.beds,area:r.area,postcode:r.postcode,[r.mode==='buy'?'asking_price':'rent_pcm']:r.price,...(r.details?{checked_details:r.details}:{})}))})});
-    const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'The ranking could not be started.');if(d.credits){AIC.info=d.credits;renderAILevels()}
+    const d=await r.json().catch(()=>({}));if(!r.ok){limitHit(r.status,d.error);throw new Error(d.error||'The ranking could not be started.')}if(d.credits){AIC.info=d.credits;renderAILevels()}
     const data=await pollJob(d.jobId);FS.rank={status:'done',level:lv,data};S.find.rank={level:lv.id,data};save()}
   catch(e){FS.rank={status:'error',level:lv,error:e.message||'The ranking could not be completed.'}}renderFind()}
 document.addEventListener('click',e=>{if(e.target.closest('#fRankNow'))rankNow()});
@@ -1374,11 +1374,11 @@ function packFrom(r,a,strat){const buy=r.mode==='buy',pp=S.deal&&S.deal.pack||{}
     risks:Array.isArray(a.risks)?a.risks:[],photos,biz:pp.biz||'',redress:pp.redress||'',fee:pp.fee||''}}
 async function packOne(r,lv){const st=stratFor(r),strat=st==='none'?(r.mode==='buy'?'BTL':'R2SA'):st;
   const res=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'analyse',deal:listingBrief([r]),level:lv.id,strategy:strat})});
-  const d=await res.json().catch(()=>({}));if(!res.ok)throw Object.assign(new Error(d.error||'The analysis could not be started.'),{stop:[401,402,403].includes(res.status)});
+  const d=await res.json().catch(()=>({}));if(!res.ok)throw Object.assign(new Error(d.error||'The analysis could not be started.'),{stop:[401,402,403].includes(res.status),limit:res.status===402});
   if(d.credits){AIC.info=d.credits;renderAILevels()}
   const a=await pollJob(d.jobId);
   const pr=await fetch('/api/packs',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({pack:packFrom(r,a||{},strat)})});
-  const pj=await pr.json().catch(()=>({}));if(!pr.ok)throw Object.assign(new Error(pj.error||'The deal pack could not be saved.'),{stop:[401,402,403].includes(pr.status)});
+  const pj=await pr.json().catch(()=>({}));if(!pr.ok)throw Object.assign(new Error(pj.error||'The deal pack could not be saved.'),{stop:[401,402,403].includes(pr.status),limit:pr.status===402});
   const pk={id:pj.id,score:Number.isFinite(+a.score)?Math.round(+a.score):null,verdict:String(a.verdict||'').slice(0,60),at:new Date().toISOString()};
   // Rows are copies of the search results: store the pack on the saved listing too, so it stays after a reload.
   r.pack=pk;const src=SRC()[r.k];if(src&&src.url===r.url)src.pack=pk;save()}
@@ -1390,7 +1390,7 @@ async function packageAll(){if(FP.busy)return;
   if(!confirm(`Analyse and package ${todo.length} deal${todo.length===1?'':'s'} at ${lv.name}?\n\nEach deal gets a full analysis, which uses credits just like analysing it on its own, and a shareable pre-NDA deal pack (no listing link or exact address).${rows.length>todo.length?`\n\n${rows.length-todo.length} already packaged will be skipped.`:''}`))return;
   Object.assign(FP,{busy:true,done:0,total:todo.length,failed:0});syncPackBtn();toast(`Packaging ${todo.length} deal${todo.length===1?'':'s'}. You can keep working; leave this page open.`);
   const q=todo.slice();let stop='';
-  const worker=async()=>{while(q.length&&!stop){const r=q.shift();try{try{await packOne(r,lv)}catch(e){if(!e.retry)throw e;await sleep(25000);await packOne(r,lv)}}catch(e){FP.failed++;if(e.stop)stop=e.message;console.warn('Packaging failed',e)}FP.done++;syncPackBtn()}};
+  const worker=async()=>{while(q.length&&!stop){const r=q.shift();try{try{await packOne(r,lv)}catch(e){if(!e.retry)throw e;await sleep(25000);await packOne(r,lv)}}catch(e){FP.failed++;if(e.stop&&!stop){stop=e.message;if(e.limit)outOfCredits(e.message)}console.warn('Packaging failed',e)}FP.done++;syncPackBtn()}};
   await Promise.all([worker(),worker(),worker()]);
   const ok=FP.done-FP.failed;FP.busy=false;save();renderFind();
   toast(stop?`${stop}${ok?` ${ok} deal${ok===1?' was':'s were'} packaged first.`:''}`:`Packaged ${ok} of ${FP.total} deal${FP.total===1?'':'s'}.${FP.failed?` ${FP.failed} couldn't be analysed; try those again.`:''} Copy the deal cards to share them with their pack links.`)}
@@ -1434,17 +1434,31 @@ $('#fResults').addEventListener('change',e=>{const t=e.target;
 /* ---------- unlock panel: 1 sign agreement, 2 pay ---------- */
 /* ---------- paywall ---------- */
 const pw=$('#payWall');let pwRun=null,pwOpener=null;
-function openPaywall(run){pwRun=run;pwOpener=document.activeElement;const ann=S.billing==='annual';
-  
+// The same panel opens whenever a limit is reached: free analyses used up, out of credits, or a paid-only feature.
+// It offers the next plan up and the referral offer (both get 3 months half price when a friend upgrades).
+const PW_DEFAULT={kicker:'Free plan',title:"You've used your 2 free deal analyses",sub:'Subscribe to keep analysing deals. Your saved deals stay available.'};
+function openPaywall(run,o){o=o||PW_DEFAULT;pwRun=run;pwOpener=document.activeElement;
+  $('#pwKicker').textContent=o.kicker;$('#pwTitle').textContent=o.title;$('#pwSub').textContent=o.sub;
+  const p=(AIC.info&&AIC.info.plan)||S.plan,maxNext=p==='Max5'?'Max20':'Max5';
+  $('#pwOptPro').hidden=['Pro','Max5','Max20'].includes(p);$('#pwOpts').hidden=p==='Max20'||p==='Admin';
+  $('#pwMax').dataset.plan=maxNext;$('#pwMax').textContent=`Subscribe to ${PLAN_DEFS[maxNext].name}`;
   try{pw.showModal()}catch(e){pw.setAttribute('open','')}const t=$('#pwTitle');if(t)t.focus()}
 function closePaywall(){pwRun=null;try{pw.close()}catch(e){pw.removeAttribute('open')}}
 pw.addEventListener('close',()=>{if(pwOpener&&pwOpener.isConnected)try{pwOpener.focus()}catch(e){}});
 pw.addEventListener('click',e=>{if(e.target===pw)closePaywall()});
 function checkoutURL(base){const u=new URL(base);const uid=document.body.dataset.userId,email=document.body.dataset.userEmail;if(uid)u.searchParams.set('client_reference_id',uid);if(email)u.searchParams.set('prefilled_email',email);return u.toString()}
 function subscribe(id){if(!startCheckout(id))closePaywall()}
-$('#pwPro').addEventListener('click',()=>subscribe('Pro'));$('#pwMax').addEventListener('click',()=>subscribe('Max5'));
+$('#pwPro').addEventListener('click',()=>subscribe('Pro'));$('#pwMax').addEventListener('click',e=>subscribe(e.currentTarget.dataset.plan||'Max5'));
 $('#pwNot').addEventListener('click',closePaywall);$('#pwClose').addEventListener('click',closePaywall);
 $('#pwAll').addEventListener('click',()=>{closePaywall();go('plans')});
+$('#pwRefer').addEventListener('click',()=>{closePaywall();go('refer')});
+// A paid action came back 402 (limit reached): explain which limit, when it resets, and the ways forward.
+function outOfCredits(msg){const i=AIC.info||{},m=String(msg||''),free=i.free||S.plan==='Free',cr=/credits/i.test(m);
+  const title=/free analyses/i.test(m)?"You've used your free analyses":/free searches/i.test(m)?"You've used your free searches this week":cr?(i.creditsLeft>0?'Not enough credits left for this level':"You're out of credits for this week"):'This needs an upgrade';
+  const reset=cr&&i.resetsAt?` Your credits reset on ${fmtDate(i.resetsAt)}.`:'';
+  const sub=cr&&!free&&!(i.creditsLeft>0)?`You've used all your credits for this week.${reset}`:m+reset;
+  openPaywall(null,{kicker:free?'Free plan':cr?'Out of credits':'Upgrade',title,sub});loadAICredits()}
+const limitHit=(status,msg)=>{if(status!==402)return false;outOfCredits(msg);return true};
 
 const sg=$('#signPanel');let sgOpener=null;const sgTouched=new Set();
 const UL={k:null,n:0,signed:null,busy:false};
@@ -1667,8 +1681,11 @@ function levelOpts(name){const i=AIC.info,free=!i||i.free||i.scoutOnly;// locked
 function renderAILevels(){const i=AIC.info,free=!i||i.free||i.scoutOnly;if(free&&AIC.level!=='quick')AIC.level='quick';
   $('#aiLevelOpts').innerHTML=levelOpts('aiLevel');$('#fLevelOpts').innerHTML=levelOpts('fLevel');$('#ddLevelOpts').innerHTML=levelOpts('ddLevel');
   const paid=i?(i.plan==='Admin'?'Admin: unlimited credits.':`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}.${i.scoutOnly?' Upgrade to Premium for Analyst and Expert.':''}`):'';
-  $('#aiCredits').textContent=!i?'':i.free?`Free plan: ${i.freeLeft} of 2 free analyses left. Upgrade for Analyst and Expert.`:paid;
-  $('#fCredits').textContent=!i?'':i.free?`Free plan: ${i.freeSearchesLeft} of 3 searches left this week. Upgrade for Analyst and Expert.`:paid}
+  const outNote=(what,reset)=>`<b>${what}</b>${reset?` ${reset}`:''} <button class="linkbtn" type="button" data-go="plans">Upgrade now</button>, or <button class="linkbtn" type="button" data-go="refer">refer a friend</button> and you both get 3 months at half price.`;
+  const setLine=(id,out,html,text)=>{const el=$(id);el.classList.toggle('out',!!out);if(out)el.innerHTML=html;else el.textContent=text};
+  const credOut=i&&!i.free&&i.plan!=='Admin'&&i.creditsLeft<=0,credReset=i&&i.resetsAt?`Your credits reset on ${fmtDate(i.resetsAt)}.`:'';
+  setLine('#aiCredits',i&&(i.free?i.freeLeft<=0:credOut),i&&i.free?outNote("You've used your 2 free analyses."):outNote("You're out of credits for this week.",credReset),!i?'':i.free?`Free plan: ${i.freeLeft} of 2 free analyses left. Upgrade for Analyst and Expert.`:paid);
+  setLine('#fCredits',i&&(i.free?i.freeSearchesLeft<=0:credOut),i&&i.free?outNote("You've used your 3 free searches this week.",i.resetsAt?`They reset on ${fmtDate(i.resetsAt)}.`:''):outNote("You're out of credits for this week.",credReset),!i?'':i.free?`Free plan: ${i.freeSearchesLeft} of 3 searches left this week. Upgrade for Analyst and Expert.`:paid)}
 async function loadAICredits(){if(!document.body.dataset.userId)return;try{const r=await fetch('/api/analyze-deal',{credentials:'same-origin'});if(r.ok){AIC.info=await r.json();renderAILevels()}}catch(e){}}
 ['#aiLevelOpts','#fLevelOpts','#ddLevelOpts'].forEach(id=>$(id).addEventListener('change',e=>{if(e.target.type==='radio'){AIC.level=e.target.value;try{localStorage.setItem('dealpro:ai-level',AIC.level)}catch(err){}renderAILevels()}}));
 renderAILevels();window.addEventListener('dealpro:signed-in',loadAICredits);
@@ -1688,7 +1705,7 @@ $('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInp
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];
   btn.disabled=true;btn.textContent='Analysing…';const hasLink=/https?:\/\//i.test(input),extraS=hasLink?40:0;status.textContent=`${lv.name} analysis started${hasLink?', reading the listing first':''}. This usually takes ${hasLink?durTxt(estSecs('analyse',lv.id)+extraS):estTxt('analyse',lv.id)}.`;
   try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'analyse',deal:(S.deal.area&&!input.toLowerCase().includes(S.deal.area.trim().toLowerCase())?`Location: ${S.deal.area.trim()}\n\n`:'')+input,level:lv.id,...(aiStrat()!=='auto'?{strategy:aiStrat()}:{})})});const start=await r.json().catch(()=>({}));
-    if(!r.ok)throw new Error(start.error||'Analysis failed.');if(start.credits){AIC.info=start.credits;renderAILevels()}
+    if(!r.ok){limitHit(r.status,start.error);throw new Error(start.error||'Analysis failed.')}if(start.credits){AIC.info=start.credits;renderAILevels()}
     const t0=Date.now();let data;
     for(;;){await sleep(2000);const p=await fetch('/api/analyze-deal?job='+encodeURIComponent(start.jobId),{credentials:'same-origin'});data=await p.json().catch(()=>({}));
       if(!p.ok)throw new Error(data.error||'Analysis failed.');if(data.credits){AIC.info=data.credits;renderAILevels()}
