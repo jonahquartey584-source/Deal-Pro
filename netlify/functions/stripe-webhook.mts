@@ -1,5 +1,6 @@
 import { getStore } from "@netlify/blobs";
 import type { Config, Context } from "@netlify/functions";
+import { onPaidUpgrade } from "../lib/referrals.mts";
 
 // Stripe calls this after checkout and when subscriptions change, so plans update
 // without the admin doing it by hand. Needs STRIPE_WEBHOOK_SECRET (whsec_...) in Netlify.
@@ -84,6 +85,8 @@ export default async (request: Request, _context: Context) => {
     const subscription = typeof obj.subscription === "string" ? obj.subscription : "";
     await setPlan(userId, plan, { customer, subscription, checkoutSession: obj.id });
     if (customer) await store.setJSON(`stripe/customers/${customer}`, { userId });
+    // A referred member's first upgrade rewards them and whoever referred them.
+    await onPaidUpgrade(userId).catch((error) => console.error("Referral reward failed", userId, error));
     return new Response("ok");
   }
 

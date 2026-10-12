@@ -60,6 +60,8 @@ export default async (request: Request, _context: Context) => {
     const nextState = body.state as Record<string, unknown>;
     if (isAdmin) {
       nextState.admin = true; nextState.plan = "Max20"; nextState.accountEnabled = true;
+      const stored = (await store.get(key, { type: "json" }) as Record<string, unknown> | null) || {};
+      for (const k of ["refCode", "referredBy", "pendingDiscount"]) { if (stored[k]) nextState[k] = stored[k]; else delete nextState[k]; }
     } else {
       // Membership, suspension and paid unlocks are only changed by the server or an administrator,
       // never by the browser, so keep the stored values.
@@ -70,6 +72,8 @@ export default async (request: Request, _context: Context) => {
       nextState.plan = stored.plan || "Free";
       if (stored.profile) nextState.profile = stored.profile; else delete nextState.profile; // set only through /api/profile
       if (stored.planExpiresAt) nextState.planExpiresAt = stored.planExpiresAt; else delete nextState.planExpiresAt;
+      // Referral details are set by the server only.
+      for (const k of ["refCode", "referredBy", "pendingDiscount"]) { if (stored[k]) nextState[k] = stored[k]; else delete nextState[k]; }
       nextState.accountEnabled = true;
       nextState.unlocked = Array.isArray(stored.unlocked) ? stored.unlocked : [];
       if (stored.stripe) nextState.stripe = stored.stripe; else delete nextState.stripe;

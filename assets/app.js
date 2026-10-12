@@ -270,7 +270,7 @@ function renderUsage(){rollWindows();const L=limits(),u=S.usage,t=now();
   $('#xMonth').textContent=`Resets ${nextMonth(t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`}
 setInterval(()=>{try{renderUsage()}catch(e){}},30000);
 function syncName(){const n=S.deal.name||'Untitled deal';$('#dealTitle').textContent=n;$$('.js-dealname').forEach(e=>e.textContent=n)}
-const VIEWS={usage:['plans','usage'],home:['home'],find:['find'],analyser:['analyser'],deals:['deals'],community:['community'],plans:['plans'],
+const VIEWS={usage:['plans','usage'],refer:['plans','refer'],home:['home'],find:['find'],analyser:['analyser'],deals:['deals'],community:['community'],plans:['plans'],
   analyse:['analyser','numbers'],dd:['analyser','dd'],pack:['analyser','pack'],send:['analyser','send'],pricing:['plans']};// old tab names map to the new structure
 const STEPS=['numbers','dd','pack','send'];
 function curStep(){let s='numbers';try{s=sessionStorage.getItem('dealpro:step')||'numbers'}catch(e){}return STEPS.includes(s)?s:'numbers'}
@@ -279,10 +279,10 @@ function go(v,step){const m=VIEWS[v]||VIEWS.home;v=m[0];step=step||m[1];const ch
   const apply=()=>{curView=v;document.documentElement.dataset.page=v;
     $$('.tab').forEach(t=>{if(t.dataset.v===v)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current')});
     $$('[data-view]').forEach(s=>s.hidden=s.dataset.view!==v);
-    if(v==='home')renderHome();if(v==='find'){renderFind();loadAICredits()}if(v==='analyser'){openAnalyser(step||curStep());loadAICredits()}if(v==='deals')renderDeals();if(v==='community')renderCommunity();if(v==='plans'){renderPlans();loadRefunds()}
+    if(v==='home')renderHome();if(v==='find'){renderFind();loadAICredits()}if(v==='analyser'){openAnalyser(step||curStep());loadAICredits()}if(v==='deals')renderDeals();if(v==='community')renderCommunity();if(v==='plans'){renderPlans();loadRefunds();loadReferrals()}
     try{sessionStorage.setItem('dealpro:tab',v)}catch(e){}
     const nav=$('.nav'),act=$(`.tab[data-v="${v}"]`);if(nav&&act&&nav.scrollWidth>nav.clientWidth)nav.scrollLeft=Math.max(0,act.offsetLeft-nav.offsetLeft-24);
-    if(v==='plans'&&step==='usage'){const us=$('#usage');if(us)setTimeout(()=>us.scrollIntoView({block:'start',behavior:reduced()?'auto':'smooth'}),30)}else window.scrollTo(0,0);heroUpdate();placeInd()};
+    if(v==='plans'&&(step==='usage'||step==='refer')){const us=$(step==='refer'?'#refer':'#usage');if(us)setTimeout(()=>us.scrollIntoView({block:'start',behavior:reduced()?'auto':'smooth'}),30)}else window.scrollTo(0,0);heroUpdate();placeInd()};
   // one smooth cross-fade with a slight rise between views; instant under reduced motion
   if(changed&&curView&&!reduced()&&document.startViewTransition){try{document.startViewTransition(apply);return}catch(e){}}
   apply();
@@ -2021,6 +2021,30 @@ document.addEventListener('click',e=>{const a=e.target.closest('a[href="#tutoria
 
 /* ---------- refunds ---------- */
 const RF_STATUS={pending:'Waiting for review',refunded:'Refunded',approved_manual:'Approved, refund on its way',declined:'Declined'};
+/* ---------- referrals: a link per offer; both people get the reward when the friend upgrades ---------- */
+const REF_KEY='dealpro:ref',REF_OFFERS={half3:['3 months half price','You both pay half price for 3 months.'],free10:['10 days free','You both get 10 days free.']};
+// Opening a referral link remembers it until the visitor has an account.
+(function(){try{const q=new URLSearchParams(location.search),code=(q.get('ref')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12),offer=q.get('offer');
+  if(code&&REF_OFFERS[offer]){localStorage.setItem(REF_KEY,JSON.stringify({code,offer,at:Date.now()}));q.delete('ref');q.delete('offer');
+    history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')+location.hash);setTimeout(()=>toast(`You've been invited to Deal Pro: ${REF_OFFERS[offer][0].toLowerCase()} for you both when you upgrade.`),1200)}}catch(e){}})();
+// After signing in, link the new account to whoever referred it (once).
+window.addEventListener('dealpro:signed-in',async()=>{let r=null;try{r=JSON.parse(localStorage.getItem(REF_KEY)||'null')}catch(e){}
+  if(!r||Date.now()-r.at>60*864e5){try{localStorage.removeItem(REF_KEY)}catch(e){}return}
+  try{const res=await fetch('/api/referrals',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:r.code,offer:r.offer})});const d=await res.json().catch(()=>({}));
+    if(res.ok){try{localStorage.removeItem(REF_KEY)}catch(e){}if(d.ok&&!d.already)toast(`${d.referrerName||'A friend'} referred you. When you upgrade, you both get ${d.offerName.toLowerCase()}.`)}}catch(e){}});
+async function loadReferrals(){const box=$('#referBox');if(!box)return;if(!document.body.dataset.userId){box.innerHTML='<p class="note" style="margin:0">Sign in to get your referral links.</p>';return}
+  try{const res=await fetch('/api/referrals',{credentials:'same-origin'});const d=await res.json();if(!res.ok)throw new Error(d.error||'');
+    const link=o=>`${location.origin}/?ref=${encodeURIComponent(d.code)}&offer=${o}`,fmt=t=>t?new Date(t).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
+    box.innerHTML=`${d.referredBy?`<p class="ref-banner">You were referred: you'll get <b>${esc(d.referredBy.offerName.toLowerCase())}</b> when you upgrade.</p>`:''}${d.pendingDiscount?`<p class="ref-banner">You've earned <b>${esc(d.pendingDiscount.toLowerCase())}</b>. It's applied when you upgrade.</p>`:''}
+      <p class="note" style="margin:0">Send a friend one of your links. When they sign up and buy an upgraded membership, you both get that reward. Pick the offer you think they'll like most.</p>
+      <div class="ref-offers">${Object.entries(REF_OFFERS).map(([o,[t,sub]])=>`<div class="ref-offer"><h3>${t}</h3><p>${sub}</p>
+        <div class="ref-link"><input class="inp" readonly id="refLink-${o}" value="${esc(link(o))}" aria-label="Your link for ${t}"><button class="btn sm" type="button" data-ref-copy="${o}">Copy</button></div>
+        <div class="ref-acts"><a class="btn sm primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`I use Deal Pro to find and analyse property deals. Sign up with my link and we both get ${t.toLowerCase()} when you upgrade: ${link(o)}`)}">Send on WhatsApp</a></div></div>`).join('')}</div>
+      ${d.referrals.length?`<div class="tw"><table class="ref-list"><thead><tr><th>Friend</th><th>Offer</th><th>Signed up</th><th>Your reward</th></tr></thead><tbody>${d.referrals.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.offerName)}</td><td>${fmt(r.signedUpAt)}</td><td>${r.paidAt?esc(r.reward):'Waiting for them to upgrade'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note" style="margin:0">No referrals yet. Your code is <b>'+esc(d.code)+'</b>.</p>'}`}
+  catch(e){box.innerHTML='<p class="note" style="margin:0">Your referral links couldn\'t load. Refresh the page to try again.</p>'}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-ref-copy]');if(!b)return;const i=$('#refLink-'+b.dataset.refCopy);if(!i)return;
+  const sel=()=>{i.focus();i.select();toast('Link selected. Press Ctrl/Cmd+C to copy.')};try{navigator.clipboard.writeText(i.value).then(()=>toast('Link copied.')).catch(sel)}catch(err){sel()}});
+window.addEventListener('dealpro:signed-in',()=>{if(curView==='plans')loadReferrals()});
 async function loadRefunds(){if(!document.body.dataset.userId){$('#refunds').hidden=true;return}$('#refunds').hidden=false;
   try{const r=await fetch('/api/refunds',{credentials:'same-origin'});const d=await r.json();if(!r.ok)throw 0;
     const L=d.requests||[],open=L.some(x=>x.status==='pending');
