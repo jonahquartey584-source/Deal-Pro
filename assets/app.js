@@ -2021,29 +2021,37 @@ document.addEventListener('click',e=>{const a=e.target.closest('a[href="#tutoria
 
 /* ---------- refunds ---------- */
 const RF_STATUS={pending:'Waiting for review',refunded:'Refunded',approved_manual:'Approved, refund on its way',declined:'Declined'};
-/* ---------- referrals: a link per offer; both people get the reward when the friend upgrades ---------- */
-const REF_KEY='dealpro:ref',REF_OFFERS={half3:['3 months half price','You both pay half price for 3 months.'],free10:['10 days free','You both get 10 days free.']};
+/* ---------- referrals: one link; when the friend upgrades, both claim a reward ---------- */
+const REF_KEY='dealpro:ref';
 // Opening a referral link remembers it until the visitor has an account.
-(function(){try{const q=new URLSearchParams(location.search),code=(q.get('ref')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12),offer=q.get('offer');
-  if(code&&REF_OFFERS[offer]){localStorage.setItem(REF_KEY,JSON.stringify({code,offer,at:Date.now()}));q.delete('ref');q.delete('offer');
-    history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')+location.hash);setTimeout(()=>toast(`You've been invited to Deal Pro: ${REF_OFFERS[offer][0].toLowerCase()} for you both when you upgrade.`),1200)}}catch(e){}})();
+(function(){try{const q=new URLSearchParams(location.search),code=(q.get('ref')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,12);
+  if(code){localStorage.setItem(REF_KEY,JSON.stringify({code,at:Date.now()}));q.delete('ref');q.delete('offer');
+    history.replaceState(null,'',location.pathname+(q.toString()?'?'+q:'')+location.hash);setTimeout(()=>toast("You've been invited to Deal Pro. When you upgrade, you and your friend both get 3 months half price."),1200)}}catch(e){}})();
 // After signing in, link the new account to whoever referred it (once).
 window.addEventListener('dealpro:signed-in',async()=>{let r=null;try{r=JSON.parse(localStorage.getItem(REF_KEY)||'null')}catch(e){}
   if(!r||Date.now()-r.at>60*864e5){try{localStorage.removeItem(REF_KEY)}catch(e){}return}
-  try{const res=await fetch('/api/referrals',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:r.code,offer:r.offer})});const d=await res.json().catch(()=>({}));
-    if(res.ok){try{localStorage.removeItem(REF_KEY)}catch(e){}if(d.ok&&!d.already)toast(`${d.referrerName||'A friend'} referred you. When you upgrade, you both get ${d.offerName.toLowerCase()}.`)}}catch(e){}});
-async function loadReferrals(){const box=$('#referBox');if(!box)return;if(!document.body.dataset.userId){box.innerHTML='<p class="note" style="margin:0">Sign in to get your referral links.</p>';return}
-  try{const res=await fetch('/api/referrals',{credentials:'same-origin'});const d=await res.json();if(!res.ok)throw new Error(d.error||'');
-    const link=o=>`${location.origin}/?ref=${encodeURIComponent(d.code)}&offer=${o}`,fmt=t=>t?new Date(t).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
-    box.innerHTML=`${d.referredBy?`<p class="ref-banner">You were referred: you'll get <b>${esc(d.referredBy.offerName.toLowerCase())}</b> when you upgrade.</p>`:''}${d.pendingDiscount?`<p class="ref-banner">You've earned <b>${esc(d.pendingDiscount.toLowerCase())}</b>. It's applied when you upgrade.</p>`:''}
-      <p class="note" style="margin:0">Send a friend one of your links. When they sign up and buy an upgraded membership, you both get that reward. Pick the offer you think they'll like most.</p>
-      <div class="ref-offers">${Object.entries(REF_OFFERS).map(([o,[t,sub]])=>`<div class="ref-offer"><h3>${t}</h3><p>${sub}</p>
-        <div class="ref-link"><input class="inp" readonly id="refLink-${o}" value="${esc(link(o))}" aria-label="Your link for ${t}"><button class="btn sm" type="button" data-ref-copy="${o}">Copy</button></div>
-        <div class="ref-acts"><a class="btn sm primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`I use Deal Pro to find and analyse property deals. Sign up with my link and we both get ${t.toLowerCase()} when you upgrade: ${link(o)}`)}">Send on WhatsApp</a></div></div>`).join('')}</div>
-      ${d.referrals.length?`<div class="tw"><table class="ref-list"><thead><tr><th>Friend</th><th>Offer</th><th>Signed up</th><th>Your reward</th></tr></thead><tbody>${d.referrals.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.offerName)}</td><td>${fmt(r.signedUpAt)}</td><td>${r.paidAt?esc(r.reward):'Waiting for them to upgrade'}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note" style="margin:0">No referrals yet. Your code is <b>'+esc(d.code)+'</b>.</p>'}`}
-  catch(e){box.innerHTML='<p class="note" style="margin:0">Your referral links couldn\'t load. Refresh the page to try again.</p>'}}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-ref-copy]');if(!b)return;const i=$('#refLink-'+b.dataset.refCopy);if(!i)return;
-  const sel=()=>{i.focus();i.select();toast('Link selected. Press Ctrl/Cmd+C to copy.')};try{navigator.clipboard.writeText(i.value).then(()=>toast('Link copied.')).catch(sel)}catch(err){sel()}});
+  try{const res=await fetch('/api/referrals',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:r.code})});const d=await res.json().catch(()=>({}));
+    if(res.ok){try{localStorage.removeItem(REF_KEY)}catch(e){}if(d.ok&&!d.already)toast(`${d.referrerName||'A friend'} referred you. When you upgrade, you both get 3 months half price.`)}}catch(e){}});
+let REF=null;
+const refClaim=(id,offers)=>Object.entries(offers).map(([o,x])=>`<button class="btn sm primary" type="button" data-ref-claim="${esc(id)}" data-offer="${o}">Claim ${esc(x.name.toLowerCase())}</button>`).join(' ');
+const refStatus=(x,offers)=>x.status==='choose'?refClaim(x.id,offers):x.status==='applied'&&x.offerName?`${esc(x.offerName)}: applied`:esc(x.offerName&&x.status!=='waiting'?`${x.offerName}: ${x.text.toLowerCase()}`:x.text);
+async function loadReferrals(){const box=$('#referBox');if(!box)return;if(!document.body.dataset.userId){box.innerHTML='<p class="note" style="margin:0">Sign in to get your referral link.</p>';return}
+  try{const res=await fetch('/api/referrals',{credentials:'same-origin'});const d=await res.json();if(!res.ok)throw new Error(d.error||'');REF=d;
+    const link=`${location.origin}/?ref=${encodeURIComponent(d.code)}`,fmt=t=>t?new Date(t).toLocaleDateString('en-GB',{day:'2-digit',month:'2-digit',year:'2-digit'}):'';
+    const rewardNames=Object.values(d.offers).map(x=>x.name.toLowerCase()).join(' or ');
+    const me=d.referredBy;
+    box.innerHTML=`${me?(me.status==='choose'?`<div class="ref-banner"><b>${esc(me.by)}'s referral is complete.</b> Claim your reward: ${refClaim(me.id,d.offers)}</div>`:me.paid?`<p class="ref-banner">Your referral reward: ${refStatus(me,d.offers)}</p>`:`<p class="ref-banner">${esc(me.by)} referred you. When you upgrade, you'll both get ${esc(rewardNames)}.</p>`):''}${d.pendingDiscount?`<p class="ref-banner">You've earned <b>${esc(d.pendingDiscount.toLowerCase())}</b>. It's applied when you upgrade.</p>`:''}
+      <p class="note" style="margin:0">Share your link. When a friend signs up and buys an upgraded membership, you both get <b>${esc(rewardNames)}</b>.</p>
+      <div class="ref-one"><div class="ref-link"><input class="inp" readonly id="refLink" value="${esc(link)}" aria-label="Your referral link"><button class="btn sm" type="button" data-ref-copy>Copy</button></div>
+        <a class="btn sm primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(`I use Deal Pro to find and analyse property deals. Sign up with my link and when you upgrade we both get ${rewardNames}: ${link}`)}">Send on WhatsApp</a></div>
+      ${d.referrals.length?`<div class="tw"><table class="ref-list"><thead><tr><th>Friend</th><th>Signed up</th><th>Your reward</th></tr></thead><tbody>${d.referrals.map(r=>`<tr><td>${esc(r.name)}</td><td>${fmt(r.signedUpAt)}</td><td>${refStatus(r,d.offers)}</td></tr>`).join('')}</tbody></table></div>`:'<p class="note" style="margin:0">No referrals yet. Your code is <b>'+esc(d.code)+'</b>.</p>'}`}
+  catch(e){box.innerHTML='<p class="note" style="margin:0">Your referral link couldn\'t load. Refresh the page to try again.</p>'}}
+document.addEventListener('click',async e=>{const c=e.target.closest('[data-ref-copy]');if(c){const i=$('#refLink');if(!i)return;
+    const sel=()=>{i.focus();i.select();toast('Link selected. Press Ctrl/Cmd+C to copy.')};try{navigator.clipboard.writeText(i.value).then(()=>toast('Link copied.')).catch(sel)}catch(err){sel()}return}
+  const b=e.target.closest('[data-ref-claim]');if(!b)return;b.disabled=true;
+  try{const res=await fetch('/api/referrals',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({choose:b.dataset.refClaim,offer:b.dataset.offer})});const d=await res.json().catch(()=>({}));
+    if(!res.ok)throw new Error(d.error||'The reward couldn\'t be claimed. Please try again.');toast(d.status==='applied'?`${d.offerName} claimed and applied.`:`${d.offerName} claimed. It will be applied to your billing shortly.`);loadReferrals()}
+  catch(err){toast(err.message);b.disabled=false}});
 window.addEventListener('dealpro:signed-in',()=>{if(curView==='plans')loadReferrals()});
 async function loadRefunds(){if(!document.body.dataset.userId){$('#refunds').hidden=true;return}$('#refunds').hidden=false;
   try{const r=await fetch('/api/refunds',{credentials:'same-origin'});const d=await r.json();if(!r.ok)throw 0;

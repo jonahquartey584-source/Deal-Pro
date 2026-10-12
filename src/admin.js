@@ -110,7 +110,7 @@ rfBox.addEventListener("click", async (event) => {
 // ---------- referrals ----------
 const refBox = document.querySelector("#referrals");
 const refStatus = document.querySelector("#refStatus");
-const REF_STATUS = { waiting: ["Waiting for the friend to upgrade", ""], applied: ["Applied", "ok"], manual: ["Apply by hand in Stripe", "warnc"], "on-upgrade": ["Applied when they upgrade", ""], "not-needed": ["Not needed", ""] };
+const REF_STATUS = { waiting: ["Waiting for the friend to upgrade", ""], choose: ["Not claimed yet", ""], applied: ["Applied", "ok"], manual: ["Apply by hand in Stripe", "warnc"], "on-upgrade": ["Applied when they upgrade", ""], "not-needed": ["Not needed", ""] };
 async function refApi(options = {}) {
   const response = await fetch("/api/referrals" + (options.method ? "" : "?all=1"), { credentials: "same-origin", headers: { "Content-Type": "application/json" }, ...options });
   const data = await response.json().catch(() => ({}));
@@ -118,12 +118,12 @@ async function refApi(options = {}) {
   return data;
 }
 const person = (p) => p ? `${esc(p.name || "No name given")}<div class="sub">${esc(p.email)} · ${esc(p.plan === "Pro" ? "Premium" : p.plan === "Lite" ? "Deal Community" : p.plan)}</div>` : "Unknown";
-const rewardCell = (r, side) => { const x = r[side] || { status: "waiting", detail: "" }; const [label, cls] = REF_STATUS[x.status] || [x.status, ""];
-  return `<div class="rw"><div class="sub">${side === "friend" ? "Friend's reward" : "Referrer's reward"}</div><div class="${cls}">${esc(label)}</div>${x.detail ? `<div class="sub">${esc(x.detail)}</div>` : ""}${x.status === "manual" ? `<button class="btn" data-ref-done="${esc(r.friendId)}" data-side="${side}">Mark applied</button>` : ""}</div>`; };
+const rewardCell = (r, side) => { const x = r[side] || { status: "waiting", detail: "" }; const [label, cls] = x.status === "waiting" && x.offer ? ["Being applied", "warnc"] : (REF_STATUS[x.status] || [x.status, ""]); const offer = side === "friend" ? r.friendOffer : r.referrerOffer;
+  return `<div class="rw"><div class="sub">${side === "friend" ? "Friend's reward" : "Referrer's reward"}${offer ? ` · ${esc(offer)}` : ""}</div><div class="${cls}">${esc(label)}</div>${x.detail ? `<div class="sub">${esc(x.detail)}</div>` : ""}${x.status === "manual" ? `<button class="btn" data-ref-done="${esc(r.friendId)}" data-side="${side}">Mark applied</button>` : ""}</div>`; };
 async function loadReferrals() {
   const data = await refApi();
   refStatus.textContent = `${data.referrals.length} referral${data.referrals.length === 1 ? "" : "s"}, ${data.referrals.filter((r) => r.paidAt).length} upgraded.${data.stripeConnected ? "" : " Stripe isn't connected, so rewards for people paying through Stripe are listed here to apply by hand."}`;
-  refBox.innerHTML = data.referrals.length ? data.referrals.map((r) => `<article class="refrow"><div class="rw"><div class="email">${person(r.referrerInfo)}</div><div class="sub">referred ${person(r.friendInfo)}</div><div class="sub">${esc(r.offerName)} · signed up ${esc(fmtJoined(r.signedUpAt))}${r.paidAt ? ` · upgraded ${esc(fmtJoined(r.paidAt))}` : ""}</div></div>${rewardCell(r, "friend")}${rewardCell(r, "referrer")}</article>`).join("") : '<div class="empty">No referrals yet.</div>';
+  refBox.innerHTML = data.referrals.length ? data.referrals.map((r) => `<article class="refrow"><div class="rw"><div class="email">${person(r.referrerInfo)}</div><div class="sub">referred ${person(r.friendInfo)}</div><div class="sub">Signed up ${esc(fmtJoined(r.signedUpAt))}${r.paidAt ? ` · upgraded ${esc(fmtJoined(r.paidAt))}` : ""}</div></div>${rewardCell(r, "friend")}${rewardCell(r, "referrer")}</article>`).join("") : '<div class="empty">No referrals yet.</div>';
 }
 refBox.addEventListener("click", async (event) => { const b = event.target.closest("[data-ref-done]"); if (!b) return; b.disabled = true;
   try { await refApi({ method: "PATCH", body: JSON.stringify({ friendId: b.dataset.refDone, side: b.dataset.side }) }); await loadReferrals(); refStatus.textContent = "Marked as applied."; }

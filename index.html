@@ -206,14 +206,13 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .check input{margin:2px 0 0;width:15px;height:15px;accent-color:var(--brand);flex:none}
 .fields{display:grid;gap:12px}
 .schips{display:flex;flex-wrap:wrap;gap:6px}.schip{position:relative;display:inline-flex}.schip input{position:absolute;opacity:0;width:1px;height:1px}.schip span{display:inline-block;padding:4px 10px;border:1px solid var(--line-2);border-radius:999px;font-size:12.5px;color:var(--ink-2);cursor:pointer;background:var(--surface-2)}.schip input:checked+span{color:var(--ink);border-color:var(--accent);background:var(--brand-soft)}.schip input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
-.ref-offers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+.ref-one{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}.ref-one .ref-link{flex:1 1 320px;min-width:0}.ref-banner .btn{margin-left:6px}
 .ref-offer{border:1px solid var(--line-2);border-radius:10px;padding:14px;display:grid;gap:8px;background:var(--surface-2);min-width:0}
 .ref-offer h3{margin:0;font-size:15px}.ref-offer p{margin:0;font-size:13px;color:var(--ink-2)}
 .ref-link{display:flex;gap:6px}.ref-link .inp{flex:1;min-width:0;font-family:var(--mono);font-size:12.5px}
 .ref-acts{display:flex;flex-wrap:wrap;gap:6px}
 .ref-list{width:100%;border-collapse:collapse;font-size:13px}.ref-list th,.ref-list td{text-align:left;padding:7px 8px;border-top:1px solid var(--line)}.ref-list th{color:var(--ink-2);font-weight:500;border-top:0}
 .ref-banner{border:1px solid var(--accent);background:var(--brand-soft);border-radius:8px;padding:10px 12px;font-size:13.5px;margin:0 0 12px}
-@media (max-width:700px){.ref-offers{grid-template-columns:minmax(0,1fr)}}
 .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 
@@ -1485,8 +1484,8 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
     <div class="plans" id="plans"></div>
 
     <section class="sec" id="refer" aria-labelledby="referH">
-      <div class="sec-h"><h2 id="referH">Refer a friend</h2><span class="sec-meta">You both get the reward</span></div>
-      <div class="panel"><div class="fs" id="referBox"><p class="note" style="margin:0">Sign in to get your referral links.</p></div></div>
+      <div class="sec-h"><h2 id="referH">Refer a friend</h2><span class="sec-meta">You both get 3 months half price</span></div>
+      <div class="panel"><div class="fs" id="referBox"><p class="note" style="margin:0">Sign in to get your referral link.</p></div></div>
     </section>
 
     <section class="sec" id="refunds" aria-labelledby="refundsH">
@@ -1610,7 +1609,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
   <div class="dr-foot"><span class="hint" id="sgHint" aria-live="polite"></span><button class="btn" id="ulBack" type="button" hidden>Back</button><button class="btn" id="sgCancel" type="button">Cancel</button><button class="btn primary" id="sgSign" type="button" disabled>Continue to payment</button><button class="btn primary" id="payBtn" type="button" hidden>Pay £500</button></div>
 </dialog>
 
-<script src="/assets/app.js?v=3" defer></script>
+<script src="/assets/app.js?v=4" defer></script>
 <script type="module" src="/assets/auth.js"></script>
 
 </body>
