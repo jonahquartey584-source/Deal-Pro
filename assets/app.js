@@ -115,6 +115,132 @@ function month(u,occ,rate,a){rate=rate??u.rate;const n=Math.round(D*occ),rev=n*r
 function be(u,a,rate){rate=rate??u.rate;const per=rate*(1-a.fee/100)-a.clean/Math.max(a.stay,1);if(per<=0)return Infinity;return (u.rent+a.other)/per/D}
 const OCC=[.6,.8,1];
 
+/* ---------- strategy models: the Numbers step follows the deal's strategy ---------- */
+// R2SA keeps the nightly-rate model above. Owned SA uses it with a mortgage in place of rent.
+// Purchases (BTL, HMO, BRRR, flip, commercial) and R2R / lease options get their own figures.
+const MODEL_OF={R2SA:'sa',SA:'ownsa',R2R:'r2r',HMO:'hmo',BTL:'btl',Commercial:'btl',BRRR:'brrr',Flip:'flip',LeaseOption:'lo'};
+const modelOf=d=>MODEL_OF[d&&d.strat]||'sa';
+const BUY_MODELS=new Set(['ownsa','btl','hmo','brrr','flip']);
+const DEF_P={dep:25,rate:5.5,costs:15,legal:1500,ltv:75,fin:10,months:6,agent:1.5,hold:250};
+const dealP=d=>Object.assign({},DEF_P,d.p||{});
+// The figures asked for on each unit, per model: [field, label].
+const UNIT_FIELDS={
+  sa:[['rent','Rent pcm'],['dep','Deposit'],['rate','Nightly rate']],
+  ownsa:[['price','Purchase price'],['refurb','Refurb and furnishing'],['rate','Nightly rate']],
+  r2r:[['rent','Rent pcm'],['dep','Deposit'],['bills','Bills pcm'],['rooms','Rooms'],['roomRent','Rent per room pcm']],
+  hmo:[['price','Purchase price'],['refurb','Refurb'],['bills','Bills pcm'],['rooms','Rooms'],['roomRent','Rent per room pcm']],
+  btl:[['price','Purchase price'],['mrent','Rent pcm'],['refurb','Refurb']],
+  brrr:[['price','Purchase price'],['refurb','Refurb'],['gdv','End value'],['mrent','Rent pcm after works']],
+  flip:[['price','Purchase price'],['refurb','Refurb'],['gdv','Resale value']],
+  lo:[['rent','Monthly payment to owner'],['dep','Option fee'],['mrent','Rent pcm from tenant']],
+};
+// Assumption inputs each model uses (ids in the Assumptions panel).
+const ASM_OF={sa:['aFee','aClean','aStay','aOther'],ownsa:['pDep','pRate','pLegal','aFee','aClean','aStay','aOther'],r2r:['aOther'],
+  hmo:['pDep','pRate','pCosts','pLegal'],btl:['pDep','pRate','pCosts','pLegal'],brrr:['pRate','pCosts','pLegal','pLtv'],
+  flip:['pDep','pFin','pMonths','pHold','pLegal','pAgent'],lo:['pCosts','pLegal']};
+const ASM_NOTE={sa:'30-day month. Other costs cover insurance, software, consumables and minor repairs per unit. Rent is treated as bills-included.',
+  ownsa:'Interest-only mortgage on the rest of the price. Stamp duty includes the 5% surcharge for additional properties. Other costs cover insurance, software, consumables, bills and minor repairs.',
+  r2r:'Profit at 75%, 90% and 100% of rooms let. Other costs cover insurance, software, cleaning of shared areas and minor repairs per unit.',
+  btl:'Interest-only mortgage. Running costs cover letting and management, maintenance, insurance and voids, as a share of rent. Stamp duty includes the 5% surcharge for additional properties.',
+  hmo:'Interest-only mortgage. Running costs (management, maintenance, insurance, voids) are a share of room rent; bills are on top. Stamp duty includes the 5% surcharge.',
+  brrr:'Bought with cash or bridging, then refinanced on an interest-only mortgage at the loan-to-value shown. Stamp duty includes the 5% surcharge.',
+  flip:'Bridging interest on the borrowed part of the price for the months held. Selling costs: the agent fee plus VAT and £1,000 legal fees. Stamp duty includes the 5% surcharge.',
+  lo:'Running costs cover letting and management, maintenance and voids, as a share of the rent you charge.'};
+const nn=v=>+v||0;
+const ioMortgage=(loan,rate)=>loan*rate/100/12;// interest-only, monthly
+const R2R_OCC=[.75,.9,1];
+function unitCalc(m,u,p,a){const price=nn(u.price),ref=nn(u.refurb),sd=price?sdltAdditional(price):0;
+  if(m==='btl'||m==='hmo'){const loan=price*(1-p.dep/100),mo=ioMortgage(loan,p.rate),rooms=nn(u.rooms),rent=m==='hmo'?rooms*nn(u.roomRent):nn(u.mrent),
+      costs=rent*p.costs/100+(m==='hmo'?nn(u.bills):0),cash=price*p.dep/100+sd+p.legal+ref,cf=rent-mo-costs;
+    return {price,ref,sd,loan,mo,rent,costs,cash,cf,dep:price*p.dep/100,stress:rent-ioMortgage(loan,p.rate+2)-costs,gy:price?rent*12/price:NaN,roi:cash?cf*12/cash:NaN,
+      lender:loan?rent/ioMortgage(loan,Math.max(p.rate,5.5)):Infinity}}
+  if(m==='brrr'){const gdv=nn(u.gdv),moneyIn=price+sd+p.legal+ref,refi=gdv*p.ltv/100,left=moneyIn-refi,mo=ioMortgage(refi,p.rate),rent=nn(u.mrent),costs=rent*p.costs/100,cf=rent-mo-costs;
+    return {price,ref,sd,gdv,moneyIn,refi,left,mo,rent,costs,cf,uplift:gdv-price-ref,roi:left>0?cf*12/left:Infinity}}
+  if(m==='flip'){const gdv=nn(u.gdv),loan=price*(1-p.dep/100),fin=ioMortgage(loan,p.fin)*p.months,hold=p.hold*p.months,sale=gdv*p.agent/100*1.2+(gdv?1000:0),
+      cash=price*p.dep/100+sd+p.legal+ref+fin+hold,profit=gdv-price-sd-p.legal-ref-fin-hold-sale;
+    return {price,ref,sd,gdv,loan,fin,hold,sale,cash,profit,dep:price*p.dep/100,margin:gdv?profit/gdv:NaN,roi:cash?profit/cash:NaN}}
+  if(m==='lo'){const rent=nn(u.mrent),pay=nn(u.rent),costs=rent*p.costs/100,cf=rent-pay-costs,cash=nn(u.dep)+p.legal;return {rent,pay,costs,cf,cash,fee:nn(u.dep),roi:cash?cf*12/cash:NaN}}
+  if(m==='r2r'){const rooms=nn(u.rooms),rr=nn(u.roomRent),bills=nn(u.bills),rent=nn(u.rent),fixed=rent+bills+a.other,full=rooms*rr;
+    return {rooms,rr,bills,rent,full,fixed,dep:nn(u.dep),at:o=>full*o-fixed,be:full?fixed/full:Infinity,cash:rent+nn(u.dep)}}
+  if(m==='ownsa'){const loan=price*(1-p.dep/100),mo=ioMortgage(loan,p.rate);return {price,ref,sd,loan,mo,dep:price*p.dep/100,cash:price*p.dep/100+sd+p.legal+ref}}
+  return {}}
+// Does the deal have the figures its model needs?
+const NEEDS={sa:u=>nn(u.rent)>0||nn(u.dep)>0||nn(u.rate)>0,ownsa:u=>nn(u.price)>0&&nn(u.rate)>0,r2r:u=>nn(u.rent)>0&&nn(u.rooms)>0&&nn(u.roomRent)>0,
+  hmo:u=>nn(u.price)>0&&nn(u.rooms)>0&&nn(u.roomRent)>0,btl:u=>nn(u.price)>0&&nn(u.mrent)>0,brrr:u=>nn(u.price)>0&&nn(u.gdv)>0,flip:u=>nn(u.price)>0&&nn(u.gdv)>0,lo:u=>nn(u.rent)>0&&nn(u.mrent)>0};
+const NEEDS_TXT={sa:'the rent, deposit and expected nightly rate',ownsa:'the purchase price and expected nightly rate',r2r:'the rent, number of rooms and rent per room',
+  hmo:'the purchase price, number of rooms and rent per room',btl:'the purchase price and the rent',brrr:'the purchase price and the end value after works',flip:'the purchase price and the resale value',lo:'the monthly payment to the owner and the rent from the tenant'};
+const modelHas=d=>(d.units||[]).some(NEEDS[modelOf(d)]);
+const sumOf=(L,k)=>L.reduce((s,x)=>s+(+x[k]||0),0);
+const pctTxt=x=>isFinite(x)?(Math.round(x*1000)/10).toFixed(1).replace(/\.0$/,'')+'%':'–';
+// The four headline figures for a deal, whatever its strategy: [label, value text, note, negative?].
+function modelStrip(d){const m=modelOf(d),a=d.a,p=dealP(d),U=d.units||[];
+  if(m==='sa'||m==='ownsa'){const own=m==='ownsa',C=own?U.map(u=>unitCalc(m,u,p,a)):null,UU=own?U.map((u,i)=>Object.assign({},u,{rent:C[i].mo})):U;
+    const tot=OCC.map(o=>UU.reduce((s,u)=>s+month(u,o,null,a).surplus,0)),bes=UU.map(u=>be(u,a)),w=bes.length?Math.max(...bes):NaN;
+    return [[own?'Cash needed':'Upfront cash',gbp(own?sumOf(C,'cash'):sumOf(U,'rent')+sumOf(U,'dep')),own?'Deposit, stamp duty, fees, refurb':'Deposits and first month'],
+      ['Surplus at 60%',gbp(tot[0]),'Per month, all units',tot[0]<0],['Surplus at 80%',gbp(tot[1]),'Per month, all units',tot[1]<0],
+      ['Break-even',isFinite(w)?pct(w):'Never','Occupancy, weakest unit'],{t60:tot[0],t80:tot[1],up:own?sumOf(C,'cash'):sumOf(U,'rent')+sumOf(U,'dep'),monthly:tot[1]}]}
+  const C=U.map(u=>unitCalc(m,u,p,a));
+  if(m==='btl'||m==='hmo'){const cash=sumOf(C,'cash'),cf=sumOf(C,'cf'),gy=sumOf(C,'price')?sumOf(C,'rent')*12/sumOf(C,'price'):NaN,roi=cash?cf*12/cash:NaN;
+    return [['Cash needed',gbp(cash),'Deposit, stamp duty, fees, refurb'],['Cash flow',gbp(cf),'Per month after mortgage and costs',cf<0],['Gross yield',pctTxt(gy),m==='hmo'?'Room rent a year ÷ price':'Rent a year ÷ price'],['Return on cash',pctTxt(roi),'Cash flow a year ÷ cash needed',roi<0],{up:cash,monthly:cf}]}
+  if(m==='brrr'){const mi=sumOf(C,'moneyIn'),left=sumOf(C,'left'),cf=sumOf(C,'cf'),roi=left>0?cf*12/left:Infinity;
+    return [['Money in',gbp(mi),'Price, stamp duty, fees, refurb'],['Left in after refinance',left<=0?`${gbp(-left)} out`:gbp(left),left<=0?'All your money back, and more':'Stays in the deal',left>0&&left>mi*.5],['Cash flow',gbp(cf),'Per month after refinance',cf<0],['Return on money left in',isFinite(roi)?pctTxt(roi):'Infinite','Cash flow a year ÷ money left in',roi<0],{up:mi,monthly:cf}]}
+  if(m==='flip'){const cash=sumOf(C,'cash'),profit=sumOf(C,'profit'),gdv=sumOf(C,'gdv'),mg=gdv?profit/gdv:NaN,roi=cash?profit/cash:NaN;
+    return [['Cash in',gbp(cash),'Deposit, costs, refurb, finance'],['Profit',gbp(profit),'After all buying, holding and selling costs',profit<0],['Margin',pctTxt(mg),'Profit ÷ resale value',mg<.15],['Return on cash',pctTxt(roi),`Over ${dealP(d).months} months`,roi<0],{up:cash,monthly:null}]}
+  if(m==='lo'){const cash=sumOf(C,'cash'),cf=sumOf(C,'cf'),roi=cash?cf*12/cash:NaN;
+    return [['Upfront',gbp(cash),'Option fee and legal costs'],['Cash flow',gbp(cf),'Per month after the payment and costs',cf<0],['Cash flow a year',gbp(cf*12),'Before tax',cf<0],['Return on upfront',pctTxt(roi),'Cash flow a year ÷ upfront',roi<0],{up:cash,monthly:cf}]}
+  if(m==='r2r'){const at=o=>C.reduce((s,c)=>s+c.at(o),0),w=C.length?Math.max(...C.map(c=>c.be)):NaN,up=sumOf(C,'cash');
+    return [['Upfront cash',gbp(up),'Deposits and first month'],['Profit at 90%',gbp(at(.9)),'Rooms let, per month',at(.9)<0],['Profit at 100%',gbp(at(1)),'Per month, all rooms let',at(1)<0],['Break-even',isFinite(w)?pct(w):'Never','Rooms let, weakest unit'],{up,monthly:at(.9)}]}
+  return []}
+// One line per unit, for due diligence research and the Deal Notice.
+function unitText(d,u){const m=modelOf(d);
+  if(BUY_MODELS.has(m))return `${u.label}: purchase price ${gbp(nn(u.price))}${nn(u.mrent)?`, rent ${gbp(nn(u.mrent))}/month`:''}${nn(u.rooms)?`, ${nn(u.rooms)} rooms at ${gbp(nn(u.roomRent))}`:''}${nn(u.refurb)?`, refurb ${gbp(nn(u.refurb))}`:''}${nn(u.gdv)?`, ${m==='flip'?'resale':'end'} value ${gbp(nn(u.gdv))}`:''}${m==='ownsa'&&u.rate?`, nightly rate £${u.rate}`:''}`;
+  if(m==='lo')return `${u.label}: monthly payment ${gbp(nn(u.rent))}, option fee ${gbp(nn(u.dep))}, rent from tenant ${gbp(nn(u.mrent))}/month`;
+  if(m==='r2r')return `${u.label}: rent ${gbp(nn(u.rent))}/month, deposit ${gbp(nn(u.dep))}, ${nn(u.rooms)} rooms at ${gbp(nn(u.roomRent))}, bills ${gbp(nn(u.bills))}/month`;
+  return `${u.label}: rent ${gbp(nn(u.rent))}/month, deposit ${gbp(nn(u.dep))}${u.rate?`, nightly rate £${u.rate}`:''}`}
+// Numbers step for the models other than R2SA and owned SA.
+function renderModel(d,m){const a=d.a,p=dealP(d),U=d.units,C=U.map(u=>unitCalc(m,u,p,a)),S4=modelStrip(d);
+  let h=`<div class="strip" role="group" aria-label="Deal summary">${S4.slice(0,4).map(([l,v,s,neg])=>`<div class="fig"><div class="fig-l">${l}</div><div class="fig-v${neg?' neg':''}">${v}</div><div class="fig-s">${s}</div></div>`).join('')}</div>`;
+  const al=[];
+  if(m==='btl'||m==='hmo'){C.forEach((c,i)=>{if(c.cf<0)al.push(`<div class="alert bad"><b>${esc(U[i].label)} loses money each month</b> after the mortgage and running costs (${gbp(c.cf)}).</div>`);
+      else if(c.lender<1.25)al.push(`<div class="alert warn"><b>${esc(U[i].label)} may fail a lender's rent check.</b> Lenders usually want the rent to be at least 125% (often 145%) of the mortgage interest at a stressed rate. Here it is ${pct(c.lender)}. A bigger deposit or a limited company mortgage may be needed.</div>`)});
+    if(m==='hmo'&&U.some(u=>nn(u.rooms)>=5))al.push(`<div class="alert warn"><b>HMO licence.</b> Five or more tenants from two or more households need a mandatory HMO licence. Check the council's additional licensing and any Article 4 direction before buying.</div>`)}
+  if(m==='brrr')C.forEach((c,i)=>{if(c.uplift<=0)al.push(`<div class="alert bad"><b>${esc(U[i].label)}: the end value doesn't cover the price and refurb.</b> There is no uplift to refinance.</div>`);
+    else if(c.left>0)al.push(`<div class="alert warn"><b>${esc(U[i].label)}: ${gbp(c.left)} stays in the deal</b> after refinancing at ${p.ltv}% of the end value. The refinance depends on the lender's valuation.</div>`);
+    if(c.cf<0)al.push(`<div class="alert bad"><b>${esc(U[i].label)} loses money each month</b> after refinancing (${gbp(c.cf)}).</div>`)});
+  if(m==='flip')C.forEach((c,i)=>{if(c.profit<0)al.push(`<div class="alert bad"><b>${esc(U[i].label)} makes a loss</b> of ${gbp(-c.profit)} after costs.</div>`);
+    else if(c.margin<.15)al.push(`<div class="alert warn"><b>${esc(U[i].label)}: a thin margin</b> of ${pctTxt(c.margin)}. Many investors aim for 20% of the resale value to cover overruns and price drops.</div>`)});
+  if(m==='r2r'){C.forEach((c,i)=>{if(c.be>.9)al.push(`<div class="alert ${c.be>1?'bad':'warn'}"><b>${esc(U[i].label)} needs ${isFinite(c.be)?pct(c.be):'more than 100%'} of rooms let</b> to break even.</div>`)});
+    al.push(`<div class="alert warn"><b>Landlord's consent.</b> Get written permission to let by the room. Five or more tenants from two or more households need an HMO licence.</div>`)}
+  if(m==='lo')C.forEach((c,i)=>{if(c.cf<0)al.push(`<div class="alert bad"><b>${esc(U[i].label)} loses money each month</b> (${gbp(c.cf)}).</div>`)});
+  if(!al.length)al.push(`<div class="alert good">No automatic flags. Due diligence still needs to be completed.</div>`);
+  h+=`<div class="alerts">${al.join('')}</div>`;
+  const multi=U.length>1;
+  const tbl=(title,meta,rows)=>`<section class="sec"><div class="sec-h"><h2>${title}</h2><span class="sec-meta">${meta}</span></div><div class="tw"><table><thead><tr><th>Per unit</th>${U.map(u=>`<th class="gh">${esc(u.label)}</th>`).join('')}${multi?'<th class="gh">All units</th>':''}</tr></thead><tbody>
+    ${rows.map(([lab,f,cls,fmt])=>{const vals=C.map(f),all=multi&&fmt!=='none'?vals.reduce((s,v)=>s+(isFinite(v)?v:0),0):null,show=v=>fmt==='pct'?pctTxt(v):typeof v==='number'?gbp(v):v;
+      return `<tr class="${cls||''}"><td>${lab}</td>${vals.map(v=>`<td class="n${typeof v==='number'&&v<0?' neg':''}">${show(v)}</td>`).join('')}${multi?`<td class="n">${fmt==='pct'||fmt==='none'?'':gbp(all)}</td>`:''}</tr>`}).join('')}
+  </tbody></table></div></section>`;
+  if(m==='btl'||m==='hmo'){
+    h+=tbl('Buying costs','Cash needed to complete',[['Purchase price',c=>c.price],[`Deposit (${p.dep}%)`,c=>c.dep],['Stamp duty (est.)',c=>c.sd],['Legal and survey',()=>p.legal],['Refurb',c=>c.ref],['Cash needed',c=>c.cash,'total']]);
+    h+=tbl('Monthly cash flow','Interest-only mortgage',[[m==='hmo'?'Room rent (all rooms)':'Rent',c=>c.rent],[`Mortgage interest (${p.rate}%)`,c=>-c.mo],[m==='hmo'?`Running costs (${p.costs}%) and bills`:`Running costs (${p.costs}%)`,c=>-c.costs],['Cash flow',c=>c.cf,'total'],[`If rates rise to ${p.rate+2}%`,c=>c.stress],['Gross yield',c=>c.gy,'','pct'],['Return on cash a year',c=>c.roi,'','pct']]);
+  }else if(m==='brrr'){
+    h+=tbl('Money in','Before refinancing',[['Purchase price',c=>c.price],['Stamp duty (est.)',c=>c.sd],['Legal and survey',()=>p.legal],['Refurb',c=>c.ref],['Money in',c=>c.moneyIn,'total']]);
+    h+=tbl('Refinance',`At ${p.ltv}% of the end value`,[['End value',c=>c.gdv],['Uplift over price and refurb',c=>c.uplift],[`New mortgage (${p.ltv}%)`,c=>c.refi],['Money left in',c=>c.left,'total']]);
+    h+=tbl('Monthly cash flow','After refinancing, interest-only',[['Rent',c=>c.rent],[`Mortgage interest (${p.rate}%)`,c=>-c.mo],[`Running costs (${p.costs}%)`,c=>-c.costs],['Cash flow',c=>c.cf,'total'],['Return on money left in a year',c=>c.roi,'','pct']]);
+  }else if(m==='flip'){
+    h+=tbl('Costs','Buying, holding and selling',[['Purchase price',c=>c.price],['Stamp duty (est.)',c=>c.sd],['Legal and survey',()=>p.legal],['Refurb',c=>c.ref],[`Bridging interest (${p.fin}%, ${p.months} months)`,c=>c.fin],[`Holding costs (${p.months} months)`,c=>c.hold],[`Selling costs (${p.agent}% + VAT, legal)`,c=>c.sale]]);
+    h+=tbl('Profit','When sold at the resale value',[['Resale value',c=>c.gdv],['Profit',c=>c.profit,'total'],['Margin on resale value',c=>c.margin,'','pct'],['Cash in',c=>c.cash],['Return on cash',c=>c.roi,'','pct']]);
+  }else if(m==='lo'){
+    h+=tbl('Monthly cash flow','Per month',[['Rent from tenant',c=>c.rent],['Payment to owner',c=>-c.pay],[`Running costs (${p.costs}%)`,c=>-c.costs],['Cash flow',c=>c.cf,'total'],['Upfront (option fee and legal)',c=>c.cash],['Return on upfront a year',c=>c.roi,'','pct']]);
+  }else if(m==='r2r'){
+    const h1=`<tr><th rowspan="2">Per unit, per month</th>${U.map(u=>`<th colspan="3" class="gh gs">${esc(u.label)}</th>`).join('')}</tr>`,h2=`<tr>${U.map(()=>R2R_OCC.map((o,j)=>`<th class="${j?'':'gs'}">${pct(o)}</th>`).join('')).join('')}</tr>`;
+    const row=(lab,f,cls='')=>`<tr class="${cls}"><td>${lab}</td>${C.map(c=>R2R_OCC.map((o,j)=>{const v=f(c,o);return `<td class="n${j?'':' gs'}${typeof v==='number'&&v<0?' neg':''}">${typeof v==='number'?gbp(v):v}</td>`}).join('')).join('')}</tr>`;
+    h+=`<section class="sec"><div class="sec-h"><h2>Monthly model</h2><span class="sec-meta">Per unit with 75%, 90% and 100% of rooms let</span></div><div class="tw"><table><thead>${h1}${h2}</thead><tbody>
+      ${row('Rooms let (average)',(c,o)=>(Math.round(c.rooms*o*10)/10).toString())}${row('Room income',(c,o)=>c.full*o)}${row('Rent to landlord',c=>-c.rent)}${row('Bills',c=>-c.bills)}${row('Other costs',()=>-a.other)}${row('Profit',(c,o)=>c.at(o),'total')}
+    </tbody></table></div><p class="note">Rent per room from the unit's figures. Illustrative only, not a forecast.</p></section>`;
+  }
+  h+=`<p class="note">${ASM_NOTE[m]} Figures are estimates for checking a deal, not financial advice.</p>`;
+  return h}
+
 /* ---------- shell / nav ---------- */
 function renderTop(){$('#planPill').textContent=limits().name+' plan';renderUsage();renderFreeCounter()}
 /* ---------- free plan: 2 lifetime deal analyses ---------- */
@@ -194,25 +320,42 @@ function renderUnits(){const d=S.deal;
     <input class="inp" style="font-weight:500;height:30px" id="u${i}label" data-i="${i}" data-f="label" value="${esc(u.label)}" aria-label="Unit name">
     ${u.url?`<a class="xlink" style="font-size:12.5px" href="${esc(u.url)}" target="_blank" rel="noopener" aria-label="Open listing for ${esc(u.label)}">Listing ↗</a>`:''}
     ${d.units.length>1?`<button class="btn ghost sm" data-rm="${i}" aria-label="Remove ${esc(u.label)}">Remove</button>`:''}</div>
-    <div class="row3" style="padding-left:22px">
-      <label class="f"><span>Rent pcm</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="u${i}rent" data-i="${i}" data-f="rent" value="${u.rent}"></span></label>
-      <label class="f"><span>Deposit</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="u${i}dep" data-i="${i}" data-f="dep" value="${u.dep}"></span></label>
-      <label class="f"><span>Nightly rate</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="u${i}rate" data-i="${i}" data-f="rate" value="${u.rate}"></span></label>
-    </div></div>`).join('');
+    ${(()=>{const F=UNIT_FIELDS[modelOf(d)],rows=[];for(let k=0;k<F.length;k+=3)rows.push(F.slice(k,k+3));
+      return rows.map(r=>`<div class="row3" style="padding-left:22px${rows.length>1?';margin-bottom:8px':''}">${r.map(([f,lab])=>{const money=f!=='rooms';
+        return `<label class="f"><span>${lab}</span><span class="ix">${money?'<span class="pre">£</span>':''}<input class="inp num" type="number" min="0" id="u${i}${f}" data-i="${i}" data-f="${f}" value="${nn(u[f])}"></span></label>`}).join('')}</div>`).join('')})()}
+</div></div>`).join('');
 }
 $('#units').addEventListener('input',e=>{const el=e.target;if(!el.dataset.f)return;const u=S.deal.units[+el.dataset.i];u[el.dataset.f]=el.dataset.f==='label'?el.value:(+el.value||0);tweenNext=true;renderResults();save()});
 $('#units').addEventListener('click',e=>{const b=e.target.closest('[data-rm]');if(!b)return;S.deal.units.splice(+b.dataset.rm,1);renderUnits();renderResults();save()});
-$('#addUnit').addEventListener('click',()=>{const n=S.deal.units.length+1;S.deal.units.push({label:'Unit '+n,rent:0,dep:0,rate:0});renderUnits();renderResults();save()});
-[['#dName','name'],['#dArea','area'],['#dStrat','strat']].forEach(([s,k])=>$(s).addEventListener('input',e=>{S.deal[k]=e.target.value;syncName();renderMeta();save()}));
+$('#addUnit').addEventListener('click',()=>{const n=S.deal.units.length+1;S.deal.units.push({label:'Unit '+n,rent:0,dep:0,rate:0,price:0,mrent:0,refurb:0,gdv:0,rooms:0,roomRent:0,bills:0});renderUnits();renderResults();save()});
+[['#dName','name'],['#dArea','area'],['#dStrat','strat']].forEach(([s,k])=>$(s).addEventListener('input',e=>{S.deal[k]=e.target.value;syncName();renderMeta();if(k==='strat'){renderUnits();renderResults()}save()}));
 // Typing the area ticks or clears "In London" (it can still be changed by hand).
 $('#dArea').addEventListener('change',e=>{const v=e.target.value.trim();if(!v)return;const lon=isLondonText(v);if(lon!==!!S.deal.london){S.deal.london=lon;$('#dLondon').checked=lon;renderResults();save()}});
 $('#dLondon').addEventListener('change',e=>{S.deal.london=e.target.checked;tweenNext=true;renderResults();save()});
+const P_IN=[['pDep','dep'],['pRate','rate'],['pCosts','costs'],['pLegal','legal'],['pLtv','ltv'],['pFin','fin'],['pMonths','months'],['pHold','hold'],['pAgent','agent']];
+P_IN.forEach(([id,k])=>{const el=$('#'+id);if(el)el.addEventListener('input',e=>{S.deal.p=Object.assign({},dealP(S.deal),{[k]:+e.target.value||0});tweenNext=true;renderResults();save()})});
+// The Assumptions panel shows the inputs the deal's strategy uses.
+function renderAsm(){const d=S.deal,m=modelOf(d),on=new Set(ASM_OF[m]),p=dealP(d);
+  $$('[data-asm]').forEach(el=>{el.hidden=!on.has(el.dataset.asm)});P_IN.forEach(([id,k])=>{const el=$('#'+id);if(el&&document.activeElement!==el)el.value=p[k]});
+  const n=$('#asmNote');if(n)n.textContent=ASM_NOTE[m];const ni=$('#numIntro');if(ni)ni.textContent=NUM_INTRO[m]}
+const NUM_INTRO={sa:'Monthly model per unit at 60%, 80% and 100% occupancy, with break-even, lower-rate sensitivity and the London 90-night check.',
+  ownsa:'Nightly-rate model with an interest-only mortgage in place of rent: cash needed, surplus at 60%, 80% and 100% occupancy and break-even.',
+  r2r:'Room-by-room model: profit with 75%, 90% and 100% of rooms let, after rent, bills and other costs, with break-even.',
+  btl:'Buy-to-let: cash needed to buy, monthly cash flow after the mortgage and running costs, yield, return on cash and a rate-rise check.',
+  hmo:'HMO: cash needed to buy, room income, cash flow after the mortgage, running costs and bills, yield and return on cash.',
+  brrr:'BRRR: money in, what stays in after refinancing on the end value, and cash flow after the new mortgage.',
+  flip:'Flip: buying, holding and selling costs, profit, margin on the resale value and return on cash.',
+  lo:'Lease option: upfront costs, monthly cash flow after the payment to the owner and running costs, and return on upfront.'};
 [['#aFee','fee'],['#aClean','clean'],['#aStay','stay'],['#aOther','other']].forEach(([s,k])=>$(s).addEventListener('input',e=>{S.deal.a[k]=+e.target.value||0;tweenNext=true;renderResults();save()}));
 
 function renderMeta(){const d=S.deal,n=d.units.length,ix=S.analysedDealIds.indexOf(d.id);
   $('#dealMeta').textContent=[isExample(d)?'Example':'',d.area,d.strat,n+' unit'+(n>1?'s':''),S.plan==='Free'&&ix>=0?`Free analysis ${ix+1} of ${FREE_ANALYSES}`:''].filter(Boolean).join(' · ')}
-function renderResults(){const d=S.deal,a=d.a,U=d.units;syncName();renderMeta();
-  const hasFigures=U.some(u=>(+u.rent||0)>0||(+u.dep||0)>0||(+u.rate||0)>0);
+function renderResults(){const d=S.deal,a=d.a,m=modelOf(d),own=m==='ownsa',PC=own?d.units.map(u=>unitCalc(m,u,dealP(d),a)):null,U=own?d.units.map((u,i)=>Object.assign({},u,{rent:PC[i].mo,dep:0})):d.units;syncName();renderMeta();renderAsm();
+  const hasFigures=modelHas(d);
+  if(hasFigures&&m!=='sa'&&!own){$('#results').innerHTML=renderModel(d,m);renderStepBar();tweenNext=false;return}
+  if(!hasFigures&&m!=='sa'){const S4=modelStrip(Object.assign({},d,{units:[]}));
+    $('#results').innerHTML=`<div class="strip" role="group" aria-label="Deal summary">${S4.slice(0,4).map(([l])=>`<div class="fig"><div class="fig-l">${l}</div><div class="fig-v">—</div><div class="fig-s">Waiting for deal figures</div></div>`).join('')}</div><div class="alerts"><div class="alert">No deal figures yet. Add ${NEEDS_TXT[m]} to see the analysis.</div></div>`;
+    renderStepBar();return}
   if(!hasFigures){
     $('#results').innerHTML=`<div class="strip" role="group" aria-label="Deal summary">
       <div class="fig"><div class="fig-l">Upfront cash</div><div class="fig-v">—</div><div class="fig-s">Add the rent and deposit</div></div>
@@ -227,7 +370,7 @@ function renderResults(){const d=S.deal,a=d.a,U=d.units;syncName();renderMeta();
   const revs=OCC.map(o=>U.reduce((s,u)=>s+month(u,o,null,a).rev,0));
   const bes=U.map(u=>be(u,a));const worstBE=Math.max(...bes);
   let h=`<div class="strip" role="group" aria-label="Deal summary">
-    <div class="fig"><div class="fig-l">Upfront cash</div><div class="fig-v" id="sumUp" data-v="${rent+dep}">${gbp(rent+dep)}</div><div class="fig-s">Deposits and first month</div></div>
+    <div class="fig"><div class="fig-l">${own?'Cash needed':'Upfront cash'}</div><div class="fig-v" id="sumUp" data-v="${own?sumOf(PC,'cash'):rent+dep}">${gbp(own?sumOf(PC,'cash'):rent+dep)}</div><div class="fig-s">${own?'Deposit, stamp duty, fees, refurb':'Deposits and first month'}</div></div>
     <div class="fig"><div class="fig-l">Surplus at 60%</div><div class="fig-v${tot[0]<0?' neg':''}" id="sum60" data-v="${tot[0]}">${gbp(tot[0])}</div><div class="fig-s">Per month, all units</div></div>
     <div class="fig"><div class="fig-l">Surplus at 80%</div><div class="fig-v${tot[1]<0?' neg':''}" id="sum80" data-v="${tot[1]}">${gbp(tot[1])}</div><div class="fig-s">Per month, all units</div></div>
     <div class="fig"><div class="fig-l">Break-even</div><div class="fig-v">${isFinite(worstBE)?pct(worstBE):'Never'}</div><div class="fig-s">Occupancy, weakest unit</div></div>
@@ -238,7 +381,7 @@ function renderResults(){const d=S.deal,a=d.a,U=d.units;syncName();renderMeta();
     al.push(`<div class="alert ${gap<0?'bad':'warn'}"><b>London 90-night limit.</b> At 90 nights a year the units earn ${gbp(U.reduce((s,u)=>s+90*u.rate,0))} against ${gbp(rent*12)} rent, ${gap<0?'a '+gbp(-gap)+' shortfall':'a '+gbp(gap)+' margin'} before any other costs. The limit only counts stays of under 90 consecutive nights: corporate or mid-term lets of 90+ nights don't count, so they can fill the rest of the year. Otherwise year-round short lets need planning permission.</div>`)}
   const vatOcc=OCC.find((o,i)=>revs[i]*12>=90000);
   if(vatOcc!==undefined)al.push(`<div class="alert warn"><b>VAT.</b> Run through one business, revenue reaches ${gbp(revs[OCC.indexOf(vatOcc)]*12)} a year at ${pct(vatOcc)} occupancy, over the £90,000 VAT threshold. VAT at 20% would cut the surplus.</div>`);
-  if(U.some(u=>u.dep>u.rent*12/52*5))al.push(`<div class="alert warn"><b>Deposit above 5 weeks' rent</b> on at least one unit. The cap applies to lets to individuals.</div>`);
+  if(!own&&U.some(u=>u.dep>u.rent*12/52*5))al.push(`<div class="alert warn"><b>Deposit above 5 weeks' rent</b> on at least one unit. The cap applies to lets to individuals.</div>`);
   if(!al.length)al.push(`<div class="alert good">No automatic flags. Due diligence still needs to be completed.</div>`);
   h+=`<div class="alerts">${al.join('')}</div>`;
   // per unit table
@@ -250,7 +393,7 @@ function renderResults(){const d=S.deal,a=d.a,U=d.units;syncName();renderMeta();
     ${row('Booking revenue',(u,m)=>m.rev)}
     ${row(`Platform fees (${a.fee}%)`,(u,m)=>m.fees)}
     ${row('Cleaning and linen',(u,m)=>m.cl)}
-    ${row('Rent incl. bills',(u,m)=>u.rent)}
+    ${row(own?`Mortgage interest (${dealP(d).rate}%)`:'Rent incl. bills',(u,m)=>u.rent)}
     ${row('Other costs',(u,m)=>a.other)}
     ${row('Operating surplus',(u,m)=>m.surplus,'total')}
   </tbody></table></div>
@@ -260,7 +403,7 @@ function renderResults(){const d=S.deal,a=d.a,U=d.units;syncName();renderMeta();
     sr+=`<tr>${k===0?`<td rowspan="3" class="u${ui===U.length-1?' lb':''}">${esc(u.label)}</td>`:''}<td class="n">${k===0?'<span class="base">base</span> ':''}£${r}</td>${v.map(x=>`<td class="n${x<0?' neg':''}">${gbp(x)}</td>`).join('')}<td class="n">${isFinite(b)?'~'+pct(b):'Never'}</td></tr>`}));
   h+=`<section class="sec"><div class="sec-h"><h2>If the nightly rate is lower</h2><span class="sec-meta">Monthly surplus per unit</span></div><div class="tw"><table><thead><tr><th>Unit</th><th>Nightly rate</th><th>60%</th><th>80%</th><th>100%</th><th>Break-even</th></tr></thead><tbody>${sr}</tbody></table></div></section>`;
   // break-even tracks
-  h+=`<section class="sec"><div class="sec-h"><h2>Break-even occupancy</h2><span class="sec-meta">Covers rent, platform fees, cleaning and other costs</span></div><div class="be-list">${U.map((u,i)=>{const b=bes[i];const x=Math.min(isFinite(b)?b:1,1)*100;
+  h+=`<section class="sec"><div class="sec-h"><h2>Break-even occupancy</h2><span class="sec-meta">Covers ${own?'mortgage interest':'rent'}, platform fees, cleaning and other costs</span></div><div class="be-list">${U.map((u,i)=>{const b=bes[i];const x=Math.min(isFinite(b)?b:1,1)*100;
     return `<div class="be-row"><div><span class="be-unit">${esc(u.label)}</span><span class="be-rate">£${u.rate}/night</span></div>
     <div class="track" role="img" aria-label="${esc(u.label)} break-even ${isFinite(b)?pct(b):'never'}"><span class="rail"></span><span class="fill" style="width:${x}%"></span>
       ${[0,60,80,100].map(t=>`<span class="tick" style="left:${t}%${t===100?';transform:translateX(-1px)':''}"></span><span class="tl${t===0?' first':t===100?' last':''}" style="left:${t}%">${t}%</span>`).join('')}
@@ -359,7 +502,7 @@ $('#ddList').addEventListener('drop',e=>{const r=e.target.closest('.dd-row');if(
 $('#ddList').addEventListener('change',e=>{if(e.target.tagName==='SELECT'){S.deal.dd[+e.target.dataset.i].s=e.target.value;save();renderDD()}});
 $('#ddList').addEventListener('input',e=>{if(e.target.tagName==='TEXTAREA'){S.deal.dd[+e.target.dataset.i].n=e.target.value;save()}});
 /* AI research: searches the public web for each check and cites its sources */
-function ddDealText(d){const u=d.units.map(x=>`${x.label}: rent ${gbp(x.rent)}/month, deposit ${gbp(x.dep)}${x.rate?`, nightly rate £${x.rate}`:''}`).join('; ');
+function ddDealText(d){const u=d.units.map(x=>unitText(d,x)).join('; ');
   return [`Deal: ${d.name||'Untitled'}`,`Location: ${d.send&&d.send.addr||d.area||'not given'}`,`Strategy: ${d.strat}${d.london?' (London)':''}`,`Units: ${u}`,d.sourceText?`Advert or notes:\n${d.sourceText.slice(0,6000)}`:''].filter(Boolean).join('\n')}
 function applyResearch(dealId,res){const apply=d=>{if(!d||d.id!==dealId)return;(res.findings||[]).forEach(f=>{const x=d.dd.find(y=>y.k===f.k);if(!x)return;
     x.ai=f.finding;x.aiSrc=f.sources||[];if(x.s==='none'&&(f.status==='partly'||f.status==='issue'))x.s=f.status});d.ai=true;d.aiAt=res.researchedAt;d.aiLevel=res.level};
@@ -401,6 +544,9 @@ function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();renderP
   const kv=(rows)=>`<dl>${rows.map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
   const cols=U.map(u=>`<div><div class="kv-h">${esc(u.label)}</div>${kv([['Rent incl. bills',gbp(u.rent)+'/month'],['Deposit',gbp(u.dep)],['Model rate','£'+u.rate+'/night']])}</div>`).join('')
     +(U.length>1?`<div><div class="kv-h">All units</div>${kv([['Rent',gbp(rent)+'/month'],['Deposits',gbp(dep)],['Upfront',gbp(rent+dep)]])}</div>`:'');
+  const m=modelOf(d),sa=m==='sa',S4=modelHas(d)?modelStrip(d):null;
+  const cols2=sa?cols:U.map(u=>`<div><div class="kv-h">${esc(u.label)}</div>${kv(UNIT_FIELDS[m].map(([f,l])=>[l,f==='rooms'?String(nn(u[f])):gbp(nn(u[f]))]))}</div>`).join('');
+  const keyTable=S4?`<div class="tw"><table><thead><tr><th>Key figure</th><th>All units</th><th style="text-align:left">What it means</th></tr></thead><tbody>${S4.slice(0,4).map(([l,v,n,neg])=>`<tr><td>${l}</td><td class="n" style="${neg?'color:#B42318':''}">${v}</td><td class="l">${n}</td></tr>`).join('')}</tbody></table></div>`:'<p>Add the deal figures to show the key numbers.</p>';
   const tr=U.map(u=>`<tr><td>${esc(u.label)} at £${u.rate}</td>${OCC.map(o=>{const v=month(u,o,null,a).surplus;return `<td class="n" style="${v<0?'color:#B42318':''}">${gbp(v)}</td>`}).join('')}<td class="n">~${pct(be(u,a))}</td></tr>`).join('');
   const ddr=DD_TEMPLATE.map((t,i)=>{const x=d.dd[i],ev=x.ev||[];return `<tr><td class="l">${t.t}</td><td class="l st ${x.s}"><span class="pdot"></span>${SLAB[x.s]}</td><td class="l">${ev.length?ev.map(e=>esc(e.name||hostOf(e.url))).join(', '):'None yet'}</td></tr>`}).join('');
   const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
@@ -410,11 +556,11 @@ function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();renderP
     <h2>${esc(d.name||'Untitled deal')}</h2><div class="ps">${esc(area)} | ${esc(d.strat)} opportunity | ${U.length} unit${U.length>1?'s':''}</div>
     ${(()=>{const ph=dealPhotos().filter(x=>x.on!==false).slice(0,5),img=(x,c)=>`<img class="${c}" src="${esc(x.url)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">`;
       return ph.length?`<div class="pk-photos${ph.length===1?' one':''}">${img(ph[0],'pk-main')}${ph.length>1?`<div class="pk-thumbs">${ph.slice(1).map(x=>img(x,'')).join('')}</div>`:''}</div>`:''})()}
-    <h3>The deal</h3><p>A rental business opportunity, not a purchase of the property. Terms are as advertised by the landlord and need written confirmation.</p>
-    <div class="kv">${cols}</div>
-    <h3>Illustrative monthly surplus</h3>
-    <div class="tw"><table><thead><tr><th>Per unit</th><th>60%</th><th>80%</th><th>100%</th><th>Break-even</th></tr></thead><tbody>${tr}</tbody></table></div>
-    <p class="small" style="margin-top:8px">${a.fee}% platform fees, £${a.clean} cleaning per ${a.stay}-night stay, £${a.other}/month other costs, 30-day month. Not a forecast; nightly rates and occupancy are unvalidated.${d.london&&d.strat==='R2SA'?' In London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights are not.':''}</p>
+    <h3>The deal</h3><p>${BUY_MODELS.has(m)?'A property purchase opportunity. The price and figures are as advertised and need checking against comparables and a survey.':m==='lo'?'A lease option: a monthly payment to the owner with an option to buy later. Terms need written confirmation.':'A rental business opportunity, not a purchase of the property. Terms are as advertised by the landlord and need written confirmation.'}</p>
+    <div class="kv">${cols2}</div>
+    ${sa?`<h3>Illustrative monthly surplus</h3>
+    <div class="tw"><table><thead><tr><th>Per unit</th><th>60%</th><th>80%</th><th>100%</th><th>Break-even</th></tr></thead><tbody>${tr}</tbody></table></div>`:`<h3>Key figures</h3>${keyTable}`}
+    <p class="small" style="margin-top:8px">${!sa?`${esc(ASM_NOTE[m])} Estimates only, not a forecast.`:''}${sa?'':'<span hidden>'}${a.fee}% platform fees, £${a.clean} cleaning per ${a.stay}-night stay, £${a.other}/month other costs, 30-day month. Not a forecast; nightly rates and occupancy are unvalidated.${d.london&&d.strat==='R2SA'?' In London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights are not.':''}${sa?'':'</span>'}</p>
     <h3>Due diligence status</h3>
     <div class="tw"><table><thead><tr><th>Check</th><th style="text-align:left">Status</th><th style="text-align:left">Evidence</th></tr></thead><tbody>${ddr}</tbody></table></div>
     <h3>Next steps</h3>
@@ -438,8 +584,8 @@ Date sent: ${today}
 
 Property address and postcode: ${s.addr||'[full address]'}
 Number of units and type: ${U.length} unit${U.length>1?'s':''} (${U.map(u=>u.label).join(', ')})
-Rent and deposit asked:
-${U.map(u=>`  - ${u.label}: ${gbp(u.rent)}/month, deposit ${gbp(u.dep)}`).join('\n')}
+${BUY_MODELS.has(modelOf(d))?'Price and figures':'Rent and deposit asked'}:
+${U.map(u=>`  - ${unitText(d,u)}`).join('\n')}
 
 Introduced Contact: ${s.ll||'[name]'} (${s.role}), ${s.phone||'[phone]'}, ${s.lemail||'[email]'}
 Use the landlord has agreed to: ${s.use}
@@ -464,10 +610,10 @@ const PL={view:store.get('pl-view','board'),strat:'all',q:''};
 // Monthly profit: the AI's figure when the deal has been analysed, otherwise the numbers model at 80% for rentals.
 function dealProfit(d){const a=d.aiAnalysis;
   if(a&&a.monthly_profit){const m=String(a.monthly_profit).replace(/,/g,'').match(/(-|−|minus\s*|loss of\s*)?£\s?(\d+(?:\.\d+)?)\s*(k)?/i);if(m){let v=+m[2]*(m[3]?1000:1);if(m[1])v=-v;return {v,src:'AI'}}}
-  if(['R2SA','R2R','SA',undefined,''].includes(d.strat)&&(d.units||[]).some(u=>u.rent>0&&u.rate>0))return {v:d.units.reduce((s,u)=>s+month(u,.8,null,d.a).surplus,0),src:'model'};
+  if(modelHas(d)){const x=modelStrip(d)[4];if(x&&x.monthly!=null&&isFinite(x.monthly))return {v:x.monthly,src:'model'}}
   return null}
 const dealRent=d=>(d.units||[]).reduce((s,u)=>s+(+u.rent||0),0);
-const dealUpfront=d=>(d.units||[]).reduce((s,u)=>s+(+u.rent||0)+(+u.dep||0),0);
+const dealUpfront=d=>{const x=modelHas(d)&&modelStrip(d)[4];return x?x.up:(d.units||[]).reduce((s,u)=>s+(+u.rent||0)+(+u.dep||0),0)};
 function ddState(d){const dd=d.dd||[];return {done:dd.filter(x=>x.s==='verified').length,issues:dd.filter(x=>x.s==='issue').length,tot:dd.length||8}}
 const daysIn=d=>{const t=Date.parse(d.stageAt||d.savedAt||'');return t?Math.max(0,Math.floor((Date.now()-t)/864e5)):null};
 function attention(d){const st=stageOf(d),dd=ddState(d),days=daysIn(d),r=[];if(!OPEN_STAGES.includes(st))return r;
@@ -711,7 +857,7 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   if(out.mode)got.push(out.mode==='buy'?'To buy':'To rent');
   {const SW=[['Flip',/\b(flip|flips|flipping|buy[ ,-]*refurb(?:ish)?[ ,-]*(?:and )?sell)\b/],['BRRR',/\bbrrr\b|refinance/],['HMO',/\bhmos?\b|let by the room/],['R2R',/\b(r2r|rent to rent|rent-to-rent|lha|local housing allowance|housing benefit|temporary accommodation|supported (?:living|housing))\b/],['R2SA',/\b(r2sa|serviced accommodation|airbnb|short[- ]lets?)\b/],['LeaseOption',/lease options?/],['Commercial',/\bcommercial\b/],['BTL',/\b(btl|buy to let|buy-to-let)\b/]];
     // the strategy mentioned first wins ("R2R ... HMO potential welcome" is R2R)
-    const hit=SW.map(([k,re])=>[k,lo.search(re)]).filter(x=>x[1]>=0).sort((a,b)=>a[1]-b[1])[0];if(hit){out.strategy=hit[0];got.push(STRAT_NAME[hit[0]]||hit[0])}}
+    const hit=SW.map(([k,re])=>[k,lo.search(re)]).filter(x=>x[1]>=0).sort((a,b)=>a[1]-b[1])[0];if(hit){out.strategy=hit[0];out.strategies=[hit[0]];got.push(STRAT_NAME[hit[0]]||hit[0])}}
   // bedrooms: "2-3 bed", "studio to 2 bed", "3+ bed", "3 bedroom", "studio"
   const bedN=w=>w==='studio'?0:+w;const BED='(?:bed|beds|bedroom|bedrooms|br|bedder)\\b';
   let m=lo.match(new RegExp(`\\b(studio|\\d)\\s*(?:-|to|or)\\s*(\\d)\\+?\\s*${BED}`));
@@ -769,13 +915,16 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   const loc=[...new Set(places)].slice(0,6).join(', ');
   if(loc){out.loc=loc;got.push(loc)}
   return {f:out,got}}
-function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';$('#fStrategy').value=f.strategy||'auto';$('#fFresh').value=f.fresh||'any';
+// Several strategies can be ticked; the first is the main one (it drives the search, ranking and analysis).
+const findStrats=f=>{const L=(Array.isArray(f.strategies)&&f.strategies.length?f.strategies:[f.strategy||'auto']).filter(x=>x);return L.length?L:['auto']};
+function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';{const L=findStrats(f);$$('input[name="fStrat"]').forEach(c=>{c.checked=L.includes(c.value)})}$('#fFresh').value=f.fresh||'any';
   $(f.mode==='buy'?'#fModeBuy':'#fModeRent').checked=true;
   f.beds=bedList(f.beds);$$('input[name="fBeds"]').forEach(c=>{c.checked=f.beds.includes(c.value)});$('#fBedsAny').checked=!f.beds.length;
   $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fNoAuction').checked=!!f.noAuction;$('#fNoFlats').checked=!!f.noFlats;$('#fNoShared').checked=!!f.noShared;$('#fFurn').value=f.furn;$('#fType').value=f.type;
   SITES.forEach(s=>{$('#fSite'+s).checked=!!f.sites[s]});findChrome()}
 function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
-  f.notes=$('#fNotes').value.slice(0,500);f.strategy=$('#fStrategy').value;f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
+  f.notes=$('#fNotes').value.slice(0,500);{const L=$$('input[name="fStrat"]:checked').map(c=>c.value),keep=findStrats(f).filter(x=>L.includes(x));
+    f.strategies=[...keep,...L.filter(x=>!keep.includes(x))];if(!f.strategies.length)f.strategies=['auto'];f.strategy=f.strategies[0]}f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
   f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.noAuction=$('#fNoAuction').checked;f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
   SITES.forEach(s=>{f.sites[s]=$('#fSite'+s).checked})}
 function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;
@@ -825,15 +974,27 @@ const ROOM_TABLE=[900,650,450];// room rent pcm, rough
 const bIdx=b=>b==null?1:Math.min(3,Math.max(0,b));
 const RENT_EST=(b,w)=>RENT_TABLE[areaTier(w)][bIdx(b)];
 const ROOM_EST=w=>ROOM_TABLE[areaTier(w)];
+// Deals analysed from a property for sale before this fix had the asking price saved as the rent and
+// deposit. A rent of £20,000 a month or more can only be a price: move it to the purchase price.
+function repairPriceAsRent(d){if(!d||!Array.isArray(d.units))return;let fixed=false;
+  d.units.forEach(u=>{if(!(+u.price>0)&&+u.rent>=20000){const beds=+(String(u.label).match(/(\d+)\s*bed/i)||[])[1]||null,w=d.area||'';
+    Object.assign(u,{price:+u.rent,rent:0,dep:0,mrent:+u.mrent||RENT_EST(beds,w),rooms:+u.rooms||Math.max(1,beds||1),roomRent:+u.roomRent||ROOM_EST(w),bills:+u.bills||100*Math.max(1,beds||1),refurb:+u.refurb||0,gdv:+u.gdv||0});fixed=true}});
+  if(fixed&&!BUY_MODELS.has(modelOf(d)))d.strat='BTL';return fixed}
+// Repaired in memory only: saving here would make the browser copy differ from the account copy on every
+// load, and sign-in reloads the page whenever they differ. The fix is saved with the member's next change.
+repairPriceAsRent(S.deal);(S.saved||[]).forEach(repairPriceAsRent);
 // Stamp duty in England for an additional property (5% surcharge on top of the standard bands).
 function sdltAdditional(p){if(p<40000)return 0;const bands=[[125000,0],[250000,.02],[925000,.05],[1500000,.10],[Infinity,.12]];let t=0,lo=0;for(const [hi,r] of bands){if(p>lo)t+=(Math.min(p,hi)-lo)*r;lo=hi}return Math.round(t+p*.05)}
 const STRAT_NAME={R2SA:'R2SA',R2R:'Rent to rent',BTL:'Buy to let',HMO:'HMO',BRRR:'BRRR',Flip:'Flip',SA:'Owned SA',LeaseOption:'Lease option',Commercial:'Commercial',none:'Prices only'};
 // The strategy in use for a listing: the member's choice, or R2SA for rentals and BTL for purchases.
-function stratFor(r){const s=(S.find&&S.find.f&&S.find.f.strategy)||'auto',buy=r.mode==='buy';
+function stratFor(r,pick){const s=pick||(S.find&&S.find.f&&S.find.f.strategy)||'auto',buy=r.mode==='buy';
   if(s==='auto')return buy?'BTL':'R2SA';if(s==='R2SA'&&buy)return 'SA';if(s==='SA'&&!buy)return 'R2SA';
   if(['BTL','HMO','BRRR','Flip'].includes(s)&&!buy)return s==='HMO'?'R2R':'none';if(s==='R2R'&&buy)return 'HMO';return s}
+// The key figure for each other ticked strategy that fits this listing: [[name,label,value,neg],...]
+function extraKeys(r){const f=S.find&&S.find.f;if(!f)return [];const main=stratFor(r),seen=new Set([main,'none']),out=[];
+  findStrats(f).slice(1).forEach(s=>{const st=stratFor(r,s);if(seen.has(st))return;seen.add(st);const k=stratFigures(r,s).key;out.push([STRAT_NAME[st]||st,k[0],k[1],!!k[2]])});return out}
 // Returns {key:[label,value,neg?], lines:[[emoji,html-safe text],...], note}
-function stratFigures(r){const st=stratFor(r),w=r.area+' '+r.postcode,buy=r.mode==='buy',P=r.price,rooms=Math.max(1,r.beds||1);
+function stratFigures(r,pick){const st=stratFor(r,pick),w=r.area+' '+r.postcode,buy=r.mode==='buy',P=r.price,rooms=Math.max(1,r.beds||1);
   const L=[],note='Figures are rough estimates for the area. Analyse the deal for a full, local check.';
   if(st==='R2SA'||st==='SA'){const u={rent:buy?0:P,rate:RATE_EST(r.beds,w)},occ=OCC.map(x=>month(u,x,null,DEF_A).surplus);
     if(buy)L.push(['💷',`Asking price ${gbp(P)}`],['🧾',`Stamp duty about ${gbp(sdltAdditional(P))} (est.)`]);else L.push(['💸',`Rent ${gbp(P)}/month (${gbp(P*12)}/year)`],['💸',`Deposit about ${gbp(P)} (est.)`]);
@@ -847,7 +1008,7 @@ function stratFigures(r){const st=stratFor(r),w=r.area+' '+r.postcode,buy=r.mode
     if(st==='BRRR')L.push(['🔨',`Money in before works: about ${gbp(P+sd+1500)} (est.)`]);else L.push(['🏦',`25% deposit ${gbp(dep)} · cash needed about ${gbp(dep+sd+1500)} (est.)`]);
     L.push(['🏠',`${st==='HMO'?`${rooms} rooms at about ${gbp(ROOM_EST(w))} = `:'Market rent about '}${gbp(rent)}/month (est.)`],['📈',`Gross yield about ${gy.toFixed(1)}% (est.)`],...(gy>15?[['⚠️','Unusually high: cheaper homes often rent for less than the area average. Check local rents before relying on this.']]:[]));
     if(st!=='BRRR')L.push(['💷',`Cash flow about ${gbp(cf)}/month after a 5.5% interest-only mortgage and costs (est.)`]);else L.push(['🔁','Refinance at 75% of the value after works: analyse for the end value']);
-    return {st,key:['Gross yield',gy.toFixed(1)+'%',gy<5],lines:L,note}}
+    return {st,key:st==='BRRR'?['Money in before works',gbp(P+sd+1500)]:['Gross yield',gy.toFixed(1)+'%',gy<5],lines:L,note}}
   if(st==='Flip'){const sd=sdltAdditional(P),entry=P+sd+1500;
     L.push(['💷',`Asking price ${gbp(P)}`],['🧾',`Stamp duty about ${gbp(sd)} (est., England)`],['💼',`Cash in before works about ${gbp(entry)} incl. legal fees (est.)`],
       ...(r.beds?[['🛏',`${gbp(Math.round(P/Math.max(1,r.beds)))} per bedroom`]]:[]),['🔨','Refurb cost, resale value and margin: analyse the deal']);
@@ -867,7 +1028,7 @@ function dealCard(r,i,o={}){const SF=o.preview?null:stratFigures(r),open=!o.prev
   return `<article class="dcard${open?' is-open':''}${FS.justOpened===r.k&&open?' just-open':''}" data-k="${r.k}" aria-label="Deal ${i+1}">
     <h3>Deal ${i+1} (${gbp(r.price)} ${bedWord(r.beds)})${r.ai>=0?` <span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="Score · ${esc(r.aiv||'')}">${r.ai}</span>`:''}</h3>${o.preview?'':`<p class="dc-live">${liveTag(r)}${ageDays(r)!=null?` <span class="muted">· listed ${ageTxt(ageDays(r)).toLowerCase()}</span>`:''} ${freshTags(r)}</p>`}
     <ul class="adv">${li('📍',`${esc(o.preview?String(r.area||r.postcode).replace(/\s*\(.*\)$/,''):[r.postcode,(r.area||'').split(',').pop().trim()].filter(Boolean).join(', '))}${o.plain?'':' <span class="em" aria-hidden="true">📍</span>'}`)}${open?li('🏠',esc(r.area)):''}${li('🛏',esc(r.type))}</ul>
-    <ul class="adv">${(o.preview?{lines:[['💸',`Rent ${gbp(r.price)}/month (${gbp(r.price*12)}/year)`],['💰',`Nightly rate about £${u.rate} (est.)`],...OCC.map((x,j)=>['💷',`${gbp(occ[j])} at ${pct(x)} occupancy`])]}:SF).lines.map(([e,t])=>li(e,esc(t))).join('')}</ul>
+    <ul class="adv">${(o.preview?{lines:[['💸',`Rent ${gbp(r.price)}/month (${gbp(r.price*12)}/year)`],['💰',`Nightly rate about £${u.rate} (est.)`],...OCC.map((x,j)=>['💷',`${gbp(occ[j])} at ${pct(x)} occupancy`])]}:SF).lines.map(([e,t])=>li(e,esc(t))).join('')}</ul>${o.preview?'':(()=>{const X=extraKeys(r);return X.length?`<ul class="adv">${X.map(([n,l,v])=>li('🔁',esc(`As ${n}: ${l} ${v} (est.)`))).join('')}</ul>`:''})()}
     ${open?`<ul class="adv">${r.title?li('📝',esc(r.title)):''}${li('🔗',`Source: ${esc(SITE_LABEL(r.site))}`)}</ul>`:''}
     <div class="dc-foot"><div class="dc-note"><span>${o.preview?'Figures illustrative. Nightly rate estimated.':esc(SF.note)}${SF?` · <b>${esc(STRAT_NAME[SF.st]||SF.st)}</b>`:''}</span></div>
       <div class="dc-act">${act}</div></div>
@@ -923,6 +1084,9 @@ function syncSel(){const n=FS.sel.size,b=$('#fBuildSel');if(b){b.disabled=!n;b.t
   const all=$('#fSelAll');if(all){const cb=$$('#fResults [data-sel]');all.checked=cb.length>0&&cb.every(c=>c.checked);all.indeterminate=!all.checked&&cb.some(c=>c.checked)}}
 function syncFee(){$$('.js-fee').forEach(e=>e.textContent=gbp(dealFee()))}
 function onFind(){readFind();save();renderFind();$$('#fLevelOpts .lv-time').forEach(e=>{e.textContent='Takes ~'+estTxt('search',e.dataset.lv,findSiteCount())})}
+$('#fStrats').addEventListener('change',e=>{const c=e.target;if(c.name!=='fStrat')return;const solo=['auto','none'],all=$$('input[name="fStrat"]');
+  if(c.checked&&solo.includes(c.value))all.forEach(x=>{if(x!==c)x.checked=false});else if(c.checked)all.forEach(x=>{if(solo.includes(x.value))x.checked=false});
+  if(!all.some(x=>x.checked))all.find(x=>x.value==='auto').checked=true},true);
 $('#fPanel').addEventListener('input',onFind);$('#fPanel').addEventListener('change',onFind);
 $('#fReset').addEventListener('click',()=>{S.find.f=FIND_DEF();bindFind();save();renderFind()});
 $('#fNotesFill').addEventListener('click',()=>{const text=$('#fNotes').value.trim(),msg=$('#fNotesMsg');if(!text){msg.textContent='Type what you’re looking for first.';$('#fNotes').focus();return}
@@ -1086,7 +1250,7 @@ function cardFacts(r,i){const buy=r.mode==='buy',town=String(r.area||'').replace
   const live=r.verified==='available'&&r.checkedAt?new Date(r.checkedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'';
   return {head:`Deal ${i+1} · ${r.type}${buy?` · ${gbp(r.price)}`:` · ${gbp(r.price)}/month`}`,lines:[
     ['📍',where],['🛏',[r.type,r.furnished&&r.furnished!=='Not stated'?r.furnished:''].filter(Boolean).join(' · ')],['🎯',`Strategy: ${STRAT_NAME[SF.st]||SF.st}`],
-    ...SF.lines,
+    ...SF.lines,...extraKeys(r).map(([n,l,v])=>['🔁',`As ${n}: ${l} ${v} (est.)`]),
     ...(r.ai>=0?[['⭐',`Deal score ${r.ai}/100${r.aiv?' · '+r.aiv:''}`]]:[]),
     ...(ageDays(r)!=null?[['🆕',`Listed ${ageTxt(ageDays(r)).toLowerCase()}${r.hot?' · going fast':''}`]]:r.hot?[['🔥','Going fast']]:[]),
     ...(live?[['✅',`Listing checked live ${live}`]]:[]),...(r.pack?[['📊',`Analysed: ${r.pack.verdict||'see pack'}${r.pack.score!=null?` · ${r.pack.score}/100`:''}`],['📄',`Deal pack: ${location.origin}/pack/${r.pack.id}`]]:[]),...(preNDA()?[]:[['🔗',r.url]])]}}
@@ -1121,7 +1285,7 @@ function photoCard(r,i){const ph=rowPhotos(r),SF=stratFigures(r),k=SF.key,buy=r.
     <div class="pc-body"><div class="pc-price">${gbp(r.price)}${buy?'':' <small>pcm</small>'}</div>
       <h3 title="${esc(r.title||r.type)}">${esc(r.type)}${r.beds!=null&&!/\d\s*bed|studio/i.test(r.type||'')?` · ${bedWord(r.beds)}`:''}</h3>
       <p class="pc-meta" title="${esc(place)}">${esc(place)}</p>
-      <p class="pc-key">${esc(k[0])} (est.) <b class="${k[2]?'neg':''}">${esc(k[1])}</b></p>
+      <p class="pc-key">${esc(k[0])} (est.) <b class="${k[2]?'neg':''}">${esc(k[1])}</b></p>${extraKeys(r).map(([n,l,v,neg])=>`<p class="pc-key">${esc(n)}: ${esc(l)} <b class="${neg?'neg':''}">${esc(v)}</b></p>`).join('')}
       <p class="pc-foot">${liveTag(r)}${ageDays(r)!=null?`<span>· listed ${ageTxt(ageDays(r)).toLowerCase()}</span>`:''}${freshTags(r)}</p>
       <div class="pc-act"><button class="btn sm primary" data-build="${r.k}">Analyse deal</button><a class="btn sm" href="${esc(r.url)}" target="_blank" rel="noopener">Listing ↗</a>${Number.isFinite(r.lat)?`<button class="btn sm ghost" type="button" data-pin="${r.k}" aria-label="Show deal ${i+1} on the map">Map</button>`:''}${r.pack?`<a class="btn sm" href="/pack/${esc(r.pack.id)}" target="_blank" rel="noopener">Pack ↗</a>`:''}</div></div>
   </article>`}
@@ -1236,7 +1400,10 @@ function analyseText(text,name){text=String(text||'').trim();if(!text){toast('Pa
     $('#aiDealInput').value=text;renderAIAnalysis(null);$('#analyseWithAI').click()})}
 function buildDeal(ls){ls=ls.filter(Boolean).filter(isOpen);if(!ls.length)return;startAnalysis(()=>{const d=sampleDeal(),areas=[...new Set(ls.map(x=>x.area))],short=a=>a.split(',')[0].trim();
   Object.assign(d,{id:'d'+Date.now(),name:areas.length>1?`${areas[0]} + ${areas.length-1} more`:areas[0],area:areas.join('; '),strat:(()=>{const st=stratFor(ls[0]);return st==='none'?(ls[0].mode==='buy'?'BTL':'R2SA'):st})(),london:ls.some(x=>isLondonText(x.area+' '+x.postcode)),status:'Analysing',
-    units:ls.map(x=>({label:`${x.type} · ${short(x.area)}`,rent:x.price,dep:x.price,rate:RATE_EST(x.beds,x.area+' '+x.postcode),url:x.url}))});
+    units:ls.map(x=>{const w=x.area+' '+x.postcode,rooms=Math.max(1,x.beds||1),base={label:`${x.type} · ${short(x.area)}`,rate:RATE_EST(x.beds,w),rooms,roomRent:ROOM_EST(w),bills:100*rooms,url:x.url};
+      // A property for sale: its price is the purchase price, never the rent.
+      return x.mode==='buy'?Object.assign(base,{price:x.price,mrent:RENT_EST(x.beds,w),rent:0,dep:0,refurb:0,gdv:0})
+        :Object.assign(base,{rent:x.price,dep:Math.round(x.price*12/52*5)})})});
   d.aiStrategy=d.strat;S.deal=d;FS.sel.clear();markAnalysed(d.id);save();bindDeal();go('analyser','numbers');
   // Fill in the deal for the AI and start the analysis straight away.
   $('#aiDealInput').value=listingBrief(ls);renderAIAnalysis(null);$('#analyseWithAI').click();
@@ -1338,11 +1505,11 @@ function dealFigs(d){const a=d.a,U=d.units||[];const rent=U.reduce((s,u)=>s+u.re
   const tot=OCC.map(o=>U.reduce((s,u)=>s+month(u,o,null,a).surplus,0)),bes=U.map(u=>be(u,a));return{up:rent+dep,t60:tot[0],t80:tot[1],be:bes.length?Math.max(...bes):NaN}}
 function renderHome(){syncFee();
   let bi=0,bv=-Infinity;LISTINGS.forEach((r,i)=>{const v=month({rent:r.price,rate:RATE_EST(r.beds,r.area+' '+r.postcode)},.8,null,DEF_A).surplus;if(v>bv){bv=v;bi=i}});
-  const f=dealFigs(S.deal),hasFigures=(S.deal.units||[]).some(u=>(+u.rent||0)>0||(+u.dep||0)>0||(+u.rate||0)>0),fig=(l,v,cls='')=>`<div class="fig"><div class="fig-l">${l}</div><div class="fig-v${cls}">${hasFigures?v:'—'}</div></div>`;
+  const hasFigures=modelHas(S.deal),S4=modelStrip(hasFigures?S.deal:Object.assign({},S.deal,{units:[]})),fig=(l,v,cls='')=>`<div class="fig"><div class="fig-l">${l}</div><div class="fig-v${cls}">${hasFigures?v:'—'}</div></div>`;
   $('#homePreview').innerHTML=`<div class="pv-label"><span class="dot"></span>Deal Finder · opportunity preview</div>
     ${dealCard(Object.assign({k:bi},LISTINGS[bi]),0,{preview:true,plain:true})}
     <div class="pv-nums"><div class="pv-label">Deal Analyser · ${esc(S.deal.name||'Untitled deal')}</div>
-      <div class="strip mini">${fig('Upfront cash',gbp(f.up))}${fig('Surplus at 60%',gbp(f.t60),f.t60<0?' neg':'')}${fig('Surplus at 80%',gbp(f.t80),f.t80<0?' neg':'')}${fig('Break-even',isFinite(f.be)?pct(f.be):'Never')}</div></div>`;
+      <div class="strip mini">${S4.slice(0,4).map(([l,v,,neg])=>fig(l,v,neg?' neg':'')).join('')}</div></div>`;
   const hp=(n,pr,per,sub,feat)=>`<div class="hplan${feat?' feat':''}"><div class="plan-h"><h3>${n}</h3>${feat?'<span class="tag">Most popular</span>':''}</div><div class="price"><span class="mono">${pr}</span><span class="per">${per}</span></div><div class="sub">${sub}</div></div>`;
   $('#homePlans').innerHTML=hp('Free','£0','per month','Try Deal Pro with 3 Deal Finder searches a week and 2 deal analyses.')+hp('Premium','£39','per month','For everyday sourcing. Searches and analyses at every power level, billed monthly.',true)+hp('Max','£100','per month and up','5x or 20x more usage than Premium, for sourcers who work deals all day.')}
 

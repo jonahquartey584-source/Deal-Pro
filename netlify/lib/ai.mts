@@ -503,7 +503,7 @@ const analyse = (deal: string, level: LevelId, strategy?: string) => {
 
 const RANK_PROMPT = `You are Deal Pro's UK property deal sourcer. You are given Deal Finder search results as JSON (each has an id, site, type, beds, area, postcode and either a monthly rent or an asking price) plus the user's search filters. Rank them by how good they are as property deals for the user's strategy: rent-to-rent / serviced accommodation for rentals; buy-to-let, HMO, BRRR or serviced accommodation for purchases. Estimate a realistic nightly rate or rent for the location where needed and say it is an estimate.
 
-Judge each listing on the user's strategy from the filters ("strategy"; "auto" means R2SA for rentals and buy-to-let for purchases):
+Judge each listing on the user's strategy from the filters ("strategy"; "auto" means R2SA for rentals and buy-to-let for purchases). If "strategies" lists more than one, judge each listing on whichever of those strategies suits it best and say which in the reason and key figure:
 - R2SA / serviced accommodation: monthly profit at 80% occupancy, break-even occupancy and short-stay demand.
 - R2R / HMO by the room: room rents for the area times rooms, minus rent or mortgage, bills and voids; licensing and Article 4.
 - Buy-to-let: gross and net yield and monthly cash flow after a mortgage.
@@ -581,7 +581,7 @@ const ANGLES = [
 ];
 export type Filters = {
   mode?: string; beds?: string | string[]; min?: number | string; max?: number | string; loc?: string;
-  priv?: boolean; furn?: string; type?: string; notes?: string; fresh?: string; strategy?: string; noAuction?: boolean; noFlats?: boolean; noShared?: boolean;
+  priv?: boolean; furn?: string; type?: string; notes?: string; fresh?: string; strategy?: string; strategies?: string[]; noAuction?: boolean; noFlats?: boolean; noShared?: boolean;
 };
 
 export type Listing = {
@@ -642,8 +642,9 @@ function describe(f: Filters) {
   ];
   const notes = typeof f.notes === "string" ? f.notes.replace(/\s+/g, " ").trim().slice(0, 500) : "";
   const fresh = Number(f.fresh) > 0 ? Number(f.fresh) : 0;
-  const hint = STRATEGY_SEARCH[String(f.strategy || "")];
-  if (hint) parts.push(f.noAuction ? hint.replace(/ auction,/g, "") : hint);
+  // Every ticked strategy adds what suits it, so the search looks for listings that fit any of them.
+  const picked = [...new Set([String(f.strategy || ""), ...(Array.isArray(f.strategies) ? f.strategies.map(String) : [])])].slice(0, 6);
+  for (const k of picked) { const hint = STRATEGY_SEARCH[k]; if (hint) parts.push(f.noAuction ? hint.replace(/ auction,/g, "") : hint); }
   if (f.noFlats) parts.push("no flats: leave out flats, apartments, maisonettes, studios and penthouses (houses, bungalows and other non-flat property only)");
   if (f.noShared) parts.push("no shared ownership: leave out shared ownership, part buy part rent, shared equity and staircasing properties");
   if (f.noAuction) parts.push("no auction properties: leave out anything sold by auction, auction lots, online or timed auctions, \"modern method of auction\" and listings saying \"subject to reserve\" or \"auction guide price\"");

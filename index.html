@@ -205,6 +205,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .check{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--ink-2);cursor:pointer}
 .check input{margin:2px 0 0;width:15px;height:15px;accent-color:var(--brand);flex:none}
 .fields{display:grid;gap:12px}
+.schips{display:flex;flex-wrap:wrap;gap:6px}.schip{position:relative;display:inline-flex}.schip input{position:absolute;opacity:0;width:1px;height:1px}.schip span{display:inline-block;padding:4px 10px;border:1px solid var(--line-2);border-radius:999px;font-size:12.5px;color:var(--ink-2);cursor:pointer;background:var(--surface-2)}.schip input:checked+span{color:var(--ink);border-color:var(--accent);background:var(--brand-soft)}.schip input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
 .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 .row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 
@@ -1133,7 +1134,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
               <label class="f"><span id="fMaxL">Max rent</span><span class="ix both"><span class="pre">£</span><input class="inp num" type="number" id="fMax" min="0" step="50"><span class="suf js-pcm">pcm</span></span></label>
             </div>
             <label class="f"><span>Location <span class="muted" style="font-weight:400">· one or more, separated by commas</span></span><input class="inp" id="fLoc" placeholder="e.g. Leeds, Manchester, LS6 (up to 6)" autocomplete="off"></label>
-            <label class="f"><span>Strategy</span><select class="inp" id="fStrategy"><option value="auto">Auto (R2SA for rentals, BTL for purchases)</option><option value="R2SA">R2SA · serviced accommodation</option><option value="R2R">R2R · rent to rent by the room</option><option value="BTL">BTL · buy to let</option><option value="HMO">HMO · buy and let by the room</option><option value="BRRR">BRRR · buy, refurbish, refinance</option><option value="Flip">Flip · buy, refurbish, sell</option><option value="SA">Owned serviced accommodation</option><option value="LeaseOption">Lease option</option><option value="Commercial">Commercial</option><option value="none">Just show prices</option></select></label>
+            <div class="f" role="group" aria-labelledby="fStratH"><span id="fStratH">Strategies <span class="muted">· tick one or more</span></span><div class="schips" id="fStrats"><label class="schip" title="R2SA for rentals, BTL for purchases"><input type="checkbox" name="fStrat" value="auto"><span>Auto</span></label><label class="schip" title="Serviced accommodation"><input type="checkbox" name="fStrat" value="R2SA"><span>R2SA</span></label><label class="schip" title="Rent to rent by the room"><input type="checkbox" name="fStrat" value="R2R"><span>R2R</span></label><label class="schip" title="Buy to let"><input type="checkbox" name="fStrat" value="BTL"><span>BTL</span></label><label class="schip" title="Buy and let by the room"><input type="checkbox" name="fStrat" value="HMO"><span>HMO</span></label><label class="schip" title="Buy, refurbish, refinance"><input type="checkbox" name="fStrat" value="BRRR"><span>BRRR</span></label><label class="schip" title="Buy, refurbish, sell"><input type="checkbox" name="fStrat" value="Flip"><span>Flip</span></label><label class="schip" title="Owned serviced accommodation"><input type="checkbox" name="fStrat" value="SA"><span>Owned SA</span></label><label class="schip" title="Purchase lease option"><input type="checkbox" name="fStrat" value="LeaseOption"><span>Lease option</span></label><label class="schip" title="Commercial property"><input type="checkbox" name="fStrat" value="Commercial"><span>Commercial</span></label><label class="schip" title="Just show prices"><input type="checkbox" name="fStrat" value="none"><span>Prices only</span></label></div></div>
             <label class="f"><span>Listed within</span><select class="inp" id="fFresh"><option value="any">Any time</option><option value="1">Last 24 hours</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option><option value="14">Last 14 days</option></select></label>
             <label class="check"><input type="checkbox" id="fPrivate"><span>Private landlords only</span></label>
             <label class="check js-buyonly"><input type="checkbox" id="fNoAuction"><span>Exclude auctions</span></label>
@@ -1207,7 +1208,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
     </nav>
 
     <div data-step-panel="numbers">
-      <div class="step-h"><div><h2>Numbers</h2><p>Monthly model per unit at 60%, 80% and 100% occupancy, with break-even, lower-rate sensitivity and the London 90-night check.</p></div></div>
+      <div class="step-h"><div><h2>Numbers</h2><p id="numIntro">Monthly model per unit at 60%, 80% and 100% occupancy, with break-even, lower-rate sensitivity and the London 90-night check.</p></div></div>
     <div class="g-side">
       <div class="panel">
         <div class="fs">
@@ -1235,12 +1236,21 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
         <div class="fs">
           <div class="fs-h"><h2>Assumptions</h2></div>
           <div class="row2">
-            <label class="f"><span>Platform fees</span><span class="ix has-suf"><input class="inp num" type="number" id="aFee" step="0.5"><span class="suf">%</span></span></label>
-            <label class="f"><span>Cleaning per stay</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="aClean"></span></label>
-            <label class="f"><span>Average stay</span><span class="ix has-suf" style="--sp:56px"><input class="inp num" type="number" id="aStay" step="0.5" min="1"><span class="suf">nights</span></span></label>
-            <label class="f"><span>Other costs pcm</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="aOther"></span></label>
+            <label class="f" data-asm="pDep" hidden><span>Deposit</span><span class="ix has-suf"><input class="inp num" type="number" id="pDep" step="1" min="0" max="100"><span class="suf">%</span></span></label>
+            <label class="f" data-asm="pRate" hidden><span>Mortgage rate</span><span class="ix has-suf"><input class="inp num" type="number" id="pRate" step="0.1" min="0"><span class="suf">%</span></span></label>
+            <label class="f" data-asm="pLtv" hidden><span>Refinance at</span><span class="ix has-suf" style="--sp:52px"><input class="inp num" type="number" id="pLtv" step="1" min="0" max="100"><span class="suf">% LTV</span></span></label>
+            <label class="f" data-asm="pFin" hidden><span>Bridging rate a year</span><span class="ix has-suf"><input class="inp num" type="number" id="pFin" step="0.1" min="0"><span class="suf">%</span></span></label>
+            <label class="f" data-asm="pMonths" hidden><span>Months held</span><span class="ix has-suf" style="--sp:60px"><input class="inp num" type="number" id="pMonths" step="1" min="1"><span class="suf">months</span></span></label>
+            <label class="f" data-asm="pHold" hidden><span>Holding costs pcm</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="pHold" min="0"></span></label>
+            <label class="f" data-asm="pAgent" hidden><span>Agent fee on sale</span><span class="ix has-suf"><input class="inp num" type="number" id="pAgent" step="0.1" min="0"><span class="suf">%</span></span></label>
+            <label class="f" data-asm="pCosts" hidden><span>Running costs</span><span class="ix has-suf" style="--sp:64px"><input class="inp num" type="number" id="pCosts" step="1" min="0" max="100"><span class="suf">% of rent</span></span></label>
+            <label class="f" data-asm="pLegal" hidden><span>Legal and survey</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="pLegal" min="0"></span></label>
+            <label class="f" data-asm="aFee"><span>Platform fees</span><span class="ix has-suf"><input class="inp num" type="number" id="aFee" step="0.5"><span class="suf">%</span></span></label>
+            <label class="f" data-asm="aClean"><span>Cleaning per stay</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="aClean"></span></label>
+            <label class="f" data-asm="aStay"><span>Average stay</span><span class="ix has-suf" style="--sp:56px"><input class="inp num" type="number" id="aStay" step="0.5" min="1"><span class="suf">nights</span></span></label>
+            <label class="f" data-asm="aOther"><span>Other costs pcm</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="aOther"></span></label>
           </div>
-          <p class="note">30-day month. Other costs cover insurance, software, consumables and minor repairs per unit. Rent is treated as bills-included.</p>
+          <p class="note" id="asmNote">30-day month. Other costs cover insurance, software, consumables and minor repairs per unit. Rent is treated as bills-included.</p>
         </div>
       </div>
       <div id="results"></div>
@@ -1586,7 +1596,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
   <div class="dr-foot"><span class="hint" id="sgHint" aria-live="polite"></span><button class="btn" id="ulBack" type="button" hidden>Back</button><button class="btn" id="sgCancel" type="button">Cancel</button><button class="btn primary" id="sgSign" type="button" disabled>Continue to payment</button><button class="btn primary" id="payBtn" type="button" hidden>Pay £500</button></div>
 </dialog>
 
-<script src="/assets/app.js?v=1" defer></script>
+<script src="/assets/app.js?v=2" defer></script>
 <script type="module" src="/assets/auth.js"></script>
 
 </body>
