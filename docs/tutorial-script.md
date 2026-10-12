@@ -113,7 +113,7 @@ In the Deal Community, you can find deals other sourcers have already contacted,
 
 **Voiceover:**
 The Free plan gives you three Scout searches a week and two analyses. Premium, at thirty-nine pounds a month, gives you sixty credits a week and every power level. Max gives you three hundred or twelve hundred credits a week, for sourcers who work deals all day.
-And here's the best part: give half price, get half price. Click Refer a friend in the sidebar to get your own link, and send it on WhatsApp or anywhere else. When your friend signs up with your link and buys their first upgraded plan, you both get three months at half price.
+And here's the best part: give half price, get half price. Click Refer a friend in the sidebar to get your own link, and send it on WhatsApp or anywhere else. When your friend signs up with your link and buys their first upgraded plan, you both get three months at half price. That takes Premium from thirty-nine pounds a month down to nineteen pounds fifty, and Max from a hundred pounds down to fifty.
 You can cancel any time, and if Deal Pro isn't right for you, you can ask for a refund within fourteen days.
 
 **On screen:** Open **Plans**. Hover Free, Premium and Max (switch between 5x and 20x). Click **Refer a friend** (the red button with the **50% off** badge in the sidebar). Hover your link, click **Copy**, then hover **Send on WhatsApp**. Scroll to **Refunds**.

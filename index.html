@@ -206,6 +206,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .check input{margin:2px 0 0;width:15px;height:15px;accent-color:var(--brand);flex:none}
 .fields{display:grid;gap:12px}
 .schips{display:flex;flex-wrap:wrap;gap:6px}.schip{position:relative;display:inline-flex}.schip input{position:absolute;opacity:0;width:1px;height:1px}.schip span{display:inline-block;padding:4px 10px;border:1px solid var(--line-2);border-radius:999px;font-size:12.5px;color:var(--ink-2);cursor:pointer;background:var(--surface-2)}.schip input:checked+span{color:var(--ink);border-color:var(--accent);background:var(--brand-soft)}.schip input:focus-visible+span{outline:2px solid var(--accent);outline-offset:2px}
+.ref-prices{display:flex;flex-wrap:wrap;gap:6px 16px;margin:10px 0 0;font-size:13px;color:var(--ink-2)}.ref-prices s{color:var(--muted);text-decoration-color:var(--accent)}.ref-prices b{color:var(--ink);font-family:var(--mono)}
 .ref-one{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}.ref-one .ref-link{flex:1 1 320px;min-width:0}.ref-banner .btn{margin-left:6px}
 .ref-offer{border:1px solid var(--line-2);border-radius:10px;padding:14px;display:grid;gap:8px;background:var(--surface-2);min-width:0}
 .ref-offer h3{margin:0;font-size:15px}.ref-offer p{margin:0;font-size:13px;color:var(--ink-2)}
@@ -224,6 +225,11 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .rp-copy .eyebrow{margin-bottom:14px}
 .rp-h{margin:0;font-size:clamp(34px,4.6vw,56px);line-height:1.02;letter-spacing:-.035em;text-wrap:balance}
 .rp-lede{margin:16px 0 0;max-width:46ch;font-size:17px;color:var(--ink-2)}.rp-lede b{color:var(--ink)}
+.rp-prices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:22px;max-width:480px}
+.rp-price{display:grid;gap:2px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,77,94,.3);background:rgba(224,20,43,.08);min-width:0}
+.rp-plan{font-size:12px;color:var(--ink-2);font-weight:500}.rp-was{font:500 14px var(--mono);color:var(--ink-2)}.rp-was s{text-decoration-color:var(--accent);text-decoration-thickness:2px}
+.rp-now{font:700 22px/1.1 var(--mono);letter-spacing:-.03em;color:var(--ink);white-space:nowrap}.rp-now small{font:500 12px var(--sans);color:var(--muted);margin-left:2px;letter-spacing:0}
+.rp-save{margin:10px 0 0;font-size:13.5px;color:var(--ink-2)}.rp-save b{color:var(--accent)}
 .rp-steps{list-style:none;margin:26px 0 0;padding:0;display:grid;gap:14px}
 .rp-steps li{display:flex;gap:14px;align-items:flex-start}.rp-steps b{display:block;font-size:15px}.rp-steps span:not(.rp-n){font-size:13.5px;color:var(--ink-2)}
 .rp-n{flex:none;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font:600 13px var(--mono);color:var(--accent);border:1px solid rgba(255,77,94,.5);background:rgba(224,20,43,.1)}
@@ -241,6 +247,7 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 @keyframes rpFloat{0%,100%{transform:rotate(-4deg) translateY(0)}50%{transform:rotate(-3deg) translateY(-8px)}}
 .rp-side{display:flex;justify-content:center;align-items:center;gap:8px;border-color:rgba(255,77,94,.45)!important;background:rgba(224,20,43,.1)!important}
 .rp-badge{font-size:10.5px;font-weight:600;background:var(--brand);color:#fff;border-radius:999px;padding:1px 7px}
+@media (max-width:480px){.rp-price{padding:10px}.rp-now{font-size:18px}.rp-now small{display:block;margin:2px 0 0}}
 @media (max-width:900px){.rp-card{grid-template-columns:minmax(0,1fr);padding:30px 22px;gap:20px}.rp-visual{min-height:250px;order:-1}}
 @media (prefers-reduced-motion:reduce){.rp-ticket,.rp-card::after{animation:none}}
 .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
@@ -1106,6 +1113,12 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
           <p class="eyebrow"><span class="eb-dot" aria-hidden="true"></span>Refer a friend</p>
           <h2 class="rp-h" id="rpTitle">Give half price.<br>Get half price.</h2>
           <p class="rp-lede">Invite a fellow investor or sourcer to Deal Pro. When they upgrade, you <b>both</b> get your next 3 months at half price.</p>
+          <div class="rp-prices" role="list" aria-label="Your price for 3 months">
+            <div class="rp-price" role="listitem"><span class="rp-plan">Premium</span><span class="rp-was"><s>£39</s></span><span class="rp-now">£19.50<small>/mo</small></span></div>
+            <div class="rp-price" role="listitem"><span class="rp-plan">Max 5x</span><span class="rp-was"><s>£100</s></span><span class="rp-now">£50<small>/mo</small></span></div>
+            <div class="rp-price" role="listitem"><span class="rp-plan">Max 20x</span><span class="rp-was"><s>£200</s></span><span class="rp-now">£100<small>/mo</small></span></div>
+          </div>
+          <p class="rp-save">Save up to <b>£300</b> each over 3 months.</p>
           <ol class="rp-steps">
             <li><span class="rp-n">1</span><div><b>Share your link</b><span>Copy it, or send it on WhatsApp in one tap.</span></div></li>
             <li><span class="rp-n">2</span><div><b>Your friend upgrades</b><span>Premium, Max or the Deal Community membership.</span></div></li>
@@ -1541,7 +1554,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
     <div class="plans" id="plans"></div>
 
     <section class="sec" id="refer" aria-labelledby="referH">
-      <div class="sec-h"><h2 id="referH">Refer a friend</h2><span class="sec-meta">You both get 3 months half price</span></div>
+      <div class="sec-h"><h2 id="referH">Refer a friend</h2><span class="sec-meta">You both get 3 months half price: Premium £19.50 a month instead of £39</span></div>
       <div class="panel"><div class="fs" id="referBox"><p class="note" style="margin:0">Sign in to get your referral link.</p></div></div>
     </section>
 
@@ -1666,7 +1679,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
   <div class="dr-foot"><span class="hint" id="sgHint" aria-live="polite"></span><button class="btn" id="ulBack" type="button" hidden>Back</button><button class="btn" id="sgCancel" type="button">Cancel</button><button class="btn primary" id="sgSign" type="button" disabled>Continue to payment</button><button class="btn primary" id="payBtn" type="button" hidden>Pay £500</button></div>
 </dialog>
 
-<script src="/assets/app.js?v=4" defer></script>
+<script src="/assets/app.js?v=5" defer></script>
 <script type="module" src="/assets/auth.js"></script>
 
 </body>
