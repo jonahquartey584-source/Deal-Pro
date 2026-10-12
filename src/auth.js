@@ -263,8 +263,14 @@ function showSignedIn(user) {
   signedInUser = user;
   localStorage.removeItem(SIGNED_OUT_KEY);
   rememberSession();
-  $(".ws-name").textContent = user.name || user.email;
+  // Show the name they gave us; the email stays in small print.
+  let profileName = "";
+  try { profileName = JSON.parse(localStorage.getItem("dealpro:state") || "{}")?.profile?.fullName || ""; } catch {}
+  const displayName = String(profileName || user.name || "").trim() || "Your workspace";
+  $(".ws-name").textContent = displayName;
+  $("#accountName").textContent = displayName;
   $("#accountEmail").textContent = user.email;
+  $("#accountEmail").title = user.email;
   document.body.dataset.userId = user.id;
   document.body.dataset.userEmail = user.email;
   if (user.email?.toLowerCase() === "jonahquartey584@gmail.com") $("#adminLink").hidden = false;
@@ -406,7 +412,7 @@ gate.addEventListener("click", (event) => { if (event.target === gate && canClos
 document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !gate.hidden && canClose()) closeAccount(); });
 document.addEventListener("click", (event) => {
   if (signedInUser) return;
-  const protectedAction = event.target.closest('[data-go="find"],[data-go="analyser"],[data-go="analyse"],[data-go="deals"],[data-go="community"],[data-plan],#pwPro,#pwMax');
+  const protectedAction = event.target.closest('[data-go="find"],[data-go="refer"],[data-go="analyser"],[data-go="analyse"],[data-go="deals"],[data-go="community"],[data-plan],#pwPro,#pwMax');
   if (!protectedAction) return;
   event.preventDefault();
   event.stopImmediatePropagation();
