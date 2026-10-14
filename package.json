@@ -3,13 +3,15 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "esbuild src/auth.js --bundle --format=esm --minify --outfile=assets/auth.js && esbuild src/admin.js --bundle --format=esm --minify --outfile=assets/admin.js",
+    "build": "esbuild src/auth.js --bundle --format=esm --minify --outfile=assets/auth.js && esbuild src/admin.js --bundle --format=esm --minify --outfile=assets/admin.js && esbuild src/pdf.js --bundle --external:html2canvas --external:canvg --external:dompurify --format=esm --minify --outfile=assets/pdf.js",
     "local": "node local/server.mjs"
   },
   "dependencies": {
     "@netlify/blobs": "latest",
     "@netlify/functions": "latest",
     "@netlify/identity": "latest",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "openai": "latest"
   },
   "devDependencies": {

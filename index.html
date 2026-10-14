@@ -1079,7 +1079,7 @@ td.t{text-align:right;color:var(--ink-2)}
 
     <div data-step-panel="pack" hidden>
       <div class="step-h"><div><h2>Deal pack</h2><p>A pre-NDA investor summary built from your numbers and due diligence. The exact address and landlord stay hidden until the investor signs your terms.</p></div>
-        <div class="ph-actions"><button class="btn primary" id="genPack" title="Uses usage">Generate final pack</button></div></div>
+        <div class="ph-actions"><button class="btn" id="pdfPack" type="button">Download PDF</button><button class="btn primary" id="genPack" title="Uses usage">Generate final pack</button></div></div>
       <div class="limit-note" id="nPack" role="status" hidden></div>
     <div class="g-side">
       <div class="panel">
@@ -1094,7 +1094,7 @@ td.t{text-align:right;color:var(--ink-2)}
         </div>
         <div class="fs">
           <div class="alert warn">Only send packs through a sourcer who is in a redress scheme, or once you are in one yourself. Keep the numbers labelled as illustrative.</div>
-          <p class="note">In the full version this exports a branded PDF. In the demo, generating removes the preview watermark.</p>
+          <p class="note">Download PDF saves the pack as a multi-page PDF: summary, the deal, the numbers, the AI analysis, due diligence and next steps. Until you generate the final pack, each page carries a PREVIEW mark.</p>
         </div>
       </div>
       <div id="packWrap"></div>
@@ -1780,6 +1780,26 @@ function bindPack(){const p=S.deal.pack;$('#pBiz').value=p.biz;$('#pRedress').va
 [['#pBiz','biz'],['#pRedress','redress'],['#pFee','fee']].forEach(([s,k])=>$(s).addEventListener('input',e=>{S.deal.pack[k]=e.target.value;save();renderPack()}));
 $('#pNDA').addEventListener('change',e=>{S.deal.pack.nda=e.target.checked;save();renderPack()});
 $('#genPack').addEventListener('click',()=>{if(S.deal.pack.final){toast('Pack already generated');return}if(!feature('pack','#nPack')||!spend(COST.pack,'Deal pack','#nPack'))return;S.deal.pack.final=true;toast('Final pack generated');save();renderPack()});
+/* ---------- PDF export (the PDF code loads only when a PDF is asked for) ---------- */
+const fileSlug=s=>String(s||'deal').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,50)||'deal';
+async function downloadPdf(build,name){
+  try{const m=await import('/assets/pdf.js');const blob=m.toBlob(build(m));const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},5000);toast('PDF downloaded.')}
+  catch(e){console.error(e);toast('The PDF could not be made. Please try again.')}}
+function packPdfData(){const d=S.deal,a=d.a,U=d.units,p=d.pack,ai=d.aiAnalysis&&typeof d.aiAnalysis==='object'?d.aiAnalysis:null;
+  const rent=U.reduce((s,u)=>s+u.rent,0),dep=U.reduce((s,u)=>s+u.dep,0),sur=(u,o)=>month(u,o,null,a).surplus,s80=U.reduce((s,u)=>s+sur(u,OCC[1]),0),worst=Math.max(...U.map(u=>be(u,a)));
+  const area=p.nda?(d.area||'').replace(/,?\s*[A-Z]{1,2}\d[\dA-Z]?\s*\d[A-Z]{2}\b/i,''):(d.send.addr||d.area);
+  const arr=x=>Array.isArray(x)?x.map(v=>String(v)):[];
+  return {name:d.name||'Untitled deal',area,address:d.send.addr||d.area,strategy:stratName(d.strat)||d.strat,nda:!!p.nda,final:!!p.final,date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),
+    units:U.map(u=>({label:u.label,rent:gbp(u.rent)+'/month',dep:gbp(u.dep),rate:'£'+u.rate+'/night'})),totalRent:gbp(rent)+'/month',totalDeposits:gbp(dep),upfront:gbp(rent+dep),surplus80:gbp(s80),surplus80Neg:s80<0,breakEven:isFinite(worst)?pct(worst):'Never',
+    occ:OCC.map(pct),scen:U.map(u=>({label:`${u.label} at £${u.rate}`,vals:OCC.map(o=>gbp(sur(u,o))),be:isFinite(be(u,a))?'~'+pct(be(u,a)):'Never'})),
+    assumptions:`${a.fee}% platform fees, £${a.clean} cleaning per ${a.stay}-night stay, £${a.other}/month other costs, 30-day month. Not a forecast; nightly rates and occupancy are unvalidated.${d.london&&d.strat==='R2SA'?' In London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission.':''}`,
+    ai:ai?{verdict:String(ai.verdict||'Analysis complete'),score:ai.score!=null?Math.max(0,Math.min(100,Math.round(+ai.score||0))):null,summary:String(ai.summary||''),betterStrategy:String(ai.better_strategy||''),
+      occupancy:(ai.occupancy_scenarios||[]).map(o=>[String(o.occupancy),String(o.monthly_profit)]),stress:(ai.stress_tests||[]).map(t=>[String(t.scenario),String(t.monthly_profit),t.still_works===false?'No':t.still_works?'Yes':'-']),
+      metrics:(ai.strategy_metrics||[]).slice(0,8).map(m=>[String(m&&m.label||''),String(m&&m.value||'')]),risks:[...arr(ai.red_flags).map(x=>'Red flag: '+x),...arr(ai.risks)],assumptions:arr(ai.assumptions),missing:arr(ai.missing_information),next:arr(ai.next_actions)}:null,
+    dd:DD_TEMPLATE.map((t,i)=>{const x=d.dd[i]||{s:'none'};return {title:t.t,status:SLAB[x.s]||'',done:x.s==='verified',note:x.n||'',evidence:(x.ev||[]).map(e=>e.name||hostOf(e.url))}}),
+    fee:p.fee,biz:p.biz,redress:p.redress,listings:U.filter(u=>u.url&&/^https:/.test(u.url)).map(u=>({label:`${u.label}: ${hostOf(u.url)}`,url:u.url}))}}
+$('#pdfPack').addEventListener('click',()=>downloadPdf(m=>m.buildDealPack(packPdfData()),`${fileSlug(S.deal.name)}-deal-pack.pdf`));
 function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();
   $('#genPack').textContent=p.final?'Pack generated':'Generate final pack';
   const rent=U.reduce((s,u)=>s+u.rent,0),dep=U.reduce((s,u)=>s+u.dep,0);
@@ -1788,7 +1808,7 @@ function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();
   const cols=U.map(u=>`<div><div class="kv-h">${esc(u.label)}</div>${kv([['Rent incl. bills',gbp(u.rent)+'/month'],['Deposit',gbp(u.dep)],['Model rate','£'+u.rate+'/night']])}</div>`).join('')
     +(U.length>1?`<div><div class="kv-h">All units</div>${kv([['Rent',gbp(rent)+'/month'],['Deposits',gbp(dep)],['Upfront',gbp(rent+dep)]])}</div>`:'');
   const tr=U.map(u=>`<tr><td>${esc(u.label)} at £${u.rate}</td>${OCC.map(o=>{const v=month(u,o,null,a).surplus;return `<td class="n" style="${v<0?'color:#B42318':''}">${gbp(v)}</td>`}).join('')}<td class="n">~${pct(be(u,a))}</td></tr>`).join('');
-  const ddr=DD_TEMPLATE.map((t,i)=>{const x=d.dd[i],ev=x.ev||[];return `<tr><td class="l">${t.t}</td><td class="l st ${x.s}"><span class="pdot"></span>${SLAB[x.s]}</td><td class="l">${ev.length?ev.map(e=>esc(e.name||hostOf(e.url))).join(', '):'None yet'}</td></tr>`}).join('');
+  const ddr=DD_TEMPLATE.map((t,i)=>{const x=d.dd[i]||{s:'none'},ev=x.ev||[];return `<tr><td class="l">${t.t}</td><td class="l st ${x.s}"><span class="pdot"></span>${SLAB[x.s]}</td><td class="l">${ev.length?ev.map(e=>esc(e.name||hostOf(e.url))).join(', '):'None yet'}</td></tr>`}).join('');
   const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
   $('#packWrap').innerHTML=`<div class="paper-bar"><span class="dot ${p.final?'good':'none'}"></span>${p.final?'Final pack generated':'Preview. Generate the final pack to remove the watermark.'}</div>
   <article class="pack">${p.final?'':'<div class="wm" aria-hidden="true"><span>PREVIEW</span></div>'}
@@ -2290,9 +2310,9 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   const SORTS=CARD_SORTS.filter(x=>bmvOn||!/^bmv/.test(x[0]));
   const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
   const acts=view==='cards'
-    ?(m?`<button class="btn sm primary" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
+    ?(m?`<button class="btn sm primary" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><button class="btn sm" id="fPdf" type="button"${nOpen?'':' disabled'} title="Save the selected deals, or all of them, as a multi-page PDF">Download PDF</button><label class="sortl"><span class="sr">Sort deals</span><select class="inp inp-sm" id="fSortSel">${SORTS.some(x=>x[0]===sv)?'':`<option value="${sv}" selected>Sheet order</option>`}${SORTS.map(([v,t])=>`<option value="${v}"${v===sv?' selected':''}>${t}</option>`).join('')}</select></label>
       <button class="btn sm car-arrow" id="fPrev" aria-label="Previous deals">${CHEV(-1)}</button><button class="btn sm car-arrow" id="fNext" aria-label="Next deals">${CHEV(1)}</button>`:'')
-    :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
+    :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><button class="btn sm" id="fPdf" type="button"${nOpen?'':' disabled'} title="Save the selected deals, or all of them, as a multi-page PDF">Download PDF</button><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
   const L=`<span class="lockc">${LOCK}Locked</span>`;
   let body;
   if(!m)body=`<div class="fempty"><h2>${hidden?'No listings confirmed live':'No listings match these filters'}</h2><p>${hidden?'Every listing found either had a dead link or its site blocked the check. Try Analyst or Expert, which open more listings to confirm them, or show the unconfirmed ones.':'Try a wider price range, a different location or more sites.'}</p></div>`;
@@ -2311,7 +2331,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
     const upd=()=>{const p=$('#fPrev'),n=$('#fNext');if(p)p.disabled=c.scrollLeft<=2;if(n)n.disabled=c.scrollLeft+c.clientWidth>=c.scrollWidth-2};c.addEventListener('scroll',upd,{passive:true});upd()}
   FS.justOpened=null;syncSel()}
 function syncSel(){const n=FS.sel.size,b=$('#fBuildSel');if(b){b.disabled=!n;b.textContent=n?`Analyse selected (${n})`:'Analyse selected'}
-  const cc=$('#fCopyCards');if(cc)cc.textContent=cardsLabel((FS.lastRows||[]).filter(isOpen).length);
+  const cc=$('#fCopyCards');if(cc)cc.textContent=cardsLabel((FS.lastRows||[]).filter(isOpen).length);const pf=$('#fPdf');if(pf)pf.textContent=FS.sel.size?`Download PDF (${FS.sel.size})`:'Download PDF';
   $$('#fResults tr[data-k]').forEach(tr=>tr.classList.toggle('is-sel',FS.sel.has(+tr.dataset.k)));
   const all=$('#fSelAll');if(all){const cb=$$('#fResults [data-sel]');all.checked=cb.length>0&&cb.every(c=>c.checked);all.indeterminate=!all.checked&&cb.some(c=>c.checked)}}
 function syncFee(){$$('.js-fee').forEach(e=>e.textContent=gbp(dealFee()))}
@@ -2466,6 +2486,17 @@ function copyTsv(){const n=openRows().length;if(!n){toast('No deals to copy.');r
 const cardsLabel=n=>FS.sel.size?`Copy ${FS.sel.size} selected card${FS.sel.size===1?'':'s'}`:`Copy all ${n} deal card${n===1?'':'s'}`;
 function cardRows(){const shown=(FS.lastRows||orderRows(findRows())).filter(isOpen);return FS.sel.size?shown.filter(r=>FS.sel.has(r.k)):shown}
 const preNDA=()=>S.find.cardLinks===false;
+function finderPdfData(){const rows=cardRows(),f=S.find.f,buy=f.mode==='buy',pre=preNDA(),bmvOn=buy&&canBmv(),first=rows[0],picks=(FS.rank&&FS.rank.status==='done'&&FS.rank.data&&Array.isArray(FS.rank.data.picks))?FS.rank.data.picks:[];
+  const bedsLab=bedList(f.beds).length?bedList(f.beds).map(b=>b==='0'?'Studio':b==='4'?'4+ beds':b+' bed').join(', '):'';
+  const criteria=[bedsLab,(f.min!==''||f.max!=='')?`${f.min!==''?gbp(+f.min):'Any'} to ${f.max!==''?gbp(+f.max):'any'}${buy?'':' pcm'}`:'',f.type&&f.type!=='any'?'Type: '+f.type:'',f.furn&&f.furn!=='any'?f.furn:'',f.priv?'Private landlords only':'',f.fresh&&f.fresh!=='any'?`Listed in the last ${f.fresh} day${+f.fresh===1?'':'s'}`:'',bmvOn&&+f.bmv>0?`At least ${+f.bmv}% below estimated market value`:''].filter(Boolean);
+  const deals=rows.map((r,i)=>{const SF=stratFigures(r),town=String(r.area||'').replace(/\s*\(.*?\)/g,'').split(',').pop().trim(),pk=picks.find(p=>+p.id===r.k),age=ageDays(r);
+    return {n:i+1,type:`${r.type}${r.beds!=null&&!/bed/i.test(r.type)?` (${bedWord(r.beds)})`:''}`,area:(pre?[town,r.postcode]:[r.area,r.postcode]).filter(Boolean).join(' ').replace(/\s*\(.*?\)/g,'').trim(),price:gbp(r.price)+(buy?'':' pcm'),key:SF.key[1],
+      mv:bmvOn&&r.mv?gbp(r.mv.value):'',bmv:bmvOn&&r.bmv!=null?r.bmv+'%':'',score:r.ai>=0?String(r.ai):'',verdict:r.ai>=0?r.aiv:'',reason:pk&&pk.reason?String(rankText(pk.reason)).slice(0,160):'',
+      site:pre?'':SITE_LABEL(r.site),listed:age!=null?'Listed '+ageTxt(age).toLowerCase():'',lines:SF.lines.map(l=>l[1]),url:pre?'':r.url,
+      checked:r.verified==='available'&&r.checkedAt?'Listing checked live '+new Date(r.checkedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):''}});
+  return {date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),preNDA:pre,location:f.loc,mode:buy?'To buy':'To rent',strategy:first?(STRAT_NAME[stratFor(first)]||''):'',buy,keyHead:first?stratFigures(first).key[0]+' (est.)':'Key figure',
+    hasMv:deals.some(x=>x.mv),hasScore:deals.some(x=>x.score),criteria,notes:f.notes,deals}}
+document.addEventListener('click',e=>{if(!e.target.closest('#fPdf'))return;if(!cardRows().length){toast('No deals to put in a PDF.');return}downloadPdf(m=>m.buildFinderPack(finderPdfData()),`deal-pack-${new Date().toISOString().slice(0,10)}.pdf`)});
 function cardFacts(r,i){const buy=r.mode==='buy',town=String(r.area||'').replace(/\s*\(.*?\)/g,'').split(',').pop().trim();
   const where=(preNDA()?[town,r.postcode]:[r.area,r.postcode]).filter(Boolean).join(' ').replace(/\s*\(.*?\)/g,'').trim();
   const SF=stratFigures(r);
