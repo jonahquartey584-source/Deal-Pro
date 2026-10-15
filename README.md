@@ -49,8 +49,9 @@ Ember & Oat (café), Kōji (omakase), Forno Rosso (pizzeria), Volt Supply (tech 
 Northlight (PC builds) and Crumb (bakery). Each has a scroll-scrubbed video hero and one
 interactive feature. They share `mockups/shared/scroll.js` and `mockups/shared/base.css`.
 Hero videos are H.264 MP4 with a VP9 WebM fallback, encoded with a keyframe every 8 frames
-so scrubbing stays smooth. Before scrolling, each hero plays a seamless Higgsfield loop
-(`hero-loop.mp4`, same first and last frame) with a usable glass card; the loop hands over to the
-scrub video on the first scroll. Phones get the loop and the card, reduced-motion visitors a still.
+so scrubbing stays smooth. Before scrolling, each hero autoplays a 10-second Higgsfield trailer with cuts and ambient sound
+(`hero-trailer.mp4`, muted until the visitor taps Sound on) behind the title and a usable glass card;
+the trailer hands over to the scrub video on the first scroll. Phones get the trailer and the card,
+reduced-motion visitors a still.
 Every picture is AI generated with Higgsfield, including the pizza toppings (transparent cut-outs
 in `forno-rosso/assets/build/`) and the laptop photos on the hub.

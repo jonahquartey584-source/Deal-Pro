@@ -221,6 +221,20 @@
   const loop = hero.querySelector('video.loop');
   const playLoop = () => { if (loop && !reduce) { const p = loop.play(); if (p) p.catch(() => {}); } };
 
+  // Sound toggle for the trailer: browsers only autoplay muted, so sound is the viewer's choice
+  if (loop) {
+    const sb = document.createElement('button');
+    sb.type = 'button'; sb.className = 'sound-btn'; sb.setAttribute('aria-pressed', 'false');
+    sb.innerHTML = '<i aria-hidden="true"></i><span>Sound on</span>';
+    sb.addEventListener('click', () => {
+      loop.muted = !loop.muted;
+      if (!loop.muted) { loop.volume = 0.6; playLoop(); }
+      sb.setAttribute('aria-pressed', String(!loop.muted));
+      sb.querySelector('span').textContent = loop.muted ? 'Sound on' : 'Sound off';
+    });
+    stage.appendChild(sb);
+  }
+
   // Cursor spotlight + gentle parallax on the live background (fine pointers only)
   if (!reduce && matchMedia('(pointer: fine)').matches) {
     let pq = false, ex = 0, ey = 0;

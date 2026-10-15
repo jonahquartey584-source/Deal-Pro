@@ -236,13 +236,13 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   function nextReel() {
     const [slug, name] = reel[ri % reel.length];
     const back = front === va ? vb : va;
-    back.src = `${slug}/assets/hero-loop.${canMp4 ? 'mp4' : 'webm'}`;
+    back.src = `${slug}/assets/hero-trailer.${canMp4 ? "mp4" : "webm"}`;
     back.oncanplay = () => { back.oncanplay = null; back.play().catch(() => {}); back.classList.add('on'); front.classList.remove('on'); front = back; };
     const tag = document.getElementById('reelTag');
     tag.style.opacity = 0; setTimeout(() => { tag.querySelector('b').textContent = name; tag.style.opacity = 1; }, 500);
     ri++;
   }
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { nextReel(); setInterval(nextReel, 5000); }
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { nextReel(); setInterval(nextReel, 7000); }
   else document.getElementById('reelTag').hidden = true;
 
   // "Try a random one"
