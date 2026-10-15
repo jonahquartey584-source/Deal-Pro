@@ -41,3 +41,12 @@ a second to `.tutorial-build/frames` for a quick check without making the video.
 
 Then bump the `?v=` number on the tutorial video and poster in `index.html`
 so browsers load the new version, and redeploy.
+
+## Website mockups (`/mockups`)
+
+Six interactive demo sites for Qp Digital, linked from `mockups/index.html`:
+Ember & Oat (café), Kōji (omakase), Forno Rosso (pizzeria), Volt Supply (tech shop),
+Northlight (PC builds) and Crumb (bakery). Each has a scroll-scrubbed video hero and one
+interactive feature. They share `mockups/shared/scroll.js` and `mockups/shared/base.css`.
+Hero videos are H.264 MP4 with a VP9 WebM fallback, encoded with a keyframe every 8 frames
+so scrubbing stays smooth. Phones and reduced-motion visitors get a still hero.

@@ -1,0 +1,293 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Forno Rosso | Wood-Fired Pizza</title>
+<meta name="description" content="Neapolitan pizza baked in ninety seconds at 485 degrees. Dough rested for 48 hours. Eat in or order out.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Instrument+Sans:wght@400;500;600&family=Martian+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#fbf1e2;--ink:#231915;--muted:#6f5d52;--accent:#d7322a;--on-accent:#fff6ea;--basil:#2f6b34;--char:#231915;
+  --card:#fff8ee;--line:rgba(35,25,21,.12);--line-strong:rgba(35,25,21,.35);
+  --display:'Bricolage Grotesque',sans-serif;--body:'Instrument Sans',system-ui,sans-serif;--mono:'Martian Mono',monospace;
+  --header-bg:rgba(35,25,21,.86);--radius:14px;
+  --scrim:linear-gradient(180deg,rgba(35,25,21,.45),rgba(35,25,21,0) 35%,rgba(35,25,21,0) 60%,rgba(35,25,21,.5));
+  --band-scrim:rgba(35,25,21,.45);
+  --env:radial-gradient(40% 30% at 90% 10%,rgba(215,50,42,.08),transparent 70%),#fbf1e2;
+}
+.site-header{color:#fff6ea}
+.logo{font-family:var(--display);font-weight:800;font-size:26px;text-decoration:none;letter-spacing:-.03em}
+.logo span{color:var(--accent)}
+.hero{color:#fff6ea}
+.hero .big{font-weight:800;letter-spacing:-.045em;text-transform:uppercase;font-size:clamp(46px,7.6vw,118px);line-height:.9}
+.hero .big em{font-style:normal;color:#ffb347}
+.hero .kick{color:#ffcf8a}
+h2{font-family:var(--display);font-weight:800;font-size:clamp(42px,6vw,90px);line-height:.92;letter-spacing:-.045em;text-transform:uppercase;margin:.2em 0 .4em}
+h2 .red{color:var(--accent)}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+.lede{font-size:19px;color:var(--muted);max-width:50ch}
+
+.big-marquee{background:var(--accent);color:var(--on-accent);padding:22px 0;transform:rotate(-2deg);margin:-30px -20px 0;position:relative;z-index:2;box-shadow:0 20px 40px -20px rgba(215,50,42,.6)}
+.big-marquee div>span{font-family:var(--display);font-weight:800;font-size:clamp(34px,5vw,64px);text-transform:uppercase;letter-spacing:-.03em}
+.big-marquee div>span::after{content:"✺";margin-left:48px;color:#ffcf8a}
+
+/* Stats strip */
+.facts{padding:130px 0 90px}
+.facts .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.fact{padding:30px;border-radius:24px;background:var(--card);border:2px solid var(--char);box-shadow:6px 6px 0 var(--char)}
+.fact b{display:block;font-family:var(--display);font-weight:800;font-size:58px;letter-spacing:-.04em;line-height:1}
+.fact span{font-size:15px;color:var(--muted)}
+@media (max-width:860px){.facts .grid{grid-template-columns:1fr 1fr}}
+
+/* Builder */
+.build{padding:90px 0 120px;overflow:hidden}
+.build .wrap{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
+.pizza-stage{position:relative;aspect-ratio:1;max-width:520px;margin-inline:auto;width:100%}
+.pizza-stage svg{width:100%;height:100%;transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}
+.pizza-stage .peel{position:absolute;inset:8% -6% -6% 8%;border-radius:50%;background:#c58a52;z-index:-1;box-shadow:inset 0 0 0 10px #b37a45}
+.top{transform-box:fill-box;transform-origin:center;animation:drop .55s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--n) * 18ms)}
+@keyframes drop{from{opacity:0;transform:translateY(-40px) scale(.4)}}
+html.reduce .top{animation:none}
+.toppings{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:26px 0}
+.tp{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;border:2px solid var(--char);background:var(--card);cursor:pointer;transition:transform .25s,box-shadow .25s,background .25s;text-align:left}
+.tp:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--char)}
+.tp[aria-pressed="true"]{background:var(--char);color:var(--bg)}
+.tp i{width:22px;height:22px;border-radius:50%;flex:none;border:2px solid currentColor}
+.tp small{margin-left:auto;font-family:var(--mono);font-size:12px}
+.total{display:flex;align-items:center;justify-content:space-between;gap:20px;padding-top:20px;border-top:2px dashed var(--line-strong);flex-wrap:wrap}
+.total b{font-family:var(--display);font-weight:800;font-size:46px;letter-spacing:-.03em}
+.btn{border-radius:14px;border:2px solid var(--char);box-shadow:5px 5px 0 var(--char);font-weight:600}
+.btn:hover{box-shadow:2px 2px 0 var(--char)}
+@media (max-width:860px){.build .wrap{grid-template-columns:1fr}.pizza-stage{width:84%}}
+
+/* Menu cards */
+.menu{padding:110px 0;background:var(--char);color:var(--bg);border-radius:48px 48px 0 0}
+.menu .kicker{color:#ffb347}
+.menu .lede{color:#cbb9a8}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:40px}
+.card{border-radius:28px;overflow:hidden;background:#2f2420;border:1px solid rgba(255,246,234,.1)}
+.card img{width:100%;aspect-ratio:1;object-fit:cover;transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.card:hover img{transform:scale(1.06)}
+.card .t{padding:22px 24px 26px;display:flex;justify-content:space-between;gap:12px;align-items:start}
+.card h3{font-family:var(--display);font-weight:800;font-size:26px;margin:0;letter-spacing:-.02em;text-transform:uppercase}
+.card p{margin:4px 0 0;color:#cbb9a8;font-size:15px}
+.card .price{font-family:var(--mono);font-size:14px;background:var(--accent);color:var(--on-accent);padding:6px 10px;border-radius:8px;white-space:nowrap}
+.sticker{position:absolute;top:18px;left:18px;background:#ffcf8a;color:var(--char);font:600 11px var(--mono);padding:8px 12px;border-radius:99px;transform:rotate(-6deg)}
+.card .imgw{position:relative;overflow:hidden}
+@media (max-width:860px){.cards{grid-template-columns:1fr}}
+
+/* Dough rail */
+.dough{background:var(--char);color:var(--bg)}
+.dough .rail-head{padding-inline:max(20px,calc((100vw - 1200px)/2));margin-bottom:30px}
+.dough .kicker{color:#ffb347}
+.stepc{width:min(420px,80vw);flex:none;padding:34px;border-radius:28px;background:#2f2420;border:1px solid rgba(255,246,234,.1);min-height:340px;display:flex;flex-direction:column;justify-content:space-between}
+.stepc .n{font-family:var(--display);font-weight:800;font-size:110px;line-height:.8;color:var(--accent);letter-spacing:-.06em}
+.stepc h3{font-family:var(--display);font-weight:800;font-size:30px;text-transform:uppercase;margin:0 0 8px;letter-spacing:-.02em}
+.stepc p{margin:0;color:#cbb9a8}
+
+/* Delivery */
+.deliver{padding:130px 0;background:var(--char);color:var(--bg)}
+.deliver .box{border-radius:36px;background:var(--accent);color:var(--on-accent);padding:clamp(30px,6vw,80px);display:grid;grid-template-columns:1.2fr 1fr;gap:40px;align-items:center;position:relative;overflow:hidden}
+.deliver .box h2{color:var(--on-accent)}
+.deliver form{display:flex;gap:10px;flex-wrap:wrap}
+.deliver input{flex:1;min-width:200px;padding:16px 20px;border-radius:14px;border:2px solid var(--char);background:#fff6ea;color:var(--char);text-transform:uppercase}
+.deliver .btn{background:var(--char);color:#fff6ea;box-shadow:5px 5px 0 #8e1d17}
+.deliver .eta{margin-top:16px;font-family:var(--mono);font-size:13px;min-height:1.5em}
+.slice{position:absolute;right:-60px;bottom:-60px;width:260px;opacity:.18;animation:spin 40s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+html.reduce .slice{animation:none}
+@media (max-width:860px){.deliver .box{grid-template-columns:1fr}}
+footer{padding:40px 0 90px;background:var(--char);color:#cbb9a8;font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:1px solid rgba(255,246,234,.12);padding-top:30px}
+</style>
+</head>
+<body>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">Forno<span>Rosso</span></a>
+    <nav aria-label="Main"><a href="#build">Build a pizza</a><a href="#menu">Menu</a><a href="#dough">The dough</a><a href="#deliver">Delivery</a></nav>
+    <a class="btn" href="#build" data-magnetic>Order now</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="2866171" aria-label="Forno Rosso">
+    <div class="stage">
+      <div class="poster" role="img" aria-label="A wood-fired oven glowing behind a marble counter"></div>
+      <video muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+      <div class="scrim"></div>
+      <div class="band pos-top" data-a="0" data-b="0.3">
+        <span class="kick">Wood-fired since 2016</span>
+        <span class="big">485 degrees.<br><em>90 seconds.</em></span>
+        <span class="sub">That is all it takes. The oven does the hard part. We just keep feeding it oak.</span>
+      </div>
+      <div class="band pos-right" data-a="0.36" data-b="0.66">
+        <span class="kick">The crust</span>
+        <span class="big">Charred,<br>puffy, <em>soft.</em></span>
+        <span class="sub">Leopard spots on the outside, cloud on the inside. Fold it, don't cut it.</span>
+      </div>
+      <div class="band pos-left" data-a="0.74" data-b="1" data-static>
+        <span class="kick">Forno Rosso</span>
+        <span class="big">Hot out<br>the <em>oven.</em></span>
+        <span class="sub">Eat in on Camden High Street or get it to your door in thirty minutes.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <div class="big-marquee marquee" aria-hidden="true"><div><span>Fuoco</span><span>Impasto</span><span>Pomodoro</span><span>Basilico</span><span>Mozzarella</span><span>Fuoco</span><span>Impasto</span><span>Pomodoro</span></div><div><span>Fuoco</span><span>Impasto</span><span>Pomodoro</span><span>Basilico</span><span>Mozzarella</span><span>Fuoco</span><span>Impasto</span><span>Pomodoro</span></div></div>
+
+  <section class="facts">
+    <div class="wrap grid" data-stagger>
+      <div class="fact"><b data-count="48" data-suffix="h">0</b><span>Dough rests before it meets the fire</span></div>
+      <div class="fact"><b data-count="485" data-suffix="&deg;">0</b><span>Oven floor, measured every hour</span></div>
+      <div class="fact"><b data-count="90" data-suffix="s">0</b><span>From peel to plate</span></div>
+      <div class="fact"><b data-count="1200" data-suffix="+">0</b><span>Pizzas on a Friday night</span></div>
+    </div>
+  </section>
+
+  <section class="build" id="build">
+    <div class="wrap">
+      <div class="pizza-stage" data-reveal="scale">
+        <span class="peel" aria-hidden="true"></span>
+        <svg viewBox="0 0 400 400" id="pizza" role="img" aria-label="Your pizza">
+          <defs><radialGradient id="crust" cx="50%" cy="50%" r="50%"><stop offset="82%" stop-color="#f3c47f"/><stop offset="92%" stop-color="#e2a35a"/><stop offset="100%" stop-color="#b8743a"/></radialGradient></defs>
+          <circle cx="200" cy="200" r="190" fill="url(#crust)"/>
+          <g fill="#3d2418" opacity=".7"><circle cx="40" cy="190" r="7"/><circle cx="80" cy="70" r="5"/><circle cx="330" cy="80" r="8"/><circle cx="370" cy="230" r="5"/><circle cx="280" cy="360" r="7"/><circle cx="120" cy="350" r="5"/><circle cx="200" cy="18" r="6"/></g>
+          <circle cx="200" cy="200" r="158" id="sauce" fill="#c8331f"/>
+          <g id="cheese"></g>
+          <g id="tops"></g>
+        </svg>
+      </div>
+      <div>
+        <span class="kicker" data-reveal="up">Build your own</span>
+        <h2 data-split>Your pizza, <span class="red">your rules.</span></h2>
+        <div class="seg" style="display:flex;gap:10px;flex-wrap:wrap" data-reveal="up">
+          <button class="tp" type="button" data-base="rosso" aria-pressed="true" style="flex:1">Rossa base</button>
+          <button class="tp" type="button" data-base="bianca" aria-pressed="false" style="flex:1">Bianca base</button>
+        </div>
+        <div class="toppings" id="toppings" data-stagger>
+          <button class="tp" type="button" data-t="mozz" data-p="1.5" aria-pressed="true"><i style="background:#fff3dc"></i>Fior di latte<small>+1.50</small></button>
+          <button class="tp" type="button" data-t="basil" data-p="0.5" aria-pressed="true"><i style="background:#2f6b34"></i>Basil<small>+0.50</small></button>
+          <button class="tp" type="button" data-t="nduja" data-p="2.5" aria-pressed="false"><i style="background:#9a1d12"></i>Nduja<small>+2.50</small></button>
+          <button class="tp" type="button" data-t="mush" data-p="2" aria-pressed="false"><i style="background:#c9a982"></i>Mushroom<small>+2.00</small></button>
+          <button class="tp" type="button" data-t="olive" data-p="1.5" aria-pressed="false"><i style="background:#2b2522"></i>Olives<small>+1.50</small></button>
+          <button class="tp" type="button" data-t="chilli" data-p="1" aria-pressed="false"><i style="background:#ff6a3d"></i>Hot honey<small>+1.00</small></button>
+        </div>
+        <div class="total"><div><span class="kicker" style="color:var(--muted)">Total</span><br><b>£<span id="tot">9.00</span></b></div><button class="btn" type="button" id="addPizza" data-magnetic>Fire it up</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="menu" id="menu">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">The classics</span>
+      <h2 data-split>Seven pizzas. No pineapple.</h2>
+      <p class="lede" data-reveal="up">We tried. The oven said no.</p>
+      <div class="cards" data-stagger>
+        <article class="card" data-tilt><div class="imgw"><img src="assets/margherita.jpg" alt="Margherita pizza from above" loading="lazy"><span class="sticker">Bestseller</span></div><div class="t"><div><h3>Margherita</h3><p>San Marzano, fior di latte, basil, olive oil.</p></div><span class="price">£9</span></div></article>
+        <article class="card" data-tilt><div class="imgw"><img src="assets/hero-ending.jpg" alt="Fresh baked pizza on marble" loading="lazy" style="object-position:50% 60%"></div><div class="t"><div><h3>Bufala</h3><p>Buffalo mozzarella added after the bake, basil, good oil.</p></div><span class="price">£12</span></div></article>
+        <article class="card" data-tilt><div class="imgw"><img src="assets/tiramisu.jpg" alt="Tiramisu in a glass" loading="lazy"><span class="sticker">Don't skip</span></div><div class="t"><div><h3>Tiramisù</h3><p>Made each morning. Plenty of cocoa.</p></div><span class="price">£6</span></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="dough" id="dough" data-hscroll aria-label="How we make the dough">
+    <div class="rail-sticky">
+      <div class="rail-head"><span class="kicker">The dough, in four steps</span><h2 style="margin-bottom:0">Two days of waiting.</h2></div>
+      <div class="rail-track">
+        <article class="stepc"><span class="n">01</span><div><h3>Mix</h3><p>Type 00 flour, water, sea salt, a pinch of yeast. Nothing else, ever.</p></div></article>
+        <article class="stepc"><span class="n">02</span><div><h3>Rest</h3><p>48 hours in the cold room. The yeast works slowly, so the crust tastes of something.</p></div></article>
+        <article class="stepc"><span class="n">03</span><div><h3>Stretch</h3><p>By hand, from the middle out. A rolling pin would push out the air we waited for.</p></div></article>
+        <article class="stepc"><span class="n">04</span><div><h3>Fire</h3><p>Ninety seconds on the stone, one turn with the peel. Out it comes, blistered.</p></div></article>
+        <article class="stepc" style="padding:0;overflow:hidden"><img src="assets/room.jpg" alt="The pizzeria dining room in the evening" style="width:100%;height:100%;object-fit:cover" loading="lazy"></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="deliver" id="deliver">
+    <div class="wrap">
+      <div class="box" data-reveal="up">
+        <svg class="slice" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="none" stroke="#fff6ea" stroke-width="2"/><path d="M50 2 V98 M2 50 H98 M16 16 L84 84 M84 16 L16 84" stroke="#fff6ea" stroke-width="2"/></svg>
+        <div><span class="kicker" style="color:#ffcf8a">Delivery</span><h2>Hot at your door in 30.</h2><p style="margin:0;opacity:.85">We deliver within three miles of Camden on our own bikes, in insulated boxes, so the crust stays crisp.</p></div>
+        <div>
+          <form id="pcForm"><label class="sr-only" for="pc">Your postcode</label><input id="pc" placeholder="Your postcode, e.g. NW1 8AH" autocomplete="postal-code" required><button class="btn" type="submit">Check</button></form>
+          <p class="eta" id="eta" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap"><span>Forno Rosso, 212 Camden High Street</span><span class="fiction">Forno Rosso is a fictional pizzeria made for a design mockup. Imagery is AI generated.</span></div></footer>
+
+<script src="../shared/scroll.js"></script>
+<script>
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const tops = document.getElementById('tops'), cheese = document.getElementById('cheese'), sauce = document.getElementById('sauce');
+  const on = new Set(['mozz', 'basil']);
+  let base = 'rosso';
+  // Deterministic scatter so toppings land in the same spots every time
+  const rnd = (seed) => () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
+  function pts(seed, n, rmax) {
+    const r = rnd(seed), out = [];
+    for (let i = 0; i < n; i++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * rmax; out.push([200 + Math.cos(a) * d, 200 + Math.sin(a) * d, r()]); }
+    return out;
+  }
+  const shapes = {
+    mozz: (g) => pts(3, 9, 120).forEach(([x, y, k], n) => add(g, 'ellipse', { cx: x, cy: y, rx: 24 + k * 8, ry: 18 + k * 6, fill: '#fff6e2' }, n)),
+    basil: (g) => pts(7, 7, 125).forEach(([x, y, k], n) => add(g, 'path', { d: `M${x} ${y} q 10 -18 22 0 q -10 14 -22 0 z`, fill: '#2f6b34', transform: `rotate(${k * 360} ${x} ${y})` }, n)),
+    nduja: (g) => pts(11, 12, 130).forEach(([x, y, k], n) => add(g, 'circle', { cx: x, cy: y, r: 7 + k * 6, fill: '#9a1d12' }, n)),
+    mush: (g) => pts(19, 9, 128).forEach(([x, y, k], n) => add(g, 'path', { d: `M${x - 12} ${y} a12 10 0 0 1 24 0 z M${x - 4} ${y} h8 v9 h-8 z`, fill: '#d6b48c', stroke: '#9c7752', 'stroke-width': 1.5, transform: `rotate(${k * 360} ${x} ${y})` }, n)),
+    olive: (g) => pts(23, 14, 132).forEach(([x, y], n) => add(g, 'circle', { cx: x, cy: y, r: 7, fill: 'none', stroke: '#2b2522', 'stroke-width': 5 }, n)),
+    chilli: (g) => pts(31, 1, 0).forEach((_, n) => add(g, 'path', { d: 'M90 150 C 150 110, 250 260, 310 200 M100 250 C 170 200, 240 300, 300 140', fill: 'none', stroke: '#ffb347', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: .85 }, n)),
+  };
+  function add(g, tag, attrs, n) {
+    const el = document.createElementNS(NS, tag);
+    for (const k in attrs) el.setAttribute(k, attrs[k]);
+    el.setAttribute('class', 'top'); el.style.setProperty('--n', n);
+    g.appendChild(el);
+  }
+  const order = ['mozz', 'nduja', 'mush', 'olive', 'basil', 'chilli'];
+  function draw() {
+    tops.innerHTML = ''; cheese.innerHTML = '';
+    sauce.setAttribute('fill', base === 'rosso' ? '#c8331f' : '#f6e7c6');
+    order.forEach((t) => { if (on.has(t)) { const g = document.createElementNS(NS, 'g'); (t === 'mozz' ? cheese : tops).appendChild(g); shapes[t](g); } });
+    let total = 9 + (base === 'bianca' ? 0.5 : 0) - 1.5 - 0.5; // margherita includes mozz and basil
+    document.querySelectorAll('#toppings .tp').forEach((b) => { if (on.has(b.dataset.t)) total += +b.dataset.p; });
+    document.getElementById('tot').textContent = total.toFixed(2);
+    document.getElementById('pizza').style.transform = `rotate(${on.size * 24}deg)`;
+  }
+  document.getElementById('toppings').addEventListener('click', (e) => {
+    const b = e.target.closest('.tp'); if (!b) return;
+    const t = b.dataset.t; on.has(t) ? on.delete(t) : on.add(t);
+    b.setAttribute('aria-pressed', on.has(t)); draw();
+  });
+  document.querySelectorAll('[data-base]').forEach((b) => b.addEventListener('click', () => {
+    base = b.dataset.base; document.querySelectorAll('[data-base]').forEach((x) => x.setAttribute('aria-pressed', x === b)); draw();
+  }));
+  document.getElementById('addPizza').onclick = () => toast(`Into the oven. Your pizza is £${document.getElementById('tot').textContent} and ready in about 12 minutes.`);
+  draw();
+
+  document.getElementById('pcForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v = document.getElementById('pc').value.trim().toUpperCase();
+    const eta = document.getElementById('eta');
+    if (!/^[A-Z]{1,2}\d/.test(v)) { eta.textContent = 'That postcode looks a bit off. Try something like NW1 8AH.'; return; }
+    const near = /^(NW1|NW3|NW5|N1|N7|N19|WC1)\b/.test(v);
+    eta.textContent = near ? `Good news. We reach ${v} in about ${22 + (v.charCodeAt(v.length - 1) % 12)} minutes.` : `${v} is just outside our bikes' range. Come and eat in, we will save you a seat.`;
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Qp Digital Mockups</title>
+<meta name="description" content="Interactive website mockups for cafés, restaurants, tech shops and bakeries. Every one has a scroll-driven video hero and a real interactive feature.">
+<meta property="og:title" content="Website Mockups | Qp Digital">
+<meta property="og:description" content="Six interactive website mockups, six different styles. Scroll them, click them, try them.">
+<meta property="og:image" content="shared/thumbs/forno-rosso.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shared/base.css">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#141210;--ink:#f1ece4;--muted:#a59d92;--accent:#d4ac5c;--on-accent:#1b1609;
+  --card:#1d1a17;--line:rgba(241,236,228,.1);--line-strong:rgba(241,236,228,.25);
+  --display:'DM Serif Display',serif;--body:'Plus Jakarta Sans',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --header-bg:rgba(20,18,16,.8);--radius:6px;
+  --gold:linear-gradient(135deg,#e6c47a,#b8893a);
+  --env:radial-gradient(40% 30% at 15% 10%,rgba(212,172,92,.09),transparent 70%),radial-gradient(35% 30% at 90% 70%,rgba(212,172,92,.05),transparent 70%),#141210;
+  --toast-bg:#f1ece4;--toast-ink:#141210;
+}
+.logo{font-family:var(--display);font-size:30px;text-decoration:none;background:var(--gold);-webkit-background-clip:text;background-clip:text;color:transparent}
+.site-header nav a{font-family:var(--mono);font-size:13px;letter-spacing:.14em;text-transform:uppercase}
+.btn{background:var(--gold);color:var(--on-accent);font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;font-size:13px;border-radius:6px;box-shadow:0 10px 30px -14px #d4ac5c}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-strong);box-shadow:none}
+
+/* Intro */
+.intro{padding:170px 0 70px;position:relative;overflow:hidden}
+.intro .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+.kicker{font-family:var(--body);font-weight:800;font-size:13px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent)}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(52px,7.4vw,112px);line-height:.95;letter-spacing:-.01em;margin:.18em 0 .3em}
+h1 em{background:var(--gold);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lede{font-size:19px;color:var(--muted);max-width:48ch;margin:0 0 30px}
+.fan{position:relative;height:440px}
+.fan img{position:absolute;width:76%;border-radius:12px;border:1px solid var(--line-strong);box-shadow:0 40px 80px -30px rgba(0,0,0,.8)}
+.fan img:nth-child(1){left:0;top:20px;rotate:-7deg}
+.fan img:nth-child(2){right:0;top:90px;rotate:5deg}
+.fan img:nth-child(3){left:12%;top:200px;rotate:-1deg}
+.stat-row{display:flex;gap:36px;flex-wrap:wrap;margin-top:34px}
+.stat-row b{font-family:var(--display);font-size:42px;font-weight:400;display:block;line-height:1}
+.stat-row small{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+@media (max-width:900px){.intro .wrap{grid-template-columns:1fr}.fan{height:300px}.intro{padding-top:120px}}
+
+/* Filter */
+.bar{position:sticky;top:72px;z-index:20;padding:14px 0;background:linear-gradient(var(--bg) 70%,transparent)}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:10px 18px;border-radius:999px;border:1px solid var(--line-strong);background:transparent;cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;transition:background .3s,color .3s,border-color .3s}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.chip span{opacity:.55;margin-left:6px}
+
+/* Cards */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:34px;padding:30px 0 120px}
+.card{display:flex;flex-direction:column;border-radius:18px;background:var(--card);border:1px solid var(--line);overflow:hidden;text-decoration:none;color:inherit;transition:border-color .4s,box-shadow .5s,transform .6s cubic-bezier(.2,.8,.2,1),opacity .5s}
+.card:hover{border-color:rgba(212,172,92,.5);box-shadow:0 30px 60px -30px rgba(0,0,0,.9),0 0 0 1px rgba(212,172,92,.2)}
+.card.hide{display:none}
+.screen{position:relative;aspect-ratio:16/10;overflow:hidden;background:#0d0c0b;border-bottom:1px solid var(--line)}
+.screen .shot,.screen .scroller{position:absolute;inset:0;background-size:cover;background-position:50% 0}
+.screen .scroller{background-size:100% auto;background-position:50% 0;opacity:0;transition:opacity .5s,background-position 0s .5s}
+.card:hover .scroller,.card:focus-visible .scroller,.card.peeking .scroller{opacity:1;background-position:50% 100%;transition:opacity .4s,background-position 9s cubic-bezier(.45,0,.55,1) .3s}
+.screen .chrome{position:absolute;top:10px;left:12px;display:flex;gap:6px;z-index:2}
+.screen .chrome i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.35)}
+.screen .peek{position:absolute;right:12px;bottom:12px;z-index:2;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:7px 11px;border-radius:99px;background:rgba(20,18,16,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:1;transition:opacity .4s}
+.card:hover .peek{opacity:0}
+.body{padding:26px 28px 28px;display:flex;flex-direction:column;gap:8px;flex:1}
+.cat{font-weight:800;font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:#cfc4b4}
+.card h2{font-family:var(--body);font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0}
+.card p{margin:4px 0 0;color:var(--muted);font-size:16px;line-height:1.6}
+.meta{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:auto;padding-top:18px}
+.swatch{display:flex}
+.swatch i{width:18px;height:18px;border-radius:50%;border:2px solid var(--card);margin-left:-6px}
+.swatch i:first-child{margin-left:0}
+.style{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:auto;margin-left:12px}
+.go{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);display:flex;gap:6px;align-items:center}
+.go b{display:inline-block;transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.card:hover .go b{transform:translateX(5px)}
+@media (max-width:1040px){.grid{grid-template-columns:1fr 1fr}}
+@media (max-width:640px){.grid{grid-template-columns:1fr;gap:24px}}
+
+/* Inside */
+.inside{padding:40px 0 130px}
+.inside .list{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:34px}
+.feat{padding:28px;border-radius:16px;border:1px solid var(--line);background:var(--card)}
+.feat svg{width:34px;height:34px;stroke:var(--accent);fill:none;stroke-width:1.5;margin-bottom:18px}
+.feat h3{margin:0 0 6px;font-size:18px}
+.feat p{margin:0;color:var(--muted);font-size:15px}
+.inside h2{font-family:var(--display);font-weight:400;font-size:clamp(38px,5vw,64px);margin:.2em 0 0;line-height:1}
+@media (max-width:900px){.inside .list{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.inside .list{grid-template-columns:1fr}}
+.cta{padding:0 0 120px}
+.cta .box{border-radius:22px;padding:clamp(34px,6vw,80px);border:1px solid rgba(212,172,92,.35);background:radial-gradient(60% 120% at 100% 0,rgba(212,172,92,.16),transparent 60%),var(--card);display:flex;justify-content:space-between;align-items:center;gap:30px;flex-wrap:wrap}
+.cta h2{font-family:var(--display);font-weight:400;font-size:clamp(34px,4.4vw,58px);margin:0;line-height:1.05;max-width:18ch}
+footer{padding:36px 0 60px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">Qp Digital</a>
+    <nav aria-label="Main"><a href="#mockups">Mockups</a><a href="#inside">What's inside</a><a href="https://qp-digital.co.uk" target="_blank" rel="noopener">Main site</a></nav>
+    <a class="btn" href="https://qp-digital.co.uk" target="_blank" rel="noopener" data-magnetic>Get a quote</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="intro">
+    <div class="wrap">
+      <div>
+        <span class="kicker" data-reveal="up">Website mockups</span>
+        <h1 data-split>Six sites. Six styles. All interactive.</h1>
+        <p class="lede" data-reveal="up">Cafés, restaurants, tech shops and bakeries, each with a video hero that plays as you scroll and a feature you can actually use. Open one and scroll.</p>
+        <div data-reveal="up" style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="#mockups" data-magnetic>See the mockups</a><a class="btn ghost" href="forno-rosso/index.html">Try a random one</a></div>
+        <div class="stat-row">
+          <div data-reveal="up"><b data-count="6">0</b><small>Live mockups</small></div>
+          <div data-reveal="up" style="--d:100ms"><b data-count="6">0</b><small>Scroll video heroes</small></div>
+          <div data-reveal="up" style="--d:200ms"><b data-count="100" data-suffix="%">0</b><small>Phone ready</small></div>
+        </div>
+      </div>
+      <div class="fan" aria-hidden="true">
+        <img src="shared/thumbs/koji.jpg" alt="" data-speed="0.12">
+        <img src="shared/thumbs/volt.jpg" alt="" data-speed="-0.06">
+        <img src="shared/thumbs/forno-rosso.jpg" alt="" data-speed="0.04">
+      </div>
+    </div>
+  </section>
+
+  <div class="bar" id="mockups">
+    <div class="wrap chips" role="group" aria-label="Filter by business type">
+      <button class="chip" type="button" data-f="all" aria-pressed="true">All<span>6</span></button>
+      <button class="chip" type="button" data-f="cafe" aria-pressed="false">Cafés<span>1</span></button>
+      <button class="chip" type="button" data-f="restaurant" aria-pressed="false">Restaurants<span>2</span></button>
+      <button class="chip" type="button" data-f="tech" aria-pressed="false">Tech shops<span>2</span></button>
+      <button class="chip" type="button" data-f="bakery" aria-pressed="false">Bakeries<span>1</span></button>
+    </div>
+  </div>
+
+  <section class="wrap grid" id="grid" data-stagger aria-label="Mockups">
+    <a class="card" href="ember-oat/index.html" data-cat="cafe">
+      <div class="screen"><span class="shot" style="background-image:url('shared/thumbs/ember-oat.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/ember-oat-full.jpg')"></span><span class="chrome" aria-hidden="true"><i></i><i></i><i></i></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Café</span><h2>Ember &amp; Oat</h2><p>Warm and editorial. Steam drifts down to the cup as you scroll, then build your own drink and watch the cup fill.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#1d1611"></i><i style="background:#e7c999"></i><i style="background:#a9b98c"></i></span><span class="style">Warm editorial</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="koji/index.html" data-cat="restaurant">
+      <div class="screen"><span class="shot" style="background-image:url('shared/thumbs/koji.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/koji-full.jpg')"></span><span class="chrome" aria-hidden="true"><i></i><i></i><i></i></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Omakase restaurant</span><h2>Kōji</h2><p>Dark, quiet and minimal. A course timeline that draws itself, and a counter seat map you book seat by seat.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#0e0f14"></i><i style="background:#d9c3a0"></i><i style="background:#d2452b"></i></span><span class="style">Dark minimal</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="forno-rosso/index.html" data-cat="restaurant">
+      <div class="screen"><span class="shot" style="background-image:url('shared/thumbs/forno-rosso.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/forno-rosso-full.jpg')"></span><span class="chrome" aria-hidden="true"><i></i><i></i><i></i></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Pizzeria</span><h2>Forno Rosso</h2><p>Loud and playful. The camera tilts from the fire to the pizza, then you build your own as toppings drop on.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#fbf1e2"></i><i style="background:#d7322a"></i><i style="background:#231915"></i></span><span class="style">Bold &amp; playful</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="volt/index.html" data-cat="tech">
+      <div class="screen"><span class="shot" style="background-image:url('shared/thumbs/volt.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/volt-full.jpg')"></span><span class="chrome" aria-hidden="true"><i></i><i></i><i></i></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Tech shop</span><h2>Volt Supply</h2><p>Clean product store. Filter and sort the range, switch colourways, and fill a slide-out cart.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#e8ebee"></i><i style="background:#15181c"></i><i style="background:#c4f22e"></i></span><span class="style">Clean product</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="northlight/index.html" data-cat="tech">
+      <div class="screen"><span class="shot" style="background-image:url('shared/thumbs/northlight.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/northlight-full.jpg')"></span><span class="chrome" aria-hidden="true"><i></i><i></i><i></i></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">PC builds &amp; repairs</span><h2>Northlight</h2><p>Neon and technical. Light ribbons fall as you scroll, then spec a PC and watch the frame rates update.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#080a17"></i><i style="background:#9b5cff"></i><i style="background:#38e8ff"></i></span><span class="style">Neon tech</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="crumb/index.html" data-cat="bakery">
+      <div class="screen"><span class="shot" style="background-image:url('shared/thumbs/crumb.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/crumb-full.jpg')"></span><span class="chrome" aria-hidden="true"><i></i><i></i><i></i></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Bakery</span><h2>Crumb</h2><p>Bright pastel and friendly. Flour falls onto the loaf, cards stack as you scroll, and you fill a box of six.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#fdf3dc"></i><i style="background:#ef7d57"></i><i style="background:#b8d4a3"></i></span><span class="style">Pastel friendly</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+  </section>
+
+  <section class="inside" id="inside">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">What's inside each one</span>
+      <h2 data-split>Built to feel expensive.</h2>
+      <div class="list" data-stagger>
+        <div class="feat"><svg viewBox="0 0 34 34"><rect x="3" y="7" width="28" height="20" rx="3"/><path d="M14 13 L21 17 L14 21 Z"/></svg><h3>Scroll-driven video</h3><p>The hero film plays forward as you scroll down and rewinds as you scroll up.</p></div>
+        <div class="feat"><svg viewBox="0 0 34 34"><path d="M8 26 L8 12 M17 26 L17 6 M26 26 L26 16"/></svg><h3>Motion everywhere</h3><p>Words rise in, images wipe open, lines draw themselves, numbers count up.</p></div>
+        <div class="feat"><svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="12"/><path d="M12 17 L16 21 L23 13"/></svg><h3>A real feature</h3><p>Every site has something to do: build, book, filter, configure or pre-order.</p></div>
+        <div class="feat"><svg viewBox="0 0 34 34"><rect x="10" y="3" width="14" height="28" rx="3"/><path d="M15 27 H19"/></svg><h3>Phone ready</h3><p>Phones get a designed still hero and the full page, fast on any connection.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <div class="wrap">
+      <div class="box" data-reveal="up">
+        <h2>Want one like this for your business?</h2>
+        <a class="btn" href="https://qp-digital.co.uk" target="_blank" rel="noopener" data-magnetic>Get a quote</a>
+      </div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap"><span>Qp Digital &middot; Website mockups</span><span class="fiction">The businesses shown are fictional and made for design mockups. Imagery is AI generated.</span></div></footer>
+
+<script src="shared/scroll.js"></script>
+<script>
+(() => {
+  const chips = document.querySelectorAll('.chip');
+  const cards = document.querySelectorAll('.card');
+  chips.forEach((c) => c.addEventListener('click', () => {
+    chips.forEach((x) => x.setAttribute('aria-pressed', x === c));
+    const f = c.dataset.f;
+    cards.forEach((card, i) => {
+      const show = f === 'all' || card.dataset.cat === f;
+      card.classList.toggle('hide', !show);
+      if (show) { card.animate([{ opacity: 0, transform: 'translateY(24px)' }, { opacity: 1, transform: 'none' }], { duration: 600, delay: i * 40, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }); }
+    });
+  }));
+  // "Try a random one"
+  const rnd = document.querySelector('.btn.ghost');
+  rnd.addEventListener('click', (e) => { e.preventDefault(); location.href = cards[Math.floor(Math.random() * cards.length)].getAttribute('href'); });
+  // Touch screens have no hover: scroll the preview while the card is on screen
+  if (matchMedia('(hover: none)').matches) {
+    const io = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle('peeking', e.isIntersecting)), { threshold: 0.7 });
+    cards.forEach((c) => io.observe(c));
+  }
+})();
+</script>
+</body>
+</html>

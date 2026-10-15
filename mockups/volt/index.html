@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Volt Supply | Audio, Wearables &amp; Tech</title>
+<meta name="description" content="Headphones, earbuds, watches and speakers we have tested ourselves. Next day delivery and a two year warranty on everything.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800&family=Manrope:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#e8ebee;--ink:#15181c;--muted:#5d646d;--accent:#c4f22e;--on-accent:#15181c;--graphite:#22262c;
+  --card:#f4f6f8;--line:rgba(21,24,28,.1);--line-strong:rgba(21,24,28,.25);
+  --display:'Unbounded',sans-serif;--body:'Manrope',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --header-bg:rgba(232,235,238,.75);--radius:12px;
+  --scrim:linear-gradient(90deg,rgba(232,235,238,.55),rgba(232,235,238,0) 45%,rgba(232,235,238,0) 60%,rgba(232,235,238,.5));
+  --band-scrim:rgba(232,235,238,.6);--shadow:rgba(255,255,255,.5);
+  --env:radial-gradient(40% 30% at 10% 90%,rgba(130,170,220,.18),transparent 70%),radial-gradient(30% 25% at 90% 20%,rgba(196,242,46,.12),transparent 70%),#e8ebee;
+}
+.logo{font-family:var(--display);font-weight:800;font-size:22px;text-decoration:none;letter-spacing:-.02em;display:flex;align-items:center;gap:8px}
+.logo i{width:22px;height:22px;border-radius:6px;background:var(--ink);display:grid;place-items:center}
+.logo i::after{content:"";width:8px;height:12px;background:var(--accent);clip-path:polygon(60% 0,0 60%,45% 60%,35% 100%,100% 38%,55% 38%)}
+.hero .big{font-weight:600;font-size:clamp(38px,5.6vw,86px);letter-spacing:-.04em;line-height:1}
+.hero .kick{font-weight:600}
+.hero .band{max-width:min(520px,38vw)}
+@media (max-width:760px){.hero .band{max-width:calc(100vw - 40px)}}
+.hero .big mark{background:var(--accent);padding:0 .12em;border-radius:.12em;color:var(--ink)}
+.cart-btn{position:relative;display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:12px;background:var(--ink);color:var(--bg);border:0;cursor:pointer;font-weight:600;font-size:14px}
+.cart-btn b{display:inline-grid;place-items:center;min-width:22px;height:22px;border-radius:6px;background:var(--accent);color:var(--ink);font-size:12px;transition:transform .4s cubic-bezier(.3,1.6,.5,1)}
+.cart-btn b.bump{transform:scale(1.4)}
+h2{font-family:var(--display);font-weight:600;font-size:clamp(32px,4.4vw,62px);letter-spacing:-.045em;line-height:1.02;margin:.3em 0 .5em}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted)}
+.kicker::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--accent);margin-right:10px;box-shadow:0 0 0 1px var(--ink)}
+.lede{font-size:18px;color:var(--muted);max-width:52ch}
+
+/* Spotlight */
+.spot{padding:150px 0 110px}
+.spot .wrap{display:grid;grid-template-columns:1.15fr .85fr;gap:60px;align-items:center}
+.spot .frame{position:relative;border-radius:32px;overflow:hidden;background:var(--card);aspect-ratio:16/11}
+.spot .frame img{width:100%;height:100%;object-fit:cover}
+.spot .glow{position:absolute;inset:auto 10% -30% 10%;height:60%;border-radius:50%;filter:blur(50px);background:var(--glow,#c4f22e);opacity:.55;transition:background .7s;mix-blend-mode:multiply}
+.swatches{display:flex;gap:12px;margin:26px 0}
+.sw{width:42px;height:42px;border-radius:50%;border:2px solid var(--bg);box-shadow:0 0 0 1px var(--line-strong);cursor:pointer;transition:transform .3s,box-shadow .3s}
+.sw[aria-pressed="true"]{box-shadow:0 0 0 2px var(--ink);transform:scale(1.08)}
+.specs{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:28px}
+.specs div{padding:16px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.specs b{font-family:var(--display);font-size:26px;font-weight:600;letter-spacing:-.03em;display:block}
+.specs small{font-size:12px;color:var(--muted)}
+@media (max-width:900px){.spot .wrap{grid-template-columns:1fr}}
+
+/* Shop grid */
+.shop{padding:100px 0}
+.shop-head{display:flex;justify-content:space-between;align-items:end;gap:20px;flex-wrap:wrap;margin-bottom:28px}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.filters button,.sort{padding:10px 16px;border-radius:10px;border:1px solid var(--line-strong);background:transparent;cursor:pointer;font-weight:500;font-size:14px;transition:background .25s,color .25s}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.prod{border-radius:22px;background:var(--card);border:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column;transition:opacity .4s,transform .5s cubic-bezier(.2,.8,.2,1)}
+.prod.hide{display:none}
+.prod .ph{aspect-ratio:1;overflow:hidden;position:relative;background:#dfe3e7}
+.prod .ph img{width:100%;height:100%;object-fit:cover;transition:transform .9s cubic-bezier(.2,.8,.2,1)}
+.prod:hover .ph img{transform:scale(1.07)}
+.prod .tag{position:absolute;top:14px;left:14px;font:600 11px var(--mono);padding:6px 10px;border-radius:8px;background:var(--accent)}
+.prod .meta{padding:18px 20px 20px;display:flex;flex-direction:column;gap:6px;flex:1}
+.prod h3{margin:0;font-family:var(--display);font-weight:600;font-size:18px;letter-spacing:-.02em}
+.prod p{margin:0;font-size:14px;color:var(--muted)}
+.prod .row{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:12px}
+.prod .row b{font-family:var(--mono);font-size:16px}
+.prod .row button{padding:10px 14px;border-radius:10px;background:var(--ink);color:var(--bg);border:0;cursor:pointer;font-weight:600;font-size:13px;transition:background .25s,color .25s}
+.prod .row button:hover{background:var(--accent);color:var(--ink)}
+.drawn{display:grid;place-items:center;height:100%;background:radial-gradient(circle at 50% 60%,#f7f9fa,#d7dce1)}
+@media (max-width:900px){.grid{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.grid{grid-template-columns:1fr}}
+
+/* Bento */
+.bento{padding:60px 0 130px}
+.bento .b{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:220px;gap:16px}
+.tile{border-radius:26px;padding:28px;background:var(--card);border:1px solid var(--line);display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;position:relative}
+.tile h3{margin:0;font-family:var(--display);font-weight:600;font-size:22px;letter-spacing:-.03em}
+.tile p{margin:0;color:var(--muted);font-size:15px}
+.tile.dark{background:var(--graphite);color:#eef1f3}
+.tile.dark p{color:#a9b1ba}
+.tile.lime{background:var(--accent)}
+.tile.lime p{color:#2c3410}
+.tile.w2{grid-column:span 2}.tile.h2{grid-row:span 2}
+.tile .bigno{font-family:var(--display);font-weight:800;font-size:84px;letter-spacing:-.06em;line-height:.9}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.9}
+.tile .over{position:relative;z-index:1}
+@media (max-width:900px){.bento .b{grid-template-columns:1fr 1fr}.tile.w2{grid-column:span 2}}
+
+/* Drawer */
+.drawer{position:fixed;inset:0;z-index:80;pointer-events:none}
+.drawer .shade{position:absolute;inset:0;background:rgba(21,24,28,.35);opacity:0;transition:opacity .4s}
+.drawer aside{position:absolute;top:0;right:0;bottom:0;width:min(420px,100%);background:var(--bg);padding:26px;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .55s cubic-bezier(.2,.8,.2,1);box-shadow:-30px 0 60px -30px rgba(0,0,0,.3)}
+.drawer.open{pointer-events:auto}.drawer.open .shade{opacity:1}.drawer.open aside{transform:none}
+.drawer header{display:flex;justify-content:space-between;align-items:center}
+.drawer h3{font-family:var(--display);font-weight:600;margin:0;font-size:22px}
+.x{width:38px;height:38px;border-radius:10px;border:1px solid var(--line-strong);background:transparent;cursor:pointer;font-size:18px}
+.free{margin:20px 0;font-size:13px;color:var(--muted)}
+.free .track{height:6px;border-radius:6px;background:var(--line);margin-top:8px;overflow:hidden}
+.free .track i{display:block;height:100%;background:var(--ink);width:0;transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.lines{flex:1;overflow:auto;display:flex;flex-direction:column;gap:12px}
+.line{display:grid;grid-template-columns:64px 1fr auto;gap:12px;align-items:center;padding:10px;border-radius:14px;background:var(--card);animation:slidein .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes slidein{from{opacity:0;transform:translateX(30px)}}
+.line img,.line .ic{width:64px;height:64px;border-radius:10px;object-fit:cover;background:#dfe3e7}
+.line b{font-size:14px;display:block}.line small{color:var(--muted);font-family:var(--mono)}
+.qty{display:flex;align-items:center;gap:6px}
+.qty button{width:28px;height:28px;border-radius:8px;border:1px solid var(--line-strong);background:transparent;cursor:pointer}
+.drawer footer{border-top:1px solid var(--line);padding-top:18px;margin-top:12px}
+.drawer footer .tot{display:flex;justify-content:space-between;font-family:var(--display);font-size:20px;margin-bottom:14px}
+.drawer .btn{width:100%;justify-content:center;border-radius:12px;color:var(--ink)}
+.empty{color:var(--muted);text-align:center;margin-top:60px}
+footer.site{padding:40px 0 90px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
+footer.site .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top"><i></i>Volt Supply</a>
+    <nav aria-label="Main"><a href="#spot">Featured</a><a href="#shop">Shop</a><a href="#why">Why Volt</a></nav>
+    <button class="cart-btn" type="button" id="cartBtn">Cart <b id="cartCount">0</b></button>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="1384750" aria-label="Volt Supply">
+    <div class="stage">
+      <div class="poster" role="img" aria-label="Graphite headphones on a stone plinth in a misty studio"></div>
+      <video muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+      <div class="scrim"></div>
+      <div class="band pos-left" data-a="0" data-b="0.3">
+        <span class="kick">New season &middot; Audio</span>
+        <span class="big">Sound you<br>can <mark>feel.</mark></span>
+        <span class="sub">Tech we have tested on our own commutes, desks and gym bags before it goes on the shelf.</span>
+      </div>
+      <div class="band pos-right" data-a="0.36" data-b="0.66">
+        <span class="kick">Volt Studio One</span>
+        <span class="big">40 hours.<br>Zero noise.</span>
+        <span class="sub">Adaptive noise cancelling that hushes the train without the pressure in your ears.</span>
+      </div>
+      <div class="band pos-left" data-a="0.74" data-b="1" data-static>
+        <span class="kick">From £249 &middot; Next day delivery</span>
+        <span class="big">Meet Studio One.</span>
+        <span class="sub">Free returns for 60 days. Try it at home, keep it if it fits your life.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <section class="spot" id="spot">
+    <div class="wrap">
+      <div class="frame" data-reveal="clip"><img src="assets/hero-ending.jpg" alt="Volt Studio One headphones on a plinth" loading="lazy"><span class="glow" id="glow" aria-hidden="true"></span></div>
+      <div>
+        <span class="kicker" data-reveal="up">Featured</span>
+        <h2 data-split>Studio One headphones</h2>
+        <p class="lede" data-reveal="up">Soft memory foam, a fold-flat hinge, and a battery that outlasts a long-haul flight there and back.</p>
+        <div class="swatches" role="group" aria-label="Colour" data-reveal="up">
+          <button class="sw" type="button" style="background:#2a2e34" data-c="#c4f22e" data-n="Graphite" aria-pressed="true" aria-label="Graphite"></button>
+          <button class="sw" type="button" style="background:#e7e3da" data-c="#f4c99b" data-n="Sand" aria-pressed="false" aria-label="Sand"></button>
+          <button class="sw" type="button" style="background:#4c6b8a" data-c="#7fb6ff" data-n="Harbour" aria-pressed="false" aria-label="Harbour"></button>
+          <button class="sw" type="button" style="background:#7a3b3b" data-c="#ff8a8a" data-n="Ember" aria-pressed="false" aria-label="Ember"></button>
+        </div>
+        <div class="specs" data-stagger>
+          <div><b data-count="40" data-suffix="h">0</b><small>Battery</small></div>
+          <div><b data-count="254" data-suffix="g">0</b><small>Weight</small></div>
+          <div><b data-count="10" data-suffix="min">0</b><small>Charge for 5 hours</small></div>
+        </div>
+        <button class="btn" type="button" id="addHero" data-magnetic>Add Graphite, £249</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="shop" id="shop">
+    <div class="wrap">
+      <div class="shop-head">
+        <div><span class="kicker" data-reveal="up">Shop</span><h2 data-split style="margin-bottom:0">Small range. All tested.</h2></div>
+        <div class="filters" id="filters" role="group" aria-label="Filter products">
+          <button type="button" data-f="all" aria-pressed="true">All</button>
+          <button type="button" data-f="audio" aria-pressed="false">Audio</button>
+          <button type="button" data-f="wear" aria-pressed="false">Wearables</button>
+          <button type="button" data-f="power" aria-pressed="false">Power</button>
+          <select class="sort" id="sort" aria-label="Sort"><option value="pop">Popular</option><option value="low">Price, low to high</option><option value="high">Price, high to low</option></select>
+        </div>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </section>
+
+  <section class="bento" id="why">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Why Volt</span>
+      <h2 data-split>The boring bits, done well.</h2>
+      <div class="b" data-stagger>
+        <div class="tile dark w2 h2"><img src="assets/speaker.jpg" alt="" loading="lazy" style="opacity:.55"><div class="over"><span class="bigno" style="color:var(--accent)" data-count="2" data-suffix=" yr">0</span></div><div class="over"><h3>Two year warranty on everything</h3><p>If it breaks, we swap it. No forms, no waiting for a manufacturer to call back.</p></div></div>
+        <div class="tile lime"><h3>Next day</h3><p>Order by 9pm, at your door tomorrow.</p></div>
+        <div class="tile"><h3>60 day returns</h3><p>Opened, used, changed your mind. All fine.</p></div>
+        <div class="tile w2"><h3>Try before you buy</h3><p>Pop into our Shoreditch store and listen to anything on the wall. Bring your own playlist.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="site"><div class="wrap"><span>Volt Supply, 31 Redchurch Street</span><span class="fiction">Volt Supply is a fictional shop made for a design mockup. Products and imagery are AI generated.</span></div></footer>
+
+<div class="drawer" id="drawer" aria-hidden="true">
+  <div class="shade" data-close></div>
+  <aside role="dialog" aria-label="Your cart">
+    <header><h3>Your cart</h3><button class="x" type="button" data-close aria-label="Close cart">&times;</button></header>
+    <div class="free"><span id="freeText">Spend £50 for free delivery</span><div class="track"><i id="freeBar"></i></div></div>
+    <div class="lines" id="lines"></div>
+    <footer><div class="tot"><span>Total</span><span id="total">£0</span></div><button class="btn" type="button" id="checkout">Checkout</button></footer>
+  </aside>
+</div>
+
+<script src="../shared/scroll.js"></script>
+<script>
+(() => {
+  const plug = `<div class="drawn"><svg width="55%" viewBox="0 0 120 120"><rect x="38" y="20" width="44" height="58" rx="10" fill="#22262c"/><rect x="48" y="6" width="6" height="16" rx="2" fill="#9aa3ad"/><rect x="66" y="6" width="6" height="16" rx="2" fill="#9aa3ad"/><path d="M60 78 C 60 100, 90 96, 92 116" stroke="#22262c" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M58 40 l-8 14 h10 l-4 12 12 -16 h-10 l4 -10z" fill="#c4f22e"/></svg></div>`;
+  const pad = `<div class="drawn"><svg width="62%" viewBox="0 0 120 120"><ellipse cx="60" cy="70" rx="50" ry="22" fill="#cfd5db"/><ellipse cx="60" cy="64" rx="50" ry="22" fill="#22262c"/><ellipse cx="60" cy="62" rx="22" ry="9" fill="none" stroke="#c4f22e" stroke-width="2"/></svg></div>`;
+  const products = [
+    { id: 'studio', n: 'Studio One', d: 'Over-ear, noise cancelling', p: 249, c: 'audio', img: 'assets/hero-ending.jpg', tag: 'New', pop: 1 },
+    { id: 'buds', n: 'Volt Buds Air', d: 'Wireless earbuds, 30h with case', p: 129, c: 'audio', img: 'assets/buds.jpg', pop: 2 },
+    { id: 'watch', n: 'Pulse Watch 2', d: 'Heart rate, GPS, 7 day battery', p: 199, c: 'wear', img: 'assets/watch.jpg', tag: 'Staff pick', pop: 3 },
+    { id: 'speaker', n: 'Roam Mini', d: 'Waterproof speaker, 20h', p: 89, c: 'audio', img: 'assets/speaker.jpg', pop: 4 },
+    { id: 'pad', n: 'Halo Pad', d: 'Wireless charging pad, 15W', p: 39, c: 'power', html: pad, pop: 5 },
+    { id: 'plug', n: 'Volt 65W Plug', d: 'Charges a laptop and a phone', p: 45, c: 'power', html: plug, pop: 6 },
+  ];
+  const grid = document.getElementById('grid');
+  function render() {
+    const f = document.querySelector('#filters [aria-pressed="true"]').dataset.f;
+    const s = document.getElementById('sort').value;
+    const list = products.filter((p) => f === 'all' || p.c === f).sort((a, b) => s === 'low' ? a.p - b.p : s === 'high' ? b.p - a.p : a.pop - b.pop);
+    grid.innerHTML = list.map((p, i) => `<article class="prod" style="animation:slidein .5s cubic-bezier(.2,.8,.2,1) both;animation-delay:${i * 60}ms">
+      <div class="ph">${p.img ? `<img src="${p.img}" alt="${p.n}" loading="lazy">` : p.html}${p.tag ? `<span class="tag">${p.tag}</span>` : ''}</div>
+      <div class="meta"><h3>${p.n}</h3><p>${p.d}</p><div class="row"><b>£${p.p}</b><button type="button" data-add="${p.id}">Add to cart</button></div></div></article>`).join('');
+  }
+  document.getElementById('filters').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    document.querySelectorAll('#filters button').forEach((x) => x.setAttribute('aria-pressed', x === b)); render();
+  });
+  document.getElementById('sort').onchange = render;
+  render();
+
+  // Cart
+  const cart = new Map();
+  const drawer = document.getElementById('drawer');
+  const open = (v) => { drawer.classList.toggle('open', v); drawer.setAttribute('aria-hidden', !v); };
+  document.getElementById('cartBtn').onclick = () => open(true);
+  drawer.addEventListener('click', (e) => { if (e.target.closest('[data-close]')) open(false); });
+  addEventListener('keydown', (e) => e.key === 'Escape' && open(false));
+  function add(id, label) {
+    const p = products.find((x) => x.id === id);
+    const key = label ? id + ':' + label : id;
+    const cur = cart.get(key) || { p, q: 0, label };
+    cur.q++; cart.set(key, cur); drawCart();
+    const b = document.getElementById('cartCount'); b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump');
+    toast(`${p.n}${label ? ' in ' + label : ''} added to your cart`);
+  }
+  function drawCart() {
+    let total = 0, count = 0;
+    const lines = document.getElementById('lines');
+    lines.innerHTML = cart.size ? [...cart].map(([k, { p, q, label }]) => { total += p.p * q; count += q; return `<div class="line">${p.img ? `<img src="${p.img}" alt="">` : `<div class="ic">${p.html}</div>`}<div><b>${p.n}${label ? ', ' + label : ''}</b><small>£${p.p} each</small></div><div class="qty"><button type="button" data-k="${k}" data-d="-1" aria-label="One fewer">&minus;</button>${q}<button type="button" data-k="${k}" data-d="1" aria-label="One more">+</button></div></div>`; }).join('') : '<p class="empty">Nothing here yet.</p>';
+    document.getElementById('cartCount').textContent = count;
+    document.getElementById('total').textContent = '£' + total;
+    const left = Math.max(0, 50 - total);
+    document.getElementById('freeText').textContent = left ? `Spend £${left} more for free delivery` : 'Free next day delivery is yours';
+    document.getElementById('freeBar').style.width = Math.min(100, total / 50 * 100) + '%';
+  }
+  document.getElementById('lines').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-k]'); if (!b) return;
+    const it = cart.get(b.dataset.k); it.q += +b.dataset.d; if (it.q <= 0) cart.delete(b.dataset.k); drawCart();
+  });
+  grid.addEventListener('click', (e) => { const b = e.target.closest('[data-add]'); if (b) add(b.dataset.add); });
+  document.getElementById('checkout').onclick = () => toast(cart.size ? 'This is a demo shop, so checkout stops here. Nothing is charged.' : 'Add something first.');
+  drawCart();
+
+  // Colourways
+  let colour = 'Graphite';
+  document.querySelectorAll('.sw').forEach((s) => s.addEventListener('click', () => {
+    document.querySelectorAll('.sw').forEach((x) => x.setAttribute('aria-pressed', x === s));
+    document.getElementById('glow').style.setProperty('--glow', s.dataset.c);
+    colour = s.dataset.n;
+    document.getElementById('addHero').textContent = `Add ${colour}, £249`;
+  }));
+  document.getElementById('addHero').onclick = () => add('studio', colour);
+})();
+</script>
+</body>
+</html>

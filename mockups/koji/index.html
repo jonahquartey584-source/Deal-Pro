@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kōji | Ten Seat Omakase</title>
+<meta name="description" content="Ten seats, one counter, eighteen courses that follow the fish market each morning.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&family=Zen+Kaku+Gothic+New:wght@400;500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0e0f14;--ink:#ece6da;--muted:#9a968d;--accent:#d2452b;--on-accent:#fff7ef;--wood:#d9c3a0;
+  --card:rgba(236,230,218,.04);--line:rgba(236,230,218,.1);--line-strong:rgba(236,230,218,.28);
+  --display:'Shippori Mincho',serif;--body:'Zen Kaku Gothic New',system-ui,sans-serif;--mono:'IBM Plex Mono',monospace;
+  --header-bg:rgba(14,15,20,.7);--radius:2px;
+  --scrim:radial-gradient(ellipse 110% 80% at 50% 50%,rgba(14,15,20,0) 30%,rgba(14,15,20,.75) 100%);
+  --band-scrim:rgba(14,15,20,.55);
+  --env:radial-gradient(30% 40% at 50% 0%,rgba(217,195,160,.07),transparent 70%),#0e0f14;
+}
+body{font-size:16px;letter-spacing:.02em}
+.logo{font-family:var(--display);font-size:26px;text-decoration:none;letter-spacing:.12em}
+.logo small{font-family:var(--mono);font-size:10px;letter-spacing:.3em;margin-left:10px;color:var(--muted);vertical-align:middle}
+.hero .big{font-weight:500;letter-spacing:.01em;font-size:clamp(40px,5.6vw,84px)}
+.hero .kick{color:var(--wood)}
+.seal{display:inline-grid;place-items:center;width:44px;height:44px;border:1.5px solid var(--accent);color:var(--accent);font-family:var(--display);font-size:22px;border-radius:4px;transform:rotate(-4deg)}
+h2{font-family:var(--display);font-weight:500;font-size:clamp(34px,4.4vw,60px);line-height:1.15;margin:.3em 0 .5em}
+.kicker{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:var(--wood)}
+.lede{color:var(--muted);font-size:18px;max-width:50ch;line-height:1.9}
+
+/* Philosophy with vertical type */
+.phil{padding:170px 0 120px}
+.phil .wrap{display:grid;grid-template-columns:auto 1fr 1fr;gap:70px;align-items:start}
+.vert{writing-mode:vertical-rl;font-family:var(--display);font-size:clamp(70px,9vw,140px);line-height:1;color:transparent;-webkit-text-stroke:1px rgba(217,195,160,.4)}
+.phil img{border-radius:2px;aspect-ratio:4/5;object-fit:cover;width:100%}
+.phil .imgcol{margin-top:120px}
+@media (max-width:900px){.phil .wrap{grid-template-columns:1fr}.vert{writing-mode:horizontal-tb;font-size:80px}.phil .imgcol{margin-top:0}}
+
+/* Course timeline */
+.courses{padding:120px 0}
+.courses .wrap{display:grid;grid-template-columns:.8fr 1.2fr;gap:70px}
+.courses .stick{position:sticky;top:120px;align-self:start}
+.timeline{position:relative;padding-left:60px}
+.timeline svg{position:absolute;left:14px;top:0;height:100%;width:20px;overflow:visible}
+.timeline svg line{stroke:var(--accent);stroke-width:1.5}
+.timeline .rail{position:absolute;left:23px;top:0;bottom:0;width:1px;background:var(--line)}
+.course{position:relative;padding:28px 0;border-bottom:1px solid var(--line)}
+.course::before{content:"";position:absolute;left:-42px;top:38px;width:9px;height:9px;border-radius:50%;background:var(--bg);border:1.5px solid var(--wood);transition:background .5s}
+.course.in::before{background:var(--wood)}
+.course .num{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.2em}
+.course h3{font-family:var(--display);font-weight:500;font-size:26px;margin:6px 0 4px}
+.course p{margin:0;color:var(--muted)}
+@media (max-width:900px){.courses .wrap{grid-template-columns:1fr}.courses .stick{position:static}}
+
+/* Triptych */
+.trip{padding:60px 0 140px}
+.trip .wrap{display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:24px;align-items:end}
+.trip figure{margin:0;overflow:hidden;border-radius:2px}
+.trip figure img{width:100%;aspect-ratio:3/4;object-fit:cover}
+.trip figure:nth-child(2) img{aspect-ratio:4/5}
+.trip figcaption{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--muted);padding-top:12px;text-transform:uppercase}
+@media (max-width:760px){.trip .wrap{grid-template-columns:1fr 1fr}.trip figure:nth-child(2){grid-column:span 2;order:-1}}
+
+/* Booking */
+.book{padding:120px 0 140px;border-top:1px solid var(--line)}
+.book .wrap{display:grid;grid-template-columns:1fr 1fr;gap:70px}
+.step{margin-bottom:34px}
+.step h4{font:500 11px var(--mono);letter-spacing:.24em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.day{padding:12px 4px;border:1px solid var(--line-strong);background:transparent;cursor:pointer;text-align:center;transition:background .3s,border-color .3s,color .3s;border-radius:2px}
+.day small{display:block;font:500 10px var(--mono);letter-spacing:.14em;color:var(--muted)}
+.day b{font-family:var(--display);font-size:22px;font-weight:500}
+.day[disabled]{opacity:.3;cursor:not-allowed;text-decoration:line-through}
+.day[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.day[aria-pressed="true"] small{color:var(--bg)}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{padding:12px 20px;border:1px solid var(--line-strong);background:transparent;cursor:pointer;border-radius:2px;transition:background .3s,color .3s}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.counter{position:relative;padding:40px 24px 30px;border:1px solid var(--line);background:linear-gradient(180deg,rgba(217,195,160,.06),transparent)}
+.counter .bar{height:16px;border-radius:2px;background:linear-gradient(90deg,#b99a6c,#d9c3a0,#b99a6c);margin:18px 0 22px;box-shadow:0 10px 30px -10px rgba(217,195,160,.4)}
+.counter .chef{text-align:center;font:500 10px var(--mono);letter-spacing:.3em;color:var(--muted)}
+.seats{display:grid;grid-template-columns:repeat(10,1fr);gap:8px}
+.seat{aspect-ratio:1;border-radius:50%;border:1.5px solid var(--wood);background:transparent;cursor:pointer;transition:background .3s,transform .3s,border-color .3s;padding:0;font:500 10px var(--mono);color:var(--muted)}
+.seat:hover:not([disabled]){transform:translateY(-3px)}
+.seat[disabled]{border-color:var(--line);background:var(--line);cursor:not-allowed;color:transparent}
+.seat[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.legend{display:flex;gap:20px;margin-top:20px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.summary{margin-top:30px;padding:24px;border:1px solid var(--line-strong);display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.summary p{margin:0;font-family:var(--display);font-size:20px}
+.summary small{display:block;font-family:var(--body);font-size:13px;color:var(--muted)}
+.btn{border-radius:2px;letter-spacing:.12em;text-transform:uppercase;font-size:13px}
+@media (max-width:900px){.book .wrap{grid-template-columns:1fr}.seats{gap:5px}}
+footer{padding:40px 0 90px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">KŌJI<small>OMAKASE</small></a>
+    <nav aria-label="Main"><a href="#counter">The counter</a><a href="#courses">Tonight</a><a href="#book">Reserve</a></nav>
+    <a class="btn" href="#book" data-magnetic>Reserve a seat</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="1224179" aria-label="Kōji">
+    <div class="stage">
+      <div class="poster" role="img" aria-label="A dark sushi counter lit by a single beam of light"></div>
+      <video muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+      <div class="scrim"></div>
+      <div class="band pos-left" data-a="0" data-b="0.32">
+        <span class="kick">Ten seats &middot; One sitting a night</span>
+        <span class="big">Quiet room.<br>Sharp knife.</span>
+        <span class="sub">Eighteen courses, chosen at the fish market at five this morning.</span>
+      </div>
+      <div class="band pos-right" data-a="0.38" data-b="0.68">
+        <span class="kick">Chef Ren Kōjima</span>
+        <span class="big">Fourteen years<br>behind a counter.</span>
+        <span class="sub">Trained in Kanazawa. Rice seasoned with red vinegar, warm as skin, the way his teacher did it.</span>
+      </div>
+      <div class="band pos-top" data-a="0.76" data-b="1" data-static>
+        <span class="kick">Kōji, Soho</span>
+        <span class="big">Your seat is waiting.</span>
+        <span class="sub">Tuesday to Saturday, 7pm. Bookings open thirty days ahead.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <section class="phil" id="counter">
+    <div class="wrap">
+      <div class="vert" aria-hidden="true" data-reveal="blur">旬の味</div>
+      <div>
+        <span class="seal" data-reveal="scale">旬</span>
+        <h2 data-split>We serve what the sea gave us today.</h2>
+        <p class="lede" data-reveal="up">There is no printed menu. Ren walks the market each morning and builds the night around whatever is best. You sit, you eat, he talks you through it, piece by piece.</p>
+        <p class="lede" data-reveal="up">Two hours, ten guests, one counter of pale hinoki wood sanded by hand every Monday.</p>
+      </div>
+      <div class="imgcol" data-reveal="clip"><img src="assets/knife.jpg" alt="A long sushi knife resting on an indigo cloth" loading="lazy"></div>
+    </div>
+  </section>
+
+  <section class="courses" id="courses">
+    <div class="wrap">
+      <div class="stick">
+        <span class="kicker" data-reveal="up">Tonight, roughly</span>
+        <h2 data-split>Eighteen courses in four acts.</h2>
+        <p class="lede" data-reveal="up">£145 per guest. Sake pairing £70. We work around allergies when you tell us at booking.</p>
+      </div>
+      <div class="timeline">
+        <span class="rail"></span>
+        <svg data-draw preserveAspectRatio="none" viewBox="0 0 20 100" aria-hidden="true"><line x1="9" y1="0" x2="9" y2="100"/></svg>
+        <div class="course" data-reveal="up"><span class="num">I &middot; 1 to 3</span><h3>Sakizuke</h3><p>Small cold bites. Monkfish liver, firefly squid, a spoon of sea urchin.</p></div>
+        <div class="course" data-reveal="up"><span class="num">II &middot; 4 to 6</span><h3>Sashimi &amp; grill</h3><p>Line caught bream, cut thick. Then something over binchotan charcoal.</p></div>
+        <div class="course" data-reveal="up"><span class="num">III &middot; 7 to 16</span><h3>Nigiri</h3><p>Ten pieces, lean to rich. Kinmedai, three cuts of tuna, kohada we cure for two days.</p></div>
+        <div class="course" data-reveal="up"><span class="num">IV &middot; 17 to 18</span><h3>Soup &amp; sweet</h3><p>Red miso with clams. A slice of tamago that tastes like custard.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="trip" aria-label="From the counter">
+    <div class="wrap">
+      <figure data-reveal="up"><img src="assets/sake.jpg" alt="Sake poured into a ceramic cup" loading="lazy"><figcaption>Junmai, chilled</figcaption></figure>
+      <figure data-reveal="up" style="--d:120ms"><img src="assets/nigiri.jpg" alt="Fatty tuna nigiri on black slate" loading="lazy"><figcaption>Course 14 &middot; Otoro</figcaption></figure>
+      <figure data-reveal="up" style="--d:240ms"><img src="assets/hero-ending.jpg" alt="The hinoki counter under a single light" loading="lazy" style="object-position:60% 50%"><figcaption>The counter</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="book" id="book">
+    <div class="wrap">
+      <div>
+        <span class="kicker" data-reveal="up">Reserve</span>
+        <h2 data-split>Pick your night and your seat.</h2>
+        <div class="step" data-reveal="up"><h4>1 &middot; Night</h4><div class="days" id="days"></div></div>
+        <div class="step" data-reveal="up"><h4>2 &middot; Guests</h4><div class="seg" id="party">
+          <button type="button" data-n="1" aria-pressed="false">1</button><button type="button" data-n="2" aria-pressed="true">2</button><button type="button" data-n="3" aria-pressed="false">3</button><button type="button" data-n="4" aria-pressed="false">4</button>
+        </div></div>
+      </div>
+      <div data-reveal="up">
+        <div class="step"><h4>3 &middot; Seats <span id="seatHint" style="text-transform:none;letter-spacing:0;font-family:var(--body)">(choose 2)</span></h4>
+          <div class="counter">
+            <div class="chef">CHEF</div>
+            <div class="bar"></div>
+            <div class="seats" id="seats"></div>
+            <div class="legend"><span><i style="border:1.5px solid var(--wood)"></i>Free</span><span><i style="background:var(--accent)"></i>Yours</span><span><i style="background:var(--line)"></i>Taken</span></div>
+          </div>
+        </div>
+        <div class="summary"><p id="sumText">Choose your seats<small>Two guests</small></p><button class="btn" type="button" id="confirm">Hold these seats</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap"><span>Kōji, 9 Greek Street, Soho</span><span class="fiction">Kōji is a fictional restaurant made for a design mockup. Imagery is AI generated.</span></div></footer>
+
+<script src="../shared/scroll.js"></script>
+<script>
+(() => {
+  const daysEl = document.getElementById('days'), seatsEl = document.getElementById('seats');
+  const dn = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  const today = new Date();
+  let party = 2, picked = [], day = null;
+  // Seed taken seats per day so each night looks different
+  const taken = (d) => { const s = new Set(); let x = d.getDate() * 7 + d.getMonth(); for (let i = 0; i < 4 + (x % 4); i++) { x = (x * 31 + 11) % 97; s.add(x % 10); } return s; };
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(today); d.setDate(today.getDate() + i);
+    const closed = d.getDay() === 0 || d.getDay() === 1;
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'day'; b.disabled = closed; b.setAttribute('aria-pressed', 'false');
+    b.innerHTML = `<small>${dn[d.getDay()]}</small><b>${d.getDate()}</b>`;
+    b.setAttribute('aria-label', d.toDateString() + (closed ? ', closed' : ''));
+    b.onclick = () => { daysEl.querySelectorAll('.day').forEach((x) => x.setAttribute('aria-pressed', x === b)); day = d; picked = []; drawSeats(); };
+    daysEl.appendChild(b);
+    if (!closed && !day) { day = d; b.setAttribute('aria-pressed', 'true'); }
+  }
+  function drawSeats() {
+    const t = taken(day);
+    seatsEl.innerHTML = '';
+    for (let i = 0; i < 10; i++) {
+      const s = document.createElement('button');
+      s.type = 'button'; s.className = 'seat'; s.textContent = i + 1;
+      s.disabled = t.has(i);
+      s.setAttribute('aria-label', `Seat ${i + 1}${t.has(i) ? ', taken' : ''}`);
+      s.setAttribute('aria-pressed', picked.includes(i));
+      s.onclick = () => {
+        if (picked.includes(i)) picked = picked.filter((p) => p !== i);
+        else { picked.push(i); if (picked.length > party) picked.shift(); }
+        drawSeats();
+      };
+      seatsEl.appendChild(s);
+    }
+    update();
+  }
+  function update() {
+    const words = ['', 'One guest', 'Two guests', 'Three guests', 'Four guests'];
+    document.getElementById('seatHint').textContent = `(choose ${party})`;
+    const ds = day.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+    const need = party - picked.length;
+    document.getElementById('sumText').innerHTML = need > 0
+      ? `${need} more seat${need > 1 ? 's' : ''} to pick<small>${words[party]} &middot; ${ds}, 7pm</small>`
+      : `Seats ${picked.map((p) => p + 1).sort((a, b) => a - b).join(' & ')} &middot; £${party * 145}<small>${words[party]} &middot; ${ds}, 7pm</small>`;
+  }
+  document.getElementById('party').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    document.querySelectorAll('#party button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    party = +b.dataset.n; picked = picked.slice(-party); drawSeats();
+  });
+  document.getElementById('confirm').onclick = () => {
+    if (picked.length < party) return toast(`Pick ${party - picked.length} more seat${party - picked.length > 1 ? 's' : ''} at the counter first.`);
+    toast('Held for 10 minutes. A card is needed to confirm. This is a demo, so nothing is charged.');
+  };
+  drawSeats();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crumb | Neighbourhood Bakery</title>
+<meta name="description" content="Sourdough, buns and cakes baked from 4am. Pre-order a box and skip the Saturday queue.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Nunito:wght@400;600;800&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#fdf3dc;--ink:#3b2618;--muted:#7c6352;--accent:#ef7d57;--on-accent:#fffaf0;--pist:#b8d4a3;--peach:#f9c8a8;--butter:#ffe48a;
+  --card:#fffaf0;--line:rgba(59,38,24,.12);--line-strong:rgba(59,38,24,.3);
+  --display:'Bagel Fat One',system-ui,sans-serif;--body:'Nunito',system-ui,sans-serif;--mono:'Nunito',sans-serif;--hand:'Caveat',cursive;
+  --header-bg:rgba(253,243,220,.82);--radius:999px;
+  --scrim:linear-gradient(180deg,rgba(253,243,220,.55),rgba(253,243,220,0) 40%,rgba(253,243,220,0) 70%,rgba(253,243,220,.35));
+  --band-scrim:rgba(253,243,220,.7);--shadow:rgba(255,248,230,.8);
+  --env:radial-gradient(35% 30% at 85% 15%,rgba(249,200,168,.45),transparent 70%),radial-gradient(35% 30% at 10% 85%,rgba(184,212,163,.4),transparent 70%),#fdf3dc;
+  --toast-bg:#3b2618;
+}
+.logo{font-family:var(--display);font-size:30px;text-decoration:none;color:var(--accent);letter-spacing:.01em}
+.hero .big{font-size:clamp(46px,7vw,110px);line-height:.95;letter-spacing:.005em;font-weight:400}
+.hero .big em{font-style:normal;color:var(--accent)}
+.hero .kick{font-family:var(--hand);font-size:30px;letter-spacing:0;text-transform:none;color:#b84f2c}
+.hero .sub{font-weight:600}
+h2{font-family:var(--display);font-weight:400;font-size:clamp(40px,5.4vw,80px);line-height:1;margin:.15em 0 .4em}
+h2 em{font-style:normal;color:var(--accent)}
+.hand{font-family:var(--hand);font-size:30px;color:var(--accent);display:inline-block;transform:rotate(-3deg)}
+.lede{font-size:19px;color:var(--muted);max-width:50ch}
+.btn{font-weight:800;box-shadow:0 6px 0 #c95e3b}
+.btn:hover{transform:translateY(-2px);box-shadow:0 8px 0 #c95e3b}
+.btn:active{transform:translateY(4px);box-shadow:0 2px 0 #c95e3b}
+
+/* Oven timer */
+.oven{padding:150px 0 80px;text-align:center}
+.timer{display:inline-flex;gap:14px;margin:20px 0 10px}
+.timer div{background:var(--card);border-radius:24px;padding:18px 22px;min-width:110px;box-shadow:0 10px 0 var(--peach)}
+.timer b{display:block;font-family:var(--display);font-size:62px;line-height:1;color:var(--ink);font-weight:400}
+.timer small{font-weight:800;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.1em}
+.wave{display:block;width:100%;height:60px;margin-top:60px}
+.wave path{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round}
+
+/* Stacked cards */
+.stack{padding:40px 0 120px}
+.scard{position:sticky;top:calc(100px + var(--i) * 26px);display:grid;grid-template-columns:1fr 1fr;border-radius:44px;overflow:hidden;min-height:440px;margin-bottom:60px;box-shadow:0 -10px 40px -20px rgba(59,38,24,.25)}
+.scard .t{padding:clamp(28px,5vw,64px);display:flex;flex-direction:column;justify-content:center}
+.scard img{width:100%;height:100%;object-fit:cover}
+.scard h3{font-family:var(--display);font-weight:400;font-size:clamp(34px,4vw,56px);margin:0 0 10px;line-height:1}
+.scard p{font-size:18px;margin:0 0 20px;max-width:40ch}
+.scard .when{font-family:var(--hand);font-size:26px}
+@media (max-width:860px){.scard{grid-template-columns:1fr;top:calc(80px + var(--i) * 16px)}.scard img{height:240px}}
+
+/* Box builder */
+.box{padding:110px 0 120px;background:var(--pist);border-radius:60px 60px 0 0}
+.box .wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start}
+.treats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:24px}
+.treat{background:var(--card);border:0;border-radius:24px;padding:14px;cursor:pointer;text-align:center;transition:transform .35s cubic-bezier(.3,1.6,.5,1),box-shadow .3s;box-shadow:0 6px 0 rgba(59,38,24,.12)}
+.treat:hover{transform:translateY(-4px) rotate(-1deg)}
+.treat:active{transform:scale(.95)}
+.treat .dot{display:block;width:64px;height:64px;border-radius:50%;margin:0 auto 8px;background-size:cover;background-position:center;border:4px solid var(--butter)}
+.treat b{display:block;font-size:15px}
+.treat small{color:var(--muted);font-weight:600}
+.crate{background:#d7a26b;border-radius:30px;padding:22px;box-shadow:inset 0 0 0 8px #c48f58,0 20px 40px -20px rgba(59,38,24,.5);position:sticky;top:110px}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.slot{aspect-ratio:1;border-radius:20px;background:#f3d9b5;border:3px dashed #c48f58;display:grid;place-items:center;position:relative;overflow:hidden;cursor:pointer;padding:0}
+.slot.filled{border-style:solid;border-color:#fffaf0;animation:plop .5s cubic-bezier(.3,1.7,.5,1)}
+.slot.filled span{position:absolute;inset:0;background-size:cover;background-position:center}
+.slot.filled::after{content:"×";position:absolute;top:6px;right:8px;width:24px;height:24px;border-radius:50%;background:rgba(59,38,24,.7);color:#fff;font-weight:800;display:grid;place-items:center;opacity:0;transition:opacity .2s}
+.slot.filled:hover::after{opacity:1}
+@keyframes plop{0%{transform:scale(.3)}100%{transform:scale(1)}}
+html.reduce .slot.filled{animation:none}
+.crate-foot{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:20px;flex-wrap:wrap;color:#fffaf0}
+.crate-foot b{font-family:var(--display);font-size:40px;font-weight:400}
+.pickup{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}
+.pickup select{padding:12px 16px;border-radius:999px;border:0;background:#fffaf0;font-weight:700}
+@media (max-width:860px){.box .wrap{grid-template-columns:1fr}.crate{position:relative;top:0}}
+
+/* Visit */
+.visit{padding:120px 0 120px;background:var(--pist)}
+.visit .card{background:var(--card);border-radius:44px;display:grid;grid-template-columns:1fr 1fr;overflow:hidden}
+.visit img{width:100%;height:100%;object-fit:cover;min-height:360px}
+.visit .t{padding:clamp(28px,5vw,60px)}
+.badge{display:inline-block;background:var(--butter);padding:8px 16px;border-radius:99px;font-weight:800;font-size:13px;transform:rotate(-2deg)}
+@media (max-width:860px){.visit .card{grid-template-columns:1fr}}
+footer{padding:40px 0 90px;background:var(--pist);color:var(--ink);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:2px dashed rgba(59,38,24,.25);padding-top:30px}
+</style>
+</head>
+<body>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">crumb</a>
+    <nav aria-label="Main"><a href="#today">Today</a><a href="#bakes">The bakes</a><a href="#box">Build a box</a><a href="#visit">Visit</a></nav>
+    <a class="btn" href="#box" data-magnetic>Pre-order</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="3558381" aria-label="Crumb bakery">
+    <div class="stage">
+      <div class="poster" role="img" aria-label="Flour drifting through sunbeams onto a sourdough loaf"></div>
+      <video muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+      <div class="scrim"></div>
+      <div class="band pos-top" data-a="0" data-b="0.3">
+        <span class="kick">good morning!</span>
+        <span class="big">Baked at 4am,<br><em>for you.</em></span>
+        <span class="sub">Sourdough, sticky buns and cakes from a tiny green-tiled bakery on Elm Row.</span>
+      </div>
+      <div class="band pos-left" data-a="0.36" data-b="0.66">
+        <span class="kick">the secret?</span>
+        <span class="big">Patience.<br>And butter.</span>
+        <span class="sub">Our starter is nine years old. Our croissants take three days. Nobody here is in a rush.</span>
+      </div>
+      <div class="band pos-top" data-a="0.74" data-b="1" data-static>
+        <span class="kick">crumb bakery</span>
+        <span class="big">Still <em>warm.</em></span>
+        <span class="sub">Pre-order a box tonight and skip the Saturday queue tomorrow.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <section class="oven" id="today">
+    <div class="wrap">
+      <span class="hand" data-reveal="scale">next tray out in&hellip;</span>
+      <h2 data-split>Cinnamon buns, fresh.</h2>
+      <div class="timer" aria-live="off" data-stagger><div><b id="tm">00</b><small>Minutes</small></div><div><b id="ts">00</b><small>Seconds</small></div></div>
+      <p class="lede" style="margin-inline:auto" data-reveal="up">A new tray comes out every 40 minutes until they run out. Usually about 11am on a Saturday.</p>
+      <svg class="wave" viewBox="0 0 1200 60" preserveAspectRatio="none" data-draw aria-hidden="true"><path d="M0 30 Q 50 0 100 30 T 200 30 T 300 30 T 400 30 T 500 30 T 600 30 T 700 30 T 800 30 T 900 30 T 1000 30 T 1100 30 T 1200 30"/></svg>
+    </div>
+  </section>
+
+  <section class="stack" id="bakes">
+    <div class="wrap">
+      <article class="scard" style="--i:0;background:var(--butter)"><div class="t"><span class="when">from 7am</span><h3>Country sourdough</h3><p>Nine-year-old starter, 36 hour ferment, a crackly crust that sings when it cools.</p><div><button class="btn" type="button" data-quick="Sourdough loaf">Save me a loaf</button></div></div><img src="assets/hero-ending.jpg" alt="A scored sourdough loaf on linen" loading="lazy"></article>
+      <article class="scard" style="--i:1;background:var(--peach)"><div class="t"><span class="when">every 40 minutes</span><h3>Sticky cinnamon buns</h3><p>Brown sugar, cardamom, and a cream cheese glaze that drips right where it should.</p><div><button class="btn" type="button" data-quick="Cinnamon bun">Save me a bun</button></div></div><img src="assets/buns.jpg" alt="Iced cinnamon buns in a tray" loading="lazy"></article>
+      <article class="scard" style="--i:2;background:#fffaf0"><div class="t"><span class="when">thursday to sunday</span><h3>Cakes &amp; macarons</h3><p>Strawberry sponge, pistachio and peach macarons. Birthday cakes with two days' notice.</p><div><button class="btn" type="button" data-quick="Strawberry slice">Save me a slice</button></div></div><img src="assets/macarons.jpg" alt="Pastel macarons and a strawberry cake" loading="lazy"></article>
+    </div>
+  </section>
+
+  <section class="box" id="box">
+    <div class="wrap">
+      <div>
+        <span class="hand" data-reveal="scale">skip the queue</span>
+        <h2 data-split>Fill a box of six.</h2>
+        <p class="lede" data-reveal="up">Tap a treat to drop it in the box. Tap it again in the box to take it out. Pay when you collect.</p>
+        <div class="treats" id="treats" data-stagger></div>
+      </div>
+      <div class="crate" data-reveal="up">
+        <div class="slots" id="slots"></div>
+        <div class="crate-foot"><span><b id="boxTotal">£0.00</b><br><small id="boxCount">0 of 6</small></span>
+          <button class="btn" type="button" id="reserve" style="background:var(--ink);box-shadow:0 6px 0 #1e130b">Reserve my box</button></div>
+        <div class="pickup"><label for="pick" style="color:#fffaf0;font-weight:800">Collect</label>
+          <select id="pick"><option>Tomorrow, 8:00</option><option>Tomorrow, 9:00</option><option>Tomorrow, 10:00</option><option>Tomorrow, 11:00</option></select></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="visit" id="visit">
+    <div class="wrap">
+      <div class="card" data-reveal="up">
+        <img src="assets/shop.jpg" alt="The bakery counter with shelves of bread" loading="lazy">
+        <div class="t"><span class="badge">Wed to Sun &middot; 7am till sold out</span><h2 style="font-size:clamp(36px,4vw,58px);margin-top:20px">Come say hi.</h2><p class="lede">22 Elm Row, the green door. Dogs welcome, and they get a biscuit.</p><a class="btn" href="#box" data-magnetic>Pre-order for tomorrow</a></div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer><div class="wrap"><span>crumb, 22 Elm Row</span><span class="fiction">Crumb is a fictional bakery made for a design mockup. Imagery is AI generated.</span></div></footer>
+
+<script src="../shared/scroll.js"></script>
+<script>
+(() => {
+  // Next tray countdown (every 40 minutes)
+  const tm = document.getElementById('tm'), ts = document.getElementById('ts');
+  let lastS = '';
+  setInterval(function t() {
+    const now = Date.now(), period = 40 * 60 * 1000, left = period - (now % period);
+    const m = String(Math.floor(left / 60000)).padStart(2, '0'), s = String(Math.floor(left / 1000) % 60).padStart(2, '0');
+    if (s !== lastS) { lastS = s; tm.textContent = m; ts.textContent = s; }
+    return t;
+  }(), 250);
+
+  // Box builder
+  const treats = [
+    ['Cinnamon bun', 3.2, 'assets/buns.jpg', '30% 40%'], ['Sourdough slice', 1.5, 'assets/hero-ending.jpg', '50% 55%'], ['Peach macaron', 1.8, 'assets/macarons.jpg', '45% 82%'],
+    ['Pistachio macaron', 1.8, 'assets/macarons.jpg', '62% 82%'], ['Strawberry slice', 4.2, 'assets/macarons.jpg', '60% 30%'], ['Little loaf', 3.5, 'assets/shop.jpg', '80% 60%'],
+  ];
+  const box = [];
+  const tEl = document.getElementById('treats'), sEl = document.getElementById('slots');
+  tEl.innerHTML = treats.map(([n, p, img, pos], i) => `<button class="treat" type="button" data-i="${i}"><span class="dot" style="background-image:url('${img}');background-position:${pos};background-size:420%"></span><b>${n}</b><small>£${p.toFixed(2)}</small></button>`).join('');
+  function draw(fresh) {
+    sEl.innerHTML = Array.from({ length: 6 }, (_, i) => {
+      const t = box[i];
+      return t !== undefined
+        ? `<button class="slot filled" type="button" data-s="${i}" aria-label="Remove ${treats[t][0]}" style="${i === fresh ? '' : 'animation:none'}"><span style="background-image:url('${treats[t][2]}');background-position:${treats[t][3]};background-size:420%"></span></button>`
+        : `<button class="slot" type="button" tabindex="-1" aria-label="Empty slot"></button>`;
+    }).join('');
+    const total = box.reduce((s, t) => s + treats[t][1], 0) * (box.length === 6 ? 0.9 : 1);
+    document.getElementById('boxTotal').textContent = '£' + total.toFixed(2);
+    document.getElementById('boxCount').textContent = box.length === 6 ? 'Full box, 10% off' : `${box.length} of 6`;
+  }
+  tEl.addEventListener('click', (e) => {
+    const b = e.target.closest('.treat'); if (!b) return;
+    if (box.length >= 6) return toast('Your box is full. Tap a treat in the box to swap it out.');
+    box.push(+b.dataset.i); draw(box.length - 1);
+  });
+  sEl.addEventListener('click', (e) => { const s = e.target.closest('.slot.filled'); if (s) { box.splice(+s.dataset.s, 1); draw(-1); } });
+  document.querySelectorAll('[data-quick]').forEach((b) => b.addEventListener('click', () => {
+    const i = treats.findIndex((t) => t[0] === b.dataset.quick);
+    if (box.length < 6) { box.push(i < 0 ? 0 : i); draw(box.length - 1); }
+    toast(`${b.dataset.quick} saved in your box`);
+  }));
+  document.getElementById('reserve').onclick = () => toast(box.length ? `Box of ${box.length} reserved for ${document.getElementById('pick').value}. Pay when you collect.` : 'Your box is empty. Tap a treat to add it.');
+  draw(-1);
+})();
+</script>
+</body>
+</html>

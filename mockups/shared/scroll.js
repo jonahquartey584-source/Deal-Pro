@@ -1,0 +1,352 @@
+/*
+  Shared scroll engine for the website mockups.
+  - Scroll-scrubbed hero video (Blob fetch, eased time, gated seeks, caption bands)
+  - Static hero fallback for phones, reduced motion, Save-Data and failed loads
+  - Reveal on scroll, staggered children, split-word headlines
+  - Parallax, horizontal scroll rails, self-drawing SVG lines, counters
+  - Tilt cards, magnetic buttons, progress bar, toasts
+*/
+(() => {
+  const root = document.documentElement;
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+  const smooth = (p, e0, e1) => {
+    const t = clamp((p - e0) / (e1 - e0), 0, 1);
+    return t * t * (3 - 2 * t);
+  };
+  root.classList.add('js');
+  if (reduce) root.classList.add('reduce');
+
+  /* ---------- Toast ---------- */
+  let toastEl;
+  window.toast = (msg) => {
+    if (!toastEl) {
+      toastEl = document.createElement('div');
+      toastEl.className = 'toast';
+      toastEl.setAttribute('role', 'status');
+      document.body.appendChild(toastEl);
+    }
+    toastEl.textContent = msg;
+    toastEl.classList.remove('show');
+    void toastEl.offsetWidth;
+    toastEl.classList.add('show');
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(() => toastEl.classList.remove('show'), 2600);
+  };
+
+  /* ---------- Split words ---------- */
+  document.querySelectorAll('[data-split]').forEach((el) => {
+    const words = el.textContent.trim().split(/\s+/);
+    el.setAttribute('aria-label', el.textContent.trim());
+    el.innerHTML = words
+      .map((w, i) => `<span class="w" aria-hidden="true"><span style="--i:${i}">${w}</span></span>`)
+      .join(' ');
+  });
+
+  /* ---------- Reveal on scroll ---------- */
+  document.querySelectorAll('[data-stagger]').forEach((g) => {
+    [...g.children].forEach((c, i) => c.style.setProperty('--d', i * 90 + 'ms'));
+  });
+  const revealIO = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          e.target.classList.add('in');
+          revealIO.unobserve(e.target);
+        }
+      });
+    },
+    { rootMargin: '0px 0px -12% 0px', threshold: 0.08 }
+  );
+  document.querySelectorAll('[data-reveal],[data-split],[data-stagger]').forEach((el) => revealIO.observe(el));
+
+  /* ---------- Counters ---------- */
+  const countIO = new IntersectionObserver((entries) => {
+    entries.forEach((e) => {
+      if (!e.isIntersecting) return;
+      countIO.unobserve(e.target);
+      const el = e.target;
+      const end = parseFloat(el.dataset.count);
+      const dec = (el.dataset.count.split('.')[1] || '').length;
+      const pre = el.dataset.prefix || '';
+      const suf = el.dataset.suffix || '';
+      if (reduce) { el.textContent = pre + end.toFixed(dec) + suf; return; }
+      const t0 = performance.now();
+      const dur = 1600;
+      const step = (now) => {
+        const k = clamp((now - t0) / dur, 0, 1);
+        const v = end * (1 - Math.pow(1 - k, 3));
+        el.textContent = pre + v.toFixed(dec) + suf;
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }, { threshold: 0.5 });
+  document.querySelectorAll('[data-count]').forEach((el) => countIO.observe(el));
+
+  /* ---------- Scroll-linked effects (parallax, rails, draw, progress) ---------- */
+  const parallax = [...document.querySelectorAll('[data-speed]')];
+  const rails = [...document.querySelectorAll('[data-hscroll]')].map((sec) => ({
+    sec,
+    track: sec.querySelector('.rail-track'),
+    last: -1,
+  }));
+  const draws = [...document.querySelectorAll('[data-draw]')].map((svg) => {
+    const paths = [...svg.querySelectorAll('path,line,polyline,circle')];
+    paths.forEach((p) => {
+      let len = 1000;
+      try { len = p.getTotalLength() || 1000; } catch (e) { /* hidden at this width */ }
+      p.style.strokeDasharray = len;
+      p.style.strokeDashoffset = len;
+      p._len = len;
+    });
+    return { svg, paths, last: -1 };
+  });
+  const bar = document.querySelector('.scroll-progress');
+  const header = document.querySelector('[data-header]');
+  let lastBar = -1;
+  let fxQueued = false;
+
+  function sizeRails() {
+    rails.forEach((r) => {
+      if (!r.track) return;
+      const extra = Math.max(0, r.track.scrollWidth - innerWidth);
+      r.extra = extra;
+      r.sec.style.height = innerWidth < 760 ? 'auto' : extra + innerHeight + 'px';
+    });
+  }
+
+  function runFx() {
+    fxQueued = false;
+    const vh = innerHeight;
+    if (!reduce) {
+      parallax.forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.bottom < -200 || r.top > vh + 200) return;
+        const mid = r.top + r.height / 2 - vh / 2;
+        const y = (-mid * parseFloat(el.dataset.speed)).toFixed(1);
+        if (el._y !== y) { el._y = y; el.style.transform = `translate3d(0,${y}px,0)`; }
+      });
+    }
+    rails.forEach((r) => {
+      if (!r.track || innerWidth < 760) return;
+      const rect = r.sec.getBoundingClientRect();
+      const p = clamp(-rect.top / Math.max(1, rect.height - vh), 0, 1);
+      const x = Math.round(p * r.extra);
+      if (x !== r.last) { r.last = x; r.track.style.transform = `translate3d(${-x}px,0,0)`; }
+    });
+    draws.forEach((d) => {
+      const rect = d.svg.getBoundingClientRect();
+      const p = reduce ? 1 : clamp((vh - rect.top) / (vh * 0.8 + rect.height * 0.5), 0, 1);
+      const q = Math.round(p * 200) / 200;
+      if (q === d.last) return;
+      d.last = q;
+      d.paths.forEach((path) => (path.style.strokeDashoffset = path._len * (1 - q)));
+    });
+    if (bar) {
+      const p = scrollY / Math.max(1, root.scrollHeight - vh);
+      const q = Math.round(p * 500) / 500;
+      if (q !== lastBar) { lastBar = q; bar.style.transform = `scaleX(${q})`; }
+    }
+    if (header) {
+      const s = scrollY > 40;
+      if (s !== header._s) { header._s = s; header.classList.toggle('scrolled', s); }
+    }
+  }
+  const queueFx = () => { if (!fxQueued) { fxQueued = true; requestAnimationFrame(runFx); } };
+  addEventListener('scroll', queueFx, { passive: true });
+  addEventListener('resize', () => { sizeRails(); queueFx(); });
+  addEventListener('load', () => { sizeRails(); queueFx(); });
+  sizeRails();
+  runFx();
+
+  /* ---------- Tilt cards + magnetic buttons (fine pointers only) ---------- */
+  if (!reduce && matchMedia('(pointer: fine)').matches) {
+    document.querySelectorAll('[data-tilt]').forEach((card) => {
+      card.addEventListener('pointermove', (e) => {
+        const r = card.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5;
+        const y = (e.clientY - r.top) / r.height - 0.5;
+        card.style.transform = `perspective(900px) rotateX(${(-y * 7).toFixed(2)}deg) rotateY(${(x * 9).toFixed(2)}deg) translateY(-4px)`;
+        card.style.setProperty('--mx', (x + 0.5) * 100 + '%');
+        card.style.setProperty('--my', (y + 0.5) * 100 + '%');
+      });
+      card.addEventListener('pointerleave', () => (card.style.transform = ''));
+    });
+    document.querySelectorAll('[data-magnetic]').forEach((b) => {
+      b.addEventListener('pointermove', (e) => {
+        const r = b.getBoundingClientRect();
+        const x = e.clientX - r.left - r.width / 2;
+        const y = e.clientY - r.top - r.height / 2;
+        b.style.transform = `translate(${x * 0.18}px,${y * 0.25}px)`;
+      });
+      b.addEventListener('pointerleave', () => (b.style.transform = ''));
+    });
+  }
+
+  /* ---------- Scroll-scrubbed hero ---------- */
+  const hero = document.querySelector('[data-scrub]');
+  if (!hero) return;
+  const stage = hero.querySelector('.stage');
+  const video = hero.querySelector('video');
+  const posterLayer = hero.querySelector('.poster');
+  const ring = hero.querySelector('.ring');
+  const bands = [...hero.querySelectorAll('.band')].map((el, n, all) => ({
+    el,
+    a: parseFloat(el.dataset.a),
+    b: parseFloat(el.dataset.b),
+    first: n === 0,
+    last: n === all.length - 1,
+    o: -1,
+    k: -1,
+  }));
+  // MP4 (H.264) first; a VP9 WebM twin covers browsers built without H.264.
+  const probe = document.createElement('video');
+  const VIDEO_URL = probe.canPlayType('video/mp4; codecs="avc1.640028"')
+    ? hero.dataset.scrub
+    : hero.dataset.scrub.replace(/\.mp4$/, '.webm');
+  const POSTER = hero.dataset.poster;
+  const ENDING = hero.dataset.ending || POSTER;
+
+  // The five static-hero gates: small screen, coarse pointer, reduced motion, Save-Data, no fetch/streams.
+  const conn = navigator.connection || {};
+  const isStatic =
+    reduce ||
+    conn.saveData ||
+    innerWidth < 760 ||
+    matchMedia('(pointer: coarse)').matches ||
+    !('fetch' in window) ||
+    location.protocol === 'file:';
+
+  if (isStatic) {
+    hero.classList.add('static');
+    posterLayer.style.backgroundImage = `url('${ENDING}')`;
+    bands.forEach((b) => {
+      const show = b.el.hasAttribute('data-static');
+      b.el.style.opacity = show ? 1 : 0;
+      b.el.style.setProperty('--k', 1);
+      b.el.classList.toggle('on', show);
+    });
+    if (ring) ring.remove();
+    return;
+  }
+
+  posterLayer.style.backgroundImage = `url('${POSTER}')`;
+  let heroOnScreen = true;
+  new IntersectionObserver((e) => { heroOnScreen = e[0].isIntersecting; if (heroOnScreen) onScroll(); }).observe(hero);
+
+  function heroProgress() {
+    const r = hero.getBoundingClientRect();
+    return clamp(-r.top / Math.max(1, r.height - innerHeight), 0, 1);
+  }
+
+  // Gated seeks: never overlap, keep only the newest target.
+  let seekBusy = false;
+  let pendingTime = null;
+  function requestSeek(t) {
+    if (!video.duration || !hero.classList.contains('video-ready')) return;
+    t = clamp(t, 0, video.duration - 0.04);
+    if (seekBusy) { pendingTime = t; return; }
+    if (Math.abs(video.currentTime - t) < 0.008) return;
+    seekBusy = true;
+    video.currentTime = t;
+  }
+  video.addEventListener('seeked', () => {
+    seekBusy = false;
+    if (pendingTime !== null) { const t = pendingTime; pendingTime = null; requestSeek(t); }
+  });
+  video.addEventListener('error', () => { seekBusy = false; pendingTime = null; });
+
+  function updateBands(p) {
+    bands.forEach((b) => {
+      const f = Math.min(0.03, (b.b - b.a) / 3);
+      // First band starts settled, last band ends settled.
+      const o = (b.first ? 1 : smooth(p, b.a, b.a + f)) * (b.last ? 1 : 1 - smooth(p, b.b - f, b.b));
+      const k = b.first ? 1 : clamp((p - b.a) / Math.min(0.04, (b.b - b.a) * 0.35), 0, 1);
+      const oq = Math.round(o * 100) / 100;
+      const kq = Math.round(k * 100) / 100;
+      if (oq !== b.o) {
+        b.o = oq;
+        b.el.style.opacity = oq;
+        const on = oq > 0.5;
+        if (on !== b.on) { b.on = on; b.el.classList.toggle('on', on); }
+        b.el.style.visibility = oq === 0 ? 'hidden' : 'visible';
+      }
+      if (kq !== b.k) { b.k = kq; b.el.style.setProperty('--k', kq); }
+    });
+  }
+
+  let target = 0, shown = 0, rafId = null, lastTick = 0;
+  function tick(now) {
+    const dt = Math.min(100, now - (lastTick || now));
+    lastTick = now;
+    shown += (target - shown) * (1 - Math.pow(1 - 0.14, dt / 16.667));
+    if (Math.abs(target - shown) < 0.0005) { shown = target; rafId = null; lastTick = 0; }
+    else rafId = requestAnimationFrame(tick);
+    if (video.duration) requestSeek(shown * video.duration);
+    updateBands(shown);
+    const hint = Math.round(clamp(1 - shown * 12, 0, 1) * 100) / 100;
+    if (hint !== hero._hint) { hero._hint = hint; hero.style.setProperty('--hint', hint); }
+  }
+  function onScroll() {
+    target = heroProgress();
+    if (rafId === null && heroOnScreen) rafId = requestAnimationFrame(tick);
+  }
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', onScroll);
+  updateBands(heroProgress());
+  onScroll();
+
+  // Paint poster first, then stream the video as a Blob behind an honest ring.
+  let started = false;
+  function startFetch() {
+    if (started) return;
+    started = true;
+    loadBlob().catch(failVideo);
+  }
+  const pi = new Image();
+  pi.onload = startFetch;
+  pi.onerror = startFetch;
+  pi.src = POSTER;
+  setTimeout(startFetch, 4000);
+
+  async function loadBlob() {
+    const ctrl = new AbortController();
+    let watchdog = setTimeout(() => ctrl.abort(), 20000);
+    const res = await fetch(VIDEO_URL, { priority: 'low', signal: ctrl.signal });
+    if (!res.ok || !res.body) throw new Error('video ' + res.status);
+    const total = Number(res.headers.get('Content-Length')) || Number(hero.dataset.bytes) || 4e6;
+    const reader = res.body.getReader();
+    const chunks = [];
+    let got = 0, lastRing = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      clearTimeout(watchdog);
+      watchdog = setTimeout(() => ctrl.abort(), 20000);
+      chunks.push(value);
+      got += value.length;
+      const frac = Math.min(1, got / total);
+      const now = performance.now();
+      if (ring && (now - lastRing > 100 || frac === 1)) {
+        lastRing = now;
+        ring.style.setProperty('--ld', Math.round(126 * (1 - frac)));
+      }
+    }
+    clearTimeout(watchdog);
+    if (ring) ring.style.setProperty('--ld', 0);
+    video.src = URL.createObjectURL(new Blob(chunks, { type: VIDEO_URL.endsWith('.webm') ? 'video/webm' : 'video/mp4' }));
+    video.load();
+    video.addEventListener('loadeddata', () => {
+      hero.classList.add('video-ready');
+      requestSeek(heroProgress() * video.duration);
+      setTimeout(() => ring && ring.classList.add('done'), 300);
+    }, { once: true });
+    video.addEventListener('error', failVideo, { once: true });
+  }
+  function failVideo() {
+    hero.classList.add('video-failed');
+    posterLayer.style.backgroundImage = `url('${ENDING}')`;
+    if (ring) ring.classList.add('done');
+  }
+})();
