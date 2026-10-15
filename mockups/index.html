@@ -7,7 +7,7 @@
 <meta name="description" content="Interactive website mockups for cafés, restaurants, tech shops and bakeries. Every one has a scroll-driven video hero and a real interactive feature.">
 <meta property="og:title" content="Website Mockups | Qp Digital">
 <meta property="og:description" content="Six interactive website mockups, six different styles. Scroll them, click them, try them.">
-<meta property="og:image" content="shared/thumbs/forno-rosso.jpg">
+<meta property="og:image" content="shared/img/laptop-forno-rosso.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
@@ -29,7 +29,15 @@
 .btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line-strong);box-shadow:none}
 
 /* Intro */
-.intro{padding:170px 0 70px;position:relative;overflow:hidden}
+.intro{padding:170px 0 70px;position:relative;overflow:hidden;isolation:isolate}
+.reel{position:absolute;inset:0;z-index:-1}
+.reel video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.4s ease}
+.reel video.on{opacity:.55}
+.reel::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(20,18,16,.92),rgba(20,18,16,.6) 55%,rgba(20,18,16,.35)),linear-gradient(0deg,var(--bg),transparent 30%)}
+.reel-tag{position:absolute;right:clamp(16px,4vw,48px);bottom:24px;display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:99px;background:rgba(20,18,16,.7);border:1px solid var(--line-strong);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;transition:opacity .5s}
+.reel-tag i{width:7px;height:7px;border-radius:50%;background:#e0142b;box-shadow:0 0 0 4px rgba(224,20,43,.25)}
+.reel-tag b{color:var(--accent)}
+.fan img{border-radius:10px}
 .intro .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
 .kicker{font-family:var(--body);font-weight:800;font-size:13px;letter-spacing:.28em;text-transform:uppercase;color:var(--accent)}
 h1{font-family:var(--display);font-weight:400;font-size:clamp(52px,7.4vw,112px);line-height:.95;letter-spacing:-.01em;margin:.18em 0 .3em}
@@ -59,9 +67,10 @@ h1 em{background:var(--gold);-webkit-background-clip:text;background-clip:text;c
 .card.hide{display:none}
 .screen{position:relative;aspect-ratio:16/10;overflow:hidden;background:#0d0c0b;border-bottom:1px solid var(--line)}
 .screen .shot,.screen .scroller{position:absolute;inset:0;background-size:cover;background-position:50% 0}
+.screen .shot{background-position:50% 50%;transition:transform .8s cubic-bezier(.2,.8,.2,1)}
 .screen .scroller{background-size:100% auto;background-position:50% 0;opacity:0;transition:opacity .5s,background-position 0s .5s}
 .card:hover .scroller,.card:focus-visible .scroller,.card.peeking .scroller{opacity:1;background-position:50% 100%;transition:opacity .4s,background-position 9s cubic-bezier(.45,0,.55,1) .3s}
-.screen .chrome{position:absolute;top:10px;left:12px;display:flex;gap:6px;z-index:2}
+.screen .chrome{display:none;position:absolute;top:10px;left:12px;display:flex;gap:6px;z-index:2}
 .screen .chrome i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.35)}
 .screen .peek{position:absolute;right:12px;bottom:12px;z-index:2;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:7px 11px;border-radius:99px;background:rgba(20,18,16,.75);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);opacity:1;transition:opacity .4s}
 .card:hover .peek{opacity:0}
@@ -84,7 +93,12 @@ h1 em{background:var(--gold);-webkit-background-clip:text;background-clip:text;c
 .inside{padding:40px 0 130px}
 .inside .list{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-top:34px}
 .feat{padding:28px;border-radius:16px;border:1px solid var(--line);background:var(--card)}
-.feat svg{width:34px;height:34px;stroke:var(--accent);fill:none;stroke-width:1.5;margin-bottom:18px}
+.feat{padding:0;overflow:hidden}
+.feat img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block;transition:transform .8s cubic-bezier(.2,.8,.2,1)}
+.feat:hover img{transform:scale(1.05)}
+.feat h3,.feat p{padding:0 22px}
+.feat h3{margin-top:18px}
+.feat p{padding-bottom:22px}
 .feat h3{margin:0 0 6px;font-size:18px}
 .feat p{margin:0;color:var(--muted);font-size:15px}
 .inside h2{font-family:var(--display);font-weight:400;font-size:clamp(38px,5vw,64px);margin:.2em 0 0;line-height:1}
@@ -111,6 +125,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 
 <main id="top">
   <section class="intro">
+    <div class="reel" aria-hidden="true"><video id="reelA" muted loop playsinline preload="auto"></video><video id="reelB" muted loop playsinline preload="auto"></video></div>
+    <span class="reel-tag" id="reelTag" aria-live="off"><i></i>Live from <b>Ember &amp; Oat</b></span>
     <div class="wrap">
       <div>
         <span class="kicker" data-reveal="up">Website mockups</span>
@@ -124,9 +140,9 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
         </div>
       </div>
       <div class="fan" aria-hidden="true">
-        <img src="shared/thumbs/koji.jpg" alt="" data-speed="0.12">
-        <img src="shared/thumbs/volt.jpg" alt="" data-speed="-0.06">
-        <img src="shared/thumbs/forno-rosso.jpg" alt="" data-speed="0.04">
+        <img src="shared/img/laptop-koji.jpg" alt="" data-speed="0.12">
+        <img src="shared/img/laptop-volt.jpg" alt="" data-speed="-0.06">
+        <img src="shared/img/laptop-forno-rosso.jpg" alt="" data-speed="0.04">
       </div>
     </div>
   </section>
@@ -143,32 +159,32 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 
   <section class="wrap grid" id="grid" data-stagger aria-label="Mockups">
     <a class="card" href="ember-oat/index.html" data-cat="cafe">
-      <div class="screen"><span class="shot" style="background-image:url('shared/thumbs/ember-oat.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/ember-oat-full.jpg')"></span><span class="chrome" aria-hidden="true"><i></i><i></i><i></i></span><span class="peek">Hover to scroll</span></div>
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-ember-oat.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/ember-oat-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
       <div class="body"><span class="cat">Café</span><h2>Ember &amp; Oat</h2><p>Warm and editorial. Steam drifts down to the cup as you scroll, then build your own drink and watch the cup fill.</p>
         <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#1d1611"></i><i style="background:#e7c999"></i><i style="background:#a9b98c"></i></span><span class="style">Warm editorial</span><span class="go">Open <b>&rarr;</b></span></div></div>
     </a>
     <a class="card" href="koji/index.html" data-cat="restaurant">
-      <div class="screen"><span class="shot" style="background-image:url('shared/thumbs/koji.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/koji-full.jpg')"></span><span class="chrome" aria-hidden="true"><i></i><i></i><i></i></span><span class="peek">Hover to scroll</span></div>
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-koji.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/koji-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
       <div class="body"><span class="cat">Omakase restaurant</span><h2>Kōji</h2><p>Dark, quiet and minimal. A course timeline that draws itself, and a counter seat map you book seat by seat.</p>
         <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#0e0f14"></i><i style="background:#d9c3a0"></i><i style="background:#d2452b"></i></span><span class="style">Dark minimal</span><span class="go">Open <b>&rarr;</b></span></div></div>
     </a>
     <a class="card" href="forno-rosso/index.html" data-cat="restaurant">
-      <div class="screen"><span class="shot" style="background-image:url('shared/thumbs/forno-rosso.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/forno-rosso-full.jpg')"></span><span class="chrome" aria-hidden="true"><i></i><i></i><i></i></span><span class="peek">Hover to scroll</span></div>
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-forno-rosso.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/forno-rosso-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
       <div class="body"><span class="cat">Pizzeria</span><h2>Forno Rosso</h2><p>Loud and playful. The camera tilts from the fire to the pizza, then you build your own as toppings drop on.</p>
         <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#fbf1e2"></i><i style="background:#d7322a"></i><i style="background:#231915"></i></span><span class="style">Bold &amp; playful</span><span class="go">Open <b>&rarr;</b></span></div></div>
     </a>
     <a class="card" href="volt/index.html" data-cat="tech">
-      <div class="screen"><span class="shot" style="background-image:url('shared/thumbs/volt.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/volt-full.jpg')"></span><span class="chrome" aria-hidden="true"><i></i><i></i><i></i></span><span class="peek">Hover to scroll</span></div>
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-volt.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/volt-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
       <div class="body"><span class="cat">Tech shop</span><h2>Volt Supply</h2><p>Clean product store. Filter and sort the range, switch colourways, and fill a slide-out cart.</p>
         <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#e8ebee"></i><i style="background:#15181c"></i><i style="background:#c4f22e"></i></span><span class="style">Clean product</span><span class="go">Open <b>&rarr;</b></span></div></div>
     </a>
     <a class="card" href="northlight/index.html" data-cat="tech">
-      <div class="screen"><span class="shot" style="background-image:url('shared/thumbs/northlight.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/northlight-full.jpg')"></span><span class="chrome" aria-hidden="true"><i></i><i></i><i></i></span><span class="peek">Hover to scroll</span></div>
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-northlight.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/northlight-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
       <div class="body"><span class="cat">PC builds &amp; repairs</span><h2>Northlight</h2><p>Neon and technical. Light ribbons fall as you scroll, then spec a PC and watch the frame rates update.</p>
         <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#080a17"></i><i style="background:#9b5cff"></i><i style="background:#38e8ff"></i></span><span class="style">Neon tech</span><span class="go">Open <b>&rarr;</b></span></div></div>
     </a>
     <a class="card" href="crumb/index.html" data-cat="bakery">
-      <div class="screen"><span class="shot" style="background-image:url('shared/thumbs/crumb.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/crumb-full.jpg')"></span><span class="chrome" aria-hidden="true"><i></i><i></i><i></i></span><span class="peek">Hover to scroll</span></div>
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-crumb.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/crumb-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
       <div class="body"><span class="cat">Bakery</span><h2>Crumb</h2><p>Bright pastel and friendly. Flour falls onto the loaf, cards stack as you scroll, and you fill a box of six.</p>
         <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#fdf3dc"></i><i style="background:#ef7d57"></i><i style="background:#b8d4a3"></i></span><span class="style">Pastel friendly</span><span class="go">Open <b>&rarr;</b></span></div></div>
     </a>
@@ -179,10 +195,10 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
       <span class="kicker" data-reveal="up">What's inside each one</span>
       <h2 data-split>Built to feel expensive.</h2>
       <div class="list" data-stagger>
-        <div class="feat"><svg viewBox="0 0 34 34"><rect x="3" y="7" width="28" height="20" rx="3"/><path d="M14 13 L21 17 L14 21 Z"/></svg><h3>Scroll-driven video</h3><p>The hero film plays forward as you scroll down and rewinds as you scroll up.</p></div>
-        <div class="feat"><svg viewBox="0 0 34 34"><path d="M8 26 L8 12 M17 26 L17 6 M26 26 L26 16"/></svg><h3>Motion everywhere</h3><p>Words rise in, images wipe open, lines draw themselves, numbers count up.</p></div>
-        <div class="feat"><svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="12"/><path d="M12 17 L16 21 L23 13"/></svg><h3>A real feature</h3><p>Every site has something to do: build, book, filter, configure or pre-order.</p></div>
-        <div class="feat"><svg viewBox="0 0 34 34"><rect x="10" y="3" width="14" height="28" rx="3"/><path d="M15 27 H19"/></svg><h3>Phone ready</h3><p>Phones get a designed still hero and the full page, fast on any connection.</p></div>
+        <div class="feat"><img src="northlight/assets/hero-poster.jpg" alt="Light ribbons from the Northlight hero video" loading="lazy"><h3>Scroll-driven video</h3><p>The hero film plays forward as you scroll down and rewinds as you scroll up.</p></div>
+        <div class="feat"><img src="crumb/assets/hero-poster.jpg" alt="Flour drifting through sunbeams in the Crumb hero" loading="lazy"><h3>Motion everywhere</h3><p>Words rise in, images wipe open, lines draw themselves, numbers count up.</p></div>
+        <div class="feat"><img src="volt/assets/hp-harbour.jpg" alt="Studio One headphones in Harbour blue from the Volt colour picker" loading="lazy"><h3>A real feature</h3><p>Every site has something to do: build, book, filter, configure or pre-order.</p></div>
+        <div class="feat"><img src="shared/img/phone.jpg" alt="The Forno Rosso site on a phone" loading="lazy"><h3>Phone ready</h3><p>Phones get the live looping hero and the full page, fast on any connection.</p></div>
       </div>
     </div>
   </section>
@@ -212,6 +228,23 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
       if (show) { card.animate([{ opacity: 0, transform: 'translateY(24px)' }, { opacity: 1, transform: 'none' }], { duration: 600, delay: i * 40, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }); }
     });
   }));
+  // Live reel behind the intro: each site's looping hero, crossfaded in turn
+  const reel = [['ember-oat', 'Ember & Oat'], ['forno-rosso', 'Forno Rosso'], ['northlight', 'Northlight'], ['koji', 'Kōji'], ['crumb', 'Crumb'], ['volt', 'Volt Supply']];
+  const canMp4 = document.createElement('video').canPlayType('video/mp4; codecs="avc1.640028"');
+  const va = document.getElementById('reelA'), vb = document.getElementById('reelB');
+  let ri = 0, front = va;
+  function nextReel() {
+    const [slug, name] = reel[ri % reel.length];
+    const back = front === va ? vb : va;
+    back.src = `${slug}/assets/hero-loop.${canMp4 ? 'mp4' : 'webm'}`;
+    back.oncanplay = () => { back.oncanplay = null; back.play().catch(() => {}); back.classList.add('on'); front.classList.remove('on'); front = back; };
+    const tag = document.getElementById('reelTag');
+    tag.style.opacity = 0; setTimeout(() => { tag.querySelector('b').textContent = name; tag.style.opacity = 1; }, 500);
+    ri++;
+  }
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { nextReel(); setInterval(nextReel, 5000); }
+  else document.getElementById('reelTag').hidden = true;
+
   // "Try a random one"
   const rnd = document.querySelector('.btn.ghost');
   rnd.addEventListener('click', (e) => { e.preventDefault(); location.href = cards[Math.floor(Math.random() * cards.length)].getAttribute('href'); });

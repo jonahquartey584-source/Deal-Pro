@@ -95,9 +95,15 @@ h2{font-family:var(--display);font-weight:500;font-size:clamp(34px,4.4vw,60px);l
 @media (max-width:900px){.book .wrap{grid-template-columns:1fr}.seats{gap:5px}}
 footer{padding:40px 0 90px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
 footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+:root{--glass:rgba(14,15,20,.5);--live:#d2452b}
+.course{display:grid;grid-template-columns:110px 1fr;gap:22px;align-items:center}
+.course img{width:110px;aspect-ratio:4/5;object-fit:cover;border-radius:2px;filter:saturate(.9)}
+.live-card .lc-img{transition:opacity .5s}
+@media (max-width:560px){.course{grid-template-columns:80px 1fr}.course img{width:80px}}
 </style>
 </head>
 <body>
+<div class="curtain" aria-hidden="true"><span class="mark">KŌJI<small>Omakase &middot; Soho</small></span></div>
 <div class="env" aria-hidden="true"></div>
 <div class="scroll-progress" aria-hidden="true"></div>
 <a class="back-link" href="../index.html">&larr; All mockups</a>
@@ -113,20 +119,29 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <main id="top">
   <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="1224179" aria-label="Kōji">
     <div class="stage">
-      <div class="poster" role="img" aria-label="A dark sushi counter lit by a single beam of light"></div>
-      <video muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+      <div class="media"><div class="poster" role="img" aria-label="A dark sushi counter lit by a single beam of light"></div><video class="loop" muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1" poster="assets/hero-poster.jpg"><source src="assets/hero-loop.mp4" type="video/mp4"><source src="assets/hero-loop.webm" type="video/webm"></video><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
       <div class="scrim"></div>
-      <div class="band pos-left" data-a="0" data-b="0.32">
-        <span class="kick">Ten seats &middot; One sitting a night</span>
-        <span class="big">Quiet room.<br>Sharp knife.</span>
-        <span class="sub">Eighteen courses, chosen at the fish market at five this morning.</span>
+      <div class="band live-band" data-a="0" data-b="0.14" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">Ten seats &middot; One sitting a night</span>
+          <span class="big" data-words>Quiet room. Sharp knife.</span>
+          <span class="sub rise">Eighteen courses, chosen at the fish market at five this morning.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#book" data-magnetic>Reserve a seat</a><a class="btn ghost" href="#courses">Tonight&rsquo;s courses</a></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="At the counter now">
+          <div class="lc-head"><span class="live-dot">At the counter</span><span id="lcSeats">3 seats left</span></div>
+          <img class="lc-img" id="lcImg" src="assets/course-3.jpg" alt="Kinmedai nigiri" style="aspect-ratio:5/4">
+          <div class="lc-row"><div><small style="opacity:.7;font-family:var(--mono);font-size:11px;letter-spacing:.14em" id="lcNum">COURSE 9 OF 18</small><div class="lc-big" id="lcName" style="font-size:24px;margin-top:4px">Kinmedai</div></div></div>
+          <div class="lc-bar"><i id="lcProg"></i></div>
+          <div class="lc-row"><small style="opacity:.75" id="lcNext">Next sitting in 2h 10m</small><a class="btn" href="#book">Hold a seat</a></div>
+        </aside>
       </div>
       <div class="band pos-right" data-a="0.38" data-b="0.68">
         <span class="kick">Chef Ren Kōjima</span>
         <span class="big">Fourteen years<br>behind a counter.</span>
         <span class="sub">Trained in Kanazawa. Rice seasoned with red vinegar, warm as skin, the way his teacher did it.</span>
       </div>
-      <div class="band pos-top" data-a="0.76" data-b="1" data-static>
+      <div class="band pos-top" data-a="0.76" data-b="1">
         <span class="kick">Kōji, Soho</span>
         <span class="big">Your seat is waiting.</span>
         <span class="sub">Tuesday to Saturday, 7pm. Bookings open thirty days ahead.</span>
@@ -159,10 +174,10 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
       <div class="timeline">
         <span class="rail"></span>
         <svg data-draw preserveAspectRatio="none" viewBox="0 0 20 100" aria-hidden="true"><line x1="9" y1="0" x2="9" y2="100"/></svg>
-        <div class="course" data-reveal="up"><span class="num">I &middot; 1 to 3</span><h3>Sakizuke</h3><p>Small cold bites. Monkfish liver, firefly squid, a spoon of sea urchin.</p></div>
-        <div class="course" data-reveal="up"><span class="num">II &middot; 4 to 6</span><h3>Sashimi &amp; grill</h3><p>Line caught bream, cut thick. Then something over binchotan charcoal.</p></div>
-        <div class="course" data-reveal="up"><span class="num">III &middot; 7 to 16</span><h3>Nigiri</h3><p>Ten pieces, lean to rich. Kinmedai, three cuts of tuna, kohada we cure for two days.</p></div>
-        <div class="course" data-reveal="up"><span class="num">IV &middot; 17 to 18</span><h3>Soup &amp; sweet</h3><p>Red miso with clams. A slice of tamago that tastes like custard.</p></div>
+        <div class="course" data-reveal="up"><img src="assets/course-1.jpg" alt="" loading="lazy"><div><span class="num">I &middot; 1 to 3</span><h3>Sakizuke</h3><p>Small cold bites. Monkfish liver, firefly squid, a spoon of sea urchin.</p></div></div>
+        <div class="course" data-reveal="up"><img src="assets/course-2.jpg" alt="" loading="lazy"><div><span class="num">II &middot; 4 to 6</span><h3>Sashimi &amp; grill</h3><p>Line caught bream, cut thick. Then something over binchotan charcoal.</p></div></div>
+        <div class="course" data-reveal="up"><img src="assets/course-3.jpg" alt="" loading="lazy"><div><span class="num">III &middot; 7 to 16</span><h3>Nigiri</h3><p>Ten pieces, lean to rich. Kinmedai, three cuts of tuna, kohada we cure for two days.</p></div></div>
+        <div class="course" data-reveal="up"><img src="assets/course-4.jpg" alt="" loading="lazy"><div><span class="num">IV &middot; 17 to 18</span><h3>Soup &amp; sweet</h3><p>Red miso with clams. A slice of tamago that tastes like custard.</p></div></div>
       </div>
     </div>
   </section>
@@ -258,6 +273,26 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
     toast('Held for 10 minutes. A card is needed to confirm. This is a demo, so nothing is charged.');
   };
   drawSeats();
+
+  // Live counter card: cycles through what is being served right now
+  const serving = [['assets/course-1.jpg', 'Sakizuke', 2], ['assets/course-2.jpg', 'Sea bream sashimi', 5], ['assets/course-3.jpg', 'Kinmedai', 9], ['assets/nigiri.jpg', 'Otoro', 14], ['assets/course-4.jpg', 'Red miso & tamago', 17]];
+  let si = 2;
+  const lcImg = document.getElementById('lcImg');
+  function serve() {
+    const [src, name, n] = serving[si];
+    lcImg.style.opacity = 0;
+    setTimeout(() => { lcImg.src = src; lcImg.alt = name; lcImg.onload = () => (lcImg.style.opacity = 1); }, 300);
+    document.getElementById('lcName').textContent = name;
+    document.getElementById('lcNum').textContent = `COURSE ${n} OF 18`;
+    document.getElementById('lcProg').style.setProperty('--w', (n / 18 * 100).toFixed(0) + '%');
+    si = (si + 1) % serving.length;
+  }
+  serve();
+  setInterval(serve, 4200);
+  const t = new Date(); const next = new Date(t); next.setHours(19, 0, 0, 0); if (next < t) next.setDate(next.getDate() + 1);
+  const mins = Math.round((next - t) / 60000);
+  document.getElementById('lcNext').textContent = `Next sitting in ${Math.floor(mins / 60)}h ${mins % 60}m`;
+  document.getElementById('lcSeats').textContent = (10 - taken(next).size) + ' seats left';
 })();
 </script>
 </body>

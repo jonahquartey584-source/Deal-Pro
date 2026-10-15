@@ -184,11 +184,57 @@
     });
   }
 
+  /* ---------- Brand intro curtain (once per visit) ---------- */
+  const intro = document.querySelector('.curtain');
+  let introSeen = false;
+  try { introSeen = sessionStorage.getItem('intro:' + location.pathname) === '1'; sessionStorage.setItem('intro:' + location.pathname, '1'); } catch (e) {}
+  if (intro && (introSeen || reduce)) intro.remove();
+  root.style.setProperty('--hd', intro && intro.isConnected ? '1.45s' : '0.1s');
+  if (intro && intro.isConnected) setTimeout(() => intro.remove(), 2300);
+
+  /* ---------- Live headline: words blur in one by one ---------- */
+  document.querySelectorAll('[data-words]').forEach((el) => {
+    let i = 0;
+    const wrap = (node) => {
+      [...node.childNodes].forEach((c) => {
+        if (c.nodeType === 3) {
+          const frag = document.createDocumentFragment();
+          c.textContent.split(/(\s+)/).forEach((part) => {
+            if (!part) return;
+            if (/^\s+$/.test(part)) { frag.appendChild(document.createTextNode(' ')); return; }
+            const s = document.createElement('span'); s.className = 'w'; s.style.setProperty('--i', i++); s.textContent = part; frag.appendChild(s);
+          });
+          c.replaceWith(frag);
+        } else if (c.nodeType === 1 && c.tagName !== 'BR') {
+          c.classList.add('w'); c.style.setProperty('--i', i++);
+        }
+      });
+    };
+    wrap(el);
+  });
+
   /* ---------- Scroll-scrubbed hero ---------- */
   const hero = document.querySelector('[data-scrub]');
   if (!hero) return;
   const stage = hero.querySelector('.stage');
-  const video = hero.querySelector('video');
+  const video = hero.querySelector('video.scrub');
+  const loop = hero.querySelector('video.loop');
+  const playLoop = () => { if (loop && !reduce) { const p = loop.play(); if (p) p.catch(() => {}); } };
+
+  // Cursor spotlight + gentle parallax on the live background (fine pointers only)
+  if (!reduce && matchMedia('(pointer: fine)').matches) {
+    let pq = false, ex = 0, ey = 0;
+    stage.addEventListener('pointermove', (e) => {
+      ex = e.clientX; ey = e.clientY;
+      if (pq) return; pq = true;
+      requestAnimationFrame(() => {
+        pq = false;
+        stage.style.setProperty('--sx', ex + 'px'); stage.style.setProperty('--sy', ey + 'px');
+        stage.style.setProperty('--px', ((ex / innerWidth - 0.5) * -18).toFixed(1) + 'px');
+        stage.style.setProperty('--py', ((ey / innerHeight - 0.5) * -12).toFixed(1) + 'px');
+      });
+    });
+  }
   const posterLayer = hero.querySelector('.poster');
   const ring = hero.querySelector('.ring');
   const bands = [...hero.querySelectorAll('.band')].map((el, n, all) => ({
@@ -219,8 +265,11 @@
     location.protocol === 'file:';
 
   if (isStatic) {
-    hero.classList.add('static');
-    posterLayer.style.backgroundImage = `url('${ENDING}')`;
+    // Phones and reduced motion: the live loop (or its first frame) with the opening card, no scrub.
+    hero.classList.add('static', 'at-top');
+    posterLayer.style.backgroundImage = `url('${POSTER}')`;
+    playLoop();
+    if (video) video.remove();
     bands.forEach((b) => {
       const show = b.el.hasAttribute('data-static');
       b.el.style.opacity = show ? 1 : 0;
@@ -232,6 +281,16 @@
   }
 
   posterLayer.style.backgroundImage = `url('${POSTER}')`;
+  hero.classList.add('at-top');
+  playLoop();
+  let atTop = true;
+  // At the very top the live loop plays; the moment scrolling starts it hands over to the scrub video.
+  function setTop(v) {
+    if (v === atTop) return;
+    atTop = v;
+    hero.classList.toggle('at-top', v);
+    if (v) playLoop(); else if (loop) loop.pause();
+  }
   let heroOnScreen = true;
   new IntersectionObserver((e) => { heroOnScreen = e[0].isIntersecting; if (heroOnScreen) onScroll(); }).observe(hero);
 
@@ -285,6 +344,7 @@
     else rafId = requestAnimationFrame(tick);
     if (video.duration) requestSeek(shown * video.duration);
     updateBands(shown);
+    setTop(shown < 0.004);
     const hint = Math.round(clamp(1 - shown * 12, 0, 1) * 100) / 100;
     if (hint !== hero._hint) { hero._hint = hint; hero.style.setProperty('--hint', hint); }
   }

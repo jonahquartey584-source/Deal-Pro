@@ -48,11 +48,9 @@ h2 .red{color:var(--accent)}
 .build{padding:90px 0 120px;overflow:hidden}
 .build .wrap{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
 .pizza-stage{position:relative;aspect-ratio:1;max-width:520px;margin-inline:auto;width:100%}
-.pizza-stage svg{width:100%;height:100%;transition:transform 1.2s cubic-bezier(.2,.8,.2,1)}
-.pizza-stage .peel{position:absolute;inset:8% -6% -6% 8%;border-radius:50%;background:#c58a52;z-index:-1;box-shadow:inset 0 0 0 10px #b37a45}
-.top{transform-box:fill-box;transform-origin:center;animation:drop .55s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--n) * 18ms)}
+
 @keyframes drop{from{opacity:0;transform:translateY(-40px) scale(.4)}}
-html.reduce .top{animation:none}
+html.reduce .sprite{animation:none}
 .toppings{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:26px 0}
 .tp{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:16px;border:2px solid var(--char);background:var(--card);cursor:pointer;transition:transform .25s,box-shadow .25s,background .25s;text-align:left}
 .tp:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--char)}
@@ -98,15 +96,26 @@ html.reduce .top{animation:none}
 .deliver input{flex:1;min-width:200px;padding:16px 20px;border-radius:14px;border:2px solid var(--char);background:#fff6ea;color:var(--char);text-transform:uppercase}
 .deliver .btn{background:var(--char);color:#fff6ea;box-shadow:5px 5px 0 #8e1d17}
 .deliver .eta{margin-top:16px;font-family:var(--mono);font-size:13px;min-height:1.5em}
-.slice{position:absolute;right:-60px;bottom:-60px;width:260px;opacity:.18;animation:spin 40s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-html.reduce .slice{animation:none}
 @media (max-width:860px){.deliver .box{grid-template-columns:1fr}}
 footer{padding:40px 0 90px;background:var(--char);color:#cbb9a8;font-size:14px}
 footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:1px solid rgba(255,246,234,.12);padding-top:30px}
+:root{--glass:rgba(35,25,21,.55);--glass-ink:#fff6ea;--glass-on:#231915;--live:#ffb347}
+.hero .btn.hero-ghost{color:#fff6ea;border-color:rgba(255,246,234,.5);box-shadow:none}
+.oven-row{display:flex;justify-content:space-between;align-items:end;gap:14px}
+.oven-row small{opacity:.8}
+.flame{flex:1;height:10px;border-radius:10px;background:rgba(255,246,234,.15);overflow:hidden;max-width:160px;margin-bottom:6px}
+.flame i{display:block;height:100%;width:var(--w);background:linear-gradient(90deg,#ffb347,#d7322a);transition:width .8s ease}
+.qty{display:flex;align-items:center;gap:10px;font-family:var(--mono)}
+.qty button{width:32px;height:32px;border-radius:10px;border:1px solid rgba(255,246,234,.35);background:transparent;color:inherit;cursor:pointer}
+.pizza-stage img.base{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;transform:scale(1.15);transition:opacity .5s}
+.pizza-stage .disc{overflow:hidden}
+.pizza-stage .disc{position:absolute;inset:0;transition:transform 1.2s cubic-bezier(.2,.8,.2,1);border-radius:50%;box-shadow:0 40px 70px -30px rgba(35,25,21,.6)}
+.pizza-stage .sprite{position:absolute;translate:-50% -50%;filter:drop-shadow(0 3px 3px rgba(60,20,10,.35));animation:drop .55s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--n) * 22ms);pointer-events:none}
+.tp img{width:26px;height:26px;object-fit:contain;flex:none}
 </style>
 </head>
 <body>
+<div class="curtain" aria-hidden="true"><span class="mark">Forno Rosso<small>Wood-fired &middot; Camden</small></span></div>
 <div class="env" aria-hidden="true"></div>
 <div class="scroll-progress" aria-hidden="true"></div>
 <a class="back-link" href="../index.html">&larr; All mockups</a>
@@ -122,20 +131,30 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
 <main id="top">
   <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="2866171" aria-label="Forno Rosso">
     <div class="stage">
-      <div class="poster" role="img" aria-label="A wood-fired oven glowing behind a marble counter"></div>
-      <video muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+      <div class="media"><div class="poster" role="img" aria-label="A wood-fired oven glowing behind a marble counter"></div><video class="loop" muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1" poster="assets/hero-poster.jpg"><source src="assets/hero-loop.mp4" type="video/mp4"><source src="assets/hero-loop.webm" type="video/webm"></video><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
       <div class="scrim"></div>
-      <div class="band pos-top" data-a="0" data-b="0.3">
-        <span class="kick">Wood-fired since 2016</span>
-        <span class="big">485 degrees.<br><em>90 seconds.</em></span>
-        <span class="sub">That is all it takes. The oven does the hard part. We just keep feeding it oak.</span>
+      <div class="band live-band" data-a="0" data-b="0.14" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">Wood-fired since 2016</span>
+          <span class="big" data-words>485 degrees. <em>90 seconds.</em></span>
+          <span class="sub rise">That is all it takes. The oven does the hard part. We just keep feeding it oak.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#build" data-magnetic>Build a pizza</a><a class="btn ghost hero-ghost" href="#menu">See the menu</a></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="The oven right now">
+          <div class="lc-head"><span class="live-dot">Oven live</span><span id="lcOven">7 in the oven</span></div>
+          <div class="oven-row"><div><small>Floor temp</small><div class="lc-big"><span id="lcTemp">485</span>&deg;C</div></div><div class="flame"><i style="--w:92%" id="lcHeat"></i></div></div>
+          <img class="lc-img" src="assets/margherita.jpg" alt="Margherita pizza" style="aspect-ratio:16/10;margin-top:14px">
+          <div class="lc-row"><div><b style="font-family:var(--display);font-size:20px">Margherita</b><br><small style="opacity:.8">£9 &middot; ready in 12 min</small></div>
+            <div class="qty"><button type="button" id="qMinus" aria-label="One fewer">&minus;</button><span id="qN">1</span><button type="button" id="qPlus" aria-label="One more">+</button></div></div>
+          <button class="btn" type="button" id="lcOrder" style="width:100%;justify-content:center;margin-top:14px">Order 1 for £9</button>
+        </aside>
       </div>
       <div class="band pos-right" data-a="0.36" data-b="0.66">
         <span class="kick">The crust</span>
         <span class="big">Charred,<br>puffy, <em>soft.</em></span>
         <span class="sub">Leopard spots on the outside, cloud on the inside. Fold it, don't cut it.</span>
       </div>
-      <div class="band pos-left" data-a="0.74" data-b="1" data-static>
+      <div class="band pos-left" data-a="0.74" data-b="1">
         <span class="kick">Forno Rosso</span>
         <span class="big">Hot out<br>the <em>oven.</em></span>
         <span class="sub">Eat in on Camden High Street or get it to your door in thirty minutes.</span>
@@ -159,15 +178,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
   <section class="build" id="build">
     <div class="wrap">
       <div class="pizza-stage" data-reveal="scale">
-        <span class="peel" aria-hidden="true"></span>
-        <svg viewBox="0 0 400 400" id="pizza" role="img" aria-label="Your pizza">
-          <defs><radialGradient id="crust" cx="50%" cy="50%" r="50%"><stop offset="82%" stop-color="#f3c47f"/><stop offset="92%" stop-color="#e2a35a"/><stop offset="100%" stop-color="#b8743a"/></radialGradient></defs>
-          <circle cx="200" cy="200" r="190" fill="url(#crust)"/>
-          <g fill="#3d2418" opacity=".7"><circle cx="40" cy="190" r="7"/><circle cx="80" cy="70" r="5"/><circle cx="330" cy="80" r="8"/><circle cx="370" cy="230" r="5"/><circle cx="280" cy="360" r="7"/><circle cx="120" cy="350" r="5"/><circle cx="200" cy="18" r="6"/></g>
-          <circle cx="200" cy="200" r="158" id="sauce" fill="#c8331f"/>
-          <g id="cheese"></g>
-          <g id="tops"></g>
-        </svg>
+        <div class="disc" id="pizza" role="img" aria-label="Your pizza"><img class="base" id="pzBase" src="assets/build/rossa.jpg" alt=""><div id="tops"></div></div>
       </div>
       <div>
         <span class="kicker" data-reveal="up">Build your own</span>
@@ -177,12 +188,12 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
           <button class="tp" type="button" data-base="bianca" aria-pressed="false" style="flex:1">Bianca base</button>
         </div>
         <div class="toppings" id="toppings" data-stagger>
-          <button class="tp" type="button" data-t="mozz" data-p="1.5" aria-pressed="true"><i style="background:#fff3dc"></i>Fior di latte<small>+1.50</small></button>
-          <button class="tp" type="button" data-t="basil" data-p="0.5" aria-pressed="true"><i style="background:#2f6b34"></i>Basil<small>+0.50</small></button>
-          <button class="tp" type="button" data-t="nduja" data-p="2.5" aria-pressed="false"><i style="background:#9a1d12"></i>Nduja<small>+2.50</small></button>
-          <button class="tp" type="button" data-t="mush" data-p="2" aria-pressed="false"><i style="background:#c9a982"></i>Mushroom<small>+2.00</small></button>
-          <button class="tp" type="button" data-t="olive" data-p="1.5" aria-pressed="false"><i style="background:#2b2522"></i>Olives<small>+1.50</small></button>
-          <button class="tp" type="button" data-t="chilli" data-p="1" aria-pressed="false"><i style="background:#ff6a3d"></i>Hot honey<small>+1.00</small></button>
+          <button class="tp" type="button" data-t="mozz" data-p="1.5" aria-pressed="true"><img src="assets/build/mozz.webp" alt="">Fior di latte<small>+1.50</small></button>
+          <button class="tp" type="button" data-t="basil" data-p="0.5" aria-pressed="true"><img src="assets/build/basil.webp" alt="">Basil<small>+0.50</small></button>
+          <button class="tp" type="button" data-t="nduja" data-p="2.5" aria-pressed="false"><img src="assets/build/nduja.webp" alt="">Nduja<small>+2.50</small></button>
+          <button class="tp" type="button" data-t="mush" data-p="2" aria-pressed="false"><img src="assets/build/mush.webp" alt="">Mushroom<small>+2.00</small></button>
+          <button class="tp" type="button" data-t="olive" data-p="1.5" aria-pressed="false"><img src="assets/build/olive.webp" alt="">Olives<small>+1.50</small></button>
+          <button class="tp" type="button" data-t="honey" data-p="1" aria-pressed="false"><img src="assets/build/honey.webp" alt="">Hot honey<small>+1.00</small></button>
         </div>
         <div class="total"><div><span class="kicker" style="color:var(--muted)">Total</span><br><b>£<span id="tot">9.00</span></b></div><button class="btn" type="button" id="addPizza" data-magnetic>Fire it up</button></div>
       </div>
@@ -218,7 +229,6 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
   <section class="deliver" id="deliver">
     <div class="wrap">
       <div class="box" data-reveal="up">
-        <svg class="slice" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="none" stroke="#fff6ea" stroke-width="2"/><path d="M50 2 V98 M2 50 H98 M16 16 L84 84 M84 16 L16 84" stroke="#fff6ea" stroke-width="2"/></svg>
         <div><span class="kicker" style="color:#ffcf8a">Delivery</span><h2>Hot at your door in 30.</h2><p style="margin:0;opacity:.85">We deliver within three miles of Camden on our own bikes, in insulated boxes, so the crust stays crisp.</p></div>
         <div>
           <form id="pcForm"><label class="sr-only" for="pc">Your postcode</label><input id="pc" placeholder="Your postcode, e.g. NW1 8AH" autocomplete="postal-code" required><button class="btn" type="submit">Check</button></form>
@@ -233,36 +243,34 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
 <script src="../shared/scroll.js"></script>
 <script>
 (() => {
-  const NS = 'http://www.w3.org/2000/svg';
-  const tops = document.getElementById('tops'), cheese = document.getElementById('cheese'), sauce = document.getElementById('sauce');
+  const tops = document.getElementById('tops'), baseImg = document.getElementById('pzBase');
   const on = new Set(['mozz', 'basil']);
   let base = 'rosso';
-  // Deterministic scatter so toppings land in the same spots every time
+  // Deterministic scatter so toppings land in the same spots every time (percent of the pizza)
   const rnd = (seed) => () => (seed = (seed * 9301 + 49297) % 233280) / 233280;
   function pts(seed, n, rmax) {
     const r = rnd(seed), out = [];
-    for (let i = 0; i < n; i++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * rmax; out.push([200 + Math.cos(a) * d, 200 + Math.sin(a) * d, r()]); }
+    for (let i = 0; i < n; i++) { const a = r() * Math.PI * 2, d = Math.sqrt(r()) * rmax; out.push([50 + Math.cos(a) * d, 50 + Math.sin(a) * d, r()]); }
     return out;
   }
-  const shapes = {
-    mozz: (g) => pts(3, 9, 120).forEach(([x, y, k], n) => add(g, 'ellipse', { cx: x, cy: y, rx: 24 + k * 8, ry: 18 + k * 6, fill: '#fff6e2' }, n)),
-    basil: (g) => pts(7, 7, 125).forEach(([x, y, k], n) => add(g, 'path', { d: `M${x} ${y} q 10 -18 22 0 q -10 14 -22 0 z`, fill: '#2f6b34', transform: `rotate(${k * 360} ${x} ${y})` }, n)),
-    nduja: (g) => pts(11, 12, 130).forEach(([x, y, k], n) => add(g, 'circle', { cx: x, cy: y, r: 7 + k * 6, fill: '#9a1d12' }, n)),
-    mush: (g) => pts(19, 9, 128).forEach(([x, y, k], n) => add(g, 'path', { d: `M${x - 12} ${y} a12 10 0 0 1 24 0 z M${x - 4} ${y} h8 v9 h-8 z`, fill: '#d6b48c', stroke: '#9c7752', 'stroke-width': 1.5, transform: `rotate(${k * 360} ${x} ${y})` }, n)),
-    olive: (g) => pts(23, 14, 132).forEach(([x, y], n) => add(g, 'circle', { cx: x, cy: y, r: 7, fill: 'none', stroke: '#2b2522', 'stroke-width': 5 }, n)),
-    chilli: (g) => pts(31, 1, 0).forEach((_, n) => add(g, 'path', { d: 'M90 150 C 150 110, 250 260, 310 200 M100 250 C 170 200, 240 300, 300 140', fill: 'none', stroke: '#ffb347', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: .85 }, n)),
-  };
-  function add(g, tag, attrs, n) {
-    const el = document.createElementNS(NS, tag);
-    for (const k in attrs) el.setAttribute(k, attrs[k]);
-    el.setAttribute('class', 'top'); el.style.setProperty('--n', n);
-    g.appendChild(el);
-  }
-  const order = ['mozz', 'nduja', 'mush', 'olive', 'basil', 'chilli'];
+  // Photographed topping cut-outs, sized as a share of the pizza's width
+  const spec = { mozz: [3, 8, 30, 15], nduja: [11, 11, 32, 7.5], mush: [19, 9, 31, 10], olive: [23, 13, 33, 5.5], basil: [7, 7, 30, 9], honey: [31, 2, 14, 46] };
+  const order = ['mozz', 'nduja', 'mush', 'olive', 'basil', 'honey'];
   function draw() {
-    tops.innerHTML = ''; cheese.innerHTML = '';
-    sauce.setAttribute('fill', base === 'rosso' ? '#c8331f' : '#f6e7c6');
-    order.forEach((t) => { if (on.has(t)) { const g = document.createElementNS(NS, 'g'); (t === 'mozz' ? cheese : tops).appendChild(g); shapes[t](g); } });
+    tops.innerHTML = '';
+    const want = base === 'rosso' ? 'assets/build/rossa.jpg' : 'assets/build/bianca.jpg';
+    if (!baseImg.src.endsWith(want)) baseImg.src = want;
+    let n = 0;
+    order.forEach((t) => {
+      if (!on.has(t)) return;
+      const [seed, count, rmax, size] = spec[t];
+      pts(seed, count, rmax).forEach(([x, y, k]) => {
+        const im = document.createElement('img');
+        im.src = 'assets/build/' + t + '.webp'; im.alt = ''; im.className = 'sprite';
+        im.style.cssText = `left:${x}%;top:${y}%;width:${size * (0.85 + k * 0.3)}%;rotate:${Math.round(k * 360)}deg;--n:${n++}`;
+        tops.appendChild(im);
+      });
+    });
     let total = 9 + (base === 'bianca' ? 0.5 : 0) - 1.5 - 0.5; // margherita includes mozz and basil
     document.querySelectorAll('#toppings .tp').forEach((b) => { if (on.has(b.dataset.t)) total += +b.dataset.p; });
     document.getElementById('tot').textContent = total.toFixed(2);
@@ -278,6 +286,20 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
   }));
   document.getElementById('addPizza').onclick = () => toast(`Into the oven. Your pizza is £${document.getElementById('tot').textContent} and ready in about 12 minutes.`);
   draw();
+
+  // Live oven card in the hero
+  let qty = 1, inOven = 7;
+  const setQty = (d) => { qty = Math.max(1, Math.min(9, qty + d)); document.getElementById('qN').textContent = qty; document.getElementById('lcOrder').textContent = `Order ${qty} for £${qty * 9}`; };
+  document.getElementById('qMinus').onclick = () => setQty(-1);
+  document.getElementById('qPlus').onclick = () => setQty(1);
+  document.getElementById('lcOrder').onclick = () => toast(`${qty} Margherita${qty > 1 ? 's' : ''} into the oven. Ready in about 12 minutes.`);
+  setInterval(() => {
+    const t = 480 + Math.round(Math.random() * 9);
+    document.getElementById('lcTemp').textContent = t;
+    document.getElementById('lcHeat').style.setProperty('--w', (t - 400) + '%');
+    inOven = Math.max(3, Math.min(11, inOven + (Math.random() < .5 ? -1 : 1)));
+    document.getElementById('lcOven').textContent = inOven + ' in the oven';
+  }, 1800);
 
   document.getElementById('pcForm').addEventListener('submit', (e) => {
     e.preventDefault();

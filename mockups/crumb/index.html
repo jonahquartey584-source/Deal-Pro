@@ -40,8 +40,6 @@ h2 em{font-style:normal;color:var(--accent)}
 .timer div{background:var(--card);border-radius:24px;padding:18px 22px;min-width:110px;box-shadow:0 10px 0 var(--peach)}
 .timer b{display:block;font-family:var(--display);font-size:62px;line-height:1;color:var(--ink);font-weight:400}
 .timer small{font-weight:800;color:var(--muted);font-size:13px;text-transform:uppercase;letter-spacing:.1em}
-.wave{display:block;width:100%;height:60px;margin-top:60px}
-.wave path{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round}
 
 /* Stacked cards */
 .stack{padding:40px 0 120px}
@@ -87,9 +85,13 @@ html.reduce .slot.filled{animation:none}
 @media (max-width:860px){.visit .card{grid-template-columns:1fr}}
 footer{padding:40px 0 90px;background:var(--pist);color:var(--ink);font-size:14px}
 footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;border-top:2px dashed rgba(59,38,24,.25);padding-top:30px}
+:root{--glass:rgba(255,250,240,.62);--glass-line:rgba(59,38,24,.14);--glass-ink:#3b2618;--live:#ef7d57;--card-radius:30px;--spot:rgba(255,240,200,.3);--live-scrim:linear-gradient(90deg,rgba(253,243,220,.72),rgba(253,243,220,.25) 55%,transparent)}
+.hero .btn.hero-ghost{color:var(--ink);border-color:rgba(59,38,24,.35);box-shadow:none;background:rgba(255,250,240,.5)}
+.live-card .lc-img{transition:opacity .4s}
 </style>
 </head>
 <body>
+<div class="curtain" aria-hidden="true"><span class="mark">crumb<small>Bakery &middot; Elm Row</small></span></div>
 <div class="env" aria-hidden="true"></div>
 <div class="scroll-progress" aria-hidden="true"></div>
 <a class="back-link" href="../index.html">&larr; All mockups</a>
@@ -105,20 +107,27 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
 <main id="top">
   <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="3558381" aria-label="Crumb bakery">
     <div class="stage">
-      <div class="poster" role="img" aria-label="Flour drifting through sunbeams onto a sourdough loaf"></div>
-      <video muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+      <div class="media"><div class="poster" role="img" aria-label="Flour drifting through sunbeams onto a sourdough loaf"></div><video class="loop" muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1" poster="assets/hero-poster.jpg"><source src="assets/hero-loop.mp4" type="video/mp4"><source src="assets/hero-loop.webm" type="video/webm"></video><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
       <div class="scrim"></div>
-      <div class="band pos-top" data-a="0" data-b="0.3">
-        <span class="kick">good morning!</span>
-        <span class="big">Baked at 4am,<br><em>for you.</em></span>
-        <span class="sub">Sourdough, sticky buns and cakes from a tiny green-tiled bakery on Elm Row.</span>
+      <div class="band live-band" data-a="0" data-b="0.14" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">good morning!</span>
+          <span class="big" data-words>Baked at 4am, <em>for you.</em></span>
+          <span class="sub rise">Sourdough, sticky buns and cakes from a tiny green-tiled bakery on Elm Row.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#box" data-magnetic>Fill a box</a><a class="btn ghost hero-ghost" href="#bakes">Today&rsquo;s bakes</a></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="Fresh out of the oven">
+          <div class="lc-head"><span class="live-dot">Fresh now</span><span>Next tray <b id="lcTray">00:00</b></span></div>
+          <img class="lc-img" id="lcImg" src="assets/treat-bun.jpg" alt="Cinnamon bun" style="aspect-ratio:1">
+          <div class="lc-row"><div><b style="font-family:var(--display);font-weight:400;font-size:22px" id="lcName">Cinnamon bun</b><br><small id="lcLeft" style="color:var(--muted);font-weight:700">14 left on the counter</small></div><button class="btn" type="button" id="lcSave">Save me one</button></div>
+        </aside>
       </div>
       <div class="band pos-left" data-a="0.36" data-b="0.66">
         <span class="kick">the secret?</span>
         <span class="big">Patience.<br>And butter.</span>
         <span class="sub">Our starter is nine years old. Our croissants take three days. Nobody here is in a rush.</span>
       </div>
-      <div class="band pos-top" data-a="0.74" data-b="1" data-static>
+      <div class="band pos-top" data-a="0.74" data-b="1">
         <span class="kick">crumb bakery</span>
         <span class="big">Still <em>warm.</em></span>
         <span class="sub">Pre-order a box tonight and skip the Saturday queue tomorrow.</span>
@@ -134,7 +143,6 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
       <h2 data-split>Cinnamon buns, fresh.</h2>
       <div class="timer" aria-live="off" data-stagger><div><b id="tm">00</b><small>Minutes</small></div><div><b id="ts">00</b><small>Seconds</small></div></div>
       <p class="lede" style="margin-inline:auto" data-reveal="up">A new tray comes out every 40 minutes until they run out. Usually about 11am on a Saturday.</p>
-      <svg class="wave" viewBox="0 0 1200 60" preserveAspectRatio="none" data-draw aria-hidden="true"><path d="M0 30 Q 50 0 100 30 T 200 30 T 300 30 T 400 30 T 500 30 T 600 30 T 700 30 T 800 30 T 900 30 T 1000 30 T 1100 30 T 1200 30"/></svg>
     </div>
   </section>
 
@@ -190,17 +198,17 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
 
   // Box builder
   const treats = [
-    ['Cinnamon bun', 3.2, 'assets/buns.jpg', '30% 40%'], ['Sourdough slice', 1.5, 'assets/hero-ending.jpg', '50% 55%'], ['Peach macaron', 1.8, 'assets/macarons.jpg', '45% 82%'],
-    ['Pistachio macaron', 1.8, 'assets/macarons.jpg', '62% 82%'], ['Strawberry slice', 4.2, 'assets/macarons.jpg', '60% 30%'], ['Little loaf', 3.5, 'assets/shop.jpg', '80% 60%'],
+    ['Cinnamon bun', 3.2, 'assets/treat-bun.jpg'], ['Sourdough slice', 1.5, 'assets/treat-sour.jpg'], ['Peach macarons', 1.8, 'assets/treat-peach.jpg'],
+    ['Pistachio macarons', 1.8, 'assets/treat-pist.jpg'], ['Strawberry slice', 4.2, 'assets/treat-straw.jpg'], ['Little loaf', 3.5, 'assets/treat-loaf.jpg'],
   ];
   const box = [];
   const tEl = document.getElementById('treats'), sEl = document.getElementById('slots');
-  tEl.innerHTML = treats.map(([n, p, img, pos], i) => `<button class="treat" type="button" data-i="${i}"><span class="dot" style="background-image:url('${img}');background-position:${pos};background-size:420%"></span><b>${n}</b><small>£${p.toFixed(2)}</small></button>`).join('');
+  tEl.innerHTML = treats.map(([n, p, img], i) => `<button class="treat" type="button" data-i="${i}"><span class="dot" style="background-image:url('${img}')"></span><b>${n}</b><small>£${p.toFixed(2)}</small></button>`).join('');
   function draw(fresh) {
     sEl.innerHTML = Array.from({ length: 6 }, (_, i) => {
       const t = box[i];
       return t !== undefined
-        ? `<button class="slot filled" type="button" data-s="${i}" aria-label="Remove ${treats[t][0]}" style="${i === fresh ? '' : 'animation:none'}"><span style="background-image:url('${treats[t][2]}');background-position:${treats[t][3]};background-size:420%"></span></button>`
+        ? `<button class="slot filled" type="button" data-s="${i}" aria-label="Remove ${treats[t][0]}" style="${i === fresh ? '' : 'animation:none'}"><span style="background-image:url('${treats[t][2]}')"></span></button>`
         : `<button class="slot" type="button" tabindex="-1" aria-label="Empty slot"></button>`;
     }).join('');
     const total = box.reduce((s, t) => s + treats[t][1], 0) * (box.length === 6 ? 0.9 : 1);
@@ -214,12 +222,31 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
   });
   sEl.addEventListener('click', (e) => { const s = e.target.closest('.slot.filled'); if (s) { box.splice(+s.dataset.s, 1); draw(-1); } });
   document.querySelectorAll('[data-quick]').forEach((b) => b.addEventListener('click', () => {
-    const i = treats.findIndex((t) => t[0] === b.dataset.quick);
+    const i = treats.findIndex((t) => t[0].startsWith(b.dataset.quick.split(' ')[0]));
     if (box.length < 6) { box.push(i < 0 ? 0 : i); draw(box.length - 1); }
     toast(`${b.dataset.quick} saved in your box`);
   }));
   document.getElementById('reserve').onclick = () => toast(box.length ? `Box of ${box.length} reserved for ${document.getElementById('pick').value}. Pay when you collect.` : 'Your box is empty. Tap a treat to add it.');
   draw(-1);
+
+  // Live "fresh now" card in the hero: rotates through what just came out
+  let li = 0; const left = [14, 22, 9, 11, 6, 8];
+  const lcImg = document.getElementById('lcImg');
+  function fresh() {
+    li = (li + 1) % treats.length;
+    lcImg.style.opacity = 0;
+    setTimeout(() => { lcImg.src = treats[li][2]; lcImg.alt = treats[li][0]; lcImg.onload = () => (lcImg.style.opacity = 1); }, 250);
+    document.getElementById('lcName').textContent = treats[li][0];
+    document.getElementById('lcLeft').textContent = left[li] + ' left on the counter';
+  }
+  setInterval(fresh, 3800);
+  setInterval(() => { document.getElementById('lcTray').textContent = tm.textContent + ':' + ts.textContent; }, 500);
+  document.getElementById('lcSave').onclick = () => {
+    if (box.length < 6) { box.push(li); draw(box.length - 1); }
+    left[li] = Math.max(0, left[li] - 1);
+    document.getElementById('lcLeft').textContent = left[li] + ' left on the counter';
+    toast(`${treats[li][0]} saved in your box`);
+  };
 })();
 </script>
 </body>

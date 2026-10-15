@@ -35,13 +35,10 @@ h2{font-family:var(--display);font-weight:350;font-size:clamp(38px,5vw,68px);lin
 h2 em{color:#e7c999}
 p.lede{font-size:19px;color:var(--muted);max-width:52ch}
 
-/* Intro: asymmetric story with steam line */
 .intro{padding:160px 0 120px}
 .intro .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:70px;align-items:center}
 .intro figure{margin:0;border-radius:220px 220px 24px 24px;overflow:hidden;aspect-ratio:4/5}
 .intro figure img{width:100%;height:100%;object-fit:cover}
-.steam{position:absolute;right:6%;top:40px;width:160px;height:320px;opacity:.5;pointer-events:none}
-.steam path{fill:none;stroke:#e7c999;stroke-width:1.5;stroke-linecap:round}
 .stats{display:flex;gap:44px;margin-top:40px;flex-wrap:wrap}
 .stats b{display:block;font-family:var(--display);font-size:46px;font-weight:350;line-height:1}
 .stats small{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
@@ -107,9 +104,15 @@ html.reduce .menu-list li{animation:none}
 @media (max-width:860px){.visit .card{grid-template-columns:1fr}.visit .card .txt{padding:32px}}
 footer{padding:40px 0 90px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
 footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.drink-photo{position:relative;width:min(420px,100%);aspect-ratio:1;border-radius:200px 200px 28px 28px;overflow:hidden;box-shadow:0 40px 80px -40px rgba(0,0,0,.9)}
+.drink-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .5s ease,transform .8s cubic-bezier(.2,.8,.2,1)}
+.drink-photo img.out{opacity:0;transform:scale(1.06)}
+.drink-badge{position:absolute;left:16px;bottom:16px;padding:8px 14px;border-radius:99px;background:rgba(29,22,17,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);font:500 12px var(--mono);letter-spacing:.08em}
+.price-tag{z-index:2;text-shadow:0 4px 20px rgba(0,0,0,.6)}
 </style>
 </head>
 <body>
+<div class="curtain" aria-hidden="true"><span class="mark">Ember &amp; Oat<small>Neighbourhood coffee</small></span></div>
 <div class="env" aria-hidden="true"></div>
 <div class="scroll-progress" aria-hidden="true"></div>
 <a class="back-link" href="../index.html">&larr; All mockups</a>
@@ -125,20 +128,30 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <main id="top">
   <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="2286387" aria-label="Ember and Oat">
     <div class="stage">
-      <div class="poster" role="img" aria-label="A latte on an oak counter in warm morning light"></div>
-      <video muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+      <div class="media"><div class="poster" role="img" aria-label="A latte on an oak counter in warm morning light"></div><video class="loop" muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1" poster="assets/hero-poster.jpg"><source src="assets/hero-loop.mp4" type="video/mp4"><source src="assets/hero-loop.webm" type="video/webm"></video><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
       <div class="scrim"></div>
-      <div class="band pos-left" data-a="0" data-b="0.3">
-        <span class="kick">Est. 2019 &middot; Open from 7am</span>
-        <span class="big">Slow mornings,<br><em>poured</em> properly.</span>
-        <span class="sub">Single origin coffee, bakes still warm from the oven, and a seat by the window that nobody will rush you out of.</span>
+      <div class="band live-band" data-a="0" data-b="0.14" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">Est. 2019 &middot; Open from 7am</span>
+          <span class="big" data-words>Slow mornings, <em>poured</em> properly.</span>
+          <span class="sub rise">Single origin coffee, bakes still warm from the oven, and a seat by the window that nobody will rush you out of.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#build" data-magnetic>Build your drink</a><a class="btn ghost" href="#menu">See the menu</a></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="Order ahead">
+          <div class="lc-head"><span class="live-dot" id="lcOpen">Open now</span><span id="lcQueue">4 in the queue</span></div>
+          <img class="lc-img" id="lcImg" src="assets/drink-flat.jpg" alt="Flat white">
+          <div class="lc-pills" id="lcPills">
+            <button type="button" data-d="flat" aria-pressed="true">Flat white</button><button type="button" data-d="latte" aria-pressed="false">Latte</button><button type="button" data-d="cortado" aria-pressed="false">Cortado</button><button type="button" data-d="filter" aria-pressed="false">Filter</button>
+          </div>
+          <div class="lc-row"><div><small style="opacity:.75">Ready in about</small><div class="lc-big"><span id="lcMins">6</span> min</div></div><button class="btn" type="button" id="lcAdd">Order ahead</button></div>
+        </aside>
       </div>
       <div class="band pos-right" data-a="0.36" data-b="0.66">
         <span class="kick">The beans</span>
         <span class="big">Roasted twelve<br>miles away.</span>
         <span class="sub">We buy from two farms we visit and roast every Tuesday. You can taste the week it was made.</span>
       </div>
-      <div class="band pos-top" data-a="0.74" data-b="1" data-static>
+      <div class="band pos-top" data-a="0.74" data-b="1">
         <span class="kick">Ember &amp; Oat</span>
         <span class="big">Your table <em>is ready.</em></span>
         <span class="sub">Order ahead, or just come in. Either way, the milk is steamed the moment you ask.</span>
@@ -149,11 +162,6 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   </section>
 
   <section class="intro" id="story">
-    <svg class="steam" viewBox="0 0 160 320" data-draw aria-hidden="true">
-      <path d="M40 310 C 10 240, 80 210, 50 150 S 70 60, 40 10"/>
-      <path d="M90 310 C 60 250, 130 200, 100 140 S 120 50, 95 0"/>
-      <path d="M130 310 C 110 260, 160 220, 135 170"/>
-    </svg>
     <div class="wrap">
       <div>
         <span class="kicker" data-reveal="up">Our story</span>
@@ -173,19 +181,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
     <div class="wrap">
       <div class="cup-wrap" data-reveal="scale">
         <div class="price-tag" aria-live="polite">&pound;<span id="price">3.40</span></div>
-        <svg class="cup" viewBox="0 0 240 260" aria-hidden="true">
-          <defs><clipPath id="cupClip"><path d="M30 60 H210 L192 220 Q190 236 174 236 H66 Q50 236 48 220 Z"/></clipPath></defs>
-          <g clip-path="url(#cupClip)">
-            <rect x="0" width="240" class="liquid" id="liq" y="150" height="100" fill="#6b4329"/>
-            <rect x="0" width="240" class="foam" id="foam" y="120" height="30" fill="#efe1c8"/>
-          </g>
-          <path d="M30 60 H210 L192 220 Q190 236 174 236 H66 Q50 236 48 220 Z" fill="none" stroke="#f3eadc" stroke-width="3"/>
-          <path d="M206 96 q 34 6 26 44 q -6 30 -36 30" fill="none" stroke="#f3eadc" stroke-width="3"/>
-          <g id="shots">
-            <circle class="shot" cx="120" cy="30" r="8" fill="#a9b98c" opacity="0"/>
-            <circle class="shot" cx="100" cy="30" r="8" fill="#a9b98c" opacity="0"/>
-          </g>
-        </svg>
+        <div class="drink-photo"><img id="drinkImg" src="assets/drink-flat.jpg" alt="Flat white"><span class="drink-badge" id="drinkBadge">Whole milk</span></div>
       </div>
       <div>
         <span class="kicker" data-reveal="up">Build a drink</span>
@@ -284,17 +280,15 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   const state = { drink: 'flat', milk: 'whole', shots: '0' };
   const prices = { drink: 3.4, milk: 0, shots: 0 };
   const names = { flat: 'Flat white', latte: 'Latte', cortado: 'Cortado', filter: 'Filter' };
-  const liq = document.getElementById('liq'), foam = document.getElementById('foam');
-  const shots = document.querySelectorAll('#shots .shot');
+  const drinkImg = document.getElementById('drinkImg');
   function drawCup() {
-    const fill = { flat: [120, 26], latte: [92, 40], cortado: [150, 18], filter: [100, 0] }[state.drink];
     const noMilk = state.milk === 'none' || state.drink === 'filter';
-    liq.setAttribute('y', fill[0] + fill[1]);
-    liq.setAttribute('height', 260);
-    liq.setAttribute('fill', noMilk ? '#3a2416' : state.milk === 'oat' ? '#8a5a37' : state.milk === 'almond' ? '#7d5233' : '#6b4329');
-    foam.setAttribute('y', fill[0]);
-    foam.setAttribute('height', noMilk ? 0 : fill[1]);
-    shots.forEach((s, i) => { s.style.opacity = i < +state.shots ? 1 : 0; s.style.transform = i < +state.shots ? 'scale(1)' : 'scale(.2)'; });
+    const src = 'assets/drink-' + state.drink + '.jpg';
+    if (!drinkImg.src.endsWith(src)) {
+      drinkImg.classList.add('out');
+      setTimeout(() => { drinkImg.src = src; drinkImg.alt = names[state.drink]; drinkImg.onload = () => drinkImg.classList.remove('out'); }, 250);
+    }
+    document.getElementById('drinkBadge').textContent = (noMilk ? 'Black' : state.milk[0].toUpperCase() + state.milk.slice(1) + ' milk') + (+state.shots ? ` · +${state.shots} shot${+state.shots > 1 ? 's' : ''}` : '');
     const total = prices.drink + (noMilk ? 0 : prices.milk) + prices.shots;
     document.getElementById('price').textContent = total.toFixed(2);
     return total;
@@ -336,10 +330,29 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   addEventListener('resize', () => show(document.querySelector('.tabs [aria-selected="true"]').dataset.tab));
   document.fonts && document.fonts.ready.then(() => show(document.querySelector('.tabs [aria-selected="true"]').dataset.tab));
 
+  // Live order card in the hero
+  const lcImg = document.getElementById('lcImg');
+  let lcDrink = 'flat';
+  document.getElementById('lcPills').addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    document.querySelectorAll('#lcPills button').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    lcDrink = b.dataset.d; lcImg.style.opacity = 0;
+    setTimeout(() => { lcImg.src = 'assets/drink-' + lcDrink + '.jpg'; lcImg.alt = names[lcDrink]; lcImg.onload = () => (lcImg.style.opacity = 1); }, 200);
+  });
+  const basePrice = { flat: 3.4, latte: 3.6, cortado: 3.1, filter: 3.0 };
+  document.getElementById('lcAdd').onclick = () => addItem(names[lcDrink], basePrice[lcDrink]);
+  let queue = 4;
+  setInterval(() => {
+    queue = Math.max(1, Math.min(9, queue + (Math.random() < .5 ? -1 : 1)));
+    document.getElementById('lcQueue').textContent = queue + ' in the queue';
+    document.getElementById('lcMins').textContent = 2 + queue;
+  }, 3500);
+
   // Open now
   const d = new Date(), h = d.getHours() + d.getMinutes() / 60, day = d.getDay();
   const [o, c] = day === 0 ? [9, 15] : day === 6 ? [8, 17] : [7, 17];
   document.getElementById('openNow').innerHTML = `<i></i> ${h >= o && h < c ? 'Open now' : 'Closed now, back at ' + o + ':00'}`;
+  document.getElementById('lcOpen').textContent = h >= o && h < c ? 'Open now' : 'Opens ' + o + ':00';
 })();
 </script>
 </body>
