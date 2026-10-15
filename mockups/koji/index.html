@@ -119,7 +119,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <main id="top">
   <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="1224179" aria-label="Kōji">
     <div class="stage">
-      <div class="media"><div class="poster" role="img" aria-label="A dark sushi counter lit by a single beam of light"></div><video class="loop" muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1" poster="assets/hero-poster.jpg"><source src="assets/hero-trailer.mp4" type="video/mp4"><source src="assets/hero-trailer.webm" type="video/webm"></video><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
+      <div class="media"><div class="poster" role="img" aria-label="A dark sushi counter lit by a single beam of light"></div><div class="panos" data-place="Kōji" data-scenes='[{"src": "assets/pano-1.jpg", "name": "The counter"}, {"src": "assets/pano-2.jpg", "name": "Greek Street"}, {"src": "assets/pano-3.jpg", "name": "The market"}]' data-pins='["Seat 4 booked", "Otoro", "Course 9 of 18", "Sake pairing", "Kinmedai", "2 seats left", "Tonight 7pm"]'><div class="pano"></div><div class="pano"></div></div><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
       <div class="scrim"></div>
       <div class="band live-band" data-a="0" data-b="0.33" data-static>
         <div class="copy">
@@ -127,6 +127,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
           <span class="big" data-words>Quiet room. Sharp knife.</span>
           <span class="sub rise">Eighteen courses, chosen at the fish market at five this morning.</span>
           <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#book" data-magnetic>Reserve a seat</a><a class="btn ghost" href="#courses">Tonight&rsquo;s courses</a></div>
+          <div class="rise" style="--rd:.95s"><div class="scene-tag" aria-hidden="true"></div></div>
         </div>
         <aside class="live-card" data-tilt aria-label="At the counter now">
           <div class="lc-head"><span class="live-dot">At the counter</span><span id="lcSeats">3 seats left</span></div>

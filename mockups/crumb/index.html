@@ -107,7 +107,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
 <main id="top">
   <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="3558381" aria-label="Crumb bakery">
     <div class="stage">
-      <div class="media"><div class="poster" role="img" aria-label="Flour drifting through sunbeams onto a sourdough loaf"></div><video class="loop" muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1" poster="assets/hero-poster.jpg"><source src="assets/hero-trailer.mp4" type="video/mp4"><source src="assets/hero-trailer.webm" type="video/webm"></video><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
+      <div class="media"><div class="poster" role="img" aria-label="Flour drifting through sunbeams onto a sourdough loaf"></div><div class="panos" data-place="crumb" data-scenes='[{"src": "assets/pano-1.jpg", "name": "The bakery"}, {"src": "assets/pano-2.jpg", "name": "The counter"}, {"src": "assets/pano-3.jpg", "name": "Elm Row"}]' data-pins='["Fresh tray", "Sourdough", "Box of 6", "Buns out", "Pistachio", "Saved for 9am", "Cinnamon bun"]'><div class="pano"></div><div class="pano"></div></div><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
       <div class="scrim"></div>
       <div class="band live-band" data-a="0" data-b="0.33" data-static>
         <div class="copy">
@@ -115,6 +115,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;
           <span class="big" data-words>Baked at 4am, <em>for you.</em></span>
           <span class="sub rise">Sourdough, sticky buns and cakes from a tiny green-tiled bakery on Elm Row.</span>
           <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#box" data-magnetic>Fill a box</a><a class="btn ghost hero-ghost" href="#bakes">Today&rsquo;s bakes</a></div>
+          <div class="rise" style="--rd:.95s"><div class="scene-tag" aria-hidden="true"></div></div>
         </div>
         <aside class="live-card" data-tilt aria-label="Fresh out of the oven">
           <div class="lc-head"><span class="live-dot">Fresh now</span><span>Next tray <b id="lcTray">00:00</b></span></div>

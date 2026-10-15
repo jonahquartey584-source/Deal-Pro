@@ -120,7 +120,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <main id="top">
   <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="3179305" aria-label="Northlight">
     <div class="stage">
-      <div class="media"><div class="poster" role="img" aria-label="Ribbons of violet and cyan light falling through dark glass"></div><video class="loop" muted loop playsinline preload="auto" aria-hidden="true" tabindex="-1" poster="assets/hero-poster.jpg"><source src="assets/hero-trailer.mp4" type="video/mp4"><source src="assets/hero-trailer.webm" type="video/webm"></video><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
+      <div class="media"><div class="poster" role="img" aria-label="Ribbons of violet and cyan light falling through dark glass"></div><div class="panos" data-place="Northlight" data-scenes='[{"src": "assets/pano-1.jpg", "name": "The workshop"}, {"src": "assets/pano-2.jpg", "name": "The bench"}, {"src": "assets/pano-3.jpg", "name": "Leeds"}]' data-pins='["Build #1341", "62°C", "214 fps", "Burn-in 31h", "Repair done", "RTX 5070 Ti", "Shipped"]'><div class="pano"></div><div class="pano"></div></div><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
       <div class="scrim"></div>
       <div class="band live-band" data-a="0" data-b="0.33" data-static>
         <div class="copy">
@@ -128,6 +128,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
           <span class="big" data-words>Built by hand. <span class="glow">Tuned to run.</span></span>
           <span class="sub rise">Gaming rigs and creator workstations, assembled and stress tested by the same two people every time.</span>
           <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#config" data-magnetic>Spec a PC</a><a class="btn ghost" href="#repair">Book a repair</a></div>
+          <div class="rise" style="--rd:.95s"><div class="scene-tag" aria-hidden="true"></div></div>
         </div>
         <aside class="live-card" data-tilt aria-label="On the bench now">
           <div class="lc-head"><span class="live-dot">On the bench</span><span>Build #1341</span></div>

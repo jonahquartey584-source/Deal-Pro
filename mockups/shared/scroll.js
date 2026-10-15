@@ -219,7 +219,32 @@
   const stage = hero.querySelector('.stage');
   const video = hero.querySelector('video.scrub');
   const loop = hero.querySelector('video.loop');
-  const playLoop = () => { if (loop && !reduce) { const p = loop.play(); if (p) p.catch(() => {}); } };
+  const playLoop = () => { if (loop && !reduce && loop.dataset.ready) { const p = loop.play(); if (p) p.catch(() => {}); } };
+
+  // The trailer is fetched whole and played from a Blob URL. Safari (and some hosts) will not play
+  // a video file served without HTTP Range support, but a Blob always plays.
+  const trailerReady = (async () => {
+    if (!loop || reduce) return;
+    const probeV = document.createElement('video');
+    const srcEl = [...loop.querySelectorAll('source')].find((x) => probeV.canPlayType(x.type));
+    if (!srcEl) return;
+    const url = srcEl.getAttribute('src');
+    loop.muted = true; loop.defaultMuted = true; loop.playsInline = true; loop.setAttribute('muted', '');
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('trailer ' + res.status);
+      const blob = await res.blob();
+      loop.querySelectorAll('source').forEach((x) => x.remove());
+      loop.src = URL.createObjectURL(new Blob([blob], { type: srcEl.type }));
+    } catch (e) {
+      loop.src = url; // fall back to a direct load
+    }
+    loop.load();
+    await new Promise((r) => { loop.addEventListener('loadeddata', r, { once: true }); setTimeout(r, 8000); });
+    loop.dataset.ready = '1';
+    hero.classList.add('trailer-on');
+    if (hero.classList.contains('at-top')) playLoop();
+  })();
 
   // Sound toggle for the trailer: browsers only autoplay muted, so sound is the viewer's choice
   if (loop) {
@@ -233,6 +258,84 @@
       sb.querySelector('span').textContent = loop.muted ? 'Sound on' : 'Sound off';
     });
     stage.appendChild(sb);
+  }
+
+  /* ---------- Live panning background (the Deal Pro hero, scene for scene) ----------
+     Wide panoramas glide slowly sideways behind the title, then crossfade to the next scene.
+     Pins drop onto the scene with live labels and travel with it as it pans. */
+  const panoWrap = hero.querySelector('.panos');
+  if (panoWrap) {
+    const scenes = JSON.parse(panoWrap.dataset.scenes);
+    const labels = JSON.parse(panoWrap.dataset.pins || '[]');
+    const place = panoWrap.dataset.place || '';
+    const [A, B] = panoWrap.querySelectorAll('.pano');
+    const RATIO = 21 / 9;
+    const mobile = matchMedia('(max-width:760px),(pointer:coarse)').matches;
+    const SWEEP = mobile ? 38 : 46;
+    const tag = hero.querySelector('.scene-tag');
+    let cur = A, nxt = B, si = 0, start = performance.now(), last = start, nextPin = 1.4, W = 0, H = 0, iw = 0, off = 0;
+    const setTag = (sc) => {
+      if (!tag) return;
+      tag.classList.add('swap');
+      setTimeout(() => { tag.innerHTML = `<i></i>${place} &middot; <b>${sc.name}</b>`; tag.classList.remove('swap'); }, 350);
+    };
+    const preload = (sc) => { const im = new Image(); im.src = sc.src; };
+    const size = () => {
+      W = stage.offsetWidth; H = stage.offsetHeight;
+      const ih = H * 1.15; iw = ih * RATIO;
+      [A, B].forEach((el) => { el.style.width = iw + 'px'; el.style.height = ih + 'px'; });
+    };
+    cur.style.backgroundImage = `url('${scenes[0].src}')`;
+    cur.style.opacity = 1;
+    setTag(scenes[0]);
+    if (scenes[1]) preload(scenes[1]);
+    size();
+    addEventListener('resize', size);
+    const blocked = (x, y) => {
+      const el = document.elementFromPoint(x, y);
+      return el && el.closest('.copy,.live-card,.site-header,.scene-tag,.back-link,.sound-btn,.hint,a,button');
+    };
+    function spawnPin() {
+      if (!labels.length) return;
+      for (let tries = 0; tries < 8; tries++) {
+        const x = W * (0.06 + Math.random() * 0.88), y = H * (0.3 + Math.random() * 0.6);
+        if (blocked(x, y) || blocked(x, y - 40)) continue;
+        const pin = document.createElement('div');
+        pin.className = 'pin';
+        pin.style.left = x + off + 'px';
+        pin.style.top = y + 'px';
+        pin.innerHTML = `<span>${labels[Math.floor(Math.random() * labels.length)]}</span><i></i>`;
+        cur.appendChild(pin);
+        setTimeout(() => pin.remove(), 4200);
+        return;
+      }
+    }
+    function frame(now) {
+      const dt = Math.min(0.1, (now - last) / 1000); last = now;
+      const t = (now - start) / 1000;
+      const k = Math.min(1, t / SWEEP), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+      const span = Math.max(0, iw - W);
+      off = reduce ? span / 2 : span * e;
+      if (scrollY < innerHeight * 1.2 || hero.classList.contains('static')) {
+        cur.style.transform = `translate3d(${-off}px,0,0)`;
+        nextPin -= dt;
+        if (!reduce && nextPin <= 0) { spawnPin(); nextPin = (mobile ? 3.4 : 2) + Math.random() * 1.5; }
+      }
+      if (!reduce && t > SWEEP + 0.4 && scenes.length > 1) {
+        si = (si + 1) % scenes.length;
+        nxt.innerHTML = '';
+        nxt.style.backgroundImage = `url('${scenes[si].src}')`;
+        nxt.style.transform = 'translate3d(0,0,0)';
+        nxt.style.opacity = 1; cur.style.opacity = 0;
+        [cur, nxt] = [nxt, cur];
+        setTag(scenes[si]);
+        preload(scenes[(si + 1) % scenes.length]);
+        start = now;
+      }
+      if (!reduce) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) last = performance.now(); });
   }
 
   // Cursor spotlight + gentle parallax on the live background (fine pointers only)
@@ -379,10 +482,10 @@
     loadBlob().catch(failVideo);
   }
   const pi = new Image();
+  trailerReady.then(() => { pi.src = POSTER; });
   pi.onload = startFetch;
   pi.onerror = startFetch;
-  pi.src = POSTER;
-  setTimeout(startFetch, 4000);
+  setTimeout(startFetch, 9000);
 
   async function loadBlob() {
     const ctrl = new AbortController();

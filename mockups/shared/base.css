@@ -45,7 +45,11 @@ html.reduce .env{animation:none}
 .hero video.scrub{opacity:0;transition:opacity .6s ease;transform:translateZ(0);will-change:transform}
 .hero.video-ready:not(.at-top) video.scrub{opacity:1}
 .hero video.loop{opacity:0;transition:opacity .7s ease}
-.hero.at-top video.loop{opacity:1}
+.hero.at-top.trailer-on video.loop{opacity:1}
+/* the background is never still: a slow drift on the hero image until (and under) the trailer */
+.hero .poster{animation:heroDrift 16s ease-in-out infinite alternate;will-change:transform}
+@keyframes heroDrift{0%{transform:scale(1.04) translate3d(-1.2%,.6%,0)}100%{transform:scale(1.14) translate3d(1.4%,-1%,0)}}
+html.reduce .hero .poster{animation:none}
 /* cursor spotlight over the live background */
 .hero .stage::after{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:radial-gradient(520px circle at var(--sx,70%) var(--sy,40%),var(--spot,rgba(255,255,255,.08)),transparent 60%);mix-blend-mode:soft-light;opacity:var(--hint,1)}
 
@@ -78,6 +82,22 @@ html.reduce .env{animation:none}
 .live-card .lc-bar i{display:block;height:100%;width:var(--w,30%);background:var(--accent);transition:width .6s ease}
 .live-card .btn{padding:11px 18px;font-size:14px;white-space:nowrap;flex:none}
 html.reduce .hero .live-band .w,html.reduce .hero .live-band .rise,html.reduce .live-card{opacity:1!important;transform:none!important;filter:none!important;animation:none!important}
+
+/* ---------- Live panning background (Deal Pro style) ---------- */
+.hero .panos{position:absolute;inset:0;overflow:hidden;transition:opacity .8s ease}
+.hero:not(.at-top) .panos{opacity:0}
+.hero .pano{position:absolute;left:0;top:0;background:0 0/100% 100% no-repeat;opacity:0;transition:opacity 1.6s ease;will-change:transform,opacity}
+.pin{position:absolute;display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);pointer-events:none;animation:pinDrop .55s cubic-bezier(.3,1.6,.5,1) both,pinOut .8s ease 3.3s forwards}
+.pin i{width:18px;height:18px;border-radius:50% 50% 50% 0;rotate:-45deg;background:var(--pin,var(--accent));box-shadow:0 0 16px var(--pin,var(--accent));position:relative}
+.pin i::after{content:"";position:absolute;inset:5px;border-radius:50%;background:#fff}
+.pin::after{content:"";width:18px;height:6px;border-radius:50%;background:rgba(0,0,0,.35);margin-top:4px}
+.pin span{font:600 12px/1 var(--body);padding:6px 11px;border-radius:12px;background:rgba(16,16,20,.88);color:#fff;border:1px solid var(--pin,var(--accent));white-space:nowrap;margin-bottom:8px;opacity:0;animation:heroUp .35s ease .5s forwards;transform:translateY(6px)}
+@keyframes pinDrop{from{opacity:0;transform:translate(-50%,-100%) translateY(-60px)}}
+@keyframes pinOut{to{opacity:0}}
+.scene-tag{margin-top:18px;width:fit-content;display:flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;border-radius:999px;background:rgba(12,12,15,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);font:500 12.5px/1.2 var(--body);color:rgba(255,255,255,.85);text-shadow:none;transition:opacity .6s ease,transform .6s cubic-bezier(.2,.8,.2,1)}
+.scene-tag i{width:7px;height:7px;border-radius:50%;background:var(--pin,var(--accent));box-shadow:0 0 0 4px rgba(255,255,255,.12)}
+.scene-tag b{color:#fff;font-weight:600}
+.scene-tag.swap{opacity:0;transform:translateY(6px)}
 
 /* trailer sound toggle */
 .sound-btn{position:absolute;right:clamp(16px,4vw,48px);bottom:28px;z-index:5;display:inline-flex;align-items:center;gap:10px;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.35);background:rgba(10,10,12,.45);color:#fff;font:600 12px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;cursor:pointer;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:background .3s,opacity .4s;opacity:var(--hint,1)}

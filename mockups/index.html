@@ -31,8 +31,10 @@
 /* Intro */
 .intro{padding:170px 0 70px;position:relative;overflow:hidden;isolation:isolate}
 .reel{position:absolute;inset:0;z-index:-1}
-.reel video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 1.4s ease}
-.reel video.on{opacity:.55}
+.reel .rimg{position:absolute;top:0;left:0;height:100%;aspect-ratio:21/9;min-width:140%;background:0 0/cover no-repeat;opacity:0;transition:opacity 1.4s ease;will-change:transform,opacity}
+.reel .rimg.on{opacity:.6;animation:reelPan 9s linear forwards}
+@keyframes reelPan{from{transform:translate3d(0,0,0)}to{transform:translate3d(calc(-100% + 100vw),0,0)}}
+html.reduce .reel .rimg.on{animation:none}
 .reel::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(20,18,16,.92),rgba(20,18,16,.6) 55%,rgba(20,18,16,.35)),linear-gradient(0deg,var(--bg),transparent 30%)}
 .reel-tag{position:absolute;right:clamp(16px,4vw,48px);bottom:24px;display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:99px;background:rgba(20,18,16,.7);border:1px solid var(--line-strong);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;transition:opacity .5s}
 .reel-tag i{width:7px;height:7px;border-radius:50%;background:#e0142b;box-shadow:0 0 0 4px rgba(224,20,43,.25)}
@@ -125,7 +127,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 
 <main id="top">
   <section class="intro">
-    <div class="reel" aria-hidden="true"><video id="reelA" muted loop playsinline preload="auto"></video><video id="reelB" muted loop playsinline preload="auto"></video></div>
+    <div class="reel" aria-hidden="true"><div class="rimg" id="reelA"></div><div class="rimg" id="reelB"></div></div>
     <span class="reel-tag" id="reelTag" aria-live="off"><i></i>Live from <b>Ember &amp; Oat</b></span>
     <div class="wrap">
       <div>
@@ -198,7 +200,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
         <div class="feat"><img src="northlight/assets/hero-poster.jpg" alt="Light ribbons from the Northlight hero video" loading="lazy"><h3>Scroll-driven video</h3><p>The hero film plays forward as you scroll down and rewinds as you scroll up.</p></div>
         <div class="feat"><img src="crumb/assets/hero-poster.jpg" alt="Flour drifting through sunbeams in the Crumb hero" loading="lazy"><h3>Motion everywhere</h3><p>Words rise in, images wipe open, lines draw themselves, numbers count up.</p></div>
         <div class="feat"><img src="volt/assets/hp-harbour.jpg" alt="Studio One headphones in Harbour blue from the Volt colour picker" loading="lazy"><h3>A real feature</h3><p>Every site has something to do: build, book, filter, configure or pre-order.</p></div>
-        <div class="feat"><img src="shared/img/phone.jpg" alt="The Forno Rosso site on a phone" loading="lazy"><h3>Phone ready</h3><p>Phones get the live looping hero and the full page, fast on any connection.</p></div>
+        <div class="feat"><img src="shared/img/phone.jpg" alt="The Forno Rosso site on a phone" loading="lazy"><h3>Phone ready</h3><p>Phones get the same live, moving hero and the full page, fast on any connection.</p></div>
       </div>
     </div>
   </section>
@@ -230,20 +232,24 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
   }));
   // Live reel behind the intro: each site's looping hero, crossfaded in turn
   const reel = [['ember-oat', 'Ember & Oat'], ['forno-rosso', 'Forno Rosso'], ['northlight', 'Northlight'], ['koji', 'Kōji'], ['crumb', 'Crumb'], ['volt', 'Volt Supply']];
-  const canMp4 = document.createElement('video').canPlayType('video/mp4; codecs="avc1.640028"');
   const va = document.getElementById('reelA'), vb = document.getElementById('reelB');
   let ri = 0, front = va;
   function nextReel() {
     const [slug, name] = reel[ri % reel.length];
     const back = front === va ? vb : va;
-    back.src = `${slug}/assets/hero-trailer.${canMp4 ? "mp4" : "webm"}`;
-    back.oncanplay = () => { back.oncanplay = null; back.play().catch(() => {}); back.classList.add('on'); front.classList.remove('on'); front = back; };
+    const im = new Image();
+    im.onload = () => {
+      back.style.backgroundImage = `url('${slug}/assets/pano-1.jpg')`;
+      back.classList.remove('on'); void back.offsetWidth; back.classList.add('on');
+      front.classList.remove('on'); front = back;
+    };
+    im.src = `${slug}/assets/pano-1.jpg`;
     const tag = document.getElementById('reelTag');
     tag.style.opacity = 0; setTimeout(() => { tag.querySelector('b').textContent = name; tag.style.opacity = 1; }, 500);
     ri++;
   }
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { nextReel(); setInterval(nextReel, 7000); }
-  else document.getElementById('reelTag').hidden = true;
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { nextReel(); setInterval(nextReel, 8000); }
+  else { nextReel(); }
 
   // "Try a random one"
   const rnd = document.querySelector('.btn.ghost');
