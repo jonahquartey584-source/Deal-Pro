@@ -15,6 +15,10 @@
     return t * t * (3 - 2 * t);
   };
   root.classList.add('js');
+  // Always open at the very top of the page, not wherever the browser last left it.
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  if (!location.hash) scrollTo(0, 0);
+  addEventListener('pageshow', (e) => { if (e.persisted && !location.hash) scrollTo(0, 0); });
   if (reduce) root.classList.add('reduce');
 
   /* ---------- Toast ---------- */
@@ -486,14 +490,27 @@
     }
     clearTimeout(watchdog);
     if (ring) ring.style.setProperty('--ld', 0);
-    video.src = URL.createObjectURL(new Blob(chunks, { type: VIDEO_URL.endsWith('.webm') ? 'video/webm' : 'video/mp4' }));
+    // Hosts that serve byte ranges can play the (now cached) file directly; the Blob is for hosts that cannot,
+    // where Safari refuses to play a plain file. Going direct also avoids security policies that block blob: media.
+    if (res.headers.get('Accept-Ranges') === 'bytes') {
+      video.dataset.direct = '1';
+      video.src = VIDEO_URL;
+    } else {
+      video.src = URL.createObjectURL(new Blob(chunks, { type: VIDEO_URL.endsWith('.webm') ? 'video/webm' : 'video/mp4' }));
+    }
     video.load();
     video.addEventListener('loadeddata', () => {
       hero.classList.add('video-ready');
       requestSeek(heroProgress() * video.duration);
       setTimeout(() => ring && ring.classList.add('done'), 300);
     }, { once: true });
-    video.addEventListener('error', failVideo, { once: true });
+    // If a Blob URL is refused (some hosts' security policies block blob: media), load the file directly.
+    video.addEventListener('error', () => {
+      if (video.dataset.direct) return failVideo();
+      video.dataset.direct = '1';
+      video.src = VIDEO_URL;
+      video.load();
+    });
   }
   function failVideo() {
     hero.classList.add('video-failed');

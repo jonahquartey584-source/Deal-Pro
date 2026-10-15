@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Qp Digital Mockups</title>
-<meta name="description" content="Interactive website mockups for cafés, restaurants, tech shops and bakeries. Every one has a scroll-driven video hero and a real interactive feature.">
+<meta name="description" content="Sixteen interactive website mockups for estate agents, bakeries, barbers, cafés, restaurants, tech shops, gardeners and plumbers, built by Qp Digital.">
 <meta property="og:title" content="Website Mockups | Qp Digital">
-<meta property="og:description" content="Six interactive website mockups, six different styles. Scroll them, click them, try them.">
+<meta property="og:description" content="Sixteen interactive website mockups across eight trades. Scroll them, click them, try them.">
 <meta property="og:image" content="shared/img/laptop-forno-rosso.jpg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -111,6 +111,38 @@ h1 em{background:var(--gold);-webkit-background-clip:text;background-clip:text;c
 .cta h2{font-family:var(--display);font-weight:400;font-size:clamp(34px,4.4vw,58px);margin:0;line-height:1.05;max-width:18ch}
 footer{padding:36px 0 60px;border-top:1px solid var(--line);color:var(--muted);font-size:14px}
 footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
+/* Services: each one pops onto the screen in turn while the stage is pinned */
+.svc{position:relative;height:340vh}
+.svc-stage{position:sticky;top:0;height:100vh;display:grid;align-content:center;overflow:hidden}
+.svc-glow{position:absolute;inset:-20%;background:radial-gradient(40% 40% at var(--gx,70%) var(--gy,50%),rgba(212,172,92,.16),transparent 70%);transition:background .9s ease;pointer-events:none}
+.svc-in{position:relative;display:grid;grid-template-columns:.78fr 1.22fr;gap:56px;align-items:center}
+.svc-copy h2{font-family:var(--display);font-weight:400;font-size:clamp(40px,5vw,72px);line-height:1;margin:.2em 0 .3em}
+.svc-copy .lede{margin-bottom:26px}
+.svc-count{display:flex;align-items:baseline;gap:8px;margin-bottom:28px;font-family:var(--mono);color:var(--muted)}
+.svc-count b{font-family:var(--display);font-weight:400;font-size:64px;line-height:1;background:var(--gold);-webkit-background-clip:text;background-clip:text;color:transparent;font-variant-numeric:tabular-nums}
+.svc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;perspective:1200px}
+.svc-card{position:relative;padding:22px 20px 22px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.01)),var(--card);overflow:hidden;
+  opacity:0;transform:translateY(70px) scale(.55) rotateX(28deg);filter:blur(8px);
+  transition:opacity .5s ease,transform .9s cubic-bezier(.34,1.56,.64,1),filter .6s ease,border-color .6s,box-shadow .6s}
+.svc-card.on{opacity:1;transform:none;filter:none}
+.svc-card.live{border-color:rgba(212,172,92,.7);box-shadow:0 34px 80px -28px rgba(212,172,92,.55),0 0 0 1px rgba(212,172,92,.3),inset 0 1px 0 rgba(255,236,190,.15);transform:translateY(-6px) scale(1.035)}
+.svc-card::after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 30%,rgba(255,236,190,.22) 48%,transparent 66%);transform:translateX(-120%);pointer-events:none}
+.svc-card.on::after{animation:svcShine 1.3s .25s cubic-bezier(.3,.7,.3,1) forwards}
+@keyframes svcShine{to{transform:translateX(120%)}}
+.svc-card img{display:block;width:clamp(96px,8.4vw,132px);height:clamp(96px,8.4vw,132px);object-fit:contain;margin:0 0 14px;filter:drop-shadow(0 16px 22px rgba(0,0,0,.55));transform:scale(.3) rotate(-25deg);transition:transform 1s cubic-bezier(.34,1.7,.64,1) .12s}
+.svc-card.on img{transform:none;animation:svcBob 5s ease-in-out 1.2s infinite}
+@keyframes svcBob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-7px) rotate(2deg)}}
+.svc-card h3{margin:0 0 6px;font-family:var(--body);font-weight:800;font-size:18px;letter-spacing:-.01em}
+.svc-card p{margin:0;color:var(--muted);font-size:14.5px;line-height:1.55}
+.svc-num{position:absolute;top:18px;right:18px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent)}
+@media (max-width:1040px){.svc-in{grid-template-columns:1fr;gap:26px}.svc-copy .lede{display:none}.svc-count{display:none}.svc-copy .btn{display:none}.svc-card p{font-size:13.5px}.svc-card img{width:72px;height:72px;margin-bottom:10px}}
+/* Phones: no pinning, each card pops in as it scrolls into view */
+@media (max-width:760px){.svc{height:auto;padding:90px 0 40px}.svc-stage{position:relative;height:auto;overflow:visible}.svc-glow{display:none}.svc-grid{grid-template-columns:1fr 1fr;gap:12px}.svc-card{padding:18px 16px}.svc-copy .lede{display:block}.svc-copy .btn{display:inline-flex;margin-top:4px}.svc-card h3{font-size:16px}}
+html.reduce .svc{height:auto;padding:100px 0}
+html.reduce .svc-stage{position:relative;height:auto}
+html.reduce .svc-card{opacity:1;transform:none;filter:none;transition:none}
+html.reduce .svc-card img{transform:none;animation:none}
+html.reduce .svc-card::after{display:none}
 </style>
 </head>
 <body>
@@ -120,7 +152,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <header class="site-header" data-header>
   <div class="wrap">
     <a class="logo" href="#top">Qp Digital</a>
-    <nav aria-label="Main"><a href="#mockups">Mockups</a><a href="#inside">What's inside</a><a href="https://qp-digital.co.uk" target="_blank" rel="noopener">Main site</a></nav>
+    <nav aria-label="Main"><a href="#services">Services</a><a href="#mockups">Mockups</a><a href="#inside">What's inside</a><a href="https://qp-digital.co.uk" target="_blank" rel="noopener">Main site</a></nav>
     <a class="btn" href="https://qp-digital.co.uk" target="_blank" rel="noopener" data-magnetic>Get a quote</a>
   </div>
 </header>
@@ -132,38 +164,130 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
     <div class="wrap">
       <div>
         <span class="kicker" data-reveal="up">Website mockups</span>
-        <h1 data-split>Six sites. Six styles. All interactive.</h1>
-        <p class="lede" data-reveal="up">Cafés, restaurants, tech shops and bakeries, each with a video hero that plays as you scroll and a feature you can actually use. Open one and scroll.</p>
+        <h1 data-split>Sixteen sites. Eight trades. All interactive.</h1>
+        <p class="lede" data-reveal="up">Estate agents, bakeries, barbers, cafés, restaurants, tech shops, gardeners and plumbers. Each one opens on a live, moving scene, plays a film as you scroll and has a feature you can actually use.</p>
         <div data-reveal="up" style="display:flex;gap:12px;flex-wrap:wrap"><a class="btn" href="#mockups" data-magnetic>See the mockups</a><a class="btn ghost" href="forno-rosso/index.html">Try a random one</a></div>
         <div class="stat-row">
-          <div data-reveal="up"><b data-count="6">0</b><small>Live mockups</small></div>
-          <div data-reveal="up" style="--d:100ms"><b data-count="6">0</b><small>Scroll video heroes</small></div>
+          <div data-reveal="up"><b data-count="16">0</b><small>Live mockups</small></div>
+          <div data-reveal="up" style="--d:100ms"><b data-count="8">0</b><small>Business types</small></div>
           <div data-reveal="up" style="--d:200ms"><b data-count="100" data-suffix="%">0</b><small>Phone ready</small></div>
         </div>
       </div>
       <div class="fan" aria-hidden="true">
-        <img src="shared/img/laptop-koji.jpg" alt="" data-speed="0.12">
-        <img src="shared/img/laptop-volt.jpg" alt="" data-speed="-0.06">
-        <img src="shared/img/laptop-forno-rosso.jpg" alt="" data-speed="0.04">
+        <img src="shared/img/laptop-harlow-finch.jpg" alt="" data-speed="0.12">
+        <img src="shared/img/laptop-fade-theory.jpg" alt="" data-speed="-0.06">
+        <img src="shared/img/laptop-little-tern.jpg" alt="" data-speed="0.04">
+      </div>
+    </div>
+  </section>
+
+  <section class="svc" id="services" aria-label="What Qp Digital builds">
+    <div class="svc-stage">
+      <div class="svc-glow" aria-hidden="true"></div>
+      <div class="wrap svc-in">
+        <div class="svc-copy">
+          <span class="kicker">What we build</span>
+          <h2>A website is only the start.</h2>
+          <p class="lede">Qp Digital builds the systems behind it too. Six services, one team, all working together.</p>
+          <div class="svc-count" aria-hidden="true"><b id="svcN">00</b><span>/ 06</span></div>
+          <a class="btn" href="https://qp-digital.co.uk/#services" target="_blank" rel="noopener" data-magnetic>See every service</a>
+        </div>
+        <div class="svc-grid">
+        <article class="svc-card" style="--i:0">
+          <span class="svc-num">01</span>
+          <img src="shared/svc/websites.webp" alt="" width="220" height="220">
+          <h3>Websites and landing pages</h3>
+          <p>Sites like the sixteen below, built to turn visitors into enquiries.</p>
+        </article>
+        <article class="svc-card" style="--i:1">
+          <span class="svc-num">02</span>
+          <img src="shared/svc/booking.webp" alt="" width="220" height="220">
+          <h3>Booking systems</h3>
+          <p>Clients pick a time and pay a deposit. No back and forth.</p>
+        </article>
+        <article class="svc-card" style="--i:2">
+          <span class="svc-num">03</span>
+          <img src="shared/svc/crm.webp" alt="" width="220" height="220">
+          <h3>CRM</h3>
+          <p>Every lead, client and follow-up in one place, so nobody slips through.</p>
+        </article>
+        <article class="svc-card" style="--i:3">
+          <span class="svc-num">04</span>
+          <img src="shared/svc/chat.webp" alt="" width="220" height="220">
+          <h3>AI call and chat answering</h3>
+          <p>Calls and chats answered day and night, with every lead captured.</p>
+        </article>
+        <article class="svc-card" style="--i:4">
+          <span class="svc-num">05</span>
+          <img src="shared/svc/automation.webp" alt="" width="220" height="220">
+          <h3>Automation systems</h3>
+          <p>Reminders, invoices and follow-ups that send themselves.</p>
+        </article>
+        <article class="svc-card" style="--i:5">
+          <span class="svc-num">06</span>
+          <img src="shared/svc/reporting.webp" alt="" width="220" height="220">
+          <h3>Reporting dashboards</h3>
+          <p>Bookings, revenue and leads on one screen, updated live.</p>
+        </article>
+        </div>
       </div>
     </div>
   </section>
 
   <div class="bar" id="mockups">
     <div class="wrap chips" role="group" aria-label="Filter by business type">
-      <button class="chip" type="button" data-f="all" aria-pressed="true">All<span>6</span></button>
-      <button class="chip" type="button" data-f="cafe" aria-pressed="false">Cafés<span>1</span></button>
+      <button class="chip" type="button" data-f="all" aria-pressed="true">All<span>16</span></button>
+      <button class="chip" type="button" data-f="estate" aria-pressed="false">Estate agents<span>2</span></button>
+      <button class="chip" type="button" data-f="bakery" aria-pressed="false">Bakeries<span>2</span></button>
+      <button class="chip" type="button" data-f="barber" aria-pressed="false">Barbers<span>2</span></button>
+      <button class="chip" type="button" data-f="cafe" aria-pressed="false">Cafés<span>2</span></button>
       <button class="chip" type="button" data-f="restaurant" aria-pressed="false">Restaurants<span>2</span></button>
       <button class="chip" type="button" data-f="tech" aria-pressed="false">Tech shops<span>2</span></button>
-      <button class="chip" type="button" data-f="bakery" aria-pressed="false">Bakeries<span>1</span></button>
+      <button class="chip" type="button" data-f="garden" aria-pressed="false">Gardeners<span>2</span></button>
+      <button class="chip" type="button" data-f="plumber" aria-pressed="false">Plumbers<span>2</span></button>
     </div>
   </div>
 
   <section class="wrap grid" id="grid" data-stagger aria-label="Mockups">
+    <a class="card" href="harlow-finch/index.html" data-cat="estate">
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-harlow-finch.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/harlow-finch-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Estate agent</span><h2>Harlow &amp; Finch</h2><p>Prime London property at dusk. Estimate what a home is worth, then filter and save this week&rsquo;s listings.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#0f1626"></i><i style="background:#c9a45c"></i><i style="background:#f1ece2"></i></span><span class="style">Navy &amp; gold</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="nest-key/index.html" data-cat="estate">
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-nest-key.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/nest-key-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Estate agent</span><h2>Nest &amp; Key</h2><p>Bright and friendly. Slide the deposit and term to see a monthly payment, then save the homes you like.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#f3f7fb"></i><i style="background:#ffb703"></i><i style="background:#13273d"></i></span><span class="style">Bright &amp; friendly</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="crumb/index.html" data-cat="bakery">
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-crumb.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/crumb-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Bakery</span><h2>Crumb</h2><p>Bright pastel and friendly. Flour falls onto the loaf, cards stack as you scroll, and you fill a box of six.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#fdf3dc"></i><i style="background:#ef7d57"></i><i style="background:#b8d4a3"></i></span><span class="style">Pastel friendly</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="daybreak/index.html" data-cat="bakery">
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-daybreak.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/daybreak-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Bakehouse</span><h2>Daybreak</h2><p>Rustic and warm. Set up a weekly bread club and see the price per month as you pick loaves.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#1b1410"></i><i style="background:#e0a03c"></i><i style="background:#f2e6d6"></i></span><span class="style">Rustic warm</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="sharp-co/index.html" data-cat="barber">
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-sharp-co.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/sharp-co-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Traditional barber</span><h2>Sharp &amp; Co.</h2><p>Brass, leather and checkerboard. Pick a service, a barber and a free slot and the booking builds itself.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#17110f"></i><i style="background:#c8a165"></i><i style="background:#b3202a"></i></span><span class="style">Classic heritage</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="fade-theory/index.html" data-cat="barber">
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-fade-theory.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/fade-theory-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Barber studio</span><h2>Fade Theory</h2><p>Concrete and neon. Choose a style to see the price and time, then join the live queue.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#151515"></i><i style="background:#ff6a1a"></i><i style="background:#ededed"></i></span><span class="style">Urban studio</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
     <a class="card" href="ember-oat/index.html" data-cat="cafe">
       <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-ember-oat.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/ember-oat-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
       <div class="body"><span class="cat">Café</span><h2>Ember &amp; Oat</h2><p>Warm and editorial. Steam drifts down to the cup as you scroll, then build your own drink and watch the cup fill.</p>
         <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#1d1611"></i><i style="background:#e7c999"></i><i style="background:#a9b98c"></i></span><span class="style">Warm editorial</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="little-tern/index.html" data-cat="cafe">
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-little-tern.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/little-tern-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Seaside café</span><h2>Little Tern</h2><p>Bright and coastal. Pack a beach box and watch the order tray and pickup time update.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#f1f6f7"></i><i style="background:#ff7a59"></i><i style="background:#11364a"></i></span><span class="style">Coastal light</span><span class="go">Open <b>&rarr;</b></span></div></div>
     </a>
     <a class="card" href="koji/index.html" data-cat="restaurant">
       <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-koji.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/koji-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
@@ -185,10 +309,25 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
       <div class="body"><span class="cat">PC builds &amp; repairs</span><h2>Northlight</h2><p>Neon and technical. Light ribbons fall as you scroll, then spec a PC and watch the frame rates update.</p>
         <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#080a17"></i><i style="background:#9b5cff"></i><i style="background:#38e8ff"></i></span><span class="style">Neon tech</span><span class="go">Open <b>&rarr;</b></span></div></div>
     </a>
-    <a class="card" href="crumb/index.html" data-cat="bakery">
-      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-crumb.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/crumb-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
-      <div class="body"><span class="cat">Bakery</span><h2>Crumb</h2><p>Bright pastel and friendly. Flour falls onto the loaf, cards stack as you scroll, and you fill a box of six.</p>
-        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#fdf3dc"></i><i style="background:#ef7d57"></i><i style="background:#b8d4a3"></i></span><span class="style">Pastel friendly</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    <a class="card" href="greenwick/index.html" data-cat="garden">
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-greenwick.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/greenwick-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Garden designer</span><h2>Greenwick</h2><p>Lush and botanical. Choose a style and size and get a garden estimate on the spot.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#0f1d16"></i><i style="background:#c9d77a"></i><i style="background:#eef2e6"></i></span><span class="style">Botanical</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="mow-better/index.html" data-cat="garden">
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-mow-better.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/mow-better-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Lawn care</span><h2>Mow Better</h2><p>Fresh and sporty. Build a lawn plan, see the price and check your postcode is covered.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#f3f8ec"></i><i style="background:#2fbf4a"></i><i style="background:#ffd23f"></i></span><span class="style">Fresh &amp; sporty</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="flowright/index.html" data-cat="plumber">
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-flowright.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/flowright-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Emergency plumber</span><h2>Flowright</h2><p>Bold and urgent. Pick the problem for a fixed price and watch the engineer&rsquo;s arrival time count down.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#0b1a2e"></i><i style="background:#ff7a1a"></i><i style="background:#4cc3ff"></i></span><span class="style">Emergency bold</span><span class="go">Open <b>&rarr;</b></span></div></div>
+    </a>
+    <a class="card" href="copperline/index.html" data-cat="plumber">
+      <div class="screen"><span class="shot" style="background-image:url('shared/img/laptop-copperline.jpg')"></span><span class="scroller" style="background-image:url('shared/thumbs/copperline-full.jpg')"></span><span class="peek">Hover to scroll</span></div>
+      <div class="body"><span class="cat">Heating engineer</span><h2>Copperline</h2><p>Copper and warm. Answer four questions to find the right boiler and see the fitted price.</p>
+        <div class="meta"><span class="swatch" aria-hidden="true"><i style="background:#161311"></i><i style="background:#d9813f"></i><i style="background:#f3ebe2"></i></span><span class="style">Copper warm</span><span class="go">Open <b>&rarr;</b></span></div></div>
     </a>
   </section>
 
@@ -217,49 +356,6 @@ footer .wrap{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap}
 <footer><div class="wrap"><span>Qp Digital &middot; Website mockups</span><span class="fiction">The businesses shown are fictional and made for design mockups. Imagery is AI generated.</span></div></footer>
 
 <script src="shared/scroll.js"></script>
-<script>
-(() => {
-  const chips = document.querySelectorAll('.chip');
-  const cards = document.querySelectorAll('.card');
-  chips.forEach((c) => c.addEventListener('click', () => {
-    chips.forEach((x) => x.setAttribute('aria-pressed', x === c));
-    const f = c.dataset.f;
-    cards.forEach((card, i) => {
-      const show = f === 'all' || card.dataset.cat === f;
-      card.classList.toggle('hide', !show);
-      if (show) { card.animate([{ opacity: 0, transform: 'translateY(24px)' }, { opacity: 1, transform: 'none' }], { duration: 600, delay: i * 40, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }); }
-    });
-  }));
-  // Live reel behind the intro: each site's looping hero, crossfaded in turn
-  const reel = [['ember-oat', 'Ember & Oat'], ['forno-rosso', 'Forno Rosso'], ['northlight', 'Northlight'], ['koji', 'Kōji'], ['crumb', 'Crumb'], ['volt', 'Volt Supply']];
-  const va = document.getElementById('reelA'), vb = document.getElementById('reelB');
-  let ri = 0, front = va;
-  function nextReel() {
-    const [slug, name] = reel[ri % reel.length];
-    const back = front === va ? vb : va;
-    const im = new Image();
-    im.onload = () => {
-      back.style.backgroundImage = `url('${slug}/assets/pano-1.jpg')`;
-      back.classList.remove('on'); void back.offsetWidth; back.classList.add('on');
-      front.classList.remove('on'); front = back;
-    };
-    im.src = `${slug}/assets/pano-1.jpg`;
-    const tag = document.getElementById('reelTag');
-    tag.style.opacity = 0; setTimeout(() => { tag.querySelector('b').textContent = name; tag.style.opacity = 1; }, 500);
-    ri++;
-  }
-  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) { nextReel(); setInterval(nextReel, 8000); }
-  else { nextReel(); }
-
-  // "Try a random one"
-  const rnd = document.querySelector('.btn.ghost');
-  rnd.addEventListener('click', (e) => { e.preventDefault(); location.href = cards[Math.floor(Math.random() * cards.length)].getAttribute('href'); });
-  // Touch screens have no hover: scroll the preview while the card is on screen
-  if (matchMedia('(hover: none)').matches) {
-    const io = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle('peeking', e.isIntersecting)), { threshold: 0.7 });
-    cards.forEach((c) => io.observe(c));
-  }
-})();
-</script>
+<script src="shared/hub.js"></script>
 </body>
 </html>

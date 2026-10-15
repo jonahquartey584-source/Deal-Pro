@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fade Theory | Barber Studio</title>
+<meta name="description" content="Skin fades, crops and line-ups in a concrete studio in Peckham. Join the live queue or book a slot.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;700&family=Azeret+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/site.css">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#151515;--ink:#ededed;--muted:#9a9a9a;--accent:#ff6a1a;--on-accent:#140700;
+  --card:rgba(237,237,237,.04);--line:rgba(237,237,237,.1);--line-strong:rgba(237,237,237,.28);
+  --display:'Anton',Impact,sans-serif;--body:'Archivo',system-ui,sans-serif;--mono:'Azeret Mono',monospace;
+  --display-weight:400;--display-case:uppercase;--display-track:.01em;--logo-track:.06em;--header-bg:rgba(21,21,21,.82);--radius:0;--panel-radius:0;--img-radius:0;
+  --scrim:radial-gradient(ellipse 120% 90% at 50% 45%,rgba(21,21,21,0) 40%,rgba(21,21,21,.7) 100%);--band-scrim:rgba(21,21,21,.5);
+  --env:radial-gradient(35% 30% at 90% 10%,rgba(255,106,26,.12),transparent 70%),#151515;
+  --glass:rgba(21,21,21,.62);--live:#ff6a1a;--spot:rgba(255,106,26,.16);--live-scrim:linear-gradient(90deg,rgba(21,21,21,.8),rgba(21,21,21,.2) 60%,transparent)
+}
+.hero .big{font-size:clamp(56px,8.4vw,128px);line-height:.9}.btn{text-transform:uppercase;letter-spacing:.08em;font-family:var(--mono);font-size:13px}.chip,.slot{border-radius:0}
+</style>
+</head>
+<body>
+<div class="curtain" aria-hidden="true"><span class="mark">FADE THEORY<small>Barber studio &middot; Peckham</small></span></div>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">FADE<b>/</b>THEORY</a>
+    <nav aria-label="Main"><a href="#about">Studio</a><a href="#styles">Styles</a><a href="#cards">Lookbook</a><a href="#contact">Visit</a></nav>
+    <a class="btn" href="#styles" data-magnetic>Join the queue</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="1333585" aria-label="Fade Theory">
+    <div class="stage">
+      <div class="media"><div class="poster" role="img" aria-label="Concrete barber studio with an orange neon strip"></div><div class="panos" data-place="FADE THEORY" data-scenes='[{"src": "assets/pano-1.jpg", "name": "The studio"}, {"src": "assets/pano-2.jpg", "name": "Rye Lane"}]'><div class="pano"></div><div class="pano"></div></div><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
+      <div class="scrim"></div>
+      <div class="band live-band" data-a="0" data-b="0.33" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">Peckham &middot; Open till 9pm</span>
+          <span class="big" data-words>Sharp lines. <em>Clean fades.</em></span>
+          <span class="sub rise">Skin fades, crops and line-ups by barbers who sweat the details.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#styles" data-magnetic>Pick a style</a><a class="btn ghost" href="#cards">Lookbook</a></div>
+          <div class="rise" style="--rd:.95s"><div class="scene-tag" aria-hidden="true"></div></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="Live queue">
+          <div class="lc-head"><span class="live-dot">Live queue</span><span><b id="lcAhead">3</b> ahead</span></div>
+          <img class="lc-img" id="lcImg" src="assets/s1.jpg" alt="A skin fade from behind">
+          <div class="lc-row"><div><b id="lcName" style="font-family:var(--display);font-size:22px;text-transform:uppercase">Skin fade</b><br><small style="opacity:.8">Next chair in <b id="lcMins">12</b> min</small></div><button class="btn" type="button" id="lcJoin">Join queue</button></div>
+        </aside>
+      </div>
+      <div class="band pos-right" data-a="0.31" data-b="0.71">
+        <span class="kick">Every line, by hand</span>
+        <span class="big">Zero guards.<br>Zero guesswork.</span>
+        <span class="sub">Foil shavers, a steady hand and a mirror check before you stand up.</span>
+      </div>
+      <div class="band pos-top" data-a="0.68" data-b="1">
+        <span class="kick">Fade Theory</span>
+        <span class="big">Your chair is ready.</span>
+        <span class="sub">Join the live queue from your phone and turn up when it is your turn.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <section class="s-intro" id="about">
+    <div class="wrap">
+      <div>
+        <span class="kicker" data-reveal="up">The studio</span>
+        <h2 class="h2" data-split>Built for one thing: the perfect fade.</h2>
+        <p class="lede" data-reveal="up">Four chairs, good lighting, no small talk unless you want it. We cut from 10 till 9, seven days a week, on Rye Lane.</p>
+        <div class="stats"><div data-reveal="up" style="--d:0ms"><b data-count="4">0</b><small>Chairs</small></div><div data-reveal="up" style="--d:110ms"><b data-count="90">0</b><small>Cuts a day</small></div><div data-reveal="up" style="--d:220ms"><b data-count="4.9" data-suffix="&#9733;">0</b><small>From 1,900 reviews</small></div></div>
+      </div>
+      <figure data-reveal="clip"><img src="assets/pano-1.jpg" alt="Black barber chairs and orange light strips in a concrete studio" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <section class="s-feature" id="styles">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Pick your cut</span>
+      <h2 class="h2" data-split>Choose a style. See the price.</h2>
+      <div class="panel" data-reveal="up">
+        <div>
+          <div class="step"><h4>Style</h4><div class="opts" id="fStyle">
+            <button class="opt" type="button" data-p="25" data-m="35" aria-pressed="true"><img src="assets/s1.jpg" alt="Skin fade"><span>Skin fade</span><small>&pound;25 &middot; 35 min</small></button>
+            <button class="opt" type="button" data-p="28" data-m="40" aria-pressed="false"><img src="assets/s2.jpg" alt="Textured crop"><span>Textured crop</span><small>&pound;28 &middot; 40 min</small></button>
+            <button class="opt" type="button" data-p="18" data-m="20" aria-pressed="false"><img src="assets/s3.jpg" alt="Buzz cut"><span>Buzz cut</span><small>&pound;18 &middot; 20 min</small></button>
+          </div></div>
+          <div class="step"><h4>Add-ons</h4><div class="chips" id="fAdd"><button class="chip" type="button" data-p="8" data-m="10" aria-pressed="false">Beard line-up +&pound;8</button><button class="chip" type="button" data-p="6" data-m="5" aria-pressed="false">Hot towel +&pound;6</button><button class="chip" type="button" data-p="10" data-m="15" aria-pressed="false">Hair design +&pound;10</button></div></div>
+        </div>
+        <div class="result">
+          <h4>Your cut</h4>
+          <img id="fImg" src="assets/s1.jpg" alt="Chosen style">
+          <div class="big-num" id="fPrice">&pound;25</div>
+          <div class="sub-num" id="fTime">35 minutes in the chair</div>
+          <button class="btn" type="button" id="fGo">Join the queue for this</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-cards" id="cards">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Lookbook</span>
+      <h2 class="h2" data-split>Cut this week.</h2>
+      
+      <div class="cards" id="cardGrid" data-stagger>
+        <article class="card"><div class="im"><img src="assets/s1.jpg" alt="Skin fade" loading="lazy"><span class="badge">#1 this week</span></div><div class="t"><h3>Skin fade</h3><p>Bald at the sides, blended to length on top.</p><div class="row"><b>&pound;25</b><span class="kicker">35 min</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s2.jpg" alt="Textured crop" loading="lazy"></div><div class="t"><h3>Textured crop</h3><p>Choppy on top, low fade, sharp fringe.</p><div class="row"><b>&pound;28</b><span class="kicker">40 min</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s3.jpg" alt="Buzz cut" loading="lazy"></div><div class="t"><h3>Buzz cut</h3><p>One length all over, edges lined up by razor.</p><div class="row"><b>&pound;18</b><span class="kicker">20 min</span></div></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-steps">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">How it works</span>
+      <h2 class="h2" data-split>Skip the waiting room.</h2>
+      <div class="steps" data-stagger><div><h3>Join the queue</h3><p>Tap once on your phone. We hold your place.</p></div><div><h3>Get a text</h3><p>We message when you are two away, so you can grab a coffee.</p></div><div><h3>Sit down</h3><p>Show us a photo or tell us the vibe. Pay by card or cash.</p></div></div>
+      <p class="quote" data-reveal="blur">&ldquo;Best fade in South London and I did not wait a minute. The queue thing is genius.&rdquo;<small>Google review</small></p>
+    </div>
+  </section>
+
+  <section class="s-cta" id="contact">
+    <div class="wrap">
+      <div class="cta-box" data-reveal="up">
+        <img src="assets/hero-ending.jpg" alt="A black barber chair under orange light" loading="lazy">
+        <div class="t">
+          <span class="kicker">Visit</span>
+          <h2 class="h2" style="margin:0">88 Rye Lane, SE15.</h2>
+          <p class="lede" style="margin:0">Open every day, 10 till 9. Leave your number and we will text you when the queue is short.</p>
+          <form id="ctaForm"><label class="sr-only" for="ctaInput">Your mobile number</label><input id="ctaInput" placeholder="Your mobile number" required><button class="btn" type="submit">Text me</button></form>
+          <p class="msg" id="ctaMsg" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="foot"><div class="wrap"><span>Fade Theory, 88 Rye Lane, London SE15</span><span class="fiction">Fade Theory is a fictional business made for a design mockup. Imagery is AI generated.</span></div></footer>
+
+<script src="../shared/scroll.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

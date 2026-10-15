@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Daybreak Bakehouse | Rye &amp; Sourdough</title>
+<meta name="description" content="Dark rye, sourdough and seeded loaves baked through the night. Subscribe and collect fresh each week.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alegreya:wght@500;800&family=Alegreya+Sans:wght@400;500;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/site.css">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#1b1410;--ink:#f2e6d6;--muted:#b5a28c;--accent:#e0a03c;--on-accent:#1b1410;
+  --card:rgba(242,230,214,.04);--line:rgba(242,230,214,.12);--line-strong:rgba(242,230,214,.3);
+  --display:'Alegreya',Georgia,serif;--body:'Alegreya Sans',system-ui,sans-serif;--mono:'Courier Prime',monospace;
+  --display-weight:800;--header-bg:rgba(27,20,16,.82);--radius:8px;--panel-radius:14px;--img-radius:10px;
+  --scrim:radial-gradient(ellipse 120% 90% at 50% 45%,rgba(27,20,16,0) 40%,rgba(27,20,16,.72) 100%);--band-scrim:rgba(27,20,16,.5);
+  --env:radial-gradient(40% 35% at 20% 15%,rgba(224,160,60,.1),transparent 70%),#1b1410;
+  --glass:rgba(27,20,16,.6);--live:#e0a03c;--live-scrim:linear-gradient(90deg,rgba(27,20,16,.8),rgba(27,20,16,.25) 60%,transparent)
+}
+.hero .big{font-size:clamp(48px,7vw,104px);line-height:.98}.hero .big em{color:#f4c06a}
+</style>
+</head>
+<body>
+<div class="curtain" aria-hidden="true"><span class="mark">Daybreak<small>Bakehouse &middot; Baked overnight</small></span></div>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">Day<b>break</b></a>
+    <nav aria-label="Main"><a href="#about">The bakehouse</a><a href="#subscribe">Bread club</a><a href="#cards">Loaves</a><a href="#contact">Visit</a></nav>
+    <a class="btn" href="#subscribe" data-magnetic>Join the bread club</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="1641894" aria-label="Daybreak Bakehouse">
+    <div class="stage">
+      <div class="media"><div class="poster" role="img" aria-label="Glowing deck oven in a dark rustic bakery"></div><div class="panos" data-place="Daybreak" data-scenes='[{"src": "assets/pano-1.jpg", "name": "The oven room"}, {"src": "assets/pano-2.jpg", "name": "The shop"}]'><div class="pano"></div><div class="pano"></div></div><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
+      <div class="scrim"></div>
+      <div class="band live-band" data-a="0" data-b="0.33" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">Baked overnight &middot; Open from 7am</span>
+          <span class="big" data-words>Bread worth <em>waking up for.</em></span>
+          <span class="sub rise">Dark rye, slow sourdough and seeded loaves, baked through the night in a deck oven.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#subscribe" data-magnetic>Join the bread club</a><a class="btn ghost" href="#cards">Today&rsquo;s loaves</a></div>
+          <div class="rise" style="--rd:.95s"><div class="scene-tag" aria-hidden="true"></div></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="Out of the oven">
+          <div class="lc-head"><span class="live-dot">Oven on</span><span>Next bake <b id="lcBake">00:00</b></span></div>
+          <img class="lc-img" id="lcImg" src="assets/s1.jpg" alt="Sliced dark rye loaf">
+          <div class="lc-row"><div><b id="lcName" style="font-family:var(--display);font-size:22px">Dark rye</b><br><small id="lcLeft" style="opacity:.8">17 left on the shelf</small></div><button class="btn" type="button" id="lcSave">Reserve one</button></div>
+        </aside>
+      </div>
+      <div class="band pos-right" data-a="0.31" data-b="0.71">
+        <span class="kick">48 hours</span>
+        <span class="big">Slow dough.<br>Deep flavour.</span>
+        <span class="sub">Two days of cold fermentation before a loaf ever sees the oven.</span>
+      </div>
+      <div class="band pos-top" data-a="0.68" data-b="1">
+        <span class="kick">Daybreak Bakehouse</span>
+        <span class="big">Still warm.</span>
+        <span class="sub">Join the bread club and collect your loaves fresh every week.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <section class="s-intro" id="about">
+    <div class="wrap">
+      <div>
+        <span class="kicker" data-reveal="up">The bakehouse</span>
+        <h2 class="h2" data-split>We bake while the street sleeps.</h2>
+        <p class="lede" data-reveal="up">Mo and Hana start at midnight. By seven the shelves are full of rye, sourdough and spelt, all made with stoneground flour from one mill in Somerset.</p>
+        <div class="stats"><div data-reveal="up" style="--d:0ms"><b data-count="48" data-suffix="h">0</b><small>Cold ferment</small></div><div data-reveal="up" style="--d:110ms"><b data-count="11">0</b><small>Loaves on the shelf daily</small></div><div data-reveal="up" style="--d:220ms"><b data-count="640">0</b><small>Bread club members</small></div></div>
+      </div>
+      <figure data-reveal="clip"><img src="assets/pano-1.jpg" alt="A rustic bakery workshop with proofing baskets" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <section class="s-feature" id="subscribe">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Bread club</span>
+      <h2 class="h2" data-split>Your loaves, every week.</h2>
+      <div class="panel" data-reveal="up">
+        <div>
+          <div class="step"><h4>Your loaf</h4><div class="opts" id="dLoaf">
+            <button class="opt" type="button" data-p="5.2" aria-pressed="true"><img src="assets/s1.jpg" alt="Dark rye"><span>Dark rye</span><small>&pound;5.20</small></button>
+            <button class="opt" type="button" data-p="4.8" aria-pressed="false"><img src="assets/s2.jpg" alt="Country sourdough"><span>Sourdough</span><small>&pound;4.80</small></button>
+            <button class="opt" type="button" data-p="5.6" aria-pressed="false"><img src="assets/s3.jpg" alt="Seeded spelt"><span>Seeded spelt</span><small>&pound;5.60</small></button>
+          </div></div>
+          <div class="step"><h4>Loaves a week</h4><div class="chips" id="dQty"><button class="chip" type="button" data-v="1" aria-pressed="false">1</button><button class="chip" type="button" data-v="2" aria-pressed="true">2</button><button class="chip" type="button" data-v="3" aria-pressed="false">3</button></div></div>
+          <div class="step"><h4>How</h4><div class="chips" id="dHow"><button class="chip" type="button" data-v="0" aria-pressed="true">Collect</button><button class="chip" type="button" data-v="2.5" aria-pressed="false">Deliver +&pound;2.50</button></div></div>
+        </div>
+        <div class="result">
+          <h4>Bread club</h4>
+          <img id="dImg" src="assets/s1.jpg" alt="Chosen loaf">
+          <div class="big-num" id="dWeek">&pound;0</div>
+          <div class="sub-num" id="dMonth">a week</div>
+          <div class="line"><span>Members save</span><b>10% on every loaf</b></div>
+          <button class="btn" type="button" id="dGo">Start my bread club</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-cards" id="cards">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Loaves</span>
+      <h2 class="h2" data-split>On the shelf this morning.</h2>
+      
+      <div class="cards" id="cardGrid" data-stagger>
+        <article class="card"><div class="im"><img src="assets/s1.jpg" alt="Dark rye" loading="lazy"><span class="badge">House loaf</span></div><div class="t"><h3>Dark rye</h3><p>Danish style, packed with seeds, keeps for a week.</p><div class="row"><b>&pound;5.20</b><span class="kicker">800g</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s2.jpg" alt="Country sourdough" loading="lazy"></div><div class="t"><h3>Country sourdough</h3><p>Crackly crust, open crumb, 48 hour ferment.</p><div class="row"><b>&pound;4.80</b><span class="kicker">900g</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s3.jpg" alt="Seeded spelt" loading="lazy"></div><div class="t"><h3>Seeded spelt</h3><p>Sunflower, pumpkin and linseed, nutty and soft.</p><div class="row"><b>&pound;5.60</b><span class="kicker">750g</span></div></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-steps">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">How it works</span>
+      <h2 class="h2" data-split>How the bread club works.</h2>
+      <div class="steps" data-stagger><div><h3>Choose</h3><p>Pick your loaf and how many you want each week.</p></div><div><h3>Collect or deliver</h3><p>Grab it from the shop or we bring it on our bike by 9.</p></div><div><h3>Pause any time</h3><p>Away for a week? Skip with one tap. No minimum term.</p></div></div>
+      <p class="quote" data-reveal="blur">&ldquo;The rye is the best I have had outside Copenhagen. I have not bought supermarket bread in a year.&rdquo;<small>Bread club member</small></p>
+    </div>
+  </section>
+
+  <section class="s-cta" id="contact">
+    <div class="wrap">
+      <div class="cta-box" data-reveal="up">
+        <img src="assets/hero-ending.jpg" alt="Dark crusty rye and sourdough loaves on a floured board" loading="lazy">
+        <div class="t">
+          <span class="kicker">Visit</span>
+          <h2 class="h2" style="margin:0">Mill Street, from 7am.</h2>
+          <p class="lede" style="margin:0">Tuesday to Sunday until we sell out. Leave your email and we will tell you when the seasonal loaves land.</p>
+          <form id="ctaForm"><label class="sr-only" for="ctaInput">Your email</label><input id="ctaInput" placeholder="Your email" required><button class="btn" type="submit">Keep me posted</button></form>
+          <p class="msg" id="ctaMsg" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="foot"><div class="wrap"><span>Daybreak Bakehouse, 3 Mill Street</span><span class="fiction">Daybreak Bakehouse is a fictional business made for a design mockup. Imagery is AI generated.</span></div></footer>
+
+<script src="../shared/scroll.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Little Tern | Seaside Café</title>
+<meta name="description" content="A seaside café on the harbour: coffee, crab sandwiches and cake, packed for the beach if you like.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Karla:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/site.css">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f1f6f7;--ink:#11364a;--muted:#5c7682;--accent:#ff7a59;--on-accent:#fff;
+  --card:#ffffff;--line:rgba(17,54,74,.1);--line-strong:rgba(17,54,74,.25);
+  --display:'Young Serif',Georgia,serif;--body:'Karla',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --display-weight:400;--header-bg:rgba(241,246,247,.85);--radius:999px;--panel-radius:32px;--img-radius:28px;
+  --scrim:linear-gradient(90deg,rgba(241,246,247,.45),rgba(241,246,247,0) 50%);--band-scrim:rgba(241,246,247,.7);--shadow:rgba(255,255,255,.6);
+  --env:radial-gradient(40% 35% at 85% 10%,rgba(255,122,89,.12),transparent 70%),radial-gradient(40% 35% at 10% 90%,rgba(42,127,168,.12),transparent 70%),#f1f6f7;
+  --glass:rgba(255,255,255,.68);--glass-line:rgba(17,54,74,.12);--glass-ink:#11364a;--glass-on:#fff;--live:#2a7fa8;--spot:rgba(255,255,255,.3);
+  --live-scrim:linear-gradient(90deg,rgba(241,246,247,.8),rgba(241,246,247,.25) 60%,transparent)
+}
+.hero{color:var(--ink)}.hero .btn.ghost{color:var(--ink);border-color:rgba(17,54,74,.3);background:rgba(255,255,255,.5)}.hero .big{font-size:clamp(46px,6.6vw,96px);line-height:1}.scene-tag{background:rgba(255,255,255,.75);color:var(--ink);border-color:rgba(17,54,74,.1)}.scene-tag b{color:var(--ink)}.tray{display:grid;gap:8px;margin:6px 0}.tray div{display:flex;justify-content:space-between;align-items:center;font-size:15px}.tray button{width:28px;height:28px;border-radius:50%;border:1px solid var(--line-strong);background:transparent;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="curtain" aria-hidden="true"><span class="mark">Little Tern<small>Seaside caf&eacute; &middot; St Ives</small></span></div>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">Little <b>Tern</b></a>
+    <nav aria-label="Main"><a href="#about">The caf&eacute;</a><a href="#order">Beach box</a><a href="#cards">Menu</a><a href="#contact">Find us</a></nav>
+    <a class="btn" href="#order" data-magnetic>Order ahead</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="2190969" aria-label="Little Tern">
+    <div class="stage">
+      <div class="media"><div class="poster" role="img" aria-label="Sea mist and sun over a calm sea through a cafe window"></div><div class="panos" data-place="Little Tern" data-scenes='[{"src": "assets/pano-1.jpg", "name": "The harbour window"}, {"src": "assets/pano-2.jpg", "name": "Porthminster Beach"}]'><div class="pano"></div><div class="pano"></div></div><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
+      <div class="scrim"></div>
+      <div class="band live-band" data-a="0" data-b="0.33" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">On the harbour &middot; Open 8 till 5</span>
+          <span class="big" data-words>Coffee with a <em>sea view.</em></span>
+          <span class="sub rise">Crab sandwiches, good coffee and lemon cake, eaten in or packed for the beach.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#order" data-magnetic>Pack a beach box</a><a class="btn ghost" href="#cards">Menu</a></div>
+          <div class="rise" style="--rd:.95s"><div class="scene-tag" aria-hidden="true"></div></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="Order for the beach">
+          <div class="lc-head"><span class="live-dot">Open now</span><span>High tide <b id="lcTide">14:32</b></span></div>
+          <img class="lc-img" id="lcImg" src="assets/s1.jpg" alt="Crab sandwich">
+          <div class="lc-pills" id="lcPills"><button type="button" data-i="0" aria-pressed="true">Crab sandwich</button><button type="button" data-i="1" aria-pressed="false">Iced latte</button><button type="button" data-i="2" aria-pressed="false">Avo toast</button><button type="button" data-i="3" aria-pressed="false">Lemon cake</button></div>
+          <div class="lc-row"><div><small style="opacity:.75">Ready in about</small><div class="lc-big"><span id="lcMins">8</span> min</div></div><button class="btn" type="button" id="lcAdd">Add &pound;9.50</button></div>
+        </aside>
+      </div>
+      <div class="band pos-right" data-a="0.31" data-b="0.71">
+        <span class="kick">Caught this morning</span>
+        <span class="big">Crab from<br>the harbour.</span>
+        <span class="sub">Landed at six, picked by nine, in your sandwich by ten.</span>
+      </div>
+      <div class="band pos-top" data-a="0.68" data-b="1">
+        <span class="kick">Little Tern</span>
+        <span class="big">Pull up a stool.</span>
+        <span class="sub">Window seats go first. Or take a beach box and find your own spot.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <section class="s-intro" id="about">
+    <div class="wrap">
+      <div>
+        <span class="kicker" data-reveal="up">The caf&eacute;</span>
+        <h2 class="h2" data-split>Small, bright, and two steps from the sand.</h2>
+        <p class="lede" data-reveal="up">Jess and Kit run Little Tern from an old net loft on the harbour. Everything is made in the back kitchen, and the coffee comes from a roaster four miles up the coast.</p>
+        <div class="stats"><div data-reveal="up" style="--d:0ms"><b data-count="4" data-suffix=" miles">0</b><small>To our roaster</small></div><div data-reveal="up" style="--d:110ms"><b data-count="300" data-suffix="+">0</b><small>Crab sandwiches a week</small></div><div data-reveal="up" style="--d:220ms"><b data-count="12">0</b><small>Window seats</small></div></div>
+      </div>
+      <figure data-reveal="clip"><img src="assets/pano-1.jpg" alt="A bright seaside cafe interior" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <section class="s-feature" id="order">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Beach box</span>
+      <h2 class="h2" data-split>Pack a box for the beach.</h2>
+      <div class="panel" data-reveal="up">
+        <div>
+          <div class="step"><h4>Tap to add</h4><div class="opts" id="tItems" style="grid-template-columns:repeat(4,1fr)">
+            <button class="opt" type="button" data-n="Crab sandwich" data-p="9.5"><img src="assets/s1.jpg" alt="Crab sandwich"><span>Crab sandwich</span><small>&pound;9.50</small></button>
+            <button class="opt" type="button" data-n="Iced latte" data-p="3.8"><img src="assets/s2.jpg" alt="Iced latte"><span>Iced latte</span><small>&pound;3.80</small></button>
+            <button class="opt" type="button" data-n="Avocado toast" data-p="8.5"><img src="assets/s3.jpg" alt="Avocado toast"><span>Avo toast</span><small>&pound;8.50</small></button>
+            <button class="opt" type="button" data-n="Lemon cake" data-p="3.6"><img src="assets/s4.jpg" alt="Lemon drizzle cake"><span>Lemon cake</span><small>&pound;3.60</small></button>
+          </div></div>
+          <div class="step"><h4>Pick up</h4><div class="chips" id="tTime"><button class="chip" type="button" aria-pressed="true">In 15 min</button><button class="chip" type="button" aria-pressed="false">11:30</button><button class="chip" type="button" aria-pressed="false">12:30</button><button class="chip" type="button" aria-pressed="false">13:30</button></div></div>
+        </div>
+        <div class="result">
+          <h4>Your beach box</h4>
+          <div class="tray" id="tTray"><p style="color:var(--muted);margin:0">Tap something tasty to add it.</p></div>
+          <div class="line"><span>Total</span><b id="tTotal">&pound;0.00</b></div>
+          <button class="btn" type="button" id="tGo">Order for pick up</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-cards" id="cards">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Menu</span>
+      <h2 class="h2" data-split>Small menu. All made here.</h2>
+      
+      <div class="cards" id="cardGrid" data-stagger>
+        <article class="card"><div class="im"><img src="assets/s1.jpg" alt="Crab sandwich" loading="lazy"><span class="badge">Local crab</span></div><div class="t"><h3>Crab sandwich</h3><p>Brown and white meat, lemon mayo, sourdough.</p><div class="row"><b>&pound;9.50</b><span class="kicker">Until it is gone</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s3.jpg" alt="Avocado toast" loading="lazy"></div><div class="t"><h3>Avo toast</h3><p>Chilli, lime, a poached egg if you like.</p><div class="row"><b>&pound;8.50</b><span class="kicker">All day</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s4.jpg" alt="Lemon drizzle cake" loading="lazy"></div><div class="t"><h3>Lemon drizzle</h3><p>Baked at seven, usually gone by two.</p><div class="row"><b>&pound;3.60</b><span class="kicker">Gluten free option</span></div></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-steps">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">How it works</span>
+      <h2 class="h2" data-split>From our kitchen to your towel.</h2>
+      <div class="steps" data-stagger><div><h3>Pick</h3><p>Choose from today&rsquo;s menu. It changes with the catch.</p></div><div><h3>Pay</h3><p>Pay online and pick a time. We pack it in paper, no plastic.</p></div><div><h3>Collect</h3><p>Grab it from the hatch on the harbour wall and head for the sand.</p></div></div>
+      <p class="quote" data-reveal="blur">&ldquo;The crab sandwich on the harbour wall is my favourite twenty minutes of the whole holiday.&rdquo;<small>Visitor review</small></p>
+    </div>
+  </section>
+
+  <section class="s-cta" id="contact">
+    <div class="wrap">
+      <div class="cta-box" data-reveal="up">
+        <img src="assets/hero-ending.jpg" alt="A cappuccino on a white windowsill with the sea behind" loading="lazy">
+        <div class="t">
+          <span class="kicker">Find us</span>
+          <h2 class="h2" style="margin:0">On the harbour, by the blue door.</h2>
+          <p class="lede" style="margin:0">Open every day, 8 till 5. Dogs welcome inside. Leave your email for the weekly specials.</p>
+          <form id="ctaForm"><label class="sr-only" for="ctaInput">Your email</label><input id="ctaInput" placeholder="Your email" required><button class="btn" type="submit">Send me specials</button></form>
+          <p class="msg" id="ctaMsg" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="foot"><div class="wrap"><span>Little Tern, The Old Net Loft, Harbour Wall</span><span class="fiction">Little Tern is a fictional business made for a design mockup. Imagery is AI generated.</span></div></footer>
+
+<script src="../shared/scroll.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

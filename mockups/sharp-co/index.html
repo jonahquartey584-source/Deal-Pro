@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sharp &amp; Co. | Traditional Barbers</title>
+<meta name="description" content="Traditional barbershop for cuts, beard trims and hot towel shaves. Book a chair online in under a minute.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Libre+Franklin:wght@400;500;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/site.css">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#17110f;--ink:#f3e9dc;--muted:#b3a495;--accent:#c8a165;--on-accent:#17110f;--red:#b3202a;
+  --card:rgba(243,233,220,.04);--line:rgba(243,233,220,.12);--line-strong:rgba(243,233,220,.3);
+  --display:'Abril Fatface',serif;--body:'Libre Franklin',system-ui,sans-serif;--mono:'Courier Prime',monospace;
+  --display-weight:400;--header-bg:rgba(23,17,15,.82);--radius:4px;--panel-radius:6px;--img-radius:4px;
+  --scrim:radial-gradient(ellipse 120% 90% at 50% 45%,rgba(23,17,15,0) 40%,rgba(23,17,15,.7) 100%);--band-scrim:rgba(23,17,15,.5);
+  --env:radial-gradient(40% 35% at 85% 20%,rgba(179,32,42,.12),transparent 70%),#17110f;
+  --glass:rgba(23,17,15,.6);--live:#b3202a;--live-scrim:linear-gradient(90deg,rgba(23,17,15,.8),rgba(23,17,15,.25) 60%,transparent)
+}
+.hero .big{font-size:clamp(50px,7.4vw,112px);line-height:.95}.hero .big em{color:#e8c48a}.card .badge{background:var(--red);color:#fff}.barbers{display:grid;gap:8px;margin-top:6px}.barbers div{display:flex;justify-content:space-between;font-size:14px}.barbers i{font-style:normal;font-family:var(--mono);font-size:12px}
+</style>
+</head>
+<body>
+<div class="curtain" aria-hidden="true"><span class="mark">Sharp &amp; Co.<small>Traditional barbers &middot; Since 1962</small></span></div>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">Sharp <b>&amp;</b> Co.</a>
+    <nav aria-label="Main"><a href="#about">The shop</a><a href="#book">Book</a><a href="#cards">Services</a><a href="#contact">Find us</a></nav>
+    <a class="btn" href="#book" data-magnetic>Book a chair</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="1853712" aria-label="Sharp &amp; Co.">
+    <div class="stage">
+      <div class="media"><div class="poster" role="img" aria-label="Pressed tin ceiling and brass lamps in a vintage barbershop"></div><div class="panos" data-place="Sharp &amp; Co." data-scenes='[{"src": "assets/pano-1.jpg", "name": "The shop floor"}, {"src": "assets/pano-2.jpg", "name": "High Street"}]'><div class="pano"></div><div class="pano"></div></div><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
+      <div class="scrim"></div>
+      <div class="band live-band" data-a="0" data-b="0.33" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">Since 1962 &middot; Walk-ins welcome</span>
+          <span class="big" data-words>A proper cut. <em>No rush.</em></span>
+          <span class="sub rise">Scissor cuts, beard work and hot towel shaves in the same chairs since 1962.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#book" data-magnetic>Book a chair</a><a class="btn ghost" href="#cards">Prices</a></div>
+          <div class="rise" style="--rd:.95s"><div class="scene-tag" aria-hidden="true"></div></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="Chairs right now">
+          <div class="lc-head"><span class="live-dot">Open now</span><span>Walk-in wait <b id="lcWait">15</b> min</span></div>
+          <img class="lc-img" id="lcImg" src="assets/s3.jpg" alt="Scissors and comb on leather">
+          <div class="barbers" id="lcBarbers"><div><span>Tom</span><i>Cutting</i></div><div><span>Ade</span><i>Free now</i></div><div><span>Luca</span><i>Shaving</i></div></div>
+          <div class="lc-row"><small style="opacity:.8" id="lcNext">Next free chair 10:40</small><button class="btn" type="button" id="lcBook">Book a chair</button></div>
+        </aside>
+      </div>
+      <div class="band pos-right" data-a="0.31" data-b="0.71">
+        <span class="kick">Hot towel shave</span>
+        <span class="big">Three towels.<br>One razor.</span>
+        <span class="sub">Thirty minutes, hot lather and a cold finish. The best half hour of your week.</span>
+      </div>
+      <div class="band pos-top" data-a="0.68" data-b="1">
+        <span class="kick">Sharp &amp; Co.</span>
+        <span class="big">Take a seat.</span>
+        <span class="sub">Book online, or walk in and we will put the kettle on.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <section class="s-intro" id="about">
+    <div class="wrap">
+      <div>
+        <span class="kicker" data-reveal="up">The shop</span>
+        <h2 class="h2" data-split>Three chairs, sixty years, one way of doing it.</h2>
+        <p class="lede" data-reveal="up">Grandad opened Sharp &amp; Co. in 1962. The chairs are the same, the tools are better, and nobody leaves until the neckline is right.</p>
+        <div class="stats"><div data-reveal="up" style="--d:0ms"><b data-count="1962">0</b><small>Opened</small></div><div data-reveal="up" style="--d:110ms"><b data-count="3">0</b><small>Chairs, every day</small></div><div data-reveal="up" style="--d:220ms"><b data-count="41000" data-suffix="+">0</b><small>Cuts last decade</small></div></div>
+      </div>
+      <figure data-reveal="clip"><img src="assets/pano-1.jpg" alt="A row of vintage barber chairs and mirrors" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <section class="s-feature" id="book">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Book a chair</span>
+      <h2 class="h2" data-split>Pick a service, a barber and a time.</h2>
+      <div class="panel" data-reveal="up">
+        <div>
+          <div class="step"><h4>Service</h4><div class="chips" id="bSvc"><button class="chip" type="button" data-p="28" data-m="30" aria-pressed="true">Cut &middot; &pound;28</button><button class="chip" type="button" data-p="38" data-m="45" aria-pressed="false">Cut &amp; beard &middot; &pound;38</button><button class="chip" type="button" data-p="32" data-m="30" aria-pressed="false">Hot towel shave &middot; &pound;32</button><button class="chip" type="button" data-p="18" data-m="20" aria-pressed="false">Under 12s &middot; &pound;18</button></div></div>
+          <div class="step"><h4>Barber</h4><div class="chips" id="bWho"><button class="chip" type="button" aria-pressed="true">Anyone</button><button class="chip" type="button" aria-pressed="false">Tom</button><button class="chip" type="button" aria-pressed="false">Ade</button><button class="chip" type="button" aria-pressed="false">Luca</button></div></div>
+          <div class="step"><h4>Day</h4><div class="chips" id="bDay"></div></div>
+          <div class="step"><h4>Time</h4><div class="slots" id="bSlots"></div></div>
+        </div>
+        <div class="result">
+          <h4>Your booking</h4>
+          <img src="assets/s1.jpg" alt="Straight razor and shaving brush" id="bImg">
+          <div class="line"><span>Service</span><b id="bSum1">Cut</b></div>
+          <div class="line"><span>With</span><b id="bSum2">Anyone</b></div>
+          <div class="line"><span>When</span><b id="bSum3">Pick a time</b></div>
+          <div class="line"><span>Price</span><b id="bSum4">&pound;28</b></div>
+          <button class="btn" type="button" id="bGo">Confirm booking</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-cards" id="cards">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Services</span>
+      <h2 class="h2" data-split>The menu has not changed much.</h2>
+      
+      <div class="cards" id="cardGrid" data-stagger>
+        <article class="card"><div class="im"><img src="assets/s3.jpg" alt="Scissors and comb on leather" loading="lazy"></div><div class="t"><h3>Classic cut</h3><p>Scissors or clippers, hot towel, neck shave and a style.</p><div class="row"><b>&pound;28</b><span class="kicker">30 min</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s2.jpg" alt="Hot towels and a lather bowl" loading="lazy"><span class="badge">Most booked</span></div><div class="t"><h3>Cut and beard</h3><p>The full cut, plus a beard shaped and lined with a razor.</p><div class="row"><b>&pound;38</b><span class="kicker">45 min</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s1.jpg" alt="Straight razor and shaving brush" loading="lazy"></div><div class="t"><h3>Hot towel shave</h3><p>Three hot towels, warm lather, a straight razor and a cold finish.</p><div class="row"><b>&pound;32</b><span class="kicker">30 min</span></div></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-steps">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">How it works</span>
+      <h2 class="h2" data-split>In the chair in three taps.</h2>
+      <div class="steps" data-stagger><div><h3>Pick a service</h3><p>Cut, beard or shave. Prices on the board, nothing extra at the till.</p></div><div><h3>Pick your barber</h3><p>Or choose anyone and take the first free chair.</p></div><div><h3>Turn up</h3><p>We text a reminder the night before. Running late? Just reply.</p></div></div>
+      <p class="quote" data-reveal="blur">&ldquo;Been coming since I was six. Tom cut my dad&rsquo;s hair, now he cuts my son&rsquo;s.&rdquo;<small>Regular, three generations</small></p>
+    </div>
+  </section>
+
+  <section class="s-cta" id="contact">
+    <div class="wrap">
+      <div class="cta-box" data-reveal="up">
+        <img src="assets/hero-ending.jpg" alt="A vintage oxblood barber chair in front of an ornate mirror" loading="lazy">
+        <div class="t">
+          <span class="kicker">Find us</span>
+          <h2 class="h2" style="margin:0">14 Market Street. Kettle&rsquo;s on.</h2>
+          <p class="lede" style="margin:0">Open Tuesday to Saturday, 9 till 6. Late on Thursdays until 8. Leave your number and we will text if a chair frees up today.</p>
+          <form id="ctaForm"><label class="sr-only" for="ctaInput">Your mobile number</label><input id="ctaInput" placeholder="Your mobile number" required><button class="btn" type="submit">Text me</button></form>
+          <p class="msg" id="ctaMsg" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="foot"><div class="wrap"><span>Sharp &amp; Co., 14 Market Street</span><span class="fiction">Sharp & Co. is a fictional business made for a design mockup. Imagery is AI generated.</span></div></footer>
+
+<script src="../shared/scroll.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

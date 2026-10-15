@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nest &amp; Key | Friendly Estate Agents</title>
+<meta name="description" content="Homes to buy and rent in Bristol, a mortgage calculator, and agents who answer the phone.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&family=Nunito+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/site.css">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f3f7fb;--ink:#13273d;--muted:#5a6b80;--accent:#ffb703;--on-accent:#13273d;
+  --card:#ffffff;--line:rgba(19,39,61,.1);--line-strong:rgba(19,39,61,.25);
+  --display:'Lexend',system-ui,sans-serif;--body:'Nunito Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',monospace;
+  --display-weight:700;--display-track:-.035em;--header-bg:rgba(243,247,251,.85);--radius:14px;--panel-radius:28px;--img-radius:22px;
+  --scrim:linear-gradient(90deg,rgba(243,247,251,.5),rgba(243,247,251,0) 50%);--band-scrim:rgba(243,247,251,.7);--shadow:rgba(255,255,255,.6);
+  --env:radial-gradient(40% 35% at 85% 10%,rgba(255,183,3,.14),transparent 70%),radial-gradient(40% 35% at 10% 90%,rgba(58,134,255,.1),transparent 70%),#f3f7fb;
+  --glass:rgba(255,255,255,.66);--glass-line:rgba(19,39,61,.12);--glass-ink:#13273d;--glass-on:#fff;--live:#2fbf71;--spot:rgba(255,255,255,.3);
+  --live-scrim:linear-gradient(90deg,rgba(243,247,251,.82),rgba(243,247,251,.3) 60%,transparent)
+}
+.hero{color:var(--ink)}.hero .btn.ghost{color:var(--ink);border-color:rgba(19,39,61,.3);background:rgba(255,255,255,.5)}.hero .big{font-size:clamp(46px,6.6vw,96px);line-height:.98}.hero .big em{color:#3a86ff}.scene-tag{background:rgba(255,255,255,.75);color:var(--ink);border-color:rgba(19,39,61,.1)}.scene-tag b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="curtain" aria-hidden="true"><span class="mark">Nest &amp; Key<small>Estate agents &middot; Bristol</small></span></div>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">nest<b>&amp;</b>key</a>
+    <nav aria-label="Main"><a href="#about">About</a><a href="#mortgage">Mortgages</a><a href="#cards">Homes</a><a href="#contact">Valuation</a></nav>
+    <a class="btn" href="#contact" data-magnetic>Free valuation</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="3106017" aria-label="Nest &amp; Key">
+    <div class="stage">
+      <div class="media"><div class="poster" role="img" aria-label="Blue summer sky above a modern family home"></div><div class="panos" data-place="Nest &amp; Key" data-scenes='[{"src": "assets/pano-1.jpg", "name": "Clifton"}, {"src": "assets/pano-2.jpg", "name": "Open house"}]'><div class="pano"></div><div class="pano"></div></div><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
+      <div class="scrim"></div>
+      <div class="band live-band" data-a="0" data-b="0.33" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">Bristol &middot; Sales and lettings</span>
+          <span class="big" data-words>Find the one that <em>feels like home.</em></span>
+          <span class="sub rise">Friendly agents, honest fees, and a phone that gets answered by a person.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#contact" data-magnetic>Find a home</a><a class="btn ghost" href="#cards">See homes</a></div>
+          <div class="rise" style="--rd:.95s"><div class="scene-tag" aria-hidden="true"></div></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="Homes near you">
+          <div class="lc-head"><span class="live-dot">2 new today</span><span id="lcViews">Bristol</span></div>
+          <img class="lc-img" id="lcImg" src="assets/s1.jpg" alt="A family semi-detached home">
+          <div class="lc-row"><div><b id="lcName" style="font-family:var(--display);font-size:20px">Ashgrove Road, BS6</b><br><small id="lcMeta" style="opacity:.8">3 bed semi &middot; &pound;525,000</small></div><button class="btn" type="button" id="lcBook">Arrange viewing</button></div>
+        </aside>
+      </div>
+      <div class="band pos-right" data-a="0.31" data-b="0.71">
+        <span class="kick">No sale, no fee</span>
+        <span class="big">One flat fee.<br>No surprises.</span>
+        <span class="sub">0.9% including VAT, and you only pay when the keys change hands.</span>
+      </div>
+      <div class="band pos-top" data-a="0.68" data-b="1">
+        <span class="kick">Nest &amp; Key</span>
+        <span class="big">Your next chapter.</span>
+        <span class="sub">Book a free valuation, or tell us what you are looking for and we will call.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <section class="s-intro" id="about">
+    <div class="wrap">
+      <div>
+        <span class="kicker" data-reveal="up">Hello</span>
+        <h2 class="h2" data-split>Estate agents who actually call you back.</h2>
+        <p class="lede" data-reveal="up">We are a team of eight in Clifton. Every seller gets one agent from valuation to completion, with a weekly update whether there is news or not.</p>
+        <div class="stats"><div data-reveal="up" style="--d:0ms"><b data-count="612">0</b><small>Homes moved last year</small></div><div data-reveal="up" style="--d:110ms"><b data-count="4.9" data-suffix="&#9733;">0</b><small>From 830 reviews</small></div><div data-reveal="up" style="--d:220ms"><b data-count="24" data-suffix=" days">0</b><small>Average time to offer</small></div></div>
+      </div>
+      <figure data-reveal="clip"><img src="assets/pano-2.jpg" alt="A bright open plan family kitchen" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <section class="s-feature" id="mortgage">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Mortgage calculator</span>
+      <h2 class="h2" data-split>What would your monthly payment be?</h2>
+      <div class="panel" data-reveal="up">
+        <div>
+          <div class="step"><h4>Home price <span id="mPriceL" style="color:var(--ink)"></span></h4><input class="range" type="range" id="mPrice" min="150000" max="900000" step="5000" value="425000" aria-label="Home price"><div class="range-row"><span>&pound;150k</span><span>&pound;900k</span></div></div>
+          <div class="step"><h4>Deposit <span id="mDepL" style="color:var(--ink)"></span></h4><input class="range" type="range" id="mDep" min="5" max="40" value="15" aria-label="Deposit percent"><div class="range-row"><span>5%</span><span>40%</span></div></div>
+          <div class="step"><h4>Term</h4><div class="chips" id="mTerm"><button class="chip" type="button" data-v="25" aria-pressed="true">25 years</button><button class="chip" type="button" data-v="30" aria-pressed="false">30 years</button><button class="chip" type="button" data-v="35" aria-pressed="false">35 years</button></div></div>
+          <div class="step"><h4>Interest rate <span id="mRateL" style="color:var(--ink)"></span></h4><input class="range" type="range" id="mRate" min="3" max="7" step="0.1" value="4.6" aria-label="Interest rate"></div>
+        </div>
+        <div class="result">
+          <h4>Monthly repayment</h4>
+          <div class="big-num" id="mOut">&pound;0</div>
+          <div class="line"><span>Mortgage amount</span><b id="mLoan">&pound;0</b></div>
+          <div class="line"><span>Deposit</span><b id="mDeposit">&pound;0</b></div>
+          <div class="line"><span>Income usually needed</span><b id="mIncome">&pound;0</b></div>
+          <button class="btn" type="button" id="mAip">Talk to our mortgage adviser</button>
+          <small style="color:var(--muted)">Illustration only. Your home may be repossessed if you do not keep up repayments.</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-cards" id="cards">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Homes</span>
+      <h2 class="h2" data-split>Fresh on the market this week.</h2>
+      
+      <div class="cards" id="cardGrid" data-stagger>
+        <article class="card"><div class="im"><img src="assets/s1.jpg" alt="Three bed semi-detached home" loading="lazy"><span class="badge">New</span><button class="fav" type="button" aria-pressed="false" aria-label="Save Ashgrove Road">&#9825;</button></div><div class="t"><h3>Ashgrove Road</h3><p>3 bed semi, garden, off-road parking</p><div class="row"><b>&pound;525,000</b><span class="kicker">BS6</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s2.jpg" alt="Garden flat with patio" loading="lazy"><span class="badge">Price cut</span><button class="fav" type="button" aria-pressed="false" aria-label="Save Clifton garden flat">&#9825;</button></div><div class="t"><h3>Clifton garden flat</h3><p>2 bed, private patio, share of freehold</p><div class="row"><b>&pound;385,000</b><span class="kicker">BS8</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s3.jpg" alt="New build townhouse" loading="lazy"><span class="badge">To let</span><button class="fav" type="button" aria-pressed="false" aria-label="Save Wapping Wharf townhouse">&#9825;</button></div><div class="t"><h3>Wapping Wharf</h3><p>4 bed townhouse, roof terrace</p><div class="row"><b>&pound;2,450 pcm</b><span class="kicker">BS1</span></div></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-steps">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">How it works</span>
+      <h2 class="h2" data-split>Moving, minus the stress.</h2>
+      <div class="steps" data-stagger><div><h3>Free valuation</h3><p>We visit, look at recent sales on your street and give you a fair asking price.</p></div><div><h3>Photos and viewings</h3><p>Bright photos, a video tour and Saturday open houses, all booked online.</p></div><div><h3>Offer to keys</h3><p>One agent chases the chain every week until moving day.</p></div></div>
+      <p class="quote" data-reveal="blur">&ldquo;Sarah answered every message, even on a Sunday. We had an offer in two weeks.&rdquo;<small>Seller, Redland</small></p>
+    </div>
+  </section>
+
+  <section class="s-cta" id="contact">
+    <div class="wrap">
+      <div class="cta-box" data-reveal="up">
+        <img src="assets/hero-ending.jpg" alt="A bright modern family home with an open front door" loading="lazy">
+        <div class="t">
+          <span class="kicker">Free valuation</span>
+          <h2 class="h2" style="margin:0">Ready to make a move?</h2>
+          <p class="lede" style="margin:0">Pop in your postcode and we will text you three times that suit our local agent.</p>
+          <form id="ctaForm"><label class="sr-only" for="ctaInput">Your postcode</label><input id="ctaInput" placeholder="Your postcode, e.g. BS6 6AA" required><button class="btn" type="submit">Get times</button></form>
+          <p class="msg" id="ctaMsg" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="foot"><div class="wrap"><span>Nest &amp; Key, 14 Whiteladies Road, Bristol BS8</span><span class="fiction">Nest & Key is a fictional business made for a design mockup. Imagery is AI generated.</span></div></footer>
+
+<script src="../shared/scroll.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

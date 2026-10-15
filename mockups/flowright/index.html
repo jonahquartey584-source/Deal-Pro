@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flowright Plumbing | 24/7 Plumbers</title>
+<meta name="description" content="Emergency plumbers across Manchester, on the way in under an hour. Fixed prices before we start.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/site.css">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0b1a2e;--ink:#eaf2fb;--muted:#93a7bf;--accent:#ff7a1a;--on-accent:#fff;--cool:#4cc3ff;
+  --card:rgba(234,242,251,.04);--line:rgba(234,242,251,.1);--line-strong:rgba(234,242,251,.28);
+  --display:'Barlow Condensed',system-ui,sans-serif;--body:'Barlow',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --display-weight:700;--display-case:uppercase;--display-track:.005em;--logo-track:.06em;--header-bg:rgba(11,26,46,.82);--radius:8px;--panel-radius:14px;--img-radius:12px;
+  --scrim:radial-gradient(ellipse 120% 90% at 50% 45%,rgba(11,26,46,0) 40%,rgba(11,26,46,.72) 100%);--band-scrim:rgba(11,26,46,.5);
+  --env:radial-gradient(40% 35% at 85% 15%,rgba(76,195,255,.1),transparent 70%),#0b1a2e;
+  --glass:rgba(11,26,46,.6);--live:#2fbf71;--spot:rgba(76,195,255,.14);--live-scrim:linear-gradient(90deg,rgba(11,26,46,.82),rgba(11,26,46,.25) 60%,transparent)
+}
+.hero .big{font-size:clamp(54px,8vw,124px);line-height:.92}.hero .big em{color:var(--accent)}.btn{text-transform:uppercase;letter-spacing:.06em;font-family:var(--display);font-size:16px}
+</style>
+</head>
+<body>
+<div class="curtain" aria-hidden="true"><span class="mark">FLOWRIGHT<small>24/7 plumbers &middot; Manchester</small></span></div>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">FLOW<b>RIGHT</b></a>
+    <nav aria-label="Main"><a href="#about">About</a><a href="#quote">Price a job</a><a href="#cards">Services</a><a href="#contact">Call out</a></nav>
+    <a class="btn" href="#quote" data-magnetic>Call out now</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="1752053" aria-label="Flowright Plumbing">
+    <div class="stage">
+      <div class="media"><div class="poster" role="img" aria-label="Water droplets falling toward a chrome tap"></div><div class="panos" data-place="FLOWRIGHT" data-scenes='[{"src": "assets/pano-1.jpg", "name": "Bathrooms"}, {"src": "assets/pano-2.jpg", "name": "Kitchens"}]'><div class="pano"></div><div class="pano"></div></div><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
+      <div class="scrim"></div>
+      <div class="band live-band" data-a="0" data-b="0.33" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">24/7 &middot; Gas Safe &middot; Fixed prices</span>
+          <span class="big" data-words>Leak? <em>We are on the way.</em></span>
+          <span class="sub rise">Emergency plumbers across Manchester, usually with you in under an hour, day or night.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#quote" data-magnetic>Price my job</a><a class="btn ghost" href="#cards">Services</a></div>
+          <div class="rise" style="--rd:.95s"><div class="scene-tag" aria-hidden="true"></div></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="Engineers near you">
+          <div class="lc-head"><span class="live-dot"><b id="lcFree">4</b>&nbsp;engineers free</span><span>Manchester</span></div>
+          <div class="lc-pills" id="lcIssue"><button type="button" data-m="38" aria-pressed="true">Leak</button><button type="button" data-m="45" aria-pressed="false">No hot water</button><button type="button" data-m="52" aria-pressed="false">Blocked drain</button></div>
+          <div class="lc-row" style="margin-top:18px"><div><small style="opacity:.75">Nearest engineer</small><div class="lc-big"><span id="lcEta">38</span> min</div></div><div style="text-align:right"><small style="opacity:.75">Call-out</small><div class="lc-big">&pound;69</div></div></div>
+          <div class="lc-bar"><i id="lcBar" style="--w:62%"></i></div>
+          <button class="btn" type="button" id="lcCall" style="width:100%;justify-content:center;margin-top:14px">Send an engineer</button>
+        </aside>
+      </div>
+      <div class="band pos-right" data-a="0.31" data-b="0.71">
+        <span class="kick">Fixed price, upfront</span>
+        <span class="big">No surprises<br>on the bill.</span>
+        <span class="sub">We tell you the price before we pick up a spanner. If it costs more, that is on us.</span>
+      </div>
+      <div class="band pos-top" data-a="0.68" data-b="1">
+        <span class="kick">Flowright</span>
+        <span class="big">Back to normal.</span>
+        <span class="sub">Text a photo of the problem and we will price it in minutes.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <section class="s-intro" id="about">
+    <div class="wrap">
+      <div>
+        <span class="kicker" data-reveal="up">About</span>
+        <h2 class="h2" data-split>Plumbers who turn up, fix it and clean up.</h2>
+        <p class="lede" data-reveal="up">Flowright has eighteen Gas Safe engineers across Greater Manchester, each in a fully stocked van. Most jobs are fixed on the first visit.</p>
+        <div class="stats"><div data-reveal="up" style="--d:0ms"><b data-count="52" data-suffix=" min">0</b><small>Average arrival</small></div><div data-reveal="up" style="--d:110ms"><b data-count="18">0</b><small>Gas Safe engineers</small></div><div data-reveal="up" style="--d:220ms"><b data-count="94" data-suffix="%">0</b><small>Fixed first visit</small></div></div>
+      </div>
+      <figure data-reveal="clip"><img src="assets/pano-1.jpg" alt="A modern navy tiled bathroom" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <section class="s-feature" id="quote">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Price a job</span>
+      <h2 class="h2" data-split>What needs fixing?</h2>
+      <div class="panel" data-reveal="up">
+        <div>
+          <div class="step"><h4>The problem</h4><div class="opts" id="pIssue">
+            <button class="opt" type="button" data-p="89" data-n="Dripping tap" aria-pressed="true"><img src="assets/s1.jpg" alt="Dripping tap"><span>Dripping tap</span><small>From &pound;89</small></button>
+            <button class="opt" type="button" data-p="129" data-n="Leaking pipe" aria-pressed="false"><img src="assets/s2.jpg" alt="Leaking pipe under a sink"><span>Leaking pipe</span><small>From &pound;129</small></button>
+            <button class="opt" type="button" data-p="99" data-n="Blocked sink" aria-pressed="false"><img src="assets/s3.jpg" alt="Blocked sink"><span>Blocked sink</span><small>From &pound;99</small></button>
+          </div></div>
+          <div class="step"><h4>When</h4><div class="chips" id="pWhen"><button class="chip" type="button" data-v="40" aria-pressed="true">Right now</button><button class="chip" type="button" data-v="0" aria-pressed="false">Tomorrow</button><button class="chip" type="button" data-v="-10" aria-pressed="false">This week</button></div></div>
+          <div class="step"><h4>Time of day</h4><div class="chips" id="pTime"><button class="chip" type="button" data-v="0" aria-pressed="true">Daytime</button><button class="chip" type="button" data-v="45" aria-pressed="false">Evening or weekend</button></div></div>
+        </div>
+        <div class="result">
+          <h4>Your fixed price</h4>
+          <img id="pImg" src="assets/s1.jpg" alt="The problem">
+          <div class="big-num" id="pOut">&pound;0</div>
+          <div class="sub-num" id="pWhenL">including parts and labour for a standard fix</div>
+          <button class="btn" type="button" id="pGo">Book this price</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-cards" id="cards">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Services</span>
+      <h2 class="h2" data-split>From drips to disasters.</h2>
+      
+      <div class="cards" id="cardGrid" data-stagger>
+        <article class="card"><div class="im"><img src="assets/s1.jpg" alt="Dripping tap" loading="lazy"></div><div class="t"><h3>Taps and toilets</h3><p>Drips, running cisterns and wobbly taps, fixed in an hour.</p><div class="row"><b>From &pound;89</b><span class="kicker">Fixed price</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s2.jpg" alt="Leaking pipe" loading="lazy"><span class="badge">24/7</span></div><div class="t"><h3>Leaks and bursts</h3><p>Water off fast, the damage stopped, the pipe repaired.</p><div class="row"><b>From &pound;129</b><span class="kicker">Under an hour</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s3.jpg" alt="Blocked sink" loading="lazy"></div><div class="t"><h3>Blocked drains</h3><p>Sinks, showers and toilets cleared, with a camera check.</p><div class="row"><b>From &pound;99</b><span class="kicker">Same day</span></div></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-steps">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">How it works</span>
+      <h2 class="h2" data-split>Fixed in three steps.</h2>
+      <div class="steps" data-stagger><div><h3>Tell us</h3><p>Pick the problem or text a photo. You get a fixed price straight away.</p></div><div><h3>Track us</h3><p>Watch your engineer on the map and get a text when they are close.</p></div><div><h3>Done</h3><p>Fixed, cleaned up and a 12 month guarantee on the work.</p></div></div>
+      <p class="quote" data-reveal="blur">&ldquo;Pipe burst at 11pm. Engineer arrived at 11:40, water off, fixed by midnight. Cannot ask for more.&rdquo;<small>Customer, Didsbury</small></p>
+    </div>
+  </section>
+
+  <section class="s-cta" id="contact">
+    <div class="wrap">
+      <div class="cta-box" data-reveal="up">
+        <img src="assets/hero-ending.jpg" alt="A chrome tap over a white basin with a drop forming" loading="lazy">
+        <div class="t">
+          <span class="kicker">Call out</span>
+          <h2 class="h2" style="margin:0">Need us right now?</h2>
+          <p class="lede" style="margin:0">Leave your number and the nearest engineer will call you back within five minutes.</p>
+          <form id="ctaForm"><label class="sr-only" for="ctaInput">Your phone number</label><input id="ctaInput" placeholder="Your phone number" required><button class="btn" type="submit">Call me back</button></form>
+          <p class="msg" id="ctaMsg" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="foot"><div class="wrap"><span>Flowright Plumbing, 40 Oxford Road, Manchester</span><span class="fiction">Flowright Plumbing is a fictional business made for a design mockup. Imagery is AI generated.</span></div></footer>
+
+<script src="../shared/scroll.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

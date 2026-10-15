@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Copperline Heating | Boilers &amp; Heating</title>
+<meta name="description" content="New boilers, servicing, underfloor heating and smart controls. Get a fixed boiler quote in a minute.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=Work+Sans:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/site.css">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#161311;--ink:#f3ebe2;--muted:#b0a397;--accent:#d9813f;--on-accent:#1a0f06;
+  --card:rgba(243,235,226,.04);--line:rgba(243,235,226,.1);--line-strong:rgba(243,235,226,.28);
+  --display:'Syne',system-ui,sans-serif;--body:'Work Sans',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --display-weight:700;--display-track:-.03em;--header-bg:rgba(22,19,17,.82);--radius:10px;--panel-radius:18px;--img-radius:14px;
+  --scrim:radial-gradient(ellipse 120% 90% at 50% 45%,rgba(22,19,17,0) 40%,rgba(22,19,17,.72) 100%);--band-scrim:rgba(22,19,17,.5);
+  --env:radial-gradient(40% 35% at 15% 20%,rgba(217,129,63,.12),transparent 70%),#161311;
+  --glass:rgba(22,19,17,.6);--live:#d9813f;--live-scrim:linear-gradient(90deg,rgba(22,19,17,.82),rgba(22,19,17,.25) 60%,transparent)
+}
+.hero .big{font-size:clamp(48px,7vw,104px);line-height:.95}.hero .big em{color:#f0a868}
+</style>
+</head>
+<body>
+<div class="curtain" aria-hidden="true"><span class="mark">Copperline<small>Boilers &amp; heating</small></span></div>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">copper<b>line</b></a>
+    <nav aria-label="Main"><a href="#about">About</a><a href="#boiler">Boiler quote</a><a href="#cards">Services</a><a href="#contact">Contact</a></nav>
+    <a class="btn" href="#boiler" data-magnetic>Get a boiler quote</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="2688137" aria-label="Copperline Heating">
+    <div class="stage">
+      <div class="media"><div class="poster" role="img" aria-label="Warm steam rising over copper pipes"></div><div class="panos" data-place="Copperline" data-scenes='[{"src": "assets/pano-1.jpg", "name": "The plant room"}, {"src": "assets/pano-2.jpg", "name": "Warm at home"}]'><div class="pano"></div><div class="pano"></div></div><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
+      <div class="scrim"></div>
+      <div class="band live-band" data-a="0" data-b="0.33" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">Gas Safe &middot; 10 year warranties</span>
+          <span class="big" data-words>Warm home. <em>Lower bills.</em></span>
+          <span class="sub rise">New boilers fitted in a day, servicing that catches problems early, and heating controls that pay for themselves.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#boiler" data-magnetic>Get a fixed quote</a><a class="btn ghost" href="#cards">Services</a></div>
+          <div class="rise" style="--rd:.95s"><div class="scene-tag" aria-hidden="true"></div></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="Your heating, live">
+          <div class="lc-head"><span class="live-dot">Heating on</span><span>Service slots this week: <b id="lcSlots">5</b></span></div>
+          <img class="lc-img" id="lcImg" src="assets/s3.jpg" alt="A smart thermostat on a wall">
+          <div class="lc-row"><div><small style="opacity:.75">Living room</small><div class="lc-big"><span id="lcTemp">19.6</span>&deg;C</div></div><div style="text-align:right"><small style="opacity:.75">Target</small><div class="lc-big"><button type="button" id="lcDown" aria-label="Lower target" style="background:none;border:0;color:inherit;font-size:22px;cursor:pointer">&minus;</button><span id="lcTarget">21</span>&deg;<button type="button" id="lcUp" aria-label="Raise target" style="background:none;border:0;color:inherit;font-size:22px;cursor:pointer">+</button></div></div></div>
+          <button class="btn" type="button" id="lcBook" style="width:100%;justify-content:center;margin-top:14px">Book a boiler service &middot; &pound;79</button>
+        </aside>
+      </div>
+      <div class="band pos-right" data-a="0.31" data-b="0.71">
+        <span class="kick">Fitted in a day</span>
+        <span class="big">Old one out.<br>New one on.</span>
+        <span class="sub">Most boiler swaps take one day, with the old one taken away and the system flushed.</span>
+      </div>
+      <div class="band pos-top" data-a="0.68" data-b="1">
+        <span class="kick">Copperline</span>
+        <span class="big">Feel the difference.</span>
+        <span class="sub">Answer four questions and get a fixed boiler price, fitted this month.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <section class="s-intro" id="about">
+    <div class="wrap">
+      <div>
+        <span class="kicker" data-reveal="up">About</span>
+        <h2 class="h2" data-split>Heating engineers, not salespeople.</h2>
+        <p class="lede" data-reveal="up">Copperline was started by two Gas Safe engineers in 2011. We recommend the right boiler for your home, not the biggest one, and every install comes with a ten year warranty.</p>
+        <div class="stats"><div data-reveal="up" style="--d:0ms"><b data-count="3900" data-suffix="+">0</b><small>Boilers fitted</small></div><div data-reveal="up" style="--d:110ms"><b data-count="10" data-suffix=" yr">0</b><small>Warranty</small></div><div data-reveal="up" style="--d:220ms"><b data-count="1" data-suffix=" day">0</b><small>Typical install</small></div></div>
+      </div>
+      <figure data-reveal="clip"><img src="assets/pano-1.jpg" alt="Copper pipework in a tidy plant room" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <section class="s-feature" id="boiler">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Boiler quote</span>
+      <h2 class="h2" data-split>Find the right boiler for your home.</h2>
+      <div class="panel" data-reveal="up">
+        <div>
+          <div class="step"><h4>Home</h4><div class="chips" id="cHome"><button class="chip" type="button" data-v="0" aria-pressed="false">Flat</button><button class="chip" type="button" data-v="1" aria-pressed="true">Terrace</button><button class="chip" type="button" data-v="2" aria-pressed="false">Semi</button><button class="chip" type="button" data-v="3" aria-pressed="false">Detached</button></div></div>
+          <div class="step"><h4>Bedrooms <span id="cBedsL" style="color:var(--ink)">3</span></h4><input class="range" type="range" id="cBeds" min="1" max="6" value="3" aria-label="Bedrooms"></div>
+          <div class="step"><h4>Bathrooms</h4><div class="chips" id="cBath"><button class="chip" type="button" data-v="1" aria-pressed="true">1</button><button class="chip" type="button" data-v="2" aria-pressed="false">2</button><button class="chip" type="button" data-v="3" aria-pressed="false">3 or more</button></div></div>
+          <div class="step"><h4>Smart thermostat</h4><div class="chips" id="cSmart"><button class="chip" type="button" data-v="190" aria-pressed="true">Add it</button><button class="chip" type="button" data-v="0" aria-pressed="false">No thanks</button></div></div>
+        </div>
+        <div class="result">
+          <h4>We recommend</h4>
+          <img src="assets/s1.jpg" alt="A white wall-hung boiler" id="cImg">
+          <div class="line"><span>Boiler</span><b id="cType">Combi 30kW</b></div>
+          <div class="big-num" id="cOut">&pound;0</div>
+          <div class="sub-num" id="cMonth">or from &pound;0 a month over 5 years</div>
+          <button class="btn" type="button" id="cGo">Lock in this price</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-cards" id="cards">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Services</span>
+      <h2 class="h2" data-split>Everything that keeps you warm.</h2>
+      
+      <div class="cards" id="cardGrid" data-stagger>
+        <article class="card"><div class="im"><img src="assets/s1.jpg" alt="Wall-hung boiler" loading="lazy"><span class="badge">10 yr warranty</span></div><div class="t"><h3>New boilers</h3><p>Combi, system or heat-pump ready, fitted in a day.</p><div class="row"><b>From &pound;2,195</b><span class="kicker">Fixed price</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s2.jpg" alt="Underfloor heating pipes" loading="lazy"></div><div class="t"><h3>Underfloor heating</h3><p>Wet systems for kitchens, bathrooms and extensions.</p><div class="row"><b>From &pound;85/m&sup2;</b><span class="kicker">Survey free</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s3.jpg" alt="Smart thermostat" loading="lazy"></div><div class="t"><h3>Smart controls</h3><p>Room by room control from your phone. Typically saves 12%.</p><div class="row"><b>From &pound;190</b><span class="kicker">Fitted</span></div></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-steps">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">How it works</span>
+      <h2 class="h2" data-split>A new boiler, the easy way.</h2>
+      <div class="steps" data-stagger><div><h3>Quote</h3><p>Four questions, one fixed price. A short video call confirms it.</p></div><div><h3>Install</h3><p>One day. Old boiler out, system flushed, new one on and tested.</p></div><div><h3>Warranty</h3><p>Ten years, plus a free first service and a reminder every year.</p></div></div>
+      <p class="quote" data-reveal="blur">&ldquo;Quote in the morning, fitted on Thursday, and our gas bill is down by a fifth.&rdquo;<small>Customer, Harrogate</small></p>
+    </div>
+  </section>
+
+  <section class="s-cta" id="contact">
+    <div class="wrap">
+      <div class="cta-box" data-reveal="up">
+        <img src="assets/hero-ending.jpg" alt="Polished copper pipes and brass valves on a charcoal wall" loading="lazy">
+        <div class="t">
+          <span class="kicker">Contact</span>
+          <h2 class="h2" style="margin:0">Talk to an engineer.</h2>
+          <p class="lede" style="margin:0">Leave your number and a Gas Safe engineer, not a call centre, will ring you back today.</p>
+          <form id="ctaForm"><label class="sr-only" for="ctaInput">Your phone number</label><input id="ctaInput" placeholder="Your phone number" required><button class="btn" type="submit">Call me back</button></form>
+          <p class="msg" id="ctaMsg" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="foot"><div class="wrap"><span>Copperline Heating, 7 Station Parade, Harrogate</span><span class="fiction">Copperline Heating is a fictional business made for a design mockup. Imagery is AI generated.</span></div></footer>
+
+<script src="../shared/scroll.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

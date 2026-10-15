@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mow Better | Lawn Care &amp; Garden Maintenance</title>
+<meta name="description" content="Lawn mowing, hedge trimming and garden tidy-ups on a plan that suits you. Check your postcode and price in seconds.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/site.css">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f3f8ec;--ink:#17331d;--muted:#5d735f;--accent:#2fbf4a;--on-accent:#fff;--yellow:#ffd23f;
+  --card:#ffffff;--line:rgba(23,51,29,.1);--line-strong:rgba(23,51,29,.25);
+  --display:'Rubik',system-ui,sans-serif;--body:'Rubik',system-ui,sans-serif;--mono:'IBM Plex Mono',monospace;
+  --display-weight:800;--display-track:-.03em;--header-bg:rgba(243,248,236,.85);--radius:16px;--panel-radius:28px;--img-radius:24px;
+  --scrim:linear-gradient(90deg,rgba(243,248,236,.4),rgba(243,248,236,0) 50%);--band-scrim:rgba(243,248,236,.7);--shadow:rgba(255,255,255,.6);
+  --env:radial-gradient(40% 35% at 85% 10%,rgba(255,210,63,.18),transparent 70%),radial-gradient(40% 35% at 10% 90%,rgba(47,191,74,.12),transparent 70%),#f3f8ec;
+  --glass:rgba(255,255,255,.7);--glass-line:rgba(23,51,29,.12);--glass-ink:#17331d;--glass-on:#fff;--live:#2fbf4a;--spot:rgba(255,255,255,.3);
+  --live-scrim:linear-gradient(90deg,rgba(243,248,236,.82),rgba(243,248,236,.3) 60%,transparent)
+}
+.hero{color:var(--ink)}.hero .btn.ghost{color:var(--ink);border-color:rgba(23,51,29,.3);background:rgba(255,255,255,.5)}.hero .big{font-size:clamp(48px,7vw,104px);line-height:.95}.hero .big em{color:var(--accent)}.scene-tag{background:rgba(255,255,255,.75);color:var(--ink);border-color:rgba(23,51,29,.1)}.scene-tag b{color:var(--ink)}.btn{box-shadow:0 5px 0 #1f8a33}
+</style>
+</head>
+<body>
+<div class="curtain" aria-hidden="true"><span class="mark">Mow Better<small>Lawn care &middot; Leeds</small></span></div>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">mow<b>better</b></a>
+    <nav aria-label="Main"><a href="#about">About</a><a href="#plans">Plans</a><a href="#cards">Services</a><a href="#contact">Postcode check</a></nav>
+    <a class="btn" href="#plans" data-magnetic>Get a price</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="2154719" aria-label="Mow Better">
+    <div class="stage">
+      <div class="media"><div class="poster" role="img" aria-label="Blue summer sky over neat green hedges"></div><div class="panos" data-place="Mow Better" data-scenes='[{"src": "assets/pano-1.jpg", "name": "Headingley gardens"}, {"src": "assets/pano-2.jpg", "name": "Harewood lawns"}]'><div class="pano"></div><div class="pano"></div></div><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
+      <div class="scrim"></div>
+      <div class="band live-band" data-a="0" data-b="0.33" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">Leeds &middot; Weekly, fortnightly or monthly</span>
+          <span class="big" data-words>Stripes your neighbours <em>will notice.</em></span>
+          <span class="sub rise">Mowing, edging, hedges and tidy-ups on a plan that suits your garden. Cancel any time.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#plans" data-magnetic>Price my lawn</a><a class="btn ghost" href="#cards">Services</a></div>
+          <div class="rise" style="--rd:.95s"><div class="scene-tag" aria-hidden="true"></div></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="Crews out today">
+          <div class="lc-head"><span class="live-dot">Crews out</span><span><b id="lcDone">27</b> lawns done today</span></div>
+          <img class="lc-img" id="lcImg" src="assets/s1.jpg" alt="Freshly striped lawn">
+          <div class="lc-row"><div><b style="font-family:var(--display);font-size:20px" id="lcArea">Headingley</b><br><small style="opacity:.8">Next free visit <b id="lcNext">tomorrow AM</b></small></div><button class="btn" type="button" id="lcCheck">Price mine</button></div>
+        </aside>
+      </div>
+      <div class="band pos-right" data-a="0.31" data-b="0.71">
+        <span class="kick">Same crew every visit</span>
+        <span class="big">Your lawn.<br>Your gardener.</span>
+        <span class="sub">You get the same two people every time, so they know the bits you care about.</span>
+      </div>
+      <div class="band pos-top" data-a="0.68" data-b="1">
+        <span class="kick">Mow Better</span>
+        <span class="big">Sorted.</span>
+        <span class="sub">Pick a plan, pop in your postcode and we will be there this week.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <section class="s-intro" id="about">
+    <div class="wrap">
+      <div>
+        <span class="kicker" data-reveal="up">About</span>
+        <h2 class="h2" data-split>Garden care that turns up when it says it will.</h2>
+        <p class="lede" data-reveal="up">Mow Better started with one mower and a van in 2016. Now eleven crews look after 1,800 gardens across Leeds, and we still text you before we arrive.</p>
+        <div class="stats"><div data-reveal="up" style="--d:0ms"><b data-count="1800">0</b><small>Gardens on a plan</small></div><div data-reveal="up" style="--d:110ms"><b data-count="11">0</b><small>Local crews</small></div><div data-reveal="up" style="--d:220ms"><b data-count="4.8" data-suffix="&#9733;">0</b><small>From 2,300 reviews</small></div></div>
+      </div>
+      <figure data-reveal="clip"><img src="assets/pano-1.jpg" alt="A row of back gardens with striped lawns" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <section class="s-feature" id="plans">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Plans</span>
+      <h2 class="h2" data-split>Build your plan. See the price.</h2>
+      <div class="panel" data-reveal="up">
+        <div>
+          <div class="step"><h4>How often</h4><div class="chips" id="mFreq"><button class="chip" type="button" data-p="18" data-n="4.3" aria-pressed="true">Weekly</button><button class="chip" type="button" data-p="22" data-n="2.2" aria-pressed="false">Fortnightly</button><button class="chip" type="button" data-p="30" data-n="1" aria-pressed="false">Monthly</button></div></div>
+          <div class="step"><h4>Lawn size <span id="mSizeL" style="color:var(--ink)">Medium</span></h4><input class="range" type="range" id="mSize" min="1" max="4" value="2" aria-label="Lawn size"><div class="range-row"><span>Small</span><span>Huge</span></div></div>
+          <div class="step"><h4>Extras each visit</h4><div class="chips" id="mExtra"><button class="chip" type="button" data-v="8" aria-pressed="false">Hedge trim</button><button class="chip" type="button" data-v="6" aria-pressed="false">Weed and feed</button><button class="chip" type="button" data-v="5" aria-pressed="false">Leaf clear</button></div></div>
+        </div>
+        <div class="result">
+          <h4>Your plan</h4>
+          <div class="big-num" id="mOut">&pound;0</div>
+          <div class="sub-num" id="mPer">a month</div>
+          <div class="line"><span>Per visit</span><b id="mVisit">&pound;0</b></div>
+          <div class="line"><span>Visits a month</span><b id="mVisits">0</b></div>
+          <button class="btn" type="button" id="mGo">Start my plan</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-cards" id="cards">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Services</span>
+      <h2 class="h2" data-split>Everything outside the back door.</h2>
+      
+      <div class="cards" id="cardGrid" data-stagger>
+        <article class="card"><div class="im"><img src="assets/s1.jpg" alt="Striped lawn" loading="lazy"><span class="badge">Most popular</span></div><div class="t"><h3>Mowing and edging</h3><p>Cut, striped, edged and the clippings taken away.</p><div class="row"><b>From &pound;18</b><span class="kicker">Per visit</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s2.jpg" alt="Neatly trimmed hedge" loading="lazy"></div><div class="t"><h3>Hedges and shrubs</h3><p>Shaped by hand, tidied and the cuttings recycled.</p><div class="row"><b>From &pound;35</b><span class="kicker">Per visit</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s3.jpg" alt="Clean patio and cleared borders" loading="lazy"></div><div class="t"><h3>Seasonal tidy</h3><p>Leaves, weeds and a patio jet wash, spring and autumn.</p><div class="row"><b>From &pound;89</b><span class="kicker">One off</span></div></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-steps">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">How it works</span>
+      <h2 class="h2" data-split>Three steps to a tidy garden.</h2>
+      <div class="steps" data-stagger><div><h3>Price it</h3><p>Pick a plan above. The price is the price, no surprises.</p></div><div><h3>First visit</h3><p>Your crew comes this week and texts before they arrive.</p></div><div><h3>Relax</h3><p>Pause, skip or cancel from your phone whenever you like.</p></div></div>
+      <p class="quote" data-reveal="blur">&ldquo;They text before they come, they are always on time, and the lawn has never looked this good.&rdquo;<small>Customer, Roundhay</small></p>
+    </div>
+  </section>
+
+  <section class="s-cta" id="contact">
+    <div class="wrap">
+      <div class="cta-box" data-reveal="up">
+        <img src="assets/hero-ending.jpg" alt="A perfectly striped lawn with a flower border" loading="lazy">
+        <div class="t">
+          <span class="kicker">Postcode check</span>
+          <h2 class="h2" style="margin:0">Do we cover you?</h2>
+          <p class="lede" style="margin:0">We look after most of Leeds and the surrounding villages. Pop your postcode in to check.</p>
+          <form id="ctaForm"><label class="sr-only" for="ctaInput">Your postcode</label><input id="ctaInput" placeholder="Your postcode, e.g. LS6 3HN" required><button class="btn" type="submit">Check</button></form>
+          <p class="msg" id="ctaMsg" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="foot"><div class="wrap"><span>Mow Better, Unit 2, Kirkstall Road, Leeds</span><span class="fiction">Mow Better is a fictional business made for a design mockup. Imagery is AI generated.</span></div></footer>
+
+<script src="../shared/scroll.js"></script>
+<script src="site.js"></script>
+</body>
+</html>

@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Greenwick Gardens | Garden Design &amp; Build</title>
+<meta name="description" content="Garden design and build: cottage borders, modern courtyards and wildlife ponds, planned and planted by one team.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Mulish:wght@400;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../shared/base.css">
+<link rel="stylesheet" href="../shared/site.css">
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0f1d16;--ink:#eef2e6;--muted:#a3b1a0;--accent:#c9d77a;--on-accent:#0f1d16;
+  --card:rgba(238,242,230,.04);--line:rgba(238,242,230,.12);--line-strong:rgba(238,242,230,.3);
+  --display:'Marcellus',Georgia,serif;--body:'Mulish',system-ui,sans-serif;--mono:'DM Mono',monospace;
+  --display-weight:400;--header-bg:rgba(15,29,22,.8);--radius:999px;--panel-radius:30px;--img-radius:26px;
+  --scrim:radial-gradient(ellipse 120% 90% at 50% 45%,rgba(15,29,22,0) 40%,rgba(15,29,22,.7) 100%);--band-scrim:rgba(15,29,22,.5);
+  --env:radial-gradient(40% 35% at 85% 15%,rgba(201,215,122,.1),transparent 70%),#0f1d16;
+  --glass:rgba(15,29,22,.58);--live:#c9d77a;--live-scrim:linear-gradient(90deg,rgba(15,29,22,.8),rgba(15,29,22,.25) 60%,transparent)
+}
+.hero .big{font-size:clamp(48px,7vw,104px);line-height:1}.wx{display:flex;gap:14px;align-items:baseline;margin:12px 0 2px}
+</style>
+</head>
+<body>
+<div class="curtain" aria-hidden="true"><span class="mark">Greenwick<small>Garden design &amp; build</small></span></div>
+<div class="env" aria-hidden="true"></div>
+<div class="scroll-progress" aria-hidden="true"></div>
+<a class="back-link" href="../index.html">&larr; All mockups</a>
+
+<header class="site-header" data-header>
+  <div class="wrap">
+    <a class="logo" href="#top">Green<b>wick</b></a>
+    <nav aria-label="Main"><a href="#about">Studio</a><a href="#estimate">Estimate</a><a href="#cards">Gardens</a><a href="#contact">Consult</a></nav>
+    <a class="btn" href="#contact" data-magnetic>Book a consult</a>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero" data-scrub="assets/hero-scrub.mp4" data-poster="assets/hero-poster.jpg" data-ending="assets/hero-ending.jpg" data-bytes="4262956" aria-label="Greenwick Gardens">
+    <div class="stage">
+      <div class="media"><div class="poster" role="img" aria-label="Sunlight through a green tree canopy"></div><div class="panos" data-place="Greenwick" data-scenes='[{"src": "assets/pano-1.jpg", "name": "Cotswold terrace"}, {"src": "assets/pano-2.jpg", "name": "City courtyard"}]'><div class="pano"></div><div class="pano"></div></div><video class="scrub" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video></div>
+      <div class="scrim"></div>
+      <div class="band live-band" data-a="0" data-b="0.33" data-static>
+        <div class="copy">
+          <span class="kick rise" style="--rd:.05s">Garden design &amp; build &middot; Oxfordshire</span>
+          <span class="big" data-words>Gardens that <em>grow on you.</em></span>
+          <span class="sub rise">We design it, build it and plant it, then come back each season to help it settle in.</span>
+          <div class="ctas rise" style="--rd:.75s"><a class="btn" href="#contact" data-magnetic>Estimate my garden</a><a class="btn ghost" href="#cards">Our gardens</a></div>
+          <div class="rise" style="--rd:.95s"><div class="scene-tag" aria-hidden="true"></div></div>
+        </div>
+        <aside class="live-card" data-tilt aria-label="This week in the garden">
+          <div class="lc-head"><span class="live-dot">This week</span><span>Plant now: <b>tulip bulbs</b></span></div>
+          <img class="lc-img" id="lcImg" src="assets/s1.jpg" alt="A cottage garden border">
+          <div class="wx"><span class="lc-big"><span id="lcTemp">17</span>&deg;C</span><small style="opacity:.8" id="lcWx">Light breeze, good for planting</small></div>
+          <div class="lc-row"><small style="opacity:.8">Next free consult <b id="lcSlot">Thu 10:00</b></small><button class="btn" type="button" id="lcBook">Book it</button></div>
+        </aside>
+      </div>
+      <div class="band pos-right" data-a="0.31" data-b="0.71">
+        <span class="kick">Design to planting</span>
+        <span class="big">One team.<br>Start to finish.</span>
+        <span class="sub">The designer who draws your garden is on site the day it is built.</span>
+      </div>
+      <div class="band pos-top" data-a="0.68" data-b="1">
+        <span class="kick">Greenwick Gardens</span>
+        <span class="big">Step outside.</span>
+        <span class="sub">A consultation takes an hour in your garden and costs nothing.</span>
+      </div>
+      <div class="hint" aria-hidden="true">Scroll<i></i></div>
+      <svg class="ring" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="126" style="stroke-dashoffset:var(--ld,126)"/></svg>
+    </div>
+  </section>
+
+  <section class="s-intro" id="about">
+    <div class="wrap">
+      <div>
+        <span class="kicker" data-reveal="up">The studio</span>
+        <h2 class="h2" data-split>Gardens designed for how you actually live.</h2>
+        <p class="lede" data-reveal="up">Ellie Greenwick trained at Kew and has designed over three hundred gardens across Oxfordshire. Her team builds every one, from the first stone to the last bulb.</p>
+        <div class="stats"><div data-reveal="up" style="--d:0ms"><b data-count="312">0</b><small>Gardens designed</small></div><div data-reveal="up" style="--d:110ms"><b data-count="3">0</b><small>RHS medals</small></div><div data-reveal="up" style="--d:220ms"><b data-count="100" data-suffix="%">0</b><small>Built by our own team</small></div></div>
+      </div>
+      <figure data-reveal="clip"><img src="assets/pano-1.jpg" alt="A designed English garden with stone terraces" loading="lazy"></figure>
+    </div>
+  </section>
+
+  <section class="s-feature" id="estimate">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Instant estimate</span>
+      <h2 class="h2" data-split>How much would your garden cost?</h2>
+      <div class="panel" data-reveal="up">
+        <div>
+          <div class="step"><h4>Style</h4><div class="chips" id="gStyle"><button class="chip" type="button" data-r="95" data-i="s1.jpg" aria-pressed="true">Cottage</button><button class="chip" type="button" data-r="160" data-i="pano-2.jpg" aria-pressed="false">Modern courtyard</button><button class="chip" type="button" data-r="120" data-i="s3.jpg" aria-pressed="false">Wildlife and pond</button><button class="chip" type="button" data-r="80" data-i="s2.jpg" aria-pressed="false">Family lawn</button></div></div>
+          <div class="step"><h4>Garden size <span id="gSizeL" style="color:var(--ink)">120 m&sup2;</span></h4><input class="range" type="range" id="gSize" min="20" max="500" step="10" value="120" aria-label="Garden size in square metres"><div class="range-row"><span>20 m&sup2;</span><span>500 m&sup2;</span></div></div>
+          <div class="step"><h4>Extras</h4><div class="chips" id="gExtra"><button class="chip" type="button" data-v="4500" aria-pressed="false">Lighting</button><button class="chip" type="button" data-v="6500" aria-pressed="false">Patio</button><button class="chip" type="button" data-v="3200" aria-pressed="false">Irrigation</button></div></div>
+        </div>
+        <div class="result">
+          <h4>Design and build</h4>
+          <img id="gImg" src="assets/s1.jpg" alt="Garden style">
+          <div class="big-num" id="gOut">&pound;0</div>
+          <div class="sub-num" id="gRange">range</div>
+          <div class="line"><span>Time on site</span><b id="gWeeks">0 weeks</b></div>
+          <button class="btn" type="button" id="gGo">Book a free consultation</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-cards" id="cards">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">Gardens</span>
+      <h2 class="h2" data-split>A few we have planted.</h2>
+      
+      <div class="cards" id="cardGrid" data-stagger>
+        <article class="card"><div class="im"><img src="assets/s1.jpg" alt="Cottage garden border" loading="lazy"><span class="badge">RHS silver</span></div><div class="t"><h3>The Old Rectory</h3><p>Deep cottage borders, roses and a hidden bench.</p><div class="row"><b>Witney</b><span class="kicker">2024</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s2.jpg" alt="Family lawn garden" loading="lazy"></div><div class="t"><h3>Long Acre</h3><p>A family garden with a play lawn and fruit trees.</p><div class="row"><b>Abingdon</b><span class="kicker">2025</span></div></div></article>
+        <article class="card"><div class="im"><img src="assets/s3.jpg" alt="Wildlife pond garden" loading="lazy"></div><div class="t"><h3>Mill Pond</h3><p>A natural pond with marginal planting for wildlife.</p><div class="row"><b>Woodstock</b><span class="kicker">2025</span></div></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="s-steps">
+    <div class="wrap">
+      <span class="kicker" data-reveal="up">How it works</span>
+      <h2 class="h2" data-split>From first visit to first bloom.</h2>
+      <div class="steps" data-stagger><div><h3>Consultation</h3><p>An hour in your garden talking about how you want to use it.</p></div><div><h3>Design</h3><p>Plans, planting lists and a fixed price within three weeks.</p></div><div><h3>Build and plant</h3><p>Our own team builds it, then we visit each season for a year.</p></div></div>
+      <p class="quote" data-reveal="blur">&ldquo;We had no idea what to do with the space. Now we eat outside every evening from May to September.&rdquo;<small>Client, Woodstock</small></p>
+    </div>
+  </section>
+
+  <section class="s-cta" id="contact">
+    <div class="wrap">
+      <div class="cta-box" data-reveal="up">
+        <img src="assets/hero-ending.jpg" alt="A landscaped garden with a stone path and pond" loading="lazy">
+        <div class="t">
+          <span class="kicker">Free consultation</span>
+          <h2 class="h2" style="margin:0">Let us walk your garden.</h2>
+          <p class="lede" style="margin:0">Tell us your postcode and we will book an hour on site with Ellie.</p>
+          <form id="ctaForm"><label class="sr-only" for="ctaInput">Your postcode</label><input id="ctaInput" placeholder="Your postcode, e.g. OX20 1TA" required><button class="btn" type="submit">Book a visit</button></form>
+          <p class="msg" id="ctaMsg" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="foot"><div class="wrap"><span>Greenwick Gardens, The Potting Shed, Woodstock</span><span class="fiction">Greenwick Gardens is a fictional business made for a design mockup. Imagery is AI generated.</span></div></footer>
+
+<script src="../shared/scroll.js"></script>
+<script src="site.js"></script>
+</body>
+</html>
