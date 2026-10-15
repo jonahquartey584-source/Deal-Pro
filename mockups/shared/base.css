@@ -87,13 +87,6 @@ html.reduce .hero .live-band .w,html.reduce .hero .live-band .rise,html.reduce .
 .hero .panos{position:absolute;inset:0;overflow:hidden;transition:opacity .8s ease}
 .hero:not(.at-top) .panos{opacity:0}
 .hero .pano{position:absolute;left:0;top:0;background:0 0/100% 100% no-repeat;opacity:0;transition:opacity 1.6s ease;will-change:transform,opacity}
-.pin{position:absolute;display:flex;flex-direction:column;align-items:center;transform:translate(-50%,-100%);pointer-events:none;animation:pinDrop .55s cubic-bezier(.3,1.6,.5,1) both,pinOut .8s ease 3.3s forwards}
-.pin i{width:18px;height:18px;border-radius:50% 50% 50% 0;rotate:-45deg;background:var(--pin,var(--accent));box-shadow:0 0 16px var(--pin,var(--accent));position:relative}
-.pin i::after{content:"";position:absolute;inset:5px;border-radius:50%;background:#fff}
-.pin::after{content:"";width:18px;height:6px;border-radius:50%;background:rgba(0,0,0,.35);margin-top:4px}
-.pin span{font:600 12px/1 var(--body);padding:6px 11px;border-radius:12px;background:rgba(16,16,20,.88);color:#fff;border:1px solid var(--pin,var(--accent));white-space:nowrap;margin-bottom:8px;opacity:0;animation:heroUp .35s ease .5s forwards;transform:translateY(6px)}
-@keyframes pinDrop{from{opacity:0;transform:translate(-50%,-100%) translateY(-60px)}}
-@keyframes pinOut{to{opacity:0}}
 .scene-tag{margin-top:18px;width:fit-content;display:flex;align-items:center;gap:8px;padding:7px 14px 7px 10px;border-radius:999px;background:rgba(12,12,15,.72);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.12);font:500 12.5px/1.2 var(--body);color:rgba(255,255,255,.85);text-shadow:none;transition:opacity .6s ease,transform .6s cubic-bezier(.2,.8,.2,1)}
 .scene-tag i{width:7px;height:7px;border-radius:50%;background:var(--pin,var(--accent));box-shadow:0 0 0 4px rgba(255,255,255,.12)}
 .scene-tag b{color:#fff;font-weight:600}
