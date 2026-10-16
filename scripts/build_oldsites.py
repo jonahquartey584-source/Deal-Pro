@@ -78,6 +78,31 @@ def degrade(slug, name, size, out_name, distort=None, q=22):
     return 'img/' + out_name
 
 
+def extra(d, imgs, h='h2'):
+    """More of the same old-site filler so each page runs well past one screen."""
+    name, trade, _, town, phone, est = d[:6]
+    pics = ''.join(f'<img src="{i}" width="200" height="150" style="margin:4px">' for i in imgs + imgs[::-1])
+    return f'''
+<{h}>Opening Hours</{h}>
+<table border="1" cellpadding="4" cellspacing="0"><tr><td>Monday - Friday</td><td>9:00am - 5:30pm</td></tr><tr><td>Saturday</td><td>9:00am - 4:00pm</td></tr><tr><td>Sunday</td><td>CLOSED</td></tr><tr><td>Bank Holidays</td><td>Please phone</td></tr></table>
+<{h}>What Our Customers Say</{h}>
+<p><i>"Excellent service, would definately recommend to anyone!!"</i> - Mrs J. Smith</p>
+<p><i>"Very professional and friendly. Will be using {E(name)} again."</i> - Dave, {E(town)}</p>
+<p><i>"Great value for money. 10/10"</i> - Anonymous</p>
+<{h}>More Photos</{h}>
+<div>{pics}</div>
+<{h}>Frequently Asked Questions</{h}>
+<p><b>Q: Do you take card payments?</b><br>A: Yes we now accept all major credit and debit cards (minimum spend £10).</p>
+<p><b>Q: Where can I park?</b><br>A: There is a pay and display car park nearby.</p>
+<p><b>Q: Do you have a website?</b><br>A: Yes, you are on it!</p>
+<{h}>How To Find Us</{h}>
+<p>{E(name)}<br>{E(town)}<br>Tel: {E(phone)}<br><br>[ Map coming soon ]</p>
+<{h}>Useful Links</{h}>
+<p><a href="#">Yell.com listing</a> | <a href="#">Our Facebook page</a> | <a href="#">Link to us</a> | <a href="#">Webring</a></p>
+<p>Trading since {est}. Registered in England and Wales.</p>
+'''
+
+
 def page(title, body, css, viewport=False):
     # No viewport meta on purpose: these sites predate phones and shrink to a postage stamp on one.
     return f'''<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -130,6 +155,7 @@ table.svc{border:2px outset #ccc;background:#eee;font-size:15px}table.svc td{pad
 <p><a href="#">Sign our Guestbook</a></p>
 </td></tr></table>
 <center><table cellpadding="4"><tr>{pics}</tr></table></center>
+<div style="padding:0 12px">{extra(d, imgs, "h3")}</div>
 <div class="foot">You are visitor number <span class="counter">004213</span><br>
 This site is best viewed in Internet Explorer 6 at 800 x 600 resolution<br>
 &copy; {E(name)} 2009. Last updated 14/03/2009. Site by Dave's Web Designs</div>
@@ -162,6 +188,7 @@ table{width:100%;border-collapse:collapse}td{border-bottom:1px dotted #444;paddi
 <h2>WELCOME!!</h2><p>{E(blurb)}</p>
 <h2>SERVICES &amp; PRICES</h2><table>{rows}</table>
 <h2>GALLERY</h2><div class="pics">{pics}</div>
+{extra(d, imgs)}
 <h2>CONTACT</h2><p>PHONE: <b style="color:#0f0">{E(phone)}</b> &nbsp; | &nbsp; ESTABLISHED {est}</p>
 </div>
 <div class="foot">&copy; 2004 {E(name)} :: All Rights Reserved :: Website by XtremeDesignz :: Add us to your favourites!</div>
@@ -198,6 +225,7 @@ ul.svc{list-style:none;padding:0}ul.svc li{padding:6px;border-bottom:1px solid #
 <h2>Our Services</h2><ul class="svc">{rows}</ul>
 <p><a class="btn" href="#">Request a Quote &raquo;</a></p>
 <h2>Photo Gallery</h2><div class="pics">{pics}</div>
+{extra(d, imgs)}
 </div><div class="side news">
 <h2>Latest News</h2>
 <p><b>12/11/2011</b><br>We have a new website! Please let us know what you think.</p>
@@ -238,6 +266,7 @@ table{border-collapse:collapse;width:60%}td{border:1px solid #ddd;padding:6px}
 <h2>About Us</h2><p>{E(blurb)}</p>
 <div class="boxes">{pics}</div>
 <h2>Price List</h2><table>{rows}</table>
+{extra(d, imgs)}
 <p><span class="fb">f Like</span> 23 people like this. Be the first of your friends.</p>
 </div>
 <div class="foot"><span>&copy; 2013 {E(name)}, {E(town)}. All Rights Reserved.</span><span>Powered by WordPress | Theme: Business Pro Lite by FreeThemes4U</span></div>
