@@ -76,7 +76,7 @@
 
   // "Try a random one"
   const rnd = document.querySelector('.btn.ghost');
-  rnd.addEventListener('click', (e) => { e.preventDefault(); location.href = cards[Math.floor(Math.random() * cards.length)].getAttribute('href'); });
+  rnd.addEventListener('click', (e) => { e.preventDefault(); window.open(cards[Math.floor(Math.random() * cards.length)].getAttribute('href'), '_blank', 'noopener'); });
   // Touch screens have no hover: scroll the preview while the card is on screen
   if (matchMedia('(hover: none)').matches) {
     const io = new IntersectionObserver((es) => es.forEach((e) => e.target.classList.toggle('peeking', e.isIntersecting)), { threshold: 0.7 });
