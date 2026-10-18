@@ -1181,11 +1181,12 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
           <div class="fs-h"><h2>Assumptions</h2></div>
           <div class="row2">
             <label class="f"><span>Platform fees</span><span class="ix has-suf"><input class="inp num" type="number" id="aFee" step="0.5"><span class="suf">%</span></span></label>
-            <label class="f"><span>Cleaning per stay</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="aClean"></span></label>
+            <label class="f"><span>Cleaning cost per stay</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="aClean"></span></label>
+            <label class="f"><span>Cleaning fee guests pay</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="aCfee"></span></label>
             <label class="f"><span>Average stay</span><span class="ix has-suf" style="--sp:56px"><input class="inp num" type="number" id="aStay" step="0.5" min="1"><span class="suf">nights</span></span></label>
             <label class="f"><span>Other costs pcm</span><span class="ix"><span class="pre">£</span><input class="inp num" type="number" id="aOther"></span></label>
           </div>
-          <p class="note">30-day month. Other costs cover insurance, software, consumables and minor repairs per unit. Rent is treated as bills-included.</p>
+          <p class="note">30-day month. Other costs cover insurance, software, consumables and minor repairs per unit. Rent is treated as bills-included: if yours excludes bills, add gas, electricity, water, broadband and council tax to Other costs. Guests usually pay a cleaning fee on top of the nightly rate, so only the gap between the cleaning cost and that fee counts against you.</p>
         </div>
       </div>
       <div id="results"></div>
@@ -1565,7 +1566,7 @@ const SAMPLE_AD=`Deal 2 - (£1,650 studio)
 function sampleDeal(){return{
   id:'d1',name:'Finsbury Park Studio Pair',area:'Islington, London N4 (Zone 2)',strat:'R2SA',london:true,status:'Analysing',
   units:[{label:'Studio A',rent:1500,dep:1500,rate:165},{label:'Studio B',rent:1650,dep:1650,rate:180}],
-  a:{fee:15,clean:45,stay:3,other:150},
+  a:{fee:15,clean:45,cfee:45,stay:3,other:150},
   dd:DD_TEMPLATE.map(x=>({k:x.k,s:'none',n:''})),ai:false,
   pack:{biz:'',redress:'',fee:'',nda:true,final:false},
   send:{co:'',email:'',addr:'',ll:'',role:'Owner / landlord',phone:'',lemail:'',use:'Serviced accommodation',docs:'Advert, photos, landlord emails'}
@@ -1646,8 +1647,10 @@ document.addEventListener('click',e=>{
 
 /* ---------- model ---------- */
 const D=30;
-function month(u,occ,rate,a){rate=rate??u.rate;const n=Math.round(D*occ),rev=n*rate,fees=rev*a.fee/100,cl=n/Math.max(a.stay,1)*a.clean;return{n,rev,fees,cl,surplus:rev-fees-cl-u.rent-a.other}}
-function be(u,a,rate){rate=rate??u.rate;const per=rate*(1-a.fee/100)-a.clean/Math.max(a.stay,1);if(per<=0)return Infinity;return (u.rent+a.other)/per/D}
+/* Guests normally pay a separate cleaning fee, so only the shortfall is a host cost. Older deals without a guest fee treat it as covering the cleaner. */
+const cnet=a=>a.clean-(a.cfee==null?a.clean:a.cfee);
+function month(u,occ,rate,a){rate=rate??u.rate;const n=Math.round(D*occ),rev=n*rate,fees=rev*a.fee/100,cl=n/Math.max(a.stay,1)*cnet(a);return{n,rev,fees,cl,surplus:rev-fees-cl-u.rent-a.other}}
+function be(u,a,rate){rate=rate??u.rate;const per=rate*(1-a.fee/100)-cnet(a)/Math.max(a.stay,1);if(per<=0)return Infinity;return (u.rent+a.other)/per/D}
 const OCC=[.6,.8,1];
 
 /* ---------- shell / nav ---------- */
@@ -1722,7 +1725,8 @@ document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g
 /* ---------- analyse ---------- */
 function bindDeal(){const d=S.deal;try{renderStratOpts()}catch(e){}/* defined later in the script */
   $('#dName').value=d.name;$('#dArea').value=d.area;$('#dStrat').value=d.strat;$('#dLondon').checked=d.london;
-  $('#aFee').value=d.a.fee;$('#aClean').value=d.a.clean;$('#aStay').value=d.a.stay;$('#aOther').value=d.a.other;renderUnits();renderResults()}
+  if(d.a.cfee==null)d.a.cfee=d.a.clean;
+  $('#aFee').value=d.a.fee;$('#aClean').value=d.a.clean;$('#aCfee').value=d.a.cfee;$('#aStay').value=d.a.stay;$('#aOther').value=d.a.other;renderUnits();renderResults()}
 function renderUnits(){const d=S.deal;
   $('#units').innerHTML=d.units.map((u,i)=>`<div class="unit" style="${i?'border-top:1px solid var(--line);padding-top:12px;margin-top:12px':''}">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="mono muted" style="font-size:12px;min-width:14px">${i+1}</span>
@@ -1742,7 +1746,7 @@ $('#addUnit').addEventListener('click',()=>{const n=S.deal.units.length+1;S.deal
 // Typing the area ticks or clears "In London" (it can still be changed by hand).
 $('#dArea').addEventListener('change',e=>{const v=e.target.value.trim();if(!v)return;const lon=isLondonText(v);if(lon!==!!S.deal.london){S.deal.london=lon;$('#dLondon').checked=lon;renderResults();save()}});
 $('#dLondon').addEventListener('change',e=>{S.deal.london=e.target.checked;tweenNext=true;renderResults();save()});
-[['#aFee','fee'],['#aClean','clean'],['#aStay','stay'],['#aOther','other']].forEach(([s,k])=>$(s).addEventListener('input',e=>{S.deal.a[k]=+e.target.value||0;tweenNext=true;renderResults();save()}));
+[['#aFee','fee'],['#aClean','clean'],['#aCfee','cfee'],['#aStay','stay'],['#aOther','other']].forEach(([s,k])=>$(s).addEventListener('input',e=>{S.deal.a[k]=+e.target.value||0;tweenNext=true;renderResults();save()}));
 
 function renderMeta(){const d=S.deal,n=d.units.length,ix=S.analysedDealIds.indexOf(d.id);
   $('#dealMeta').textContent=[isExample(d)?'Example':'',d.area,d.strat,n+' unit'+(n>1?'s':''),S.plan==='Free'&&ix>=0?`Free analysis ${ix+1} of ${FREE_ANALYSES}`:''].filter(Boolean).join(' · ')}
@@ -1784,18 +1788,18 @@ function renderResults(){const d=S.deal,a=d.a,U=d.units;syncName();renderMeta();
     ${row('Occupied nights',(u,m)=>String(m.n))}
     ${row('Booking revenue',(u,m)=>m.rev)}
     ${row(`Platform fees (${a.fee}%)`,(u,m)=>m.fees)}
-    ${row('Cleaning and linen',(u,m)=>m.cl)}
+    ${row('Cleaning, net of guest fee',(u,m)=>m.cl)}
     ${row('Rent incl. bills',(u,m)=>u.rent)}
     ${row('Other costs',(u,m)=>a.other)}
     ${row('Operating surplus',(u,m)=>m.surplus,'total')}
   </tbody></table></div>
-  <p class="note">£${a.clean} cleaning per turnover with a ${a.stay}-night average stay. 100% is a theoretical ceiling. Illustrative only, not a forecast.</p></section>`;
+  <p class="note">£${a.clean} cleaning cost per turnover, less a £${a.cfee==null?a.clean:a.cfee} cleaning fee paid by guests, with a ${a.stay}-night average stay. 100% is a theoretical ceiling. Illustrative only, not a forecast.</p></section>`;
   // sensitivity
   let sr='';U.forEach((u,ui)=>[u.rate,u.rate-15,u.rate-35].forEach((r,k)=>{const v=OCC.map(o=>month(u,o,r,a).surplus);const b=be(u,a,r);
     sr+=`<tr>${k===0?`<td rowspan="3" class="u${ui===U.length-1?' lb':''}">${esc(u.label)}</td>`:''}<td class="n">${k===0?'<span class="base">base</span> ':''}£${r}</td>${v.map(x=>`<td class="n${x<0?' neg':''}">${gbp(x)}</td>`).join('')}<td class="n">${isFinite(b)?'~'+pct(b):'Never'}</td></tr>`}));
   h+=`<section class="sec"><div class="sec-h"><h2>If the nightly rate is lower</h2><span class="sec-meta">Monthly surplus per unit</span></div><div class="tw"><table><thead><tr><th>Unit</th><th>Nightly rate</th><th>60%</th><th>80%</th><th>100%</th><th>Break-even</th></tr></thead><tbody>${sr}</tbody></table></div></section>`;
   // break-even tracks
-  h+=`<section class="sec"><div class="sec-h"><h2>Break-even occupancy</h2><span class="sec-meta">Covers rent, platform fees, cleaning and other costs</span></div><div class="be-list">${U.map((u,i)=>{const b=bes[i];const x=Math.min(isFinite(b)?b:1,1)*100;
+  h+=`<section class="sec"><div class="sec-h"><h2>Break-even occupancy</h2><span class="sec-meta">Covers rent, platform fees, cleaning not paid by guests and other costs</span></div><div class="be-list">${U.map((u,i)=>{const b=bes[i];const x=Math.min(isFinite(b)?b:1,1)*100;
     return `<div class="be-row"><div><span class="be-unit">${esc(u.label)}</span><span class="be-rate">£${u.rate}/night</span></div>
     <div class="track" role="img" aria-label="${esc(u.label)} break-even ${isFinite(b)?pct(b):'never'}"><span class="rail"></span><span class="fill" style="width:${x}%"></span>
       ${[0,60,80,100].map(t=>`<span class="tick" style="left:${t}%${t===100?';transform:translateX(-1px)':''}"></span><span class="tl${t===0?' first':t===100?' last':''}" style="left:${t}%">${t}%</span>`).join('')}
@@ -1949,7 +1953,7 @@ function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();renderP
     <div class="kv">${cols}</div>
     <h3>Illustrative monthly surplus</h3>
     <div class="tw"><table><thead><tr><th>Per unit</th><th>60%</th><th>80%</th><th>100%</th><th>Break-even</th></tr></thead><tbody>${tr}</tbody></table></div>
-    <p class="small" style="margin-top:8px">${a.fee}% platform fees, £${a.clean} cleaning per ${a.stay}-night stay, £${a.other}/month other costs, 30-day month. Not a forecast; nightly rates and occupancy are unvalidated.${d.london&&d.strat==='R2SA'?' In London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights are not.':''}</p>
+    <p class="small" style="margin-top:8px">${a.fee}% platform fees, £${a.clean} cleaning cost per ${a.stay}-night stay less £${a.cfee==null?a.clean:a.cfee} paid by guests, £${a.other}/month other costs, 30-day month. Not a forecast; nightly rates and occupancy are unvalidated.${d.london&&d.strat==='R2SA'?' In London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights are not.':''}</p>
     <h3>Due diligence status</h3>
     <div class="tw"><table><thead><tr><th>Check</th><th style="text-align:left">Status</th><th style="text-align:left">Evidence</th></tr></thead><tbody>${ddr}</tbody></table></div>
     <h3>Next steps</h3>
@@ -2349,7 +2353,7 @@ function sortRows(r){const s=S.find.sort;if(!s)return r;
   return r.slice().sort((a,b)=>{const x=val(a,s.k),y=val(b,s.k);const c=typeof x==='number'?x-y:String(x).localeCompare(String(y),'en-GB',{numeric:true,sensitivity:'base'});return (c||a.k-b.k)*s.dir})}
 const LOCK='<svg class="lk" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><rect x="2.25" y="5.25" width="7.5" height="5.5" rx="1"/><path d="M4 5.25V3.75a2 2 0 0 1 4 0v1.5"/></svg>';
 const CHEV=d=>`<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d<0?'M8.5 3.5L5 7l3.5 3.5':'M5.5 3.5L9 7l-3.5 3.5'}"/></svg>`;
-const DEF_A={fee:15,clean:45,stay:3,other:150};
+const DEF_A={fee:15,clean:45,cfee:45,stay:3,other:150};
 /* strategy-aware figures for Deal Finder cards, the sheet and copied cards. All rough estimates, labelled as such. */
 // Long-let rents follow different areas from short-let demand: these are the higher-rent towns and cities.
 const PRIME_RENT=/\b(oxford|cambridge|brighton|hove|bristol|bath|edinburgh|reading|guildford|st albans|windsor|winchester|watford|milton keynes|cheltenham|york|aberdeen|surrey|hertfordshire)\b/i;

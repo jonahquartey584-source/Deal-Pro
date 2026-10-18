@@ -250,7 +250,7 @@ export function premiumState(deal = {}) {
     plan: "Pro",
     deal: {
       id: "d100", name: "New deal", area: "", strat: "R2SA", london: false, status: "Checking",
-      units: [{ label: "Unit 1", rent: 0, dep: 0, rate: 0 }], a: { fee: 15, clean: 45, stay: 3, other: 150 },
+      units: [{ label: "Unit 1", rent: 0, dep: 0, rate: 0 }], a: { fee: 15, clean: 45, cfee: 45, stay: 3, other: 150 },
       dd: ["terms", "consent", "ninety", "licence", "tax", "location", "safety", "rates"].map((k) => ({ k, s: "none", n: "" })), ai: false,
       pack: { biz: "", redress: "", fee: "", nda: true, final: false },
       send: { co: "", email: "", addr: "", ll: "", role: "Owner / landlord", phone: "", lemail: "", use: "Serviced accommodation", docs: "Advert, photos, landlord emails" },

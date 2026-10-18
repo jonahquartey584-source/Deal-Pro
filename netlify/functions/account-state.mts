@@ -15,7 +15,7 @@ const defaultState = (admin = false) => ({
   deal: {
     id: `d${Date.now()}`, name: "New deal", area: "", strat: "R2SA", london: false, status: "Checking",
     units: [{ label: "Unit 1", rent: 0, dep: 0, rate: 0 }],
-    a: { fee: 15, clean: 45, stay: 3, other: 150 }, dd: [], ai: false,
+    a: { fee: 15, clean: 45, cfee: 45, stay: 3, other: 150 }, dd: [], ai: false,
     pack: { biz: "", redress: "", fee: "", nda: true, final: false },
     send: { co: "", email: "", addr: "", ll: "", role: "Owner / landlord", phone: "", lemail: "", use: "Serviced accommodation", docs: "" },
   },
