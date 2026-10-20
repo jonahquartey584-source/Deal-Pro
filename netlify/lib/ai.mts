@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 import { getStore } from "@netlify/blobs";
-import { mismatch as screenMismatch, type Kind } from "./screen.mts";
+import { mismatch as screenMismatch, planningIn, type Kind, type PlanningStatus } from "./screen.mts";
 import { bmvPct, readValue, type MV } from "./valuation.mts";
 
 export const ADMIN_EMAIL = "jonahquartey584@gmail.com";
@@ -191,6 +191,7 @@ export const STRATEGIES: Record<string, { name: string; prompt: string }> = {
   Flip: { name: "Flip (buy, refurbish, sell)", prompt: "Model it as a flip: purchase price, stamp duty, legal fees, refurbishment with a 10% contingency, finance and holding costs over the project, selling costs (agent and legal), realistic resale value from comparable sales (say it is an estimate), profit before tax, profit as a percentage of the resale value (aim for at least 15-20%) and return on cash invested. Give the maximum purchase price that still hits a 20% margin." },
   LeaseOption: { name: "Lease option (purchase lease option)", prompt: "Model it as a purchase lease option: option fee, monthly payment to the owner, what you can let it for (single let, rooms or serviced accommodation), monthly profit during the option, the agreed purchase price against today's value, and the option term. Flag that it needs a specialist solicitor and that the owner must take independent legal advice." },
   SA: { name: "Owned serviced accommodation", prompt: "Model it as an owned serviced accommodation: purchase and furnishing costs, stamp duty, mortgage (holiday-let or SA products, assume 6% interest-only unless given), nightly rate and occupancy at 60%, 80% and 100%, platform fees, cleaning, bills, council tax or business rates, net profit, yield and return on cash. Check planning and the lease. In London, the 90-night rule only limits stays of under 90 consecutive nights, so corporate or mid-term lets of 90+ nights can fill the rest of the year." },
+  Planning: { name: "Planning uplift / development", prompt: "Model it as a planning or development opportunity: the asking price, what planning exists (granted, pending, prior approval, or only potential: say which the details show and never assume permission), the likely scheme (units, floor area or plot), build or conversion costs per square foot or per unit with a 10% contingency, professional fees, planning, CIL and Section 106 costs, finance and holding costs, the gross development value from comparable new-build or converted sales (say it is an estimate), profit on cost and on GDV (aim for at least 20% on GDV), and the planning risk. Compare the value with planning to the value without it, so the uplift is clear. Flag the checks that decide the deal: the council planning history and conditions, permission expiry (usually three years), Article 4 directions, conservation area or listed building status, flood risk, access and ownership, utilities, and whether a planning consultant or architect should confirm the scheme before offering." },
   Commercial: { name: "Commercial property", prompt: "Model it as commercial property: rent or price, lease length, break clauses and tenant covenant if known, business rates and service charges, net initial yield, void risk and re-letting costs, and use class. For conversions to residential, mention permitted development and prior approval." },
 };
 
@@ -353,8 +354,9 @@ Judge each listing on the user's strategy from the filters ("strategy"; "auto" m
 - Buy-to-let: gross and net yield and monthly cash flow after a mortgage.
 - BRRR: likely value after works against price plus refurbishment, and money left in after a 75% refinance.
 - Flip: likely resale value from comparable sales against price, refurbishment, costs and stamp duty; margin on resale value.
+- Planning (planning uplift or development): the planning position first (granted, prior approval, pending or only potential, from planning_status and planning_detail; never assume permission the advert does not state), then the likely value once permission is secured or the scheme is built against the asking price plus build or conversion costs and fees, the uplift and profit on cost, and the main planning risk (refusal, conditions, expiry, Article 4, conservation area or listed building, flood risk, access and ownership). Rank granted permission above pending, and pending above potential, unless the numbers clearly say otherwise. State that any uplift or development value is an AI estimate that needs a planning consultant, architect and valuer to confirm, and that the council's planning portal must be checked.
 - Lease option, commercial and others: the figures that matter for that route.
-Never talk about occupancy or nightly rates unless the strategy is short lets. Do not use the following R2SA method for other strategies.
+Never talk about occupancy or nightly rates unless the strategy is short lets. For a planning search, key_figure is the planning position and the estimated uplift, for example "Planning granted for 4 flats; est. GDV £1.1m". Do not use the following R2SA method for other strategies.
 For R2SA rentals, likely monthly profit at 80% occupancy (revenue = 24 nights x nightly rate, minus 15% platform fees, £45 cleaning per 3-night stay, rent and about £150 other costs), break-even occupancy, for purchases, gross yield and cash flow; price or rent level against the area, demand for short stays in that location, and compliance risk (in London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights don't count, so note when a London deal would need them; HMO and Article 4 where relevant). Treat nightly rates as estimates and say so. If the filters include "notes" (the user's own criteria in their words), rank listings that meet them higher and say which criteria each pick meets or misses. Never invent facts about a specific listing. The id is only for matching your picks to the results: never mention ids anywhere in your text. When you compare listings, name them by type and street or area (for example "the 1 bed flat on Adam & Eve Court").
 
 Purchases may include est_market_value, below_market_value_pct (positive means the asking price is below market value) and valuation_confidence: weigh a larger, well-evidenced discount in the score, and treat a low-confidence valuation cautiously.
@@ -428,6 +430,8 @@ const ANGLES = [
 export type Filters = {
   mode?: string; beds?: string | string[]; min?: number | string; max?: number | string; loc?: string;
   priv?: boolean; furn?: string; type?: string; notes?: string; fresh?: string; strategy?: string;
+  // Planning searches: "granted" (permission in place), "potential" (uplift or conversion potential) or "any" (any planning angle).
+  planning?: string;
 };
 
 export type Listing = {
@@ -447,6 +451,8 @@ export type Listing = {
   mv?: MV;
   // Why the advert doesn't fit the search (a room, commercial, wrong area, ruled out by its description); such listings are dropped.
   mismatch?: string;
+  // Planning searches: what the advert says about planning permission or potential.
+  planning?: { status: PlanningStatus; detail: string };
   details?: { deposit: string; availableFrom: string; listed?: string; highlights: string[] };
 };
 
@@ -474,6 +480,14 @@ const STRATEGY_SEARCH: Record<string, string> = {
   Commercial: "commercial property",
 };
 
+// Planning searches look for property and land where planning is the opportunity, in the advert's own words.
+function planningHint(f: Filters) {
+  const kinds = "houses with large plots, land, building plots, development sites, derelict or tired buildings, offices, shops, pubs, barns, garages and other buildings suitable for conversion to residential, and properties with room to extend, split into flats or add an annexe";
+  if (f.planning === "granted") return `with planning permission already granted (full, outline, reserved matters or prior approval) for new homes, conversion, extension or change of use: ${kinds}. The advert must say planning is granted or approved`;
+  if (f.planning === "potential") return `with planning uplift potential but no permission yet (STPP, subject to planning, development or conversion potential, permitted development, change of use, scope to extend or split): ${kinds}`;
+  return `with a planning angle: permission granted or applied for, or strong potential for planning uplift (STPP, subject to planning, development or conversion potential, permitted development, change of use, scope to extend or split): ${kinds}`;
+}
+
 function describe(f: Filters) {
   const buy = f.mode === "buy";
   const parts = [
@@ -488,7 +502,7 @@ function describe(f: Filters) {
   ];
   const notes = typeof f.notes === "string" ? f.notes.replace(/\s+/g, " ").trim().slice(0, 500) : "";
   const fresh = Number(f.fresh) > 0 ? Number(f.fresh) : 0;
-  const hint = STRATEGY_SEARCH[String(f.strategy || "")];
+  const hint = f.strategy === "Planning" ? planningHint(f) : STRATEGY_SEARCH[String(f.strategy || "")];
   if (hint) parts.push(hint);
   if (fresh) parts.push(`only listings added or updated in the last ${fresh === 1 ? "24 hours" : `${fresh} days`} (newest first)`);
   return parts.filter(Boolean).join(", ") + (notes ? `. The user's own criteria, in their words (follow them where the listing shows it): "${notes}"` : "");
@@ -572,7 +586,7 @@ async function searchSite(site: string, f: Filters, level: LevelId, pass: number
   const skip = exclude.length ? `\nYou've already found these, so don't return them again:\n${exclude.slice(-80).join("\n")}` : "";
   const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
 ${ANGLES[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only return individual listing pages: one property per URL, shaped like ${conf.example}. Never return search-results, area, category or map pages, even if they show listings; open the individual advert and use its URL. Skip adverts marked let agreed, under offer, sold STC or no longer available.${skip}
-Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "private_landlord": true | false | null, "added": string (when the advert was added, reduced or updated, exactly as the site shows it, e.g. "Added today", "Added on 28/09/2026", "3 days ago"; "" if not shown)}]}.
+Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office", "Building plot", "Land"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "private_landlord": true | false | null, "added": string (when the advert was added, reduced or updated, exactly as the site shows it, e.g. "Added today", "Added on 28/09/2026", "3 days ago"; "" if not shown)}]}.
 Prefer the newest listings. Only include listings you actually found in the search results, with the URL exactly as the search returned it. Never build or guess a URL from an ID or address, and never invent a listing or price. If you find none, return {"listings": []}.`;
   const { parsed, seen } = await webJson(prompt, conf.domains, level, lv.context, lv.effort);
   const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
@@ -608,7 +622,7 @@ async function verifyBatch(batch: Listing[], level: LevelId, f: Filters = {}) {
   const prompt = `Open each of these property listing pages and check them:
 ${batch.map((l, i) => `${i + 1}. ${l.url}`).join("\n")}
 For each, confirm the page opens (not a 404 or "page not found"), is a single property advert (not a search-results or area page), and whether it is still available (not let agreed, under offer, sold STC, expired or removed), and read the details from the page itself.
-Return JSON: {"checks": [{"url": string (exactly as given), "opened": true | false (false if you could not open this exact page), "is_listing": true | false, "available": true | false | null, "title": string (the advert's own title), "type": string (e.g. "2 bed flat"), "area": string (street/area and town as the advert shows), "listed": string (the date it was added or last updated, if shown), "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not], "property_kind": "whole_property" | "single_room" (one room in a shared home, so the price is for the room) | "commercial" | "other", "postcode": string (the full postcode or district the advert shows), "in_requested_area": true | false | null (is it in or within a few miles of: ${f.loc?.trim() || "no area given"}; null if no area was given), "rules_out_strategy": string (a short quote from the advert's description that rules out the member's plan, for example "no sharers", "no subletting", "no short lets", "single family only"; "" if nothing does)}]}.
+Return JSON: {"checks": [{"url": string (exactly as given), "opened": true | false (false if you could not open this exact page), "is_listing": true | false, "available": true | false | null, "title": string (the advert's own title), "type": string (e.g. "2 bed flat"), "area": string (street/area and town as the advert shows), "listed": string (the date it was added or last updated, if shown), "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not], "property_kind": "whole_property" | "single_room" (one room in a shared home, so the price is for the room) | "commercial" | "other", "postcode": string (the full postcode or district the advert shows), "in_requested_area": true | false | null (is it in or within a few miles of: ${f.loc?.trim() || "no area given"}; null if no area was given), "rules_out_strategy": string (a short quote from the advert's description that rules out the member's plan, for example "no sharers", "no subletting", "no short lets", "single family only"; "" if nothing does)${f.strategy === "Planning" ? `, "planning_status": "granted" (the advert says planning permission, prior approval or a lawful development certificate is granted) | "pending" (an application is in) | "potential" (STPP, development or conversion potential, permitted development, scope to extend or split) | "none" (nothing about planning or development), "planning_detail": string (a short quote or summary of what the advert says about planning, the scheme and any reference or expiry; "" if none)` : ""}}]}.
 The member's plan: ${describe(f)}.
 Read the whole description, not just the title. Only report what the pages actually say. Use null or "" when a detail isn't shown.`;
   const { parsed } = await webJson(prompt, domains, level, level === "quick" ? "medium" : "high", level === "quick" ? "low" : "medium");
@@ -642,7 +656,9 @@ Read the whole description, not just the title. Only report what the pages actua
     if (!l.listedAt && parseListed(String(c.listed || ""))) l.listedAt = parseListed(String(c.listed || ""));
     if (c.postcode && !l.postcode) l.postcode = String(c.postcode).toUpperCase().slice(0, 8);
     const kind: Kind = c.property_kind === "single_room" ? "room" : c.property_kind === "commercial" ? "commercial" : c.property_kind === "whole_property" ? "whole" : "unknown";
-    const why = screenMismatch(l, f, { kind, inArea: typeof c.in_requested_area === "boolean" ? c.in_requested_area : null, restriction: String(c.rules_out_strategy || "").slice(0, 120) }, l.details.highlights.join(" "));
+    const plan = ["granted", "pending", "potential", "none"].includes(String(c.planning_status)) ? c.planning_status as PlanningStatus : undefined;
+    if (plan && f.strategy === "Planning") l.planning = { status: plan, detail: String(c.planning_detail || "").slice(0, 200) };
+    const why = screenMismatch(l, f, { kind, inArea: typeof c.in_requested_area === "boolean" ? c.in_requested_area : null, restriction: String(c.rules_out_strategy || "").slice(0, 120), planning: plan }, l.details.highlights.join(" "));
     if (why) l.mismatch = why;
     if (HOT_TEXT.test(l.details.highlights.join(" "))) l.hot = true;
   }
@@ -679,6 +695,8 @@ export type SearchState = {
 
 export function newSearch(input: string, level: LevelId, canValue = false): SearchState {
   const { filters = {}, sites = [], existing = [] } = JSON.parse(input) as { filters?: Filters; sites?: string[]; existing?: Array<Record<string, unknown>> };
+  // Planning opportunities are purchases (property and land for sale), so a planning search is always for sale.
+  if (filters.strategy === "Planning") filters.mode = "buy";
   const ticked = sites.filter((s) => s in SITES);
   // Rental-only sites can't have property for sale; keep them out of a purchase search.
   const wanted = filters.mode === "buy" && ticked.some((s) => !RENT_ONLY.has(s)) ? ticked.filter((s) => !RENT_ONLY.has(s)) : ticked;
@@ -733,6 +751,7 @@ export async function checkLink(l: Listing, f: Filters = {}): Promise<"live" | "
     if (added) { const at = parseListed(added); if (at) l.listedAt = at; }
     if (HOT_TEXT.test(text.slice(0, 6000))) l.hot = true;
     // Read the advert itself: is it a room, commercial, in the wrong area, or ruled out by its description?
+    if (f.strategy === "Planning") { const p = planningIn(text); if (p && p.status !== "none") l.planning = p; }
     const why = screenMismatch(l, f, {}, text);
     if (why) l.mismatch = why;
     if (title && !/rightmove|zoopla|openrent|spareroom|gumtree|facebook/i.test(title.replace(/[|\-–].*$/, "").trim())) l.title = title.replace(/\s*[|–-]\s*(Rightmove|Zoopla|OpenRent|SpareRoom|Gumtree|Facebook).*$/i, "").slice(0, 140);
@@ -822,7 +841,9 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
       for (let i = 0; out.length < list.length; i++) for (const sl of bySite.values()) if (sl[i]) out.push(sl[i]);
       return out;
     };
-    const targets = [...roundRobin(st.listings.filter((l) => l.link !== "live")), ...roundRobin(st.listings.filter((l) => l.link === "live"))].slice(0, lv.verify);
+    // Planning searches read first the adverts whose planning status isn't known yet.
+    const planUnknown = (l: Listing) => st.filters.strategy === "Planning" && !l.planning;
+    const targets = [...roundRobin(st.listings.filter((l) => l.link !== "live")), ...roundRobin(st.listings.filter((l) => l.link === "live" && planUnknown(l))), ...roundRobin(st.listings.filter((l) => l.link === "live" && !planUnknown(l)))].slice(0, lv.verify);
     while (st.verifyAt < targets.length) {
       if (timeLeft() < 4 * 60_000) return st;
       const group = targets.slice(st.verifyAt, st.verifyAt + 20);
@@ -874,6 +895,7 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
             [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price,
             ...(l.mv ? { est_market_value: l.mv.value, below_market_value_pct: bmvPct(l.price, l.mv), valuation_confidence: l.mv.confidence } : {}),
             ...(l.details ? { checked_details: l.details, still_available: l.verified } : {}),
+            ...(l.planning ? { planning_status: l.planning.status, planning_detail: l.planning.detail } : {}),
           })),
         }), level);
       } catch (error) {
