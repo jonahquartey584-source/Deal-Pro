@@ -1317,7 +1317,11 @@ async function drawMap(rows){const el=$('#fMap');if(!el)return;const sig=(S.find
   try{await loadLeaflet()}catch(e){el.innerHTML='<div class="pm-msg">The map couldn\'t load. Check your connection and try again.</div>';return}
   if(!el.isConnected||$('#fMap')!==el)return;const Lf=window.L;
   LMAP=Lf.map(el,{scrollWheelZoom:false,zoomSnap:.5});FS.mapSig=sig;LMAP.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
-  Lf.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{subdomains:'abcd',maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'}).addTo(LMAP);
+  // OpenStreetMap's own tiles need no API key (CARTO's free basemap now does); the tile pane is inverted in CSS to keep the dark look.
+  let tileOk=false,tileBad=0;
+  const tl=Lf.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'}).addTo(LMAP);
+  tl.on('tileload',()=>{tileOk=true});
+  tl.on('tileerror',()=>{if(!tileOk&&++tileBad===4&&el.isConnected&&!el.querySelector('.pm-msg')){const m=document.createElement('div');m.className='pm-msg pm-note';m.textContent='Map tiles couldn\'t load. The pins still show where each listing is.';el.appendChild(m)}});
   el.addEventListener('click',()=>LMAP&&LMAP.scrollWheelZoom.enable(),{once:true});
   const seen=new Map(),ll=[];
   pts.forEach(r=>{let lat=r.lat,lng=r.lng;const key=lat.toFixed(4)+','+lng.toFixed(4),n=seen.get(key)||0;seen.set(key,n+1);
