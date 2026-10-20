@@ -97,8 +97,9 @@ export default async (request: Request, _context: Context) => {
   // kind "analyse": one deal from the AI Deal Analyser. kind "rank": Deal Finder results to rank.
   // kind "search": live Deal Finder search of the ticked sites, then ranking.
   // kind "dd": web research for the due diligence checks of one deal.
-  const body = await request.json().catch(() => null) as { kind?: string; deal?: string; level?: string; listings?: unknown; filters?: unknown; sites?: unknown; checks?: unknown; strategy?: string; existing?: unknown } | null;
-  const kind = body?.kind === "search" ? "search" : body?.kind === "rank" ? "rank" : body?.kind === "dd" ? "dd" : "analyse";
+  // kind "planning": planning applications and uplift potential for an area (counts as a search).
+  const body = await request.json().catch(() => null) as { kind?: string; deal?: string; level?: string; listings?: unknown; filters?: unknown; sites?: unknown; checks?: unknown; strategy?: string; existing?: unknown; location?: string; focus?: unknown; works?: unknown } | null;
+  const kind = body?.kind === "search" ? "search" : body?.kind === "rank" ? "rank" : body?.kind === "dd" ? "dd" : body?.kind === "planning" ? "planning" : "analyse";
   const level = (body?.level && body.level in LEVELS ? body.level : "quick") as LevelId;
   let input: string;
   if (kind === "analyse") {
@@ -114,6 +115,11 @@ export default async (request: Request, _context: Context) => {
     if (!checks.length) return json({ error: "There are no checks to research." }, 400);
     input = JSON.stringify({ deal, checks: checks.map((c) => ({ k: c.k.slice(0, 40), t: c.t.slice(0, 120), d: c.d.slice(0, 400) })) });
     if (input.length > 20_000) return json({ error: "The deal details are too long to research." }, 413);
+  } else if (kind === "planning") {
+    const location = String(body?.location || "").trim().slice(0, 120);
+    if (location.length < 2) return json({ error: "Enter a postcode, street or town to search." }, 400);
+    const pick = (v: unknown, ok: readonly string[]) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && ok.includes(x)) : []);
+    input = JSON.stringify({ location, focus: pick(body?.focus, ["granted", "pending", "refused", "uplift"]), works: pick(body?.works, ["extension", "loft", "conversion", "new-home", "change-of-use", "hmo"]) });
   } else if (kind === "search") {
     const sites = Array.isArray(body?.sites) ? body.sites.filter((x): x is string => typeof x === "string" && x in SITES) : [];
     if (!sites.length) return json({ error: "Tick at least one site to search." }, 400);

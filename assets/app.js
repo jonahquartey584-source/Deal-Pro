@@ -270,7 +270,7 @@ function renderUsage(){rollWindows();const L=limits(),u=S.usage,t=now();
   $('#xMonth').textContent=`Resets ${nextMonth(t).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}`}
 setInterval(()=>{try{renderUsage()}catch(e){}},30000);
 function syncName(){const n=S.deal.name||'Untitled deal';$('#dealTitle').textContent=n;$$('.js-dealname').forEach(e=>e.textContent=n)}
-const VIEWS={usage:['plans','usage'],refer:['plans','refer'],home:['home'],find:['find'],analyser:['analyser'],deals:['deals'],community:['community'],plans:['plans'],
+const VIEWS={usage:['plans','usage'],refer:['plans','refer'],home:['home'],find:['find'],planning:['planning'],analyser:['analyser'],deals:['deals'],community:['community'],plans:['plans'],
   analyse:['analyser','numbers'],dd:['analyser','dd'],pack:['analyser','pack'],send:['analyser','send'],pricing:['plans']};// old tab names map to the new structure
 const STEPS=['numbers','dd','pack','send'];
 function curStep(){let s='numbers';try{s=sessionStorage.getItem('dealpro:step')||'numbers'}catch(e){}return STEPS.includes(s)?s:'numbers'}
@@ -279,7 +279,7 @@ function go(v,step){const m=VIEWS[v]||VIEWS.home;v=m[0];step=step||m[1];const ch
   const apply=()=>{curView=v;document.documentElement.dataset.page=v;
     $$('.tab').forEach(t=>{if(t.dataset.v===v)t.setAttribute('aria-current','page');else t.removeAttribute('aria-current')});
     $$('[data-view]').forEach(s=>s.hidden=s.dataset.view!==v);
-    if(v==='home')renderHome();if(v==='find'){renderFind();loadAICredits()}if(v==='analyser'){openAnalyser(step||curStep());loadAICredits()}if(v==='deals')renderDeals();if(v==='community')renderCommunity();if(v==='plans'){renderPlans();loadRefunds();loadReferrals()}
+    if(v==='home')renderHome();if(v==='find'){renderFind();loadAICredits()}if(v==='planning'){renderPlanning();loadAICredits()}if(v==='analyser'){openAnalyser(step||curStep());loadAICredits()}if(v==='deals')renderDeals();if(v==='community')renderCommunity();if(v==='plans'){renderPlans();loadRefunds();loadReferrals()}
     try{sessionStorage.setItem('dealpro:tab',v)}catch(e){}
     const nav=$('.nav'),act=$(`.tab[data-v="${v}"]`);if(nav&&act&&nav.scrollWidth>nav.clientWidth)nav.scrollLeft=Math.max(0,act.offsetLeft-nav.offsetLeft-24);
     if(v==='plans'&&(step==='usage'||step==='refer')){const us=$(step==='refer'?'#refer':'#usage');if(us)setTimeout(()=>us.scrollIntoView({block:'start',behavior:reduced()?'auto':'smooth'}),30)}else window.scrollTo(0,0);heroUpdate();placeInd()};
@@ -1667,7 +1667,7 @@ renderAIAnalysis(S.deal.aiAnalysis);
 const AI_LEVELS=[{id:'quick',name:'Scout',desc:'Quick first look',use:'Uses the least credits'},{id:'standard',name:'Analyst',desc:'Full, detailed analysis',use:'Uses more credits'},{id:'deep',name:'Expert',desc:'Stress-tested, thorough',use:'Uses the most credits'}];
 const AIC={info:null,level:(()=>{try{return localStorage.getItem('dealpro:ai-level')||'quick'}catch(e){return 'quick'}})()};
 /* time estimates in seconds, from how much work each level does */
-const EST_S={analyse:{quick:40,standard:100,deep:240},dd:{quick:30,standard:90,deep:240},search:{quick:120,standard:300,deep:1200}};
+const EST_S={analyse:{quick:40,standard:100,deep:240},dd:{quick:30,standard:90,deep:240},search:{quick:120,standard:300,deep:1200},plan:{quick:60,standard:150,deep:420}};
 // Sites are searched side by side, so more sites add a little time rather than multiplying it.
 function estSecs(kind,lv,sites){const b=EST_S[kind][lv]||60;let n=1;try{n=Math.max(1,String(S.find.f.loc||'').split(/\s*(?:[,;/]|\band\b|\bor\b|&)\s*/i).filter(x=>x.trim().length>1).length)}catch(e){}
   return kind==='search'?Math.round(b*(1+Math.max(0,(sites||6)-4)*.08)*(1+Math.min(5,n-1)*.25)):b}
@@ -1677,21 +1677,22 @@ function estTxt(kind,lv,sites){if(kind==='search'&&lv==='deep')return '15–30 m
 // Time left: starts from the estimate and, once real progress is known, follows the actual pace.
 function leftTxt(est,elapsed,frac){let total=est;if(frac>.1&&elapsed>15)total=(est+elapsed/frac)/2;const left=total-elapsed;
   return left>10?`about ${durTxt(left)} left`:elapsed>est*1.5?'taking a little longer than usual':'almost done'}
-const LEVEL_KIND={aiLevel:'analyse',fLevel:'search',ddLevel:'dd'};
+const LEVEL_KIND={aiLevel:'analyse',fLevel:'search',ddLevel:'dd',pnLevel:'plan'};
 const findSiteCount=()=>{try{return SITES.filter(s=>S.find.f.sites[s]).length||1}catch(e){return 6}};
 function levelOpts(name){const i=AIC.info,free=!i||i.free||i.scoutOnly;// locked until the server confirms a plan with every level
   return AI_LEVELS.map(l=>{const locked=free&&l.id!=='quick';
     return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="${name}" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)}</span><span class="lv-use">${locked?'Premium and Max':esc(l.use)}</span><span class="lv-time" data-kind="${LEVEL_KIND[name]}" data-lv="${l.id}">Takes ~${estTxt(LEVEL_KIND[name],l.id,findSiteCount())}</span></label>`}).join('')}
 function renderAILevels(){const i=AIC.info,free=!i||i.free||i.scoutOnly;if(free&&AIC.level!=='quick')AIC.level='quick';
-  $('#aiLevelOpts').innerHTML=levelOpts('aiLevel');$('#fLevelOpts').innerHTML=levelOpts('fLevel');$('#ddLevelOpts').innerHTML=levelOpts('ddLevel');
+  $('#aiLevelOpts').innerHTML=levelOpts('aiLevel');$('#fLevelOpts').innerHTML=levelOpts('fLevel');$('#ddLevelOpts').innerHTML=levelOpts('ddLevel');$('#pnLevelOpts').innerHTML=levelOpts('pnLevel');
   const paid=i?(i.plan==='Admin'?'Admin: unlimited credits.':`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}.${i.scoutOnly?' Upgrade to Premium for Analyst and Expert.':''}`):'';
   const outNote=(what,reset)=>`<b>${what}</b>${reset?` ${reset}`:''} <button class="linkbtn" type="button" data-go="plans">Upgrade now</button>, or <button class="linkbtn" type="button" data-go="refer">refer a friend</button> and you both get 3 months at half price.`;
   const setLine=(id,out,html,text)=>{const el=$(id);el.classList.toggle('out',!!out);if(out)el.innerHTML=html;else el.textContent=text};
   const credOut=i&&!i.free&&i.plan!=='Admin'&&i.creditsLeft<=0,credReset=i&&i.resetsAt?`Your credits reset on ${fmtDate(i.resetsAt)}.`:'';
   setLine('#aiCredits',i&&(i.free?i.freeLeft<=0:credOut),i&&i.free?outNote("You've used your 2 free analyses."):outNote("You're out of credits for this week.",credReset),!i?'':i.free?`Free plan: ${i.freeLeft} of 2 free analyses left. Upgrade for Analyst and Expert.`:paid);
-  setLine('#fCredits',i&&(i.free?i.freeSearchesLeft<=0:credOut),i&&i.free?outNote("You've used your 3 free searches this week.",i.resetsAt?`They reset on ${fmtDate(i.resetsAt)}.`:''):outNote("You're out of credits for this week.",credReset),!i?'':i.free?`Free plan: ${i.freeSearchesLeft} of 3 searches left this week. Upgrade for Analyst and Expert.`:paid)}
+  setLine('#fCredits',i&&(i.free?i.freeSearchesLeft<=0:credOut),i&&i.free?outNote("You've used your 3 free searches this week.",i.resetsAt?`They reset on ${fmtDate(i.resetsAt)}.`:''):outNote("You're out of credits for this week.",credReset),!i?'':i.free?`Free plan: ${i.freeSearchesLeft} of 3 searches left this week. Upgrade for Analyst and Expert.`:paid);
+  setLine('#pnCredits',i&&(i.free?i.freeSearchesLeft<=0:credOut),i&&i.free?outNote("You've used your 3 free searches this week.",i.resetsAt?`They reset on ${fmtDate(i.resetsAt)}.`:''):outNote("You're out of credits for this week.",credReset),!i?'':i.free?`Free plan: ${i.freeSearchesLeft} of 3 searches left this week. Planning searches count as searches.`:paid)}
 async function loadAICredits(){if(!document.body.dataset.userId)return;try{const r=await fetch('/api/analyze-deal',{credentials:'same-origin'});if(r.ok){AIC.info=await r.json();renderAILevels()}}catch(e){}}
-['#aiLevelOpts','#fLevelOpts','#ddLevelOpts'].forEach(id=>$(id).addEventListener('change',e=>{if(e.target.type==='radio'){AIC.level=e.target.value;try{localStorage.setItem('dealpro:ai-level',AIC.level)}catch(err){}renderAILevels()}}));
+['#aiLevelOpts','#fLevelOpts','#ddLevelOpts','#pnLevelOpts'].forEach(id=>$(id).addEventListener('change',e=>{if(e.target.type==='radio'){AIC.level=e.target.value;try{localStorage.setItem('dealpro:ai-level',AIC.level)}catch(err){}renderAILevels()}}));
 renderAILevels();window.addEventListener('dealpro:signed-in',loadAICredits);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 /* strategy to analyse for: 'auto' lets the AI pick */
@@ -2137,6 +2138,89 @@ $('#managePlan').addEventListener('click',()=>{if(S.stripe&&S.stripe.customer&&S
 
 /* ---------- boot ---------- */
 const siteIntro=$('#siteIntro');if(siteIntro)setTimeout(()=>{siteIntro.remove();document.documentElement.classList.remove('si-wait')},6000);
+/* ---------- Planning: applications and uplift ideas for an area ---------- */
+const PN={busy:false,res:null,filter:'all',job:null,map:null,mk:new Map(),sig:''};
+const PN_ST={granted:'Granted',pending:'Pending',refused:'Refused',withdrawn:'Withdrawn',unknown:'Status unknown'};
+const PN_KIND={extension:'Extension',loft:'Loft','conversion':'Flats','new-home':'New home','change-of-use':'Change of use',hmo:'HMO',other:'Other'};
+const PN_PIN={extension:'Ext',loft:'Loft',conversion:'Flats','new-home':'New','change-of-use':'Use',hmo:'HMO',other:'Plan'};
+try{const x=JSON.parse(sessionStorage.getItem('dealpro:planning')||'null');if(x&&x.res)PN.res=x.res}catch(e){}
+try{const x=JSON.parse(localStorage.getItem('dealpro:plan-job')||'null');if(x&&x.id)PN.job=x}catch(e){}
+const pnSave=()=>{try{sessionStorage.setItem('dealpro:planning',JSON.stringify({res:PN.res}))}catch(e){}};
+const pnJobSave=j=>{PN.job=j;try{if(j)localStorage.setItem('dealpro:plan-job',JSON.stringify(j));else localStorage.removeItem('dealpro:plan-job')}catch(e){}};
+const pnChecked=n=>$$(`input[name="${n}"]:checked`).map(x=>x.value);
+function pnError(msg,resume){const n=$('#pnErr');if(!n)return;
+  n.innerHTML=`<div><b>${resume?'The search lost touch with Deal Pro':'The search hit a problem'}</b></div><div>${esc(msg)}</div><div class="ln-a">${resume?'<button class="btn sm primary" type="button" data-pn="resume">Reconnect</button>':''}<button class="btn sm ghost" type="button" data-pn="close">Dismiss</button></div>`;n.hidden=false}
+function pnClear(){const n=$('#pnErr');if(n){n.hidden=true;n.innerHTML=''}}
+function pnSrc(list){const s=(list||[]).filter(x=>safeUrl(x.url));return s.length?`<div class="pn-src">${s.map(x=>`<a href="${esc(safeUrl(x.url))}" target="_blank" rel="noopener noreferrer">${esc(x.title||hostOf(x.url))} ↗</a>`).join('')}</div>`:''}
+function renderPlanning(){const r=PN.res;
+  if(PN.job&&!PN.busy&&document.body.dataset.userId&&PN.job.uid===document.body.dataset.userId){followPlanning(PN.job);return}
+  if(PN.busy)return;
+  const box=$('#pnResults');
+  if(!r){box.innerHTML=`<div class="fempty"><h2>Find planning near any property</h2><p>Enter a postcode, street or town. Deal Pro searches the public planning registers and shows the applications it finds on a map, with the council's reference and a link to each one, plus ideas for adding value and the planning rules that apply.</p></div>`;return}
+  drawPlanning()}
+function drawPlanning(){const r=PN.res,box=$('#pnResults');if(!r)return;
+  const apps=r.applications||[],f=PN.filter,rows=apps.map((a,i)=>Object.assign({i},a)).filter(a=>f==='all'||a.status===f);
+  const count=s=>apps.filter(a=>a.status===s).length;
+  const chips=[['all',`All ${apps.length}`],...['granted','pending','refused','withdrawn','unknown'].filter(s=>count(s)).map(s=>[s,`${PN_ST[s]} ${count(s)}`])];
+  const nPin=rows.filter(a=>Number.isFinite(a.lat)&&Number.isFinite(a.lng)).length;
+  const card=a=>`<article class="pn-card" id="pnc${a.i}" data-i="${a.i}"><div class="pn-top"><span class="pn-st ${esc(a.status)}">${esc(PN_ST[a.status]||'Status unknown')}</span><span class="pn-kind">${esc(PN_KIND[a.kind]||'Other')}</span>${a.date?`<span class="pn-date">${esc(fmtDate(a.date))}</span>`:''}</div>
+    <h3>${esc(a.address)}</h3><p class="pn-prop">${esc(a.proposal)}</p>${a.note?`<p class="pn-note">${esc(a.note)}</p>`:''}
+    <div class="pn-foot">${a.ref?`<span class="mono">${esc(a.ref)}</span>`:''}<a href="${esc(safeUrl(a.url))}" target="_blank" rel="noopener noreferrer">Source ↗</a>${Number.isFinite(a.lat)?`<button class="btn xs" type="button" data-pn-pin="${a.i}">Show on map</button>`:''}</div></article>`;
+  const empty=`<div class="fempty"><h2>No applications found</h2><p>${apps.length?'None match this filter.':`Nothing was found for ${esc(r.location)}. Try a wider place (a town or postcode district), more types of work, or Analyst or Expert, which search more registers.`}</p></div>`;
+  box.innerHTML=`<div class="pn-sum"><h2>${esc(r.location)}${r.council?` <span class="muted" style="font-weight:400">· ${esc(r.council)}</span>`:''}</h2><p>${esc(r.summary||'')||'Planning applications found for this area.'}</p></div>
+    ${(r.uplifts||[]).length?`<h3 class="pn-h">Uplift ideas <span class="muted">what could add value here, and the evidence</span></h3><div class="pn-ups">${r.uplifts.map(u=>`<div class="pn-up"><b>${esc(u.idea)}</b>${u.route?`<span class="pn-route">${esc(u.route)}</span>`:''}${u.detail?`<p>${esc(u.detail)}</p>`:''}${u.evidence?`<p class="pn-ev"><b>Evidence:</b> ${esc(u.evidence)}</p>`:''}${pnSrc(u.sources)}</div>`).join('')}</div>`:''}
+    ${(r.constraints||[]).length?`<h3 class="pn-h">Planning rules to check</h3><div class="pn-cons">${r.constraints.map(c=>`<div class="pn-con ${esc(c.status)}"><b>${esc(c.t)}</b><p>${esc(c.finding)}</p>${pnSrc(c.sources)}</div>`).join('')}</div>`:''}
+    <h3 class="pn-h">Planning applications <span class="muted">${apps.length} found</span></h3>
+    ${apps.length?`<div class="pn-filt" role="group" aria-label="Filter by status">${chips.map(([k,t])=>`<button type="button" data-pn-f="${k}" aria-pressed="${k===f}">${esc(t)}</button>`).join('')}</div>`:''}
+    ${rows.length?`<div class="pmap"><div class="pn-list" role="list" aria-label="Planning applications">${rows.map(card).join('')}</div>
+      <div class="pm-side"><div class="pm-map" id="pnMap" role="region" aria-label="Map of the planning applications">${nPin||r.centre?'':'<div class="pm-msg">These applications have no location to show on the map.</div>'}</div>${nPin?`<div class="pm-note">${nPin} of ${rows.length} on the map · positions are from the postcode</div>`:''}</div></div>`:empty}
+    <p class="pn-disc">Found on ${fmtDate(r.searchedAt)} from public planning registers and the web. Statuses and dates can be out of date: open each source and confirm it on the council's own planning register. Whether work needs permission depends on the exact address, so check it on the <a href="https://www.planningportal.co.uk/permission/common-projects" target="_blank" rel="noopener noreferrer">Planning Portal</a> before you rely on it.</p>`;
+  if(rows.length)pnDrawMap(rows)}
+async function pnDrawMap(rows){const el=$('#pnMap');if(!el)return;if(PN.map){PN.map.remove();PN.map=null}PN.mk.clear();
+  const pts=rows.filter(a=>Number.isFinite(a.lat)&&Number.isFinite(a.lng)),c=PN.res&&PN.res.centre;if(!pts.length&&!c)return;
+  try{await loadLeaflet()}catch(e){el.innerHTML='<div class="pm-msg">The map couldn\'t load. Check your connection and try again.</div>';return}
+  if(!el.isConnected||$('#pnMap')!==el)return;const Lf=window.L;
+  PN.map=Lf.map(el,{scrollWheelZoom:false,zoomSnap:.5});PN.map.attributionControl.setPrefix('<a href="https://leafletjs.com" target="_blank" rel="noopener">Leaflet</a>');
+  let tileOk=false,bad=0;const tl=Lf.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors'}).addTo(PN.map);
+  tl.on('tileload',()=>{tileOk=true});tl.on('tileerror',()=>{if(!tileOk&&++bad===4&&el.isConnected&&!el.querySelector('.pm-msg')){const m=document.createElement('div');m.className='pm-msg pm-note';m.textContent='Map tiles couldn\'t load. The pins still show where each application is.';el.appendChild(m)}});
+  el.addEventListener('click',()=>PN.map&&PN.map.scrollWheelZoom.enable(),{once:true});
+  const seen=new Map(),ll=[];
+  if(c){Lf.marker([c.lat,c.lng],{icon:Lf.divIcon({className:'pm-pin pn-centre',html:'<span>Search</span>',iconSize:null}),title:'Centre of your search',keyboard:false,interactive:false}).addTo(PN.map);ll.push([c.lat,c.lng])}
+  pts.forEach(a=>{let lat=a.lat,lng=a.lng;const key=lat.toFixed(4)+','+lng.toFixed(4),n=seen.get(key)||0;seen.set(key,n+1);
+    // Applications on one postcode are fanned out so each pin can be clicked.
+    if(n){const t=n*2.4,d=.0004*Math.sqrt(n);lat+=d*Math.cos(t);lng+=d*Math.sin(t)*1.6}
+    const m=Lf.marker([lat,lng],{icon:Lf.divIcon({className:`pm-pin pn-${a.status}${a.geo==='postcode'?'':' approx'}`,html:`<span>${esc(PN_PIN[a.kind]||'Plan')}</span>`,iconSize:null}),title:`${PN_KIND[a.kind]||'Application'}, ${PN_ST[a.status]||''}: ${a.address}`,riseOnHover:true,keyboard:true}).addTo(PN.map);
+    m.bindPopup(()=>{const d=document.createElement('div');d.innerHTML=`<div class="pp"><span class="pn-pst">${esc(PN_ST[a.status]||'')} · ${esc(PN_KIND[a.kind]||'')}</span><span>${esc(a.address)}</span><span>${esc(a.proposal)}</span><a href="${esc(safeUrl(a.url))}" target="_blank" rel="noopener noreferrer">Open source ↗</a></div>`;return d},{className:'pm-pop',maxWidth:232,minWidth:232,autoPanPadding:[20,20]});
+    m.on('click',()=>{const k=$('#pnc'+a.i);if(k){k.scrollIntoView({block:'nearest',behavior:reduced()?'auto':'smooth'});k.classList.remove('flash');void k.offsetWidth;k.classList.add('flash')}});
+    PN.mk.set(a.i,m);ll.push([lat,lng])});
+  if(ll.length===1)PN.map.setView(ll[0],15);else PN.map.fitBounds(ll,{padding:[40,40],maxZoom:15});
+  setTimeout(()=>{if(PN.map)PN.map.invalidateSize()},80)}
+async function followPlanning(job){if(PN.busy)return;PN.busy=true;const lv=AI_LEVELS.find(l=>l.id===job.level)||AI_LEVELS[0],btn=$('#pnSearch'),box=$('#pnResults'),est=estSecs('plan',lv.id),t0=Date.parse(job.at)||Date.now();
+  btn.disabled=true;pnClear();let first=true;
+  const tick=()=>{const el=Math.round((Date.now()-t0)/1000);box.innerHTML=`<div class="fempty" role="status"><h2>Searching planning registers…</h2><p>${esc(lv.name)} is looking for planning in ${esc(job.loc)}: ${leftTxt(est,el,0)} (usually ${estTxt('plan',lv.id)}). You can leave this page and come back.</p></div>`;if(first){first=false;box.scrollIntoView({block:'nearest',behavior:reduced()?'auto':'smooth'})}};tick();
+  try{const res=await pollJob(job.id,tick);pnJobSave(null);PN.res=res;PN.filter='all';pnSave();PN.busy=false;btn.disabled=false;drawPlanning();toast('Planning search complete')}
+  catch(e){PN.busy=false;btn.disabled=false;
+    if(/Lost connection|sign-in needs renewing/i.test(e.message)){pnError(e.message,true)}
+    else{pnJobSave(null);pnError(e.message||'The search could not be completed. Please try again.');}
+    box.innerHTML=PN.res?'':'';if(PN.res)drawPlanning()}}
+async function startPlanning(){if(PN.busy)return;const loc=$('#pnLoc').value.trim();pnClear();$('#nPlan').hidden=true;
+  if(loc.length<2){pnError('Enter a postcode, street or town to search.');$('#pnLoc').focus();return}
+  const focus=pnChecked('pnFocus');if(!focus.length){pnError('Tick at least one thing to look for.');return}
+  const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0],btn=$('#pnSearch');btn.disabled=true;
+  try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'planning',level:lv.id,location:loc,focus,works:pnChecked('pnWorks')})});
+    const d=await r.json().catch(()=>({}));if(!r.ok){limitHit(r.status,d.error);throw new Error(d.error||'The search could not be started.')}
+    if(d.credits){AIC.info=d.credits;renderAILevels()}
+    const job={id:d.jobId,level:lv.id,loc,at:new Date().toISOString(),uid:document.body.dataset.userId||''};pnJobSave(job);followPlanning(job)}
+  catch(e){btn.disabled=false;pnError(e.message||'The search could not be started. Please try again.')}}
+$('#pnSearch').addEventListener('click',startPlanning);
+$('#pnLoc').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();startPlanning()}});
+$('#pnReset').addEventListener('click',()=>{$('#pnLoc').value='';$$('input[name="pnFocus"]').forEach(x=>x.checked=['granted','pending','uplift'].includes(x.value));$$('input[name="pnWorks"]').forEach(x=>x.checked=false);pnClear()});
+$('#pnResults').addEventListener('click',e=>{const f=e.target.closest('[data-pn-f]');if(f){PN.filter=f.dataset.pnF;drawPlanning();return}
+  const p=e.target.closest('[data-pn-pin]');if(p){const m=PN.mk.get(+p.dataset.pnPin);if(m&&PN.map){const side=$('.pm-side');if(side&&matchMedia('(max-width:900px)').matches)side.scrollIntoView({block:'nearest',behavior:reduced()?'auto':'smooth'});PN.map.setView(m.getLatLng(),Math.max(PN.map.getZoom(),16),{animate:!reduced()});m.openPopup()}}});
+$('#pnResults').addEventListener('mouseover',e=>{const c=e.target.closest('.pn-card');if(c&&!c.contains(e.relatedTarget)){const m=PN.mk.get(+c.dataset.i);const el=m&&m.getElement();if(el)el.classList.add('hl')}});
+$('#pnResults').addEventListener('mouseout',e=>{const c=e.target.closest('.pn-card');if(c&&!c.contains(e.relatedTarget)){const m=PN.mk.get(+c.dataset.i);const el=m&&m.getElement();if(el)el.classList.remove('hl')}});
+$('#pnErr').addEventListener('click',e=>{const b=e.target.closest('[data-pn]');if(!b)return;if(b.dataset.pn==='close')pnClear();else if(b.dataset.pn==='resume'&&PN.job){pnClear();followPlanning(PN.job)}});
+window.addEventListener('dealpro:signed-in',()=>{if(PN.job&&PN.job.uid===document.body.dataset.userId&&!PN.busy)followPlanning(PN.job)});
 renderTop();bindDeal();bindFind();syncFee();
 let tab='home';try{tab=sessionStorage.getItem('dealpro:tab')||'home'}catch(e){}
 go(tab);

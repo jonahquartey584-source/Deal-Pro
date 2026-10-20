@@ -64,7 +64,7 @@ export async function activityFor(userId: string, usage?: Usage | null): Promise
   };
 }
 export async function recordActivity(job: Record<string, unknown>) {
-  const field = job.kind === "search" ? "searches" : job.kind === "analyse" ? "analyses" : job.kind === "dd" ? "research" : null;
+  const field = job.kind === "search" || job.kind === "planning" ? "searches" : job.kind === "analyse" ? "analyses" : job.kind === "dd" ? "research" : null;
   if (!field || typeof job.userId !== "string") return;
   const userId = job.userId;
   const fresh = !(await accounts().get(`users/${userId}/activity`, { type: "json" }));
@@ -1073,5 +1073,143 @@ export async function runResearch(input: string, level: LevelId) {
   return {
     findings: checks.map((c) => byKey.get(c.k) || { k: c.k, status: "none" as const, finding: "The research didn't find public information for this check. Obtain the evidence directly and add it below.", sources: [] }),
     researchedAt: new Date().toISOString(),
+  };
+}
+
+// ---------- Planning search: applications and uplift potential for an area ----------
+export type PlanningInput = { location: string; focus: string[]; works: string[] };
+const PLAN_FOCUS = ["granted", "pending", "refused", "uplift"] as const;
+const PLAN_WORKS = ["extension", "loft", "conversion", "new-home", "change-of-use", "hmo"] as const;
+const PLAN_KINDS = new Set<string>([...PLAN_WORKS, "other"]);
+const PLAN_STATUS = new Set(["granted", "pending", "refused", "withdrawn", "unknown"]);
+const PLAN_DOMAINS = ["plota.co.uk", "planindex.co.uk", "planningalerts.app", "towncrierapp.uk", "metisintelligence.co.uk", "planningscout.co.uk", "planning.data.gov.uk", "gov.uk", "planningportal.co.uk"];
+
+const PLANNING_PROMPT = `You are Deal Pro's UK planning researcher. A property investor wants to know what planning exists, and what planning uplift is possible, in a place. Search the public web: the council's planning register and planning-application aggregators (for example plota.co.uk, planindex.co.uk, planningalerts.app), GOV.UK, planning.data.gov.uk and the council's own conservation area and Article 4 pages.
+Rules:
+- Only report planning applications you actually found on a page, with that page's URL. Never invent a reference, address, date, status or URL. If you find few, return few.
+- Prefer applications from the last 3 years. Give the council's reference (for example 26/01937/PREHH), the address with its postcode, a plain-English description of what is proposed, the status and the decision or submission date.
+- "uplifts" are ideas for adding value to homes in this area (rear extension, loft conversion, conversion to flats, change of use, new home in the garden), each with the planning route that is likely to apply here (permitted development, prior approval, lawful development certificate or full planning permission) and the evidence from this area that backs it up (similar applications decided nearby, with their outcomes). Say plainly when evidence is missing.
+- "constraints" are the planning controls that matter for the area: conservation areas, listed buildings, Article 4 directions (including any HMO direction), green belt and flood zones. Say what you found, and that the exact address must be checked on the council's map.
+- Plain English, no hype, and never use the word "AI".`;
+const PLANNING_FORMAT = `Return JSON: {"council": string, "summary": string (max 70 words),
+"constraints": [{"k": "conservation" | "listed" | "article4" | "greenbelt" | "flood" | "pd", "t": string (short title), "status": "issue" | "partly" | "none", "finding": string (max 60 words), "sources": [{"title": string, "url": string}]}],
+"applications": [{"ref": string, "address": string, "postcode": string, "proposal": string (max 40 words), "kind": "extension" | "loft" | "conversion" | "new-home" | "change-of-use" | "hmo" | "other", "status": "granted" | "pending" | "refused" | "withdrawn" | "unknown", "date": string (YYYY-MM-DD if known), "url": string, "note": string (max 25 words, what this shows for an investor, or "")}],
+"uplifts": [{"idea": string, "route": string, "detail": string (max 60 words), "evidence": string (max 40 words), "sources": [{"title": string, "url": string}]}]}`;
+const PLANNING_LEVEL: Record<LevelId, { context: "low" | "medium" | "high"; max: number; note: string }> = {
+  quick: { context: "low", max: 8, note: "Quick first pass: up to 8 applications, up to 3 constraints and 3 uplift ideas." },
+  standard: { context: "medium", max: 15, note: "Search properly: up to 15 applications, every relevant constraint and up to 5 uplift ideas." },
+  deep: { context: "high", max: 25, note: "Search exhaustively across several sources and street by street: up to 25 applications, every relevant constraint and up to 6 uplift ideas, cross-checking outcomes." },
+};
+
+const POSTCODE = /\b([A-Z]{1,2}\d[A-Z\d]?)\s*(\d[A-Z]{2})\b/i;
+const hostOf = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
+
+export async function placePlanning(location: string, apps: Array<Record<string, any>>) {
+  // Unit postcodes place a pin within a few doors; a district centre is marked as approximate.
+  const full = [...new Set(apps.map((a) => String(a.postcode || "").toUpperCase().replace(/\s+/g, "")).filter((p) => /^[A-Z]{1,2}\d[A-Z\d]?\d[A-Z]{2}$/.test(p)))].slice(0, 100);
+  const byPc = new Map<string, { lat: number; lng: number }>();
+  if (full.length) {
+    try {
+      const r = await fetch("https://api.postcodes.io/postcodes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ postcodes: full }), signal: AbortSignal.timeout(8000) });
+      const j = r.ok ? await r.json() as { result?: Array<{ query: string; result: { latitude: number; longitude: number } | null }> } : null;
+      for (const x of j?.result || []) if (x.result && inUK(x.result.latitude, x.result.longitude)) byPc.set(x.query.toUpperCase().replace(/\s+/g, ""), { lat: x.result.latitude, lng: x.result.longitude });
+    } catch { /* pins are optional */ }
+  }
+  const outcodes = new Map<string, { lat: number; lng: number } | null>();
+  for (const a of apps) {
+    const pc = String(a.postcode || "").toUpperCase().replace(/\s+/g, "");
+    if (!byPc.has(pc)) { const oc = pc.match(/^([A-Z]{1,2}\d[A-Z\d]?)/)?.[1]; if (oc) outcodes.set(oc, null); }
+  }
+  await Promise.all([...outcodes.keys()].slice(0, 20).map(async (oc) => {
+    const j = await getJson(`https://api.postcodes.io/outcodes/${encodeURIComponent(oc)}`);
+    const r = j?.result;
+    if (r && inUK(r.latitude, r.longitude)) outcodes.set(oc, { lat: r.latitude, lng: r.longitude });
+  }));
+  for (const a of apps) {
+    const pc = String(a.postcode || "").toUpperCase().replace(/\s+/g, "");
+    const exact = byPc.get(pc), oc = outcodes.get(pc.match(/^([A-Z]{1,2}\d[A-Z\d]?)/)?.[1] || "");
+    if (exact) { a.lat = exact.lat; a.lng = exact.lng; a.geo = "postcode"; }
+    else if (oc) { a.lat = oc.lat; a.lng = oc.lng; a.geo = "area"; }
+  }
+  // The centre of the search: its postcode, or the place name.
+  let centre: { lat: number; lng: number } | null = null;
+  const pm = location.match(POSTCODE);
+  if (pm) {
+    const j = await getJson(`https://api.postcodes.io/postcodes/${encodeURIComponent(pm[1] + pm[2])}`);
+    if (j?.result && inUK(j.result.latitude, j.result.longitude)) centre = { lat: j.result.latitude, lng: j.result.longitude };
+  }
+  if (!centre) {
+    const j = await getJson(`https://api.postcodes.io/places?q=${encodeURIComponent(location.replace(POSTCODE, "").trim() || location)}&limit=1`);
+    const r = j?.result?.[0];
+    if (r && inUK(r.latitude, r.longitude)) centre = { lat: r.latitude, lng: r.longitude };
+  }
+  if (!centre) {
+    const placed = apps.filter((a) => Number.isFinite(a.lat));
+    if (placed.length) centre = { lat: placed.reduce((s, a) => s + a.lat, 0) / placed.length, lng: placed.reduce((s, a) => s + a.lng, 0) / placed.length };
+  }
+  return centre;
+}
+
+export async function runPlanning(input: string, level: LevelId) {
+  const { location, focus, works } = JSON.parse(input) as PlanningInput;
+  const lv = PLANNING_LEVEL[level];
+  const want = focus.length ? focus : [...PLAN_FOCUS];
+  const types = works.length ? works.join(", ") : "any type of work";
+  const ask = (f: string[]) => webJson(
+    `${PLANNING_PROMPT}\n${lv.note}\n\nPlace: ${location}\nLook for: ${f.map((x) => x === "uplift" ? "planning uplift ideas and the evidence for them" : `${x} planning applications`).join("; ")}.\nTypes of work: ${types}.\n\n${PLANNING_FORMAT}`,
+    PLAN_DOMAINS, level, lv.context, LEVELS[level].effort);
+  // Expert searches each focus separately, in parallel, so each gets a full search.
+  const parts = level === "deep" && want.length > 1
+    ? await Promise.all(want.map((f) => ask([f]).catch((error) => { console.warn("Planning search failed for", f, errText(error)); return null; })))
+    : [await ask(want)];
+  if (parts.every((p) => !p)) throw new Error("Planning search failed");
+
+  const hosts = new Set<string>();
+  for (const p of parts) if (p) for (const u of p.seen) hosts.add(hostOf(u));
+  // A page the search never returned can't be a source: its address must be on a site the search really visited.
+  const sourced = (u: unknown) => typeof u === "string" && /^https?:\/\//.test(u) && hosts.has(hostOf(u));
+  const seenRefs = new Set<string>();
+  const applications: Array<Record<string, any>> = [];
+  const constraints = new Map<string, Record<string, any>>();
+  const uplifts: Array<Record<string, any>> = [];
+  for (const p of parts) {
+    if (!p) continue;
+    for (const a of (Array.isArray(p.parsed.applications) ? p.parsed.applications : []) as Array<Record<string, unknown>>) {
+      const ref = String(a.ref || "").trim().slice(0, 40), address = String(a.address || "").trim().slice(0, 160);
+      if (!address || !sourced(a.url)) continue;
+      const key = (ref || address).toLowerCase();
+      if (seenRefs.has(key)) continue;
+      seenRefs.add(key);
+      const pc = String(a.postcode || "").trim() || address.match(POSTCODE)?.[0] || "";
+      applications.push({
+        ref, address, postcode: pc.toUpperCase().slice(0, 9), proposal: String(a.proposal || "").slice(0, 320),
+        kind: PLAN_KINDS.has(String(a.kind)) ? String(a.kind) : "other",
+        status: PLAN_STATUS.has(String(a.status)) ? String(a.status) : "unknown",
+        date: /^\d{4}-\d{2}(-\d{2})?$/.test(String(a.date || "")) ? String(a.date) : "",
+        url: String(a.url), note: String(a.note || "").slice(0, 220),
+      });
+    }
+    for (const c of (Array.isArray(p.parsed.constraints) ? p.parsed.constraints : []) as Array<Record<string, unknown>>) {
+      const k = String(c.k || "");
+      if (!["conservation", "listed", "article4", "greenbelt", "flood", "pd"].includes(k) || constraints.has(k)) continue;
+      constraints.set(k, { k, t: String(c.t || k).slice(0, 80), status: c.status === "issue" ? "issue" : c.status === "partly" ? "partly" : "none", finding: String(c.finding || "").slice(0, 500), sources: keepSources(c.sources, p.seen) });
+    }
+    for (const u of (Array.isArray(p.parsed.uplifts) ? p.parsed.uplifts : []) as Array<Record<string, unknown>>) {
+      const idea = String(u.idea || "").trim().slice(0, 100);
+      if (!idea || uplifts.some((x) => x.idea.toLowerCase() === idea.toLowerCase())) continue;
+      uplifts.push({ idea, route: String(u.route || "").slice(0, 120), detail: String(u.detail || "").slice(0, 500), evidence: String(u.evidence || "").slice(0, 320), sources: keepSources(u.sources, p.seen) });
+    }
+  }
+  // Newest first, then keep what this level allows.
+  applications.sort((a, b) => String(b.date).localeCompare(String(a.date)));
+  const kept = applications.slice(0, lv.max);
+  const centre = await placePlanning(location, kept);
+  const first = parts.find((p) => p) as { parsed: Record<string, any> };
+  return {
+    location, focus: want, works,
+    council: String(first.parsed.council || "").slice(0, 80),
+    summary: String(first.parsed.summary || "").slice(0, 600),
+    centre, applications: kept, constraints: [...constraints.values()], uplifts: uplifts.slice(0, 8),
+    searchedAt: new Date().toISOString(),
   };
 }

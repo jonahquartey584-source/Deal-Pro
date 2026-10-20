@@ -562,6 +562,29 @@ fieldset.fg{border:0;margin:0;padding:0;min-width:0}
 .pm-pop .pp{padding:8px 10px 10px;display:grid;gap:2px}.pm-pop .pp b{font:600 15px var(--mono);color:var(--accent)}.pm-pop .pp span{color:var(--ink-2);font-size:12px}
 .pm-pop .pp a{color:var(--ink);font-weight:600;font-size:12.5px;margin-top:4px}
 .pm-pop a.leaflet-popup-close-button{color:#fff;text-shadow:0 1px 3px #000}
+/* Planning: applications and uplift ideas for an area, with a map */
+.pn-sum{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:0 0 14px}.pn-sum h2{margin:0 0 4px;font-size:16px}.pn-sum p{margin:0;color:var(--ink-2);font-size:13.5px}
+.pn-h{margin:18px 0 8px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px}.pn-h .muted{font-weight:400;font-size:12.5px}
+.pn-cons{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.pn-con{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--muted);border-radius:8px;padding:10px 12px;min-width:0}.pn-con.issue{border-left-color:var(--warn)}.pn-con.partly{border-left-color:#C98A0B}.pn-con.none{border-left-color:var(--good)}
+.pn-con b{display:block;font-size:13px}.pn-con p{margin:3px 0 0;font-size:12.5px;color:var(--ink-2)}.pn-src{margin:6px 0 0;font-size:12px;display:flex;flex-wrap:wrap;gap:4px 10px}.pn-src a{color:var(--ink);overflow-wrap:anywhere}
+.pn-ups{display:grid;gap:10px}.pn-up{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:11px 13px}.pn-up b{font-size:13.5px}.pn-up .pn-route{display:inline-block;margin-left:8px;font-size:11.5px;font-weight:600;padding:1px 7px;border-radius:99px;background:var(--surface-2);color:var(--ink-2)}
+.pn-up p{margin:4px 0 0;font-size:13px;color:var(--ink-2)}.pn-up .pn-ev{color:var(--ink)}
+.pn-filt{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}.pn-filt button{border:1px solid var(--line-2);background:var(--surface);color:var(--ink-2);border-radius:99px;padding:4px 11px;font:500 12.5px var(--sans);cursor:pointer}.pn-filt button[aria-pressed="true"]{background:var(--hover);color:var(--ink);border-color:var(--ink-2)}
+.pn-list{display:grid;gap:10px;padding-bottom:16px;min-width:0}
+.pn-card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px 13px;min-width:0;transition:border-color .15s}.pn-card:hover,.pn-card.hl{border-color:var(--accent)}.pn-card.flash{animation:pcFlash 1.2s var(--ease)}
+.pn-top{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;color:var(--ink-2)}
+.pn-st{font-weight:600;padding:2px 8px;border-radius:99px;color:#fff;background:#3F444D}.pn-st.granted{background:#16794A}.pn-st.pending{background:#8A5A00}.pn-st.refused{background:#B42318}
+.pn-kind{padding:2px 8px;border-radius:99px;background:var(--surface-2)}.pn-date{margin-left:auto}
+.pn-card h3{margin:6px 0 2px;font-size:14px;font-weight:600}.pn-prop{margin:0;font-size:13px;color:var(--ink-2)}.pn-note{margin:5px 0 0;font-size:12.5px;color:var(--ink)}
+.pn-foot{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;margin-top:8px;font-size:12px}.pn-foot .mono{font-family:var(--mono);color:var(--muted)}.pn-foot a{color:var(--ink);font-weight:600}
+.pn-disc{margin:6px 0 0;font-size:12px;color:var(--muted)}
+.pm-pin.pn-granted span{background:#16794A}.pm-pin.pn-granted span::after{border-top-color:#16794A}
+.pm-pin.pn-pending span{background:#8A5A00}.pm-pin.pn-pending span::after{border-top-color:#8A5A00}
+.pm-pin.pn-refused span{background:#B42318}.pm-pin.pn-refused span::after{border-top-color:#B42318}
+.pm-pin.pn-withdrawn span,.pm-pin.pn-unknown span{background:#3F444D}.pm-pin.pn-withdrawn span::after,.pm-pin.pn-unknown span::after{border-top-color:#3F444D}
+.pm-pin.pn-centre span{background:var(--accent);font-size:11px}.pm-pin.pn-centre span::after{border-top-color:var(--accent)}
+.pm-pop .pp .pn-pst{font:600 12px var(--sans);color:var(--ink)}
 .leaflet-container{font:12px var(--sans)}.leaflet-bar a{background:var(--surface-2);color:var(--ink);border-bottom-color:var(--line-2)}.leaflet-bar a:hover{background:var(--hover);color:var(--ink)}
 .leaflet-control-attribution{background:rgba(11,11,12,.75)!important;color:var(--muted)}.leaflet-control-attribution a{color:var(--ink-2)}
 @media (max-width:900px){.pmap{grid-template-columns:minmax(0,1fr)}.pm-side{position:relative;top:0;height:320px;min-height:0;order:-1}}
@@ -1072,6 +1095,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
     <nav class="nav" aria-label="Sections">
       <button class="tab" data-v="home" aria-current="page"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2.5 7L8 2.5 13.5 7v6.5h-11z"/><path d="M6.5 13.5V10h3v3.5"/></svg>Home</button>
       <button class="tab tab-lg" data-v="find"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="7" cy="7" r="4.25"/><path d="M10.25 10.25l3.25 3.25"/></svg><span class="tab-txt"><span class="tab-l">Deal Finder</span><span class="tab-d">Search free property deals</span></span></button>
+      <button class="tab tab-lg" data-v="planning"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5l4-1.75 4 1.75 4-1.75v7.5l-4 1.75-4-1.75-4 1.75z"/><path d="M6 3.75v7.5M10 5.5V13"/></svg><span class="tab-txt"><span class="tab-l">Planning</span><span class="tab-d">Find planning and uplifts</span></span></button>
       <button class="tab tab-lg" data-v="analyser"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 13.5V8.5M8 13.5v-11M13 13.5V6"/></svg><span class="tab-txt"><span class="tab-l">Deal Analyser</span><span class="tab-d">Numbers, due diligence and deal pack</span></span></button>
       <button class="tab tab-lg" data-v="community"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="5.5" cy="5.5" r="2.25"/><circle cx="11" cy="6.5" r="1.75"/><path d="M1.75 13.5c.4-2.3 1.9-3.75 3.75-3.75s3.35 1.45 3.75 3.75M9.5 10.25c.5-.35 1-.5 1.5-.5 1.5 0 2.6 1.2 2.9 3.75"/></svg><span class="tab-txt"><span class="tab-l">Deal Community<span class="nav-badge" id="cNewBadge" hidden></span></span><span class="tab-d">Post and find contacted deals</span></span></button>
       <div class="nav-div" role="presentation"></div>
@@ -1254,6 +1278,35 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
       </div>
       <div class="limit-note ferr" id="fErr" role="alert" hidden></div>
       <div id="fResults"></div>
+    </div>
+  </section>
+
+  <!-- PLANNING -->
+  <section data-view="planning" hidden>
+    <header class="ph">
+      <div class="ph-main">
+        <h1>Planning</h1>
+        <p class="ph-desc">Search any UK area for planning applications and planning uplift potential. Every result links to its source and is plotted on a map.</p>
+        <p class="ph-meta">Counts as one Deal Finder search. Results come from public planning registers and can be out of date, so check the council's own record before relying on one.</p>
+      </div>
+    </header>
+    <div class="limit-note" id="nPlan" role="status" hidden></div>
+    <div class="find">
+      <div class="panel fpanel" id="pnPanel">
+        <div class="fs">
+          <div class="fs-h"><h2>Search</h2><button class="btn ghost sm" id="pnReset" type="button">Reset</button></div>
+          <div class="fields">
+            <label class="f"><span>Location</span><input class="inp" id="pnLoc" placeholder="Postcode, street or town, e.g. E6 6AE or East Ham" autocomplete="off" maxlength="120"></label>
+            <div class="f" role="group" aria-labelledby="pnFocusH"><span id="pnFocusH">What to look for <span class="muted">· tick one or more</span></span><div class="schips" id="pnFocus"><label class="schip"><input type="checkbox" name="pnFocus" value="granted" checked><span>Granted</span></label><label class="schip"><input type="checkbox" name="pnFocus" value="pending" checked><span>Pending</span></label><label class="schip"><input type="checkbox" name="pnFocus" value="refused"><span>Refused</span></label><label class="schip"><input type="checkbox" name="pnFocus" value="uplift" checked><span>Uplift ideas</span></label></div></div>
+            <div class="f" role="group" aria-labelledby="pnWorksH"><span id="pnWorksH">Type of work <span class="muted">· optional</span></span><div class="schips" id="pnWorks"><label class="schip"><input type="checkbox" name="pnWorks" value="extension"><span>Extension</span></label><label class="schip"><input type="checkbox" name="pnWorks" value="loft"><span>Loft</span></label><label class="schip"><input type="checkbox" name="pnWorks" value="conversion"><span>Flats</span></label><label class="schip"><input type="checkbox" name="pnWorks" value="new-home"><span>New home</span></label><label class="schip"><input type="checkbox" name="pnWorks" value="change-of-use"><span>Change of use</span></label><label class="schip"><input type="checkbox" name="pnWorks" value="hmo"><span>HMO</span></label></div></div>
+            <p class="fnote">Granted and refused show decisions you can learn from. Pending shows what neighbours are trying now. Uplift ideas suggest what could add value here, with the evidence.</p>
+          </div>
+        </div>
+        <div class="fs"><fieldset class="ai-levels"><legend>Power level</legend><div class="ai-level-opts ai-level-stack" id="pnLevelOpts"></div><p class="ai-credits" id="pnCredits"></p></fieldset>
+          <button class="btn primary block" id="pnSearch" type="button">Search planning</button></div>
+      </div>
+      <div class="limit-note ferr" id="pnErr" role="alert" hidden></div>
+      <div id="pnResults"></div>
     </div>
   </section>
 
@@ -1691,7 +1744,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
   <div class="dr-foot"><span class="hint" id="sgHint" aria-live="polite"></span><button class="btn" id="ulBack" type="button" hidden>Back</button><button class="btn" id="sgCancel" type="button">Cancel</button><button class="btn primary" id="sgSign" type="button" disabled>Continue to payment</button><button class="btn primary" id="payBtn" type="button" hidden>Pay £500</button></div>
 </dialog>
 
-<script src="/assets/app.js?v=7" defer></script>
+<script src="/assets/app.js?v=8" defer></script>
 <script type="module" src="/assets/auth.js"></script>
 
 </body>

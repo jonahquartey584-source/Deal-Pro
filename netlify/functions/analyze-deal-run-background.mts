@@ -1,5 +1,5 @@
 import type { Config, Context } from "@netlify/functions";
-import { jobs, recordActivity, refundJob, runAnalysis, runRank, runResearch, newSearch, searchProgress, stepSearch, type LevelId, type SearchState } from "../lib/ai.mts";
+import { jobs, recordActivity, refundJob, runAnalysis, runRank, runResearch, runPlanning, newSearch, searchProgress, stepSearch, type LevelId, type SearchState } from "../lib/ai.mts";
 
 // A background function can run for 15 minutes. Searches work for up to 13, save their
 // progress and start a fresh run to continue, so an Expert search can take much longer.
@@ -51,6 +51,7 @@ export default async (request: Request, _context: Context) => {
     } else {
       analysis = job.kind === "rank" ? await runRank(String(job.input), level)
         : job.kind === "dd" ? await runResearch(String(job.input), level)
+        : job.kind === "planning" ? await runPlanning(String(job.input), level)
         : await runAnalysis(String(job.input), level, typeof job.strategy === "string" ? job.strategy : undefined);
     }
     const final = await store.get(jobId, { type: "json" }) as Record<string, unknown> | null;
@@ -71,6 +72,7 @@ export default async (request: Request, _context: Context) => {
       : job.kind === "search"
       ? "The search could not be completed. Your credits have not been used; please try again."
       : job.kind === "dd" ? "The research could not be completed. Your credits have not been used; please try again."
+      : job.kind === "planning" ? "The planning search could not be completed. Your credits have not been used; please try again."
       : "The analysis could not be completed. Your credits have not been used; please try again.");
   }
 };
