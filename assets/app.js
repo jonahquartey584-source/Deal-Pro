@@ -1332,7 +1332,12 @@ async function drawMap(rows){const el=$('#fMap');if(!el)return;const sig=(S.find
     m.on('click',()=>focusCard(r.k));m.on('mouseover',()=>{const c=$('#pc'+r.k);if(c)c.classList.add('hl')});m.on('mouseout',()=>{const c=$('#pc'+r.k);if(c)c.classList.remove('hl')});
     LMK.set(r.k,m);ll.push([lat,lng])});
   if(keep)LMAP.setView(keep.c,keep.z,{animate:false});else LMAP.fitBounds(ll,{padding:[40,40],maxZoom:14});
-  setTimeout(()=>{if(LMAP)LMAP.invalidateSize()},80)}
+  setTimeout(()=>{if(LMAP)LMAP.invalidateSize()},80);
+  // The panel can change size after the map is drawn (page animation, layout, window resize): resize the map with it and,
+  // until the member moves the map themselves, fit the pins again so tiles fill the box and every pin is in view.
+  try{let touched=!!keep;['mousedown','wheel','touchstart'].forEach(ev=>el.addEventListener(ev,()=>{touched=true},{passive:true}));
+    const map=LMAP,ro=new ResizeObserver(()=>{if(LMAP!==map||!el.isConnected)return;map.invalidateSize();if(!touched)map.fitBounds(ll,{padding:[40,40],maxZoom:14,animate:false})});
+    ro.observe(el);map.on('unload',()=>ro.disconnect())}catch(e){}}
 $('#fResults').addEventListener('mouseover',e=>{const c=e.target.closest('.pcard');if(c&&!c.contains(e.relatedTarget))hlPin(+c.dataset.k,true)});
 $('#fResults').addEventListener('mouseout',e=>{const c=e.target.closest('.pcard');if(c&&!c.contains(e.relatedTarget))hlPin(+c.dataset.k,false)});
 /* Share as link: publish the deal cards as one web page at /deals/<id>, to send on WhatsApp, email or text */
