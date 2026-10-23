@@ -151,14 +151,14 @@ const ioMortgage=(loan,rate)=>loan*rate/100/12;// interest-only, monthly
 const R2R_OCC=[.75,.9,1];
 function unitCalc(m,u,p,a){const price=nn(u.price),ref=nn(u.refurb),sd=price?sdltAdditional(price):0;
   if(m==='btl'||m==='hmo'){const loan=price*(1-p.dep/100),mo=ioMortgage(loan,p.rate),rooms=nn(u.rooms),rent=m==='hmo'?rooms*nn(u.roomRent):nn(u.mrent),
-      costs=rent*p.costs/100+(m==='hmo'?nn(u.bills):0),cash=price*p.dep/100+sd+p.legal+ref,cf=rent-mo-costs;
-    return {price,ref,sd,loan,mo,rent,costs,cash,cf,dep:price*p.dep/100,stress:rent-ioMortgage(loan,p.rate+2)-costs,gy:price?rent*12/price:NaN,roi:cash?cf*12/cash:NaN,
+      costs=rent*p.costs/100+(m==='hmo'?nn(u.bills):0),cash=price*p.dep/100+sd+p.legal+ref,cf=rent-mo-costs,cost=price+sd+p.legal+ref;
+    return {price,ref,sd,loan,mo,rent,costs,cash,cf,dep:price*p.dep/100,stress:rent-ioMortgage(loan,p.rate+2)-costs,gy:price?rent*12/price:NaN,roi:cash?cf*12/cash:NaN,cost,noi:(rent-costs)*12,roiv:cost?(rent-costs)*12/cost:NaN,
       lender:loan?rent/ioMortgage(loan,Math.max(p.rate,5.5)):Infinity}}
   if(m==='brrr'){const gdv=nn(u.gdv),moneyIn=price+sd+p.legal+ref,refi=gdv*p.ltv/100,left=moneyIn-refi,mo=ioMortgage(refi,p.rate),rent=nn(u.mrent),costs=rent*p.costs/100,cf=rent-mo-costs;
-    return {price,ref,sd,gdv,moneyIn,refi,left,mo,rent,costs,cf,uplift:gdv-price-ref,roi:left>0?cf*12/left:Infinity}}
+    return {price,ref,sd,gdv,moneyIn,refi,left,mo,rent,costs,cf,uplift:gdv-price-ref,roi:left>0?cf*12/left:Infinity,cost:moneyIn,noi:(rent-costs)*12,roiv:moneyIn?(rent-costs)*12/moneyIn:NaN}}
   if(m==='flip'){const gdv=nn(u.gdv),loan=price*(1-p.dep/100),fin=ioMortgage(loan,p.fin)*p.months,hold=p.hold*p.months,sale=gdv*p.agent/100*1.2+(gdv?1000:0),
       cash=price*p.dep/100+sd+p.legal+ref+fin+hold,profit=gdv-price-sd-p.legal-ref-fin-hold-sale;
-    return {price,ref,sd,gdv,loan,fin,hold,sale,cash,profit,dep:price*p.dep/100,margin:gdv?profit/gdv:NaN,roi:cash?profit/cash:NaN}}
+    const cost=price+sd+p.legal+ref+fin+hold+sale;return {price,ref,sd,gdv,loan,fin,hold,sale,cash,profit,dep:price*p.dep/100,margin:gdv?profit/gdv:NaN,roi:cash?profit/cash:NaN,cost,roiv:cost?profit/cost:NaN}}
   if(m==='lo'){const rent=nn(u.mrent),pay=nn(u.rent),costs=rent*p.costs/100,cf=rent-pay-costs,cash=nn(u.dep)+p.legal;return {rent,pay,costs,cf,cash,fee:nn(u.dep),roi:cash?cf*12/cash:NaN}}
   if(m==='r2r'){const rooms=nn(u.rooms),rr=nn(u.roomRent),bills=nn(u.bills),rent=nn(u.rent),fixed=rent+bills+a.other,full=rooms*rr;
     return {rooms,rr,bills,rent,full,fixed,dep:nn(u.dep),at:o=>full*o-fixed,be:full?fixed/full:Infinity,cash:rent+nn(u.dep)}}
@@ -173,6 +173,12 @@ const modelHas=d=>(d.units||[]).some(NEEDS[modelOf(d)]);
 const sumOf=(L,k)=>L.reduce((s,x)=>s+(+x[k]||0),0);
 const pctTxt=x=>isFinite(x)?(Math.round(x*1000)/10).toFixed(1).replace(/\.0$/,'')+'%':'–';
 // The four headline figures for a deal, whatever its strategy: [label, value text, note, negative?].
+// ROCE (return on cash) is already shown. ROI is the return on the whole cost of the deal, whether or not it is mortgaged:
+// rent less running costs a year over the total cost (price, stamp duty, fees, refurb); for a flip, profit over the total cost of the project.
+function modelROI(d){const m=modelOf(d);if(!['btl','hmo','brrr','flip'].includes(m)||!modelHas(d))return null;
+  const C=(d.units||[]).map(u=>unitCalc(m,u,dealP(d),d.a)),cost=sumOf(C,'cost');if(!(cost>0))return null;
+  const gain=m==='flip'?sumOf(C,'profit'):sumOf(C,'noi');
+  return ['ROI',pctTxt(gain/cost),m==='flip'?'Profit ÷ total cost of the project':'Rent less running costs a year ÷ total cost, before the mortgage',gain<0]}
 function modelStrip(d){const m=modelOf(d),a=d.a,p=dealP(d),U=d.units||[];
   if(m==='sa'||m==='ownsa'){const own=m==='ownsa',C=own?U.map(u=>unitCalc(m,u,p,a)):null,UU=own?U.map((u,i)=>Object.assign({},u,{rent:C[i].mo})):U;
     const tot=OCC.map(o=>UU.reduce((s,u)=>s+month(u,o,null,a).surplus,0)),bes=UU.map(u=>be(u,a)),w=bes.length?Math.max(...bes):NaN;
@@ -181,11 +187,11 @@ function modelStrip(d){const m=modelOf(d),a=d.a,p=dealP(d),U=d.units||[];
       ['Break-even',isFinite(w)?pct(w):'Never','Occupancy, weakest unit'],{t60:tot[0],t80:tot[1],up:own?sumOf(C,'cash'):sumOf(U,'rent')+sumOf(U,'dep'),monthly:tot[1]}]}
   const C=U.map(u=>unitCalc(m,u,p,a));
   if(m==='btl'||m==='hmo'){const cash=sumOf(C,'cash'),cf=sumOf(C,'cf'),gy=sumOf(C,'price')?sumOf(C,'rent')*12/sumOf(C,'price'):NaN,roi=cash?cf*12/cash:NaN;
-    return [['Cash needed',gbp(cash),'Deposit, stamp duty, fees, refurb'],['Cash flow',gbp(cf),'Per month after mortgage and costs',cf<0],['Gross yield',pctTxt(gy),m==='hmo'?'Room rent a year ÷ price':'Rent a year ÷ price'],['Return on cash',pctTxt(roi),'Cash flow a year ÷ cash needed',roi<0],{up:cash,monthly:cf}]}
+    return [['Cash needed',gbp(cash),'Deposit, stamp duty, fees, refurb'],['Cash flow',gbp(cf),'Per month after mortgage and costs',cf<0],['Gross yield',pctTxt(gy),m==='hmo'?'Room rent a year ÷ price':'Rent a year ÷ price'],['ROCE (return on cash)',pctTxt(roi),'Cash flow a year ÷ cash needed',roi<0],{up:cash,monthly:cf}]}
   if(m==='brrr'){const mi=sumOf(C,'moneyIn'),left=sumOf(C,'left'),cf=sumOf(C,'cf'),roi=left>0?cf*12/left:Infinity;
     return [['Money in',gbp(mi),'Price, stamp duty, fees, refurb'],['Left in after refinance',left<=0?`${gbp(-left)} out`:gbp(left),left<=0?'All your money back, and more':'Stays in the deal',left>0&&left>mi*.5],['Cash flow',gbp(cf),'Per month after refinance',cf<0],['Return on money left in',isFinite(roi)?pctTxt(roi):'Infinite','Cash flow a year ÷ money left in',roi<0],{up:mi,monthly:cf}]}
   if(m==='flip'){const cash=sumOf(C,'cash'),profit=sumOf(C,'profit'),gdv=sumOf(C,'gdv'),mg=gdv?profit/gdv:NaN,roi=cash?profit/cash:NaN;
-    return [['Cash in',gbp(cash),'Deposit, costs, refurb, finance'],['Profit',gbp(profit),'After all buying, holding and selling costs',profit<0],['Margin',pctTxt(mg),'Profit ÷ resale value',mg<.15],['Return on cash',pctTxt(roi),`Over ${dealP(d).months} months`,roi<0],{up:cash,monthly:null}]}
+    return [['Cash in',gbp(cash),'Deposit, costs, refurb, finance'],['Profit',gbp(profit),'After all buying, holding and selling costs',profit<0],['Margin',pctTxt(mg),'Profit ÷ resale value',mg<.15],['ROCE (return on cash)',pctTxt(roi),`Profit ÷ cash in, over ${dealP(d).months} months`,roi<0],{up:cash,monthly:null}]}
   if(m==='lo'){const cash=sumOf(C,'cash'),cf=sumOf(C,'cf'),roi=cash?cf*12/cash:NaN;
     return [['Upfront',gbp(cash),'Option fee and legal costs'],['Cash flow',gbp(cf),'Per month after the payment and costs',cf<0],['Cash flow a year',gbp(cf*12),'Before tax',cf<0],['Return on upfront',pctTxt(roi),'Cash flow a year ÷ upfront',roi<0],{up:cash,monthly:cf}]}
   if(m==='r2r'){const at=o=>C.reduce((s,c)=>s+c.at(o),0),w=C.length?Math.max(...C.map(c=>c.be)):NaN,up=sumOf(C,'cash');
@@ -199,7 +205,8 @@ function unitText(d,u){const m=modelOf(d);
   return `${u.label}: rent ${gbp(nn(u.rent))}/month, deposit ${gbp(nn(u.dep))}${u.rate?`, nightly rate £${u.rate}`:''}`}
 // Numbers step for the models other than R2SA and owned SA.
 function renderModel(d,m){const a=d.a,p=dealP(d),U=d.units,C=U.map(u=>unitCalc(m,u,p,a)),S4=modelStrip(d);
-  let h=`<div class="strip" role="group" aria-label="Deal summary">${S4.slice(0,4).map(([l,v,s,neg])=>`<div class="fig"><div class="fig-l">${l}</div><div class="fig-v${neg?' neg':''}">${v}</div><div class="fig-s">${s}</div></div>`).join('')}</div>`;
+  const ROI=modelROI(d);
+  let h=`<div class="strip${ROI?' s5':''}" role="group" aria-label="Deal summary">${S4.slice(0,4).concat(ROI?[ROI]:[]).map(([l,v,s,neg])=>`<div class="fig"><div class="fig-l">${l}</div><div class="fig-v${neg?' neg':''}">${v}</div><div class="fig-s">${s}</div></div>`).join('')}</div>`;
   const al=[];
   if(m==='btl'||m==='hmo'){C.forEach((c,i)=>{if(c.cf<0)al.push(`<div class="alert bad"><b>${esc(U[i].label)} loses money each month</b> after the mortgage and running costs (${gbp(c.cf)}).</div>`);
       else if(c.lender<1.25)al.push(`<div class="alert warn"><b>${esc(U[i].label)} may fail a lender's rent check.</b> Lenders usually want the rent to be at least 125% (often 145%) of the mortgage interest at a stressed rate. Here it is ${pct(c.lender)}. A bigger deposit or a limited company mortgage may be needed.</div>`)});
@@ -221,14 +228,14 @@ function renderModel(d,m){const a=d.a,p=dealP(d),U=d.units,C=U.map(u=>unitCalc(m
   </tbody></table></div></section>`;
   if(m==='btl'||m==='hmo'){
     h+=tbl('Buying costs','Cash needed to complete',[['Purchase price',c=>c.price],[`Deposit (${p.dep}%)`,c=>c.dep],['Stamp duty (est.)',c=>c.sd],['Legal and survey',()=>p.legal],['Refurb',c=>c.ref],['Cash needed',c=>c.cash,'total']]);
-    h+=tbl('Monthly cash flow','Interest-only mortgage',[[m==='hmo'?'Room rent (all rooms)':'Rent',c=>c.rent],[`Mortgage interest (${p.rate}%)`,c=>-c.mo],[m==='hmo'?`Running costs (${p.costs}%) and bills`:`Running costs (${p.costs}%)`,c=>-c.costs],['Cash flow',c=>c.cf,'total'],[`If rates rise to ${p.rate+2}%`,c=>c.stress],['Gross yield',c=>c.gy,'','pct'],['Return on cash a year',c=>c.roi,'','pct']]);
+    h+=tbl('Monthly cash flow','Interest-only mortgage',[[m==='hmo'?'Room rent (all rooms)':'Rent',c=>c.rent],[`Mortgage interest (${p.rate}%)`,c=>-c.mo],[m==='hmo'?`Running costs (${p.costs}%) and bills`:`Running costs (${p.costs}%)`,c=>-c.costs],['Cash flow',c=>c.cf,'total'],[`If rates rise to ${p.rate+2}%`,c=>c.stress],['Gross yield',c=>c.gy,'','pct'],['ROCE (return on cash) a year',c=>c.roi,'','pct'],['ROI a year (rent less running costs ÷ total cost)',c=>c.roiv,'','pct']]);
   }else if(m==='brrr'){
     h+=tbl('Money in','Before refinancing',[['Purchase price',c=>c.price],['Stamp duty (est.)',c=>c.sd],['Legal and survey',()=>p.legal],['Refurb',c=>c.ref],['Money in',c=>c.moneyIn,'total']]);
     h+=tbl('Refinance',`At ${p.ltv}% of the end value`,[['End value',c=>c.gdv],['Uplift over price and refurb',c=>c.uplift],[`New mortgage (${p.ltv}%)`,c=>c.refi],['Money left in',c=>c.left,'total']]);
-    h+=tbl('Monthly cash flow','After refinancing, interest-only',[['Rent',c=>c.rent],[`Mortgage interest (${p.rate}%)`,c=>-c.mo],[`Running costs (${p.costs}%)`,c=>-c.costs],['Cash flow',c=>c.cf,'total'],['Return on money left in a year',c=>c.roi,'','pct']]);
+    h+=tbl('Monthly cash flow','After refinancing, interest-only',[['Rent',c=>c.rent],[`Mortgage interest (${p.rate}%)`,c=>-c.mo],[`Running costs (${p.costs}%)`,c=>-c.costs],['Cash flow',c=>c.cf,'total'],['Return on money left in a year',c=>c.roi,'','pct'],['ROI a year (rent less running costs ÷ total cost)',c=>c.roiv,'','pct']]);
   }else if(m==='flip'){
     h+=tbl('Costs','Buying, holding and selling',[['Purchase price',c=>c.price],['Stamp duty (est.)',c=>c.sd],['Legal and survey',()=>p.legal],['Refurb',c=>c.ref],[`Bridging interest (${p.fin}%, ${p.months} months)`,c=>c.fin],[`Holding costs (${p.months} months)`,c=>c.hold],[`Selling costs (${p.agent}% + VAT, legal)`,c=>c.sale]]);
-    h+=tbl('Profit','When sold at the resale value',[['Resale value',c=>c.gdv],['Profit',c=>c.profit,'total'],['Margin on resale value',c=>c.margin,'','pct'],['Cash in',c=>c.cash],['Return on cash',c=>c.roi,'','pct']]);
+    h+=tbl('Profit','When sold at the resale value',[['Resale value',c=>c.gdv],['Profit',c=>c.profit,'total'],['Margin on resale value',c=>c.margin,'','pct'],['Cash in',c=>c.cash],['ROCE (return on cash)',c=>c.roi,'','pct'],['Total cost of the project',c=>c.cost],['ROI (profit ÷ total cost)',c=>c.roiv,'','pct']]);
   }else if(m==='lo'){
     h+=tbl('Monthly cash flow','Per month',[['Rent from tenant',c=>c.rent],['Payment to owner',c=>-c.pay],[`Running costs (${p.costs}%)`,c=>-c.costs],['Cash flow',c=>c.cf,'total'],['Upfront (option fee and legal)',c=>c.cash],['Return on upfront a year',c=>c.roi,'','pct']]);
   }else if(m==='r2r'){
@@ -313,7 +320,9 @@ document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g
 /* ---------- analyse ---------- */
 function bindDeal(){const d=S.deal;try{renderStratOpts()}catch(e){}/* defined later in the script */
   $('#dName').value=d.name;$('#dArea').value=d.area;$('#dStrat').value=d.strat;$('#dLondon').checked=d.london;
-  $('#aFee').value=d.a.fee;$('#aClean').value=d.a.clean;$('#aStay').value=d.a.stay;$('#aOther').value=d.a.other;renderUnits();renderResults()}
+  $('#aFee').value=d.a.fee;$('#aClean').value=d.a.clean;$('#aStay').value=d.a.stay;$('#aOther').value=d.a.other;renderUnits();renderResults();syncAIPanel()}
+// The pasted details, the analysis and its status always belong to the deal on screen, so a new or opened deal never shows (or overwrites) another deal's analysis.
+function syncAIPanel(){const d=S.deal,i=$('#aiDealInput'),st=$('#aiDealStatus');if(i)i.value=d.sourceText||'';renderAIAnalysis(d.aiAnalysis||null);if(st)st.textContent=''}
 function renderUnits(){const d=S.deal;
   $('#units').innerHTML=d.units.map((u,i)=>`<div class="unit" style="${i?'border-top:1px solid var(--line);padding-top:12px;margin-top:12px':''}">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="mono muted" style="font-size:12px;min-width:14px">${i+1}</span>
@@ -546,7 +555,7 @@ function renderPack(){const d=S.deal,a=d.a,U=d.units,p=d.pack;bindPack();renderP
     +(U.length>1?`<div><div class="kv-h">All units</div>${kv([['Rent',gbp(rent)+'/month'],['Deposits',gbp(dep)],['Upfront',gbp(rent+dep)]])}</div>`:'');
   const m=modelOf(d),sa=m==='sa',S4=modelHas(d)?modelStrip(d):null;
   const cols2=sa?cols:U.map(u=>`<div><div class="kv-h">${esc(u.label)}</div>${kv(UNIT_FIELDS[m].map(([f,l])=>[l,f==='rooms'?String(nn(u[f])):gbp(nn(u[f]))]))}</div>`).join('');
-  const keyTable=S4?`<div class="tw"><table><thead><tr><th>Key figure</th><th>All units</th><th style="text-align:left">What it means</th></tr></thead><tbody>${S4.slice(0,4).map(([l,v,n,neg])=>`<tr><td>${l}</td><td class="n" style="${neg?'color:#B42318':''}">${v}</td><td class="l">${n}</td></tr>`).join('')}</tbody></table></div>`:'<p>Add the deal figures to show the key numbers.</p>';
+  const keyTable=S4?`<div class="tw"><table><thead><tr><th>Key figure</th><th>All units</th><th style="text-align:left">What it means</th></tr></thead><tbody>${S4.slice(0,4).concat(modelROI(d)?[modelROI(d)]:[]).map(([l,v,n,neg])=>`<tr><td>${l}</td><td class="n" style="${neg?'color:#B42318':''}">${v}</td><td class="l">${n}</td></tr>`).join('')}</tbody></table></div>`:'<p>Add the deal figures to show the key numbers.</p>';
   const tr=U.map(u=>`<tr><td>${esc(u.label)} at £${u.rate}</td>${OCC.map(o=>{const v=month(u,o,null,a).surplus;return `<td class="n" style="${v<0?'color:#B42318':''}">${gbp(v)}</td>`}).join('')}<td class="n">~${pct(be(u,a))}</td></tr>`).join('');
   const ddr=DD_TEMPLATE.map((t,i)=>{const x=d.dd[i],ev=x.ev||[];return `<tr><td class="l">${t.t}</td><td class="l st ${x.s}"><span class="pdot"></span>${SLAB[x.s]}</td><td class="l">${ev.length?ev.map(e=>esc(e.name||hostOf(e.url))).join(', '):'None yet'}</td></tr>`}).join('');
   const today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
@@ -676,8 +685,13 @@ function saveCurrent(){const c=JSON.parse(JSON.stringify(S.deal));const now=new 
   if(i<0&&S.plan==='Free'&&S.saved.length>=3){toast('The Free plan saves up to 3 deals. Upgrade to save more.');return}if(i>=0)S.saved[i]=c;else S.saved.unshift(c);save();renderDeals();toast('Deal saved')}
 $('#saveDeal').addEventListener('click',saveCurrent);
 $('#saveDealTop').addEventListener('click',saveCurrent);
-function newBlankDeal(){startAnalysis(()=>{const d=freshDeal();S.deal=d;markAnalysed(d.id);save();bindDeal();go('analyser','numbers')})}
+// Before another deal replaces the one on screen, keep the current one in My deals (unless it is the example or still empty).
+function stashDeal(){const d=S.deal;if(isExample(d)||!(d.aiAnalysis||d.sourceText||(d.name&&!/^(new|pasted|untitled) deal$/i.test(d.name))&&(d.units||[]).some(u=>nn(u.rent)||nn(u.price)||nn(u.dep))))return true;
+  if(!S.saved.some(x=>x.id===d.id)&&S.plan==='Free'&&S.saved.length>=3)return confirm('The Free plan saves up to 3 deals, so "'+(d.name||'this deal')+'" can\'t be saved. Start a new deal and lose it?');
+  saveCurrent();return true}
+function newBlankDeal(){if(!stashDeal())return;startAnalysis(()=>{const d=freshDeal();S.deal=d;markAnalysed(d.id);save();bindDeal();go('analyser','numbers')})}
 $('#newDeal').addEventListener('click',newBlankDeal);
+$('#anNew').addEventListener('click',()=>{newBlankDeal();setTimeout(()=>{const i=$('#aiDealInput');if(i)i.focus()},50)});
 $('#anScratch').addEventListener('click',newBlankDeal);
 
 /* ---------- pricing ---------- */
@@ -1684,6 +1698,9 @@ renderAILevels();window.addEventListener('dealpro:signed-in',loadAICredits);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 /* strategy to analyse for: 'auto' lets the AI pick */
 const STRAT_OPTS=[['auto','Auto','Works out which strategy the details describe or suit best.']].concat(STRATS);
+// A deal still called "New deal" or "Pasted deal" takes the title of the listing that was read, so it is easy to tell apart in My deals.
+function nameFromListing(a){const t=String(((a&&a.links_read)||[]).map(l=>l.title).find(Boolean)||'').trim();if(!t||S.deal.name&&!/^(new|pasted|untitled) deal$/i.test(S.deal.name))return;
+  S.deal.name=t.slice(0,80);const n=$('#dName');if(n)n.value=S.deal.name;syncName()}
 // Photos the listing reader found go to the deal, for its deal pack (ones the user added by link are kept).
 function takePhotos(a){const found=[...new Set(((a&&a.links_read)||[]).flatMap(l=>Array.isArray(l.photos)?l.photos:[]))].filter(u=>/^https:\/\//.test(u));if(!found.length)return;
   const prev=dealPhotos(),was=new Map(prev.map(x=>[x.url,x.on]));S.deal.photos=found.map(url=>({url,on:was.has(url)?was.get(url):true})).concat(prev.filter(x=>x.added&&!found.includes(x.url)))}
@@ -1694,6 +1711,9 @@ function renderStratOpts(){const cur=aiStrat();
 $('#aiStratOpts').addEventListener('change',e=>{if(e.target.name!=='aiStrat')return;const v=e.target.value;S.deal.aiStrategy=v;if(v!=='auto'){S.deal.strat=v;try{$('#dStrat').value=v}catch(err){}if(typeof renderMeta==='function')renderMeta()}save();renderStratOpts()});
 renderStratOpts();window.addEventListener('dealpro:signed-in',renderStratOpts);
 $('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInput').value.trim(),btn=$('#analyseWithAI'),status=$('#aiDealStatus');if(!input){status.textContent='Paste the deal information first.';$('#aiDealInput').focus();return}
+  // This deal already has an analysis and new details were pasted: offer a new deal so the saved deals keep their own names and numbers.
+  if(S.deal.aiAnalysis&&S.deal.sourceText&&S.deal.sourceText.trim()!==input&&!isExample(S.deal)){
+    if(confirm('This deal already has an analysis, and you have pasted different details.\n\nOK: start a new deal for this property (the current deal is saved first).\nCancel: replace the analysis on "'+(S.deal.name||'this deal')+'".')){if(!stashDeal())return;analyseText(input,'');return}}
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];
   btn.disabled=true;btn.textContent='Analysing…';const hasLink=/https?:\/\//i.test(input),extraS=hasLink?40:0;status.textContent=`${lv.name} analysis started${hasLink?', reading the listing first':''}. This usually takes ${hasLink?durTxt(estSecs('analyse',lv.id)+extraS):estTxt('analyse',lv.id)}.`;
   try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'analyse',deal:(S.deal.area&&!input.toLowerCase().includes(S.deal.area.trim().toLowerCase())?`Location: ${S.deal.area.trim()}\n\n`:'')+input,level:lv.id,...(aiStrat()!=='auto'?{strategy:aiStrat()}:{})})});const start=await r.json().catch(()=>({}));
@@ -1703,7 +1723,7 @@ $('#analyseWithAI').addEventListener('click',async()=>{const input=$('#aiDealInp
       if(!p.ok)throw new Error(data.error||'Analysis failed.');if(data.credits){AIC.info=data.credits;renderAILevels()}
       if(data.status==='done')break;if(data.status==='error')throw new Error(data.error||'Analysis failed.');
       {const el=Math.round((Date.now()-t0)/1000);status.textContent=`${lv.name} ${hasLink&&el<25?'is reading the listing':'analysis in progress'}… ${el}s · ${leftTxt(estSecs('analyse',lv.id)+extraS,el,0)}`}if(Date.now()-t0>17*60e3)throw new Error('The analysis is taking too long. Please try again.')}
-    S.deal.aiAnalysis=Object.assign({},data.analysis,{_level:lv.id,_strategy:aiStrat()});S.deal.sourceText=input;takePhotos(S.deal.aiAnalysis);save();renderAIAnalysis(S.deal.aiAnalysis);saveAIHistory(input,lv);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
+    S.deal.aiAnalysis=Object.assign({},data.analysis,{_level:lv.id,_strategy:aiStrat()});S.deal.sourceText=input;takePhotos(S.deal.aiAnalysis);nameFromListing(S.deal.aiAnalysis);save();renderAIAnalysis(S.deal.aiAnalysis);saveAIHistory(input,lv);status.textContent='Analysis complete. Verify the flagged information before proceeding.'}
   catch(e){status.textContent=e.message||'The analysis could not be completed. Please try again.'}finally{btn.disabled=false;btn.textContent='Analyse deal'}});
 $('#advancedToggle').addEventListener('click',e=>{const on=document.body.classList.toggle('advanced-mode');e.currentTarget.setAttribute('aria-expanded',String(on));e.currentTarget.textContent=on?'Hide advanced controls':'Show advanced controls'});
 window.addEventListener('dealpro:save-error',()=>toast('Your latest change could not be saved. Check your connection and try again.'));

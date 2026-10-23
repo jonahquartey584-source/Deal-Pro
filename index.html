@@ -279,7 +279,10 @@ input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-
 .fig-v{font-family:var(--mono);font-size:22px;font-weight:500;letter-spacing:-.03em;line-height:1.2;margin-top:6px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .fig-s{font-size:12px;color:var(--muted);margin-top:3px}
 .fig-v.neg{color:var(--bad)}
+.strip.s5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@container (max-width:760px){.strip.s5{grid-template-columns:repeat(3,minmax(0,1fr))}.strip.s5 .fig:last-child{grid-column:span 2}}
 @container (max-width:560px){.strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container (max-width:560px){.strip.s5{grid-template-columns:repeat(2,minmax(0,1fr))}.strip.s5 .fig:last-child{grid-column:span 2}}
 @media (max-width:640px){.strip.dd-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* alerts */
@@ -1263,7 +1266,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
         <h1 id="dealTitle">Finsbury Park Studio Pair</h1>
         <p class="ph-meta" id="dealMeta"></p>
       </div>
-      <div class="ph-actions"><button class="btn" id="aiHistory" type="button">Previous analyses</button><button class="btn primary" id="saveDealTop">Save deal</button></div>
+      <div class="ph-actions"><button class="btn" id="anNew" type="button" title="Start a fresh deal for another property. The current deal is saved first.">New deal</button><button class="btn" id="aiHistory" type="button">Previous analyses</button><button class="btn primary" id="saveDealTop">Save deal</button></div>
     </header>
     <div class="ai-simple">
       <div class="ai-entry">
@@ -1680,7 +1683,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
   <div class="dr-foot"><span class="hint" id="sgHint" aria-live="polite"></span><button class="btn" id="ulBack" type="button" hidden>Back</button><button class="btn" id="sgCancel" type="button">Cancel</button><button class="btn primary" id="sgSign" type="button" disabled>Continue to payment</button><button class="btn primary" id="payBtn" type="button" hidden>Pay £500</button></div>
 </dialog>
 
-<script src="/assets/app.js?v=8" defer></script>
+<script src="/assets/app.js?v=9" defer></script>
 <script type="module" src="/assets/auth.js"></script>
 
 </body>
