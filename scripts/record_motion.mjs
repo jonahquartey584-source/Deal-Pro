@@ -99,7 +99,7 @@ server.close();
 
 if (PREVIEW) { console.log(`Preview frames in ${FRAMES}`); process.exit(0); }
 
-const posterAt = 20.6; // the strategy tiles
+const posterAt = 24.2; // the strategy tiles
 execFileSync(FFMPEG, ["-y", "-loglevel", "error", "-i", path.join(FRAMES, `${String(Math.round(posterAt * FPS)).padStart(5, "0")}.jpg`), "-vf", "scale=1280:720:flags=lanczos", path.join(OUT, "deal-pro-overview-poster.png")]);
 const frames = ["-framerate", String(FPS), "-i", path.join(FRAMES, "%05d.jpg")];
 const enc = ["-c:v", "libx264", "-preset", "slow", "-crf", "20", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart"];

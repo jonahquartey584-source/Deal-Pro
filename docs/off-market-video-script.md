@@ -32,24 +32,49 @@ Full text, to read straight through:
 
 ---
 
-## 2. "What Deal Pro does" overview: new scene after the strategies
+## 2. "What Deal Pro does" overview: rewritten (about 1 minute 43 seconds)
 
-Inserted right after the strategy tiles ("...and commercial") and before the
-listing walk-through. Length: about 16 seconds (the video grows from 55 to 72 seconds).
+The overview now says Deal Pro finds any deal, on or off the market, for any
+strategy and any location, and then analyses it, pulls comparables, runs due
+diligence and packages the deal. Narration was generated in Higgsfield
+(ElevenLabs engine, preset voice "Alistair"), one clip per scene.
 
-| Time in scene | Voiceover | On screen |
+| Scene | Voiceover | On screen |
 | --- | --- | --- |
-| 0:00 | And Deal Pro goes where the usual property pages don't. | Dark scene. **OFF-MARKET MODE** pill and the headline "Where the usual pages don't look." |
-| 0:04 | Switch on off-market mode, for rent or to buy, | The mode switch flips on. **Rent** then **Buy** highlight. "Searching everywhere, at Expert level". |
-| 0:07 | and it searches everywhere for probate sales, repossessions, auction lots, and landlords letting direct. | Four tags pop in one by one: Probate sales, Repossessions, Auction lots, Landlords letting direct. |
-| 0:13.5 | Every result is tagged with why it stands out. | A result card: £89,950, 3 bed terrace, Probate sale, Needs modernisation, Listed 190 days, "Why it stands out". |
+| Hours of scrolling | Finding good property deals means hours of scrolling, and nine in ten aren't worth your time. | The scrolling phone, the hours counter, the receipt of costs, "9 in 10 not worth it". |
+| Logo | Deal Pro does the work for you. | Red wipe and the Deal Pro wordmark. |
+| Find | It finds any deal, on the market or off it, for any strategy, in any location in the UK. | Radar of pins: "Deals found, on and off market". "Any strategy. Any location. On and off market." |
+| Strategies | Rent to rent, serviced accommodation, buy to let, HMOs, BRRR, flips, lease options and commercial. | The strategy tiles. |
+| Off-market | And with off-market mode, it goes where the usual property pages don't: probate sales, repossessions, auction lots, and landlords letting direct. | Mode switch flips on, Rent/Buy, four tags pop in: "Every result is tagged with why it stands out." |
+| Listing | Every deal comes with the full details and a live link, checked so you know it still exists. | A listing with its details called out. |
+| Judges | But Deal Pro doesn't just find deals. It judges them, and only the strongest make it through. | "Doesn't just find deals. It judges them." and the funnel. |
+| Numbers | It works out the numbers for your strategy: the cash you need upfront, the profit each month, the break-even, and whether the deal survives a rate rise or an empty month. | Profit sum, upfront cash bar, break-even and stress tests. |
+| Comparables | It pulls the comparables, recent sales and rents nearby, so you know what the property is really worth and what it should rent for. | Three sold comparables, rents nearby, estimated market value and "10% below market value". |
+| Verdict | You get a clear verdict on every deal: weak, potential, or strong. | The traffic light. |
+| Due diligence | Then it runs due diligence: planning, licensing, flood risk, title and more, researched with sources you can open. | Eight checks tick off, each with an "Open source" link. |
+| Deal pack | And it packages the whole deal: saved, checked, and ready to share as a deal pack. | Saved, 8 of 8 checks, the shared deal pack. |
+| Close | Every deal. Every strategy. Every location. On and off market. Numbers done. | The five closing lines. |
 
-Full text:
+Full text, as one paragraph to copy:
 
-> And Deal Pro goes where the usual property pages don't. Switch on off-market
-> mode, for rent or to buy, and it searches everywhere for probate sales,
-> repossessions, auction lots, and landlords letting direct. Every result is
-> tagged with why it stands out.
+> Finding good property deals means hours of scrolling, and nine in ten aren't
+> worth your time. Deal Pro does the work for you. It finds any deal, on the
+> market or off it, for any strategy, in any location in the UK. Rent to rent,
+> serviced accommodation, buy to let, HMOs, BRRR, flips, lease options and
+> commercial. And with off-market mode, it goes where the usual property pages
+> don't: probate sales, repossessions, auction lots, and landlords letting
+> direct. Every deal comes with the full details and a live link, checked so
+> you know it still exists. But Deal Pro doesn't just find deals. It judges
+> them, and only the strongest make it through. It works out the numbers for
+> your strategy: the cash you need upfront, the profit each month, the
+> break-even, and whether the deal survives a rate rise or an empty month. It
+> pulls the comparables, recent sales and rents nearby, so you know what the
+> property is really worth and what it should rent for. You get a clear
+> verdict on every deal: weak, potential, or strong. Then it runs due
+> diligence: planning, licensing, flood risk, title and more, researched with
+> sources you can open. And it packages the whole deal: saved, checked, and
+> ready to share as a deal pack. Every deal. Every strategy. Every location.
+> On and off market. Numbers done.
 
 ---
 

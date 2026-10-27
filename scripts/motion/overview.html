@@ -84,6 +84,18 @@ body{font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .stag i{width:18px;height:18px;border-radius:50%;background:#ff3049;box-shadow:0 0 16px #ff3049}
 .ocard{position:absolute;left:400px;top:520px;width:1120px;border-radius:30px;background:#fff;box-shadow:0 40px 90px rgba(0,0,0,.5);padding:44px 54px;color:#111}
 .ocard .t{display:inline-block;margin:6px 12px 0 0;padding:10px 22px;border-radius:999px;font-size:30px;font-weight:700;background:#FDECEE;color:#C20F24}
+/* comparables and due diligence scenes */
+.cmp{position:absolute;width:520px;border-radius:26px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);padding:26px 34px;color:#fff}
+.cmp small{display:block;font-size:26px;color:#9a9cb0;font-weight:600}
+.cmp b{display:block;font-size:58px;font-weight:800;letter-spacing:-.03em;margin:2px 0}
+.cmp span{font-size:28px;color:#c9cadb}
+.cmp.subject{background:#fff;color:#111;border:0;box-shadow:0 30px 70px rgba(0,0,0,.45)}
+.cmp.subject small,.cmp.subject span{color:#555}
+.mvbox{position:absolute;border-radius:30px;background:linear-gradient(180deg,#1f2240,#15172c);border:2px solid #E0142B;padding:34px 40px;color:#fff;box-shadow:0 30px 80px rgba(224,20,43,.25)}
+.badge{display:inline-block;background:#E0142B;color:#fff;font-size:38px;font-weight:800;padding:12px 28px;border-radius:999px;margin-top:20px}
+.ddrow{position:absolute;display:flex;align-items:center;gap:22px;width:800px;height:96px;border-radius:22px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.16);padding:0 28px;color:#fff;font-size:40px;font-weight:700}
+.ddrow i{flex:none;display:grid;place-items:center;width:50px;height:50px;border-radius:50%;background:#16a34a;font-style:normal;font-size:30px}
+.ddrow em{margin-left:auto;font-style:normal;font-size:24px;font-weight:600;color:#9a9cb0;background:rgba(255,255,255,.08);border-radius:999px;padding:6px 16px;white-space:nowrap}
 /* S11 end */
 .slam{position:absolute;left:150px;font-size:150px;font-weight:900;letter-spacing:-.05em;color:#fff;line-height:1}
 </style>
@@ -114,8 +126,8 @@ body{font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
     <div id="s3rings"></div>
     <div class="abs" id="s3sweep" style="left:400px;top:0;width:1120px;height:1120px;border-radius:50%;background:conic-gradient(from 0deg,rgba(255,48,73,.0) 0deg,rgba(255,48,73,.0) 300deg,rgba(255,48,73,.35) 360deg)"></div>
     <div id="s3pins"></div>
-    <div class="abs" style="left:110px;top:120px"><div style="font-size:28px;color:#8e90a6;font-weight:500">Deals found on the market</div><div style="font-size:120px;font-weight:900;color:#fff;letter-spacing:-.04em" id="s3n">0</div></div>
-    <div class="abs serif" style="right:120px;bottom:110px;font-size:80px;color:#fff;text-align:right;line-height:1.05" id="s3any">Every corner<br>of the market.</div>
+    <div class="abs" style="left:110px;top:120px"><div style="font-size:28px;color:#8e90a6;font-weight:500">Deals found, on and off market</div><div style="font-size:120px;font-weight:900;color:#fff;letter-spacing:-.04em" id="s3n">0</div></div>
+    <div class="abs serif" style="right:120px;bottom:110px;font-size:80px;color:#fff;text-align:right;line-height:1.05" id="s3any">Any strategy. Any location.<br>On and off market.</div>
   </div>
 
   <!-- S4: whichever strategy -->
@@ -223,9 +235,37 @@ body{font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
   <!-- S11: end -->
   <div class="layer" id="s11">
     <div class="abs" id="s11logo" style="left:0;top:0"><div class="lock" style="font-size:120px;gap:24px"><svg width="120" height="120" viewBox="0 0 20 20"><rect width="20" height="20" rx="4" fill="#fff"/><path d="M6 5h3.6a5 5 0 0 1 0 10H6z" fill="#E0142B"/><rect x="6" y="9" width="4" height="2" fill="#fff"/></svg>Deal Pro</div></div>
-    <div class="slam" id="w1" style="top:340px">Every deal.</div>
-    <div class="slam" id="w2" style="top:510px">Every strategy.</div>
-    <div class="slam" id="w3" style="top:680px">Numbers <span class="serif" style="font-weight:400;letter-spacing:0;font-size:170px">done.</span></div>
+    <div class="slam" id="w1" style="top:250px;font-size:128px">Every deal.</div>
+    <div class="slam" id="w2" style="top:400px;font-size:128px">Every strategy.</div>
+    <div class="slam" id="w3" style="top:550px;font-size:128px">Every location.</div>
+    <div class="slam" id="w4" style="top:700px;font-size:128px">On and off market.</div>
+    <div class="slam" id="w5" style="top:850px;font-size:128px">Numbers <span class="serif" style="font-weight:400;letter-spacing:0;font-size:150px">done.</span></div>
+  </div>
+  <!-- Comparables: its own narration clip -->
+  <div class="layer offbg" id="scomps">
+    <div class="c" style="top:90px" id="scEy"><span class="eyebrow"><i></i>Comparables</span></div>
+    <div class="c serif" style="top:170px;font-size:104px;color:#fff;line-height:1.05" id="scH">What it's really worth.</div>
+    <div class="cmp subject" id="scSub" style="left:110px;top:430px;width:480px"><small>Your deal · asking price</small><b>£115,000</b><span>3 bed terrace · Anfield L4</span></div>
+    <div class="cmp" id="scC0" style="left:650px;top:380px"><small>Sold nearby · 0.2 mi</small><b>£128,000</b><span>3 bed terrace · Aug 2026</span></div>
+    <div class="cmp" id="scC1" style="left:650px;top:555px"><small>Sold nearby · 0.4 mi</small><b>£131,500</b><span>3 bed terrace · Jun 2026</span></div>
+    <div class="cmp" id="scC2" style="left:650px;top:730px"><small>Sold nearby · 0.5 mi</small><b>£124,950</b><span>3 bed terrace · May 2026</span></div>
+    <div class="cmp" id="scRent" style="left:1230px;top:380px;width:580px"><small>Rents nearby</small><b>£825 to £875 pcm</b><span>3 bed terraces, last 90 days</span></div>
+    <div class="mvbox" id="scMV" style="left:1230px;top:590px;width:580px"><div style="font-size:28px;color:#9a9cb0;font-weight:600">Estimated market value</div><div style="font-size:84px;font-weight:900;letter-spacing:-.03em">£128,000</div><div id="scBadge" class="badge">10% below market value</div></div>
+    <div class="cmp" id="scRentBox" style="left:1230px;top:880px;width:580px;padding:18px 34px"><small>Estimated rent</small><b id="scRentBig" style="font-size:44px">£825 pcm</b></div>
+  </div>
+  <!-- Due diligence: its own narration clip -->
+  <div class="layer offbg" id="sdd">
+    <div class="c" style="top:90px" id="sdEy"><span class="eyebrow"><i></i>Due diligence</span></div>
+    <div class="c serif" style="top:170px;font-size:104px;color:#fff;line-height:1.05" id="sdH">Researched, with sources.</div>
+    <div class="ddrow" id="sdR0" style="left:140px;top:400px"><i>✓</i><span id="sdT0">Planning history</span><em id="sdS0">Open source ↗</em></div>
+    <div class="ddrow" id="sdR1" style="left:140px;top:520px"><i>✓</i><span id="sdT1">Licensing and Article 4</span><em id="sdS1">Open source ↗</em></div>
+    <div class="ddrow" id="sdR2" style="left:140px;top:640px"><i>✓</i><span id="sdT2">Flood risk</span><em id="sdS2">Open source ↗</em></div>
+    <div class="ddrow" id="sdR3" style="left:140px;top:760px"><i>✓</i><span id="sdT3">Title and tenure</span><em id="sdS3">Open source ↗</em></div>
+    <div class="ddrow" id="sdR4" style="left:980px;top:400px"><i>✓</i><span id="sdT4">Council tax and EPC</span><em id="sdS4">Open source ↗</em></div>
+    <div class="ddrow" id="sdR5" style="left:980px;top:520px"><i>✓</i><span id="sdT5">Local rents and demand</span><em id="sdS5">Open source ↗</em></div>
+    <div class="ddrow" id="sdR6" style="left:980px;top:640px"><i>✓</i><span id="sdT6">Area and crime</span><em id="sdS6">Open source ↗</em></div>
+    <div class="ddrow" id="sdR7" style="left:980px;top:760px"><i>✓</i><span id="sdT7">Insurance and lender checks</span><em id="sdS7">Open source ↗</em></div>
+    <div class="c" style="top:930px;font-size:46px;color:#fff;font-weight:800" id="sdFoot"><span id="sdCount">0 of 8 checks</span><span style="color:#9a9cb0;font-weight:600"> · every finding links to its source</span></div>
   </div>
   <!-- Off-market: inserted after the strategies, with its own narration -->
   <div class="layer offbg" id="soff">
@@ -234,7 +274,7 @@ body{font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
     <div class="modebox" id="soffMode"><span id="soffStd" style="color:#9a9cb0">Standard</span><div class="sw" id="soffSw"><i id="soffKnob"></i></div><span id="soffOn">Off-market mode</span><div class="seg2"><b id="soffRent">Rent</b><b id="soffBuy">Buy</b></div></div>
     <div class="c" style="top:660px;font-size:36px;color:#9a9cb0;font-weight:600" id="soffEv">Searching everywhere, at Expert level</div>
     <div class="soffrow"><div class="stag" id="soffT0">Probate sales<i></i></div><div class="stag" id="soffT1">Repossessions<i></i></div><div class="stag" id="soffT2">Auction lots<i></i></div><div class="stag" id="soffT3">Landlords letting direct<i></i></div></div>
-    <div class="ocard" id="soffCard"><div style="font-size:30px;color:var(--grey);font-weight:600">Off-market result</div><div style="font-size:72px;font-weight:900;letter-spacing:-.03em;margin-top:4px">£89,950</div><div style="font-size:40px;font-weight:700;margin-top:2px">3 bed terrace · Wavertree, Liverpool</div><div style="margin-top:22px"><span class="t">Probate sale</span><span class="t">Needs modernisation</span><span class="t">Listed 190 days</span></div><div style="margin-top:26px;font-size:34px;color:#444">Why it stands out: sold by executors, on the market for six months.</div></div>
+    <div class="c" style="top:930px;font-size:40px;color:#c9cadb;font-weight:600" id="soffNote">Every result is tagged with why it stands out.</div>
   </div>
 
 </div>
@@ -415,41 +455,75 @@ window.render = (t) => {
     set($("k3"), T(t, 48.85, 49.0), `scale(${pop(t, 48.85, 0.4)})`);
     set($("s10end"), T(t, 49.0, 49.2), rise(t, 49.0, 0.35, 30)); }
 
-  // S11 end: the wordmark, then the three lines slam in, then the address
-  { set($("s11"), vis(t, ...S.s11));
-    const moveK = inOut(T(t, 51.05, 51.45));
-    const lx = 610 + (150 - 610) * moveK, ly = 440 + (110 - 440) * moveK, sc = 1 - 0.45 * moveK;
-    set($("s11logo"), T(t, 50.3, 50.5), `translate(${lx}px, ${ly}px) scale(${pop(t, 50.3, 0.45) * sc})`); $("s11logo").style.transformOrigin = "0 0";
-    [["w1", 51.35], ["w2", 52.3], ["w3", 53.5]].forEach(([id, a]) => set($(id), T(t, a, a + 0.08), `scale(${1.5 - 0.5 * out3(T(t, a, a + 0.22))})`));
-    ["w1", "w2", "w3"].forEach((id) => ($(id).style.transformOrigin = "0 50%")); }
+  // S11 end: the wordmark, then the five lines slam in with the narration (te = seconds since 50.15)
+  { const te = t - 50.15;
+    set($("s11"), vis(t, ...S.s11));
+    const moveK = inOut(T(te, 0.45, 0.85));
+    const lx = 610 + (150 - 610) * moveK, ly = 440 + (90 - 440) * moveK, sc = 1 - 0.55 * moveK;
+    set($("s11logo"), T(te, 0.0, 0.2), `translate(${lx}px, ${ly}px) scale(${pop(te, 0.0, 0.45) * sc})`); $("s11logo").style.transformOrigin = "0 0";
+    [["w1", 0.7], ["w2", 1.55], ["w3", 3.0], ["w4", 4.45], ["w5", 6.55]].forEach(([id, a]) => set($(id), T(te, a, a + 0.08), `scale(${1.5 - 0.5 * out3(T(te, a, a + 0.22))})`));
+    ["w1", "w2", "w3", "w4", "w5"].forEach((id) => ($(id).style.transformOrigin = "0 50%")); }
 };
 window.render(0);
 
-/* Off-market scene (own narration, inserted at A_OFF), then the rest of the video carries on D_OFF seconds later */
-const A_OFF = 21.6, D_OFF = 16.437;
-function drawOff(u) {
-  const fade = T(u, 0, 0.35) * (1 - T(u, D_OFF - 0.35, D_OFF));
-  set($("soff"), fade);
-  set($("soffEy"), T(u, 0.2, 0.5), rise(u, 0.2, 0.4, 24));
-  set($("soffH"), T(u, 0.4, 0.9), rise(u, 0.4, 0.6, 40));
-  const stage2 = T(u, 3.7, 4.1) * (1 - T(u, 13.3, 13.7));
-  set($("soffMode"), stage2, rise(u, 3.7, 0.5, 40));
-  const on = out3(T(u, 4.2, 4.7));
+/* New timeline: one narration clip per scene (see docs/overview-video-script.md). Old scenes are played at the pace of their new clip,
+   and three scenes (off-market, comparables, due diligence) are overlays that sit on top of a held frame. */
+const ND = [6.460181, 1.991791, 7.085397, 10.000045, 11.472948, 6.782971, 6.101406, 11.137596, 9.068277, 5.360748, 8.800045, 6.400045, 8.480045], GAP = 0.3;
+const NS = []; { let a = 0; for (const d of ND) { NS.push(a); a += d + GAP; } }
+const SEG = [{ o: [0, 6.85] }, { o: [6.85, 9.4] }, { o: [9.4, 13.35] }, { o: [13.35, 21.65] }, { k: "off", hold: 21.65 }, { o: [21.65, 25.65] }, { o: [25.65, 31.65] },
+  { o: [31.65, 40.6] }, { k: "comps", hold: 40.6 }, { o: [40.6, 45.75] }, { k: "dd", hold: 45.75 }, { o: [45.75, 50.15] }, { k: "end" }];
+const fadeIO = (u, len) => T(u, 0, 0.35) * (1 - T(u, len - 0.35, len));
+
+function drawOff(u, len) {
+  set($("soff"), fadeIO(u, len));
+  set($("soffEy"), T(u, 0.1, 0.4), rise(u, 0.1, 0.4, 24));
+  set($("soffMode"), T(u, 0.25, 0.65), rise(u, 0.25, 0.5, 40));
+  const on = out3(T(u, 0.9, 1.4));
   $("soffSw").style.background = on > 0.5 ? "#E0142B" : "#3a3c52";
   $("soffKnob").style.transform = `translateX(${on * 74}px)`;
   $("soffOn").style.color = on > 0.5 ? "#fff" : "#9a9cb0"; $("soffStd").style.color = on > 0.5 ? "#9a9cb0" : "#fff";
-  const rent = u >= 5.5 && u < 6.15, buy = u >= 6.15;
+  const rent = u >= 1.7 && u < 2.3, buy = u >= 2.3;
   for (const [id, a] of [["soffRent", rent], ["soffBuy", buy]]) { $(id).style.background = a ? "#E0142B" : "transparent"; $(id).style.color = a ? "#fff" : "#9a9cb0"; }
-  set($("soffEv"), T(u, 6.95, 7.3) * (1 - T(u, 13.3, 13.7)));
+  set($("soffH"), T(u, 2.2, 2.8), rise(u, 2.2, 0.6, 40));
+  set($("soffEv"), T(u, 3.4, 3.8));
   $("soffEv").textContent = "Searching everywhere, at Expert level" + ".".repeat(Math.floor(u * 3) % 4);
-  [[9.4, 0], [10.45, 1], [11.5, 2], [12.2, 3]].forEach(([a, i]) => { set($("soffT" + i), pop(u, a) * (1 - T(u, 13.3, 13.7)), `scale(${0.7 + 0.3 * pop(u, a)})`); });
-  set($("soffCard"), T(u, 13.55, 13.8), `translateY(${(1 - out3(T(u, 13.55, 14.1))) * 90}px) scale(${0.96 + 0.04 * out3(T(u, 13.55, 14.1))})`);
+  [[5.35, 0], [6.65, 1], [8.0, 2], [9.2, 3]].forEach(([a, i]) => { set($("soffT" + i), pop(u, a), `scale(${0.7 + 0.3 * pop(u, a)})`); });
+  set($("soffNote"), T(u, 10.3, 10.7), rise(u, 10.3, 0.4, 20));
 }
+
+function drawComps(u, len) {
+  set($("scomps"), fadeIO(u, len));
+  set($("scEy"), T(u, 0.1, 0.4), rise(u, 0.1, 0.4, 24));
+  set($("scH"), T(u, 0.2, 0.8), rise(u, 0.2, 0.6, 40));
+  set($("scSub"), T(u, 0.6, 0.9), `scale(${0.9 + 0.1 * pop(u, 0.6)})`);
+  [1.7, 2.7, 3.7].forEach((a, i) => set($("scC" + i), T(u, a, a + 0.3), `translateX(${(1 - out3(T(u, a, a + 0.4))) * 60}px)`));
+  set($("scRent"), T(u, 4.7, 5.0), rise(u, 4.7, 0.4, 24));
+  set($("scMV"), T(u, 5.9, 6.2), `scale(${0.92 + 0.08 * pop(u, 5.9)})`);
+  set($("scBadge"), T(u, 6.8, 7.05), `scale(${pop(u, 6.8, 0.4)})`);
+  const rk = out3(T(u, 7.7, 8.3)); $("scRentBig").textContent = "£" + Math.round(825 + 25 * rk) + " pcm";
+  set($("scRentBox"), T(u, 7.6, 7.9), rise(u, 7.6, 0.4, 24));
+}
+
+const DD_ITEMS = [2.3, 3.2, 4.2, 5.2, 5.7, 5.95, 6.2, 6.45];
+function drawDD(u, len) {
+  set($("sdd"), fadeIO(u, len));
+  set($("sdEy"), T(u, 0.1, 0.4), rise(u, 0.1, 0.4, 24));
+  set($("sdH"), T(u, 0.2, 0.8), rise(u, 0.2, 0.6, 40));
+  DD_ITEMS.forEach((a, i) => { set($("sdR" + i), T(u, a, a + 0.25), `translateY(${(1 - out3(T(u, a, a + 0.35))) * 26}px)`); $("sdT" + i).style.opacity = T(u, a + 0.2, a + 0.4); set($("sdS" + i), T(u, 6.9 + i * 0.1, 7.1 + i * 0.1)); });
+  const n = DD_ITEMS.filter((a) => u >= a + 0.3).length; $("sdCount").textContent = `${n} of 8 checks`;
+  set($("sdFoot"), T(u, 6.5, 6.9), rise(u, 6.5, 0.4, 20));
+}
+
 const render0 = window.render;
 window.render = (t) => {
-  if (t < A_OFF) { set($("soff"), 0); return render0(t); }
-  if (t < A_OFF + D_OFF) { render0(A_OFF); drawOff(t - A_OFF); return; }
-  set($("soff"), 0); render0(t - D_OFF);
+  let i = NS.length - 1; while (i > 0 && t < NS[i]) i--;
+  const seg = SEG[i], u = t - NS[i], len = ND[i] + GAP;
+  set($("soff"), 0); set($("scomps"), 0); set($("sdd"), 0);
+  if (seg.k === "off") { render0(seg.hold); drawOff(u, len); }
+  else if (seg.k === "comps") { render0(seg.hold); drawComps(u, len); }
+  else if (seg.k === "dd") { render0(seg.hold); drawDD(u, len); }
+  else if (seg.k === "end") render0(50.15 + u);
+  else { const [a, b] = seg.o; render0(a + (b - a) * Math.min(1, u / len)); }
 };
 </script>
 </body>
