@@ -71,6 +71,19 @@ body{font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .dcard{position:absolute;left:760px;top:330px;width:400px;height:420px;border-radius:24px;background:#fff;box-shadow:0 30px 70px rgba(20,10,10,.14);border:1px solid #EEE6E3;padding:30px;transform-origin:center}
 .ribbon{position:absolute;right:34px;top:-8px;width:70px;height:110px;background:#E0142B;clip-path:polygon(0 0,100% 0,100% 100%,50% 78%,0 100%)}
 .chip{display:inline-block;padding:12px 26px;border-radius:999px;font-size:30px;font-weight:700}
+/* off-market scene */
+.offbg{background:radial-gradient(ellipse at 50% 55%,#1b1d33 0%,#0B0C14 62%,#06060b 100%)}
+.eyebrow{display:inline-flex;align-items:center;gap:12px;background:rgba(224,20,43,.16);border:1px solid rgba(255,48,73,.5);color:#ff6b7d;font-size:30px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:12px 26px;border-radius:999px}
+.eyebrow i{width:14px;height:14px;border-radius:50%;background:#ff3049;box-shadow:0 0 18px #ff3049}
+.modebox{position:absolute;left:300px;top:470px;width:1320px;height:150px;border-radius:30px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;gap:26px;padding:0 34px;color:#fff;font-size:44px;font-weight:700}
+.modebox .sw{position:relative;width:150px;height:76px;border-radius:999px;background:#3a3c52;flex:none}
+.modebox .sw i{position:absolute;top:8px;left:8px;width:60px;height:60px;border-radius:50%;background:#fff}
+.modebox .seg2{margin-left:auto;display:flex;gap:10px;background:rgba(255,255,255,.08);padding:8px;border-radius:20px;font-size:38px}
+.modebox .seg2 b{padding:12px 34px;border-radius:14px;color:#9a9cb0;font-weight:700}
+.soffrow{position:absolute;left:0;right:0;top:800px;display:flex;justify-content:center;gap:26px}.stag{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:999px;padding:16px 30px;font-size:38px;font-weight:700;white-space:nowrap}
+.stag i{width:18px;height:18px;border-radius:50%;background:#ff3049;box-shadow:0 0 16px #ff3049}
+.ocard{position:absolute;left:400px;top:520px;width:1120px;border-radius:30px;background:#fff;box-shadow:0 40px 90px rgba(0,0,0,.5);padding:44px 54px;color:#111}
+.ocard .t{display:inline-block;margin:6px 12px 0 0;padding:10px 22px;border-radius:999px;font-size:30px;font-weight:700;background:#FDECEE;color:#C20F24}
 /* S11 end */
 .slam{position:absolute;left:150px;font-size:150px;font-weight:900;letter-spacing:-.05em;color:#fff;line-height:1}
 </style>
@@ -214,6 +227,16 @@ body{font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
     <div class="slam" id="w2" style="top:510px">Every strategy.</div>
     <div class="slam" id="w3" style="top:680px">Numbers <span class="serif" style="font-weight:400;letter-spacing:0;font-size:170px">done.</span></div>
   </div>
+  <!-- Off-market: inserted after the strategies, with its own narration -->
+  <div class="layer offbg" id="soff">
+    <div class="c" style="top:120px" id="soffEy"><span class="eyebrow"><i></i>Off-market mode</span></div>
+    <div class="c serif" style="top:210px;font-size:112px;color:#fff;line-height:1.04" id="soffH">Where the usual<br>pages don't look.</div>
+    <div class="modebox" id="soffMode"><span id="soffStd" style="color:#9a9cb0">Standard</span><div class="sw" id="soffSw"><i id="soffKnob"></i></div><span id="soffOn">Off-market mode</span><div class="seg2"><b id="soffRent">Rent</b><b id="soffBuy">Buy</b></div></div>
+    <div class="c" style="top:660px;font-size:36px;color:#9a9cb0;font-weight:600" id="soffEv">Searching everywhere, at Expert level</div>
+    <div class="soffrow"><div class="stag" id="soffT0">Probate sales<i></i></div><div class="stag" id="soffT1">Repossessions<i></i></div><div class="stag" id="soffT2">Auction lots<i></i></div><div class="stag" id="soffT3">Landlords letting direct<i></i></div></div>
+    <div class="ocard" id="soffCard"><div style="font-size:30px;color:var(--grey);font-weight:600">Off-market result</div><div style="font-size:72px;font-weight:900;letter-spacing:-.03em;margin-top:4px">£89,950</div><div style="font-size:40px;font-weight:700;margin-top:2px">3 bed terrace · Wavertree, Liverpool</div><div style="margin-top:22px"><span class="t">Probate sale</span><span class="t">Needs modernisation</span><span class="t">Listed 190 days</span></div><div style="margin-top:26px;font-size:34px;color:#444">Why it stands out: sold by executors, on the market for six months.</div></div>
+  </div>
+
 </div>
 
 <script>
@@ -401,6 +424,33 @@ window.render = (t) => {
     ["w1", "w2", "w3"].forEach((id) => ($(id).style.transformOrigin = "0 50%")); }
 };
 window.render(0);
+
+/* Off-market scene (own narration, inserted at A_OFF), then the rest of the video carries on D_OFF seconds later */
+const A_OFF = 21.6, D_OFF = 16.437;
+function drawOff(u) {
+  const fade = T(u, 0, 0.35) * (1 - T(u, D_OFF - 0.35, D_OFF));
+  set($("soff"), fade);
+  set($("soffEy"), T(u, 0.2, 0.5), rise(u, 0.2, 0.4, 24));
+  set($("soffH"), T(u, 0.4, 0.9), rise(u, 0.4, 0.6, 40));
+  const stage2 = T(u, 3.7, 4.1) * (1 - T(u, 13.3, 13.7));
+  set($("soffMode"), stage2, rise(u, 3.7, 0.5, 40));
+  const on = out3(T(u, 4.2, 4.7));
+  $("soffSw").style.background = on > 0.5 ? "#E0142B" : "#3a3c52";
+  $("soffKnob").style.transform = `translateX(${on * 74}px)`;
+  $("soffOn").style.color = on > 0.5 ? "#fff" : "#9a9cb0"; $("soffStd").style.color = on > 0.5 ? "#9a9cb0" : "#fff";
+  const rent = u >= 5.5 && u < 6.15, buy = u >= 6.15;
+  for (const [id, a] of [["soffRent", rent], ["soffBuy", buy]]) { $(id).style.background = a ? "#E0142B" : "transparent"; $(id).style.color = a ? "#fff" : "#9a9cb0"; }
+  set($("soffEv"), T(u, 6.95, 7.3) * (1 - T(u, 13.3, 13.7)));
+  $("soffEv").textContent = "Searching everywhere, at Expert level" + ".".repeat(Math.floor(u * 3) % 4);
+  [[9.4, 0], [10.45, 1], [11.5, 2], [12.2, 3]].forEach(([a, i]) => { set($("soffT" + i), pop(u, a) * (1 - T(u, 13.3, 13.7)), `scale(${0.7 + 0.3 * pop(u, a)})`); });
+  set($("soffCard"), T(u, 13.55, 13.8), `translateY(${(1 - out3(T(u, 13.55, 14.1))) * 90}px) scale(${0.96 + 0.04 * out3(T(u, 13.55, 14.1))})`);
+}
+const render0 = window.render;
+window.render = (t) => {
+  if (t < A_OFF) { set($("soff"), 0); return render0(t); }
+  if (t < A_OFF + D_OFF) { render0(A_OFF); drawOff(t - A_OFF); return; }
+  set($("soff"), 0); render0(t - D_OFF);
+};
 </script>
 </body>
 </html>

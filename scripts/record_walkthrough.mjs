@@ -66,15 +66,16 @@ Landlord open to company lets`;
 // The Islington studio from the advert above, so the Numbers step matches the AI's figures.
 const STATE = premiumState({ name: "Islington N4 studio", area: "Islington, London N4", london: true, units: [{ label: "Studio", rent: 1650, dep: 1650, rate: 180 }] });
 
-const { page, until, move, click, moveClick, type, scroll, finish, now } = await start({
+const { page, until: until0, move, click, moveClick, type, scroll, finish, now } = await start({
   state: STATE,
   api: (url, method, body) => {
     if (url.pathname === "/api/community") return [200, { posts: POSTS }];
     if (url.pathname === "/api/refunds") return [200, { requests: [] }];
     if (url.pathname === "/api/analyze-deal") {
-      if (method === "POST") { if (body.kind === "search") searchStart = now(); return [202, { jobId: body.kind, credits: CREDITS }]; }
+      if (method === "POST") { if (body.kind === "search" && body.filters && body.filters.offmarket) { offStart = now(); return [202, { jobId: "offsearch", credits: CREDITS }]; } if (body.kind === "search") searchStart = now(); return [202, { jobId: body.kind, credits: CREDITS }]; }
       const job = url.searchParams.get("job");
       if (job === "search") return [200, searchPoll()];
+      if (job === "offsearch") return [200, offPoll()];
       if (job) return [200, { status: "done", analysis: ANALYSIS, credits: CREDITS }];
       return [200, CREDITS];
     }
@@ -97,6 +98,28 @@ function searchPoll() {
   if (t < VERIFY_FROM) return { status: "running", credits: CREDITS, progress: { phase: "search", sites, found: total } };
   if (t < SEARCH_DONE) return { status: "running", credits: CREDITS, progress: { phase: "verify", sites, found: total, verified: Math.round((t - VERIFY_FROM) * 6) } };
   return { status: "done", credits: CREDITS, analysis: { listings: LIVE, sites: Object.fromEntries(SEARCH_SITES.map((x) => [x, { status: "done", found: LIVE.filter((l) => l.site === x).length }])), ranking: RANK } };
+}
+
+// Off-market mode: its own narration (5 sentences, 28 seconds) is inserted into the tutorial at A_OFF,
+// and everything after it in the original narration is pushed back by D_OFF.
+const A_OFF = 189.65, D_OFF = 28.2467;
+const until = (t) => until0(t >= A_OFF ? t + D_OFF : t);
+const OFFLIST = [
+  { id: "9001", type: "3 bed terraced house", title: "3 bed terrace, probate sale", area: "Wavertree, Liverpool L15", postcode: "L15", price: 89950, beds: 3, signals: ["Probate or deceased estate", "Needs modernisation"], daysOnMarket: 190 },
+  { id: "9002", type: "2 bed flat", title: "2 bed flat, auction lot", area: "Anfield, Liverpool L4", postcode: "L4", price: 62000, beds: 2, signals: ["Auction lot", "Cash buyers only"] },
+  { id: "9003", type: "4 bed house", title: "4 bed house, repossession", area: "Headingley, Leeds LS6", postcode: "LS6", price: 125000, beds: 4, signals: ["Repossession", "Price reduced"] },
+  { id: "9004", type: "3 bed semi-detached house", title: "3 bed semi, vendor keen to sell", area: "Walton, Liverpool L9", postcode: "L9", price: 104500, beds: 3, signals: ["Motivated seller", "Price reduced", "Chain free"], daysOnMarket: 240 },
+  { id: "9005", type: "2 bed terraced house", title: "2 bed terrace, tenanted", area: "Toxteth, Liverpool L8", postcode: "L8", price: 78000, beds: 2, signals: ["Needs modernisation", "Tenanted investment"] },
+].map((l) => ({ site: "Rightmove", landlord: "x", mode: "buy", private: false, furnished: "Not stated", url: `https://www.rightmove.co.uk/properties/${l.id}0000`, verified: "available", checkedAt: "2026-10-27T10:00:00Z", listedAt: "2026-10-12T10:00:00Z", found: "27 Oct 2026", confirmed: true, ...l }));
+const OFF_SITES = ["Gumtree", "Rightmove", "Zoopla", "Facebook", "RightmoveCommercial", "Realla", "NovaLoca", "LoopNet", "OnTheMarket", "EIG", "AuctionHouse", "Allsop", "SDL", "SavillsAuctions", "iamsold"];
+let offStart = 0;
+function offPoll() {
+  const t = now(), VERIFY_FROM = A_OFF + 16.0, DONE = A_OFF + 22.8, ROUNDS = 12, k = Math.min(1, (t - offStart) / (VERIFY_FROM - offStart));
+  const sites = Object.fromEntries(OFF_SITES.map((site, i) => { const round = Math.min(ROUNDS, Math.floor(k * ROUNDS + (i % 4) * 0.3)); return [site, { status: round >= ROUNDS ? "done" : "searching", found: Math.min(round * 2 + (i % 3), 18), round, rounds: ROUNDS }]; }));
+  const total = Object.values(sites).reduce((a, x) => a + x.found, 0);
+  if (t < VERIFY_FROM) return { status: "running", credits: CREDITS, progress: { phase: "search", sites, found: total } };
+  if (t < DONE) return { status: "running", credits: CREDITS, progress: { phase: "verify", sites, found: total, verified: Math.round((t - VERIFY_FROM) * 12) } };
+  return { status: "done", credits: CREDITS, analysis: { listings: OFFLIST, sites: {}, ranking: null, removed: 3, offStats: { candidates: 41, noSignal: 12, priceFiltered: 0, extraRounds: 1 } } };
 }
 
 /* ---------- the walkthrough, timed to the narration ---------- */
@@ -215,6 +238,29 @@ await until(181.5);
 await move('.sheet th [data-sort="price"]', 0.7);
 await until(184.0);
 await moveClick("#fCopy", 0.8);
+
+// 3:09 Off-market mode (new narration, A_OFF to A_OFF + D_OFF)
+await until0(A_OFF + 0.3);
+await scroll(0, 0.9);
+await until0(A_OFF + 1.6);
+await move("#fOffSwitch", 1.2);
+await until0(A_OFF + 4.6);
+await moveClick("#fOffSwitch", 0.8);
+await until0(A_OFF + 6.3);
+await moveClick('label[for="fModeRent"]', 0.8);
+await until0(A_OFF + 7.2);
+await moveClick('label[for="fModeBuy"]', 0.5);
+await until0(A_OFF + 8.4);
+await scroll("#fSearch", 0.9, 420);
+await moveClick("#fSearch", 0.9);
+await until0(A_OFF + 15.0);
+await move("#fResults .fprog-t", 0.9);
+await until0(A_OFF + 23.2);
+await moveClick("#fViewCards", 0.7);
+await until0(A_OFF + 24.8);
+await move(".pcard .fr-tag.sig", 1.0);
+await until0(A_OFF + 27.0);
+await move(".pcard:nth-child(2) .fr-tag.sig", 0.9);
 
 // 3:09 Analysing a deal
 await until(189.8);

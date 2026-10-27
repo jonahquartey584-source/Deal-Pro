@@ -709,7 +709,7 @@ function renderPlans(){
       <div class="lead">Limited usage</div>${feats(['3 Deal Finder searches a week','2 Scout deal analyses','Browse the Deal Community, reply and chat','Save up to 3 deals','Secure personal account'])}${planBtn('Free')}</div>
     <div class="plan feat"><div class="plan-h"><h3>Premium</h3><span class="tag">Most popular</span></div><p class="plan-from">For everyday sourcing</p>
       <div class="price"><span class="mono">£${ann?33:39}</span><span class="per">per month</span></div><div class="bill-note">${ann?'Billed annually (£396 upfront)':'Billed monthly'}</div>
-      <div class="lead">Everything in Free, plus:</div>${feats(['Analyst and Expert power levels','60 credits a week for searches and analyses','Post 10 deals a month in the Deal Community','Due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
+      <div class="lead">Everything in Free, plus:</div>${feats(['Off-market mode: deals the usual pages bury, to rent or to buy','Analyst and Expert power levels','60 credits a week for searches and analyses','Post 10 deals a month in the Deal Community','Due diligence','Deal packs','Advert import','Unlimited saved deals'])}${planBtn('Pro',true)}</div>
     <div class="plan"><div class="plan-h"><h3>Max</h3></div><p class="plan-from">From £100/month · For sourcers who work deals all day</p>
       <div class="seg segb tier" role="group" aria-label="Max usage tier"><button id="maxT5" data-tier="5" aria-pressed="${mt==='5'}">5x</button><button id="maxT20" data-tier="20" aria-pressed="${mt==='20'}">20x</button></div>
       <div class="price"><span class="mono">£${mt==='20'?200:100}</span><span class="per">per month</span></div><div class="bill-note">Billed monthly</div>
