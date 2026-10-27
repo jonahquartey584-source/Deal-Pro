@@ -1002,7 +1002,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
 .rank-stats{font-size:12px!important;color:var(--muted)}.rank-exp{font-size:14px!important;line-height:1.6;color:var(--ink);max-width:80ch}.rank-hl{margin:6px 0 4px;padding-left:18px;display:grid;gap:3px;font-size:13px;color:var(--ink-2)}.rank-sub{font-size:13px;margin:12px 0 2px}
 .cardlinks{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);white-space:nowrap;cursor:pointer}.cardlinks input{accent-color:var(--brand)}
 .fresh-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:10px}.fresh-bar.stale{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--surface))}
-.fr-cell{white-space:nowrap}.fr-tag{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;letter-spacing:.02em;border-radius:4px;padding:1px 5px;vertical-align:1px}.fr-tag.new{background:var(--brand);color:#fff}.fr-tag.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}.fr-tag.old{border:1px solid var(--line-2);color:var(--muted)}
+.fr-tag.sig{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}.fr-cell{white-space:nowrap}.fr-tag{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;letter-spacing:.02em;border-radius:4px;padding:1px 5px;vertical-align:1px}.fr-tag.new{background:var(--brand);color:#fff}.fr-tag.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}.fr-tag.old{border:1px solid var(--line-2);color:var(--muted)}
 .warn-note{color:var(--warn)!important}
 .fprog-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.fresh-bar>span{flex:1 1 260px}
 .lv-time{font-size:11.5px!important;color:var(--muted)!important}
@@ -1219,6 +1219,8 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
             <div class="f" role="group" aria-labelledby="fStratH"><span id="fStratH">Strategies <span class="muted">· tick one or more</span></span><div class="schips" id="fStrats"><label class="schip" title="R2SA for rentals, BTL for purchases"><input type="checkbox" name="fStrat" value="auto"><span>Auto</span></label><label class="schip" title="Serviced accommodation"><input type="checkbox" name="fStrat" value="R2SA"><span>R2SA</span></label><label class="schip" title="Rent to rent by the room"><input type="checkbox" name="fStrat" value="R2R"><span>R2R</span></label><label class="schip" title="Buy to let"><input type="checkbox" name="fStrat" value="BTL"><span>BTL</span></label><label class="schip" title="Buy and let by the room"><input type="checkbox" name="fStrat" value="HMO"><span>HMO</span></label><label class="schip" title="Buy, refurbish, refinance"><input type="checkbox" name="fStrat" value="BRRR"><span>BRRR</span></label><label class="schip" title="Buy, refurbish, sell"><input type="checkbox" name="fStrat" value="Flip"><span>Flip</span></label><label class="schip" title="Owned serviced accommodation"><input type="checkbox" name="fStrat" value="SA"><span>Owned SA</span></label><label class="schip" title="Purchase lease option"><input type="checkbox" name="fStrat" value="LeaseOption"><span>Lease option</span></label><label class="schip" title="Commercial property"><input type="checkbox" name="fStrat" value="Commercial"><span>Commercial</span></label><label class="schip" title="Just show prices"><input type="checkbox" name="fStrat" value="none"><span>Prices only</span></label></div></div>
             <label class="f"><span>Listed within</span><select class="inp" id="fFresh"><option value="any">Any time</option><option value="1">Last 24 hours</option><option value="3">Last 3 days</option><option value="7">Last 7 days</option><option value="14">Last 14 days</option></select></label>
             <label class="check"><input type="checkbox" id="fPrivate"><span>Private landlords only</span></label>
+            <label class="check js-buyonly" title="Looks in the places deal sourcers use: probate and deceased estates, repossessions, auction and unsold lots, tired or cash-only property, reduced and long-listed homes, and direct sellers"><input type="checkbox" id="fOffMarket"><span>Off-market &amp; distressed</span></label>
+            <p class="fnote js-buyonly" id="fOffNote">Searches the public places where motivated sellers show up: auction lots (EIG, Auction House, Allsop, SDL, Savills, iamsold), probate, repossessions, tired or cash-only property and reduced listings, and tags why each one stands out. Properties that are never advertised, such as agents' private lists or closed groups, can't be searched.</p>
             <label class="check js-buyonly"><input type="checkbox" id="fNoAuction"><span>Exclude auctions</span></label>
             <label class="check"><input type="checkbox" id="fNoFlats"><span>Exclude flats</span></label>
             <label class="check js-buyonly"><input type="checkbox" id="fNoShared"><span>Exclude shared ownership</span></label>
@@ -1235,6 +1237,16 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
                 <label class="check"><input type="checkbox" id="fSiteRightmove" checked><span>Rightmove</span></label>
                 <label class="check"><input type="checkbox" id="fSiteZoopla" checked><span>Zoopla</span></label>
                 <label class="check"><input type="checkbox" id="fSiteFacebook" checked><span>Facebook Marketplace</span></label>
+              </div>
+              <p class="fnote js-buyonly" style="margin-top:10px">Auctions and off-market sources</p>
+              <div class="checks js-buyonly">
+                <label class="check"><input type="checkbox" id="fSiteOnTheMarket"><span>OnTheMarket</span></label>
+                <label class="check"><input type="checkbox" id="fSiteEIG"><span>EIG Auctions</span></label>
+                <label class="check"><input type="checkbox" id="fSiteAuctionHouse"><span>Auction House UK</span></label>
+                <label class="check"><input type="checkbox" id="fSiteAllsop"><span>Allsop</span></label>
+                <label class="check"><input type="checkbox" id="fSiteSDL"><span>SDL Auctions</span></label>
+                <label class="check"><input type="checkbox" id="fSiteSavillsAuctions"><span>Savills Auctions</span></label>
+                <label class="check"><input type="checkbox" id="fSiteiamsold"><span>iamsold</span></label>
               </div>
               <p class="fnote" style="margin-top:10px">Commercial</p>
               <div class="checks">
@@ -1683,7 +1695,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
   <div class="dr-foot"><span class="hint" id="sgHint" aria-live="polite"></span><button class="btn" id="ulBack" type="button" hidden>Back</button><button class="btn" id="sgCancel" type="button">Cancel</button><button class="btn primary" id="sgSign" type="button" disabled>Continue to payment</button><button class="btn primary" id="payBtn" type="button" hidden>Pay £500</button></div>
 </dialog>
 
-<script src="/assets/app.js?v=9" defer></script>
+<script src="/assets/app.js?v=10" defer></script>
 <script type="module" src="/assets/auth.js"></script>
 
 </body>

@@ -812,9 +812,15 @@ const LISTINGS=[
 {"site":"Gumtree","id":"1802424388","landlord":"Landlord 68","type":"1 bed flat","beds":1,"area":"Holborn, WC1","postcode":"WC1","price":2167,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.gumtree.com/p/property-to-rent/x/1802424388","found":"23 Sep 2026"},
 {"site":"Gumtree","id":"1802233608","landlord":"Landlord 69","type":"2 bed flat","beds":2,"area":"Earls Court, SW5","postcode":"SW5","price":3150,"mode":"rent","private":true,"furnished":"Not stated","url":"https://www.gumtree.com/p/property-to-rent/x/1802233608","found":"23 Sep 2026"}
 ];
-const SITES=['OpenRent','SpareRoom','Gumtree','Rightmove','Zoopla','Facebook','RightmoveCommercial','Realla','NovaLoca','LoopNet'];
-const SITE_LABEL=s=>({Facebook:'Facebook Marketplace',RightmoveCommercial:'Rightmove Commercial'})[s]||s;
-const FIND_DEF=()=>({strategy:'auto',noAuction:false,noFlats:false,noShared:false,fresh:'any',notes:'',mode:'rent',beds:[],min:1200,max:5000,loc:'',priv:false,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false}});
+const SITES=['OpenRent','SpareRoom','Gumtree','Rightmove','Zoopla','Facebook','RightmoveCommercial','Realla','NovaLoca','LoopNet','OnTheMarket','EIG','AuctionHouse','Allsop','SDL','SavillsAuctions','iamsold'];
+const SITE_LABEL=s=>({Facebook:'Facebook Marketplace',RightmoveCommercial:'Rightmove Commercial',EIG:'EIG Auctions',AuctionHouse:'Auction House UK',SDL:'SDL Auctions',SavillsAuctions:'Savills Auctions'})[s]||s;
+// Sources where off-market and distressed property shows up: ticking "Off-market & distressed" switches these on.
+const OFFMARKET_SITES=['Rightmove','Zoopla','OnTheMarket','Gumtree','EIG','AuctionHouse','Allsop','SDL','SavillsAuctions','iamsold'];
+const BUY_ONLY_SITES=['OnTheMarket','EIG','AuctionHouse','Allsop','SDL','SavillsAuctions','iamsold'];
+// Signals the search found in a listing (probate, auction, reduced...), as short tags.
+const sigList=r=>Array.isArray(r.signals)?r.signals:[];
+const sigTags=(r,n=2)=>sigList(r).slice(0,n).map(x=>`<span class="fr-tag sig" title="${esc(x)}">${esc(x)}</span>`).join('')+(sigList(r).length>n?`<span class="fr-tag sig" title="${esc(sigList(r).slice(n).join(', '))}">+${sigList(r).length-n}</span>`:'');
+const FIND_DEF=()=>({strategy:'auto',noAuction:false,noFlats:false,noShared:false,offmarket:false,fresh:'any',notes:'',mode:'rent',beds:[],min:1200,max:5000,loc:'',priv:false,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false,OnTheMarket:false,EIG:false,AuctionHouse:false,Allsop:false,SDL:false,SavillsAuctions:false,iamsold:false}});
 if(!S.find||!S.find.f)S.find={f:FIND_DEF(),searched:false,sort:null};
 S.find.f=Object.assign(FIND_DEF(),S.find.f);S.find.f.sites=Object.assign(FIND_DEF().sites,S.find.f.sites);
 const FS={busy:false,sel:new Set(),showUnconfirmed:false,auto:0,lastRefresh:false};
@@ -898,6 +904,7 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   if(/\bunfurnished\b/.test(lo))out.furn='unfurnished';else if(/\bfurnished\b/.test(lo))out.furn='furnished';if(out.furn)got.push(out.furn[0].toUpperCase()+out.furn.slice(1));
   if(/private landlords?|no agents?|direct(?:ly)? (?:from|with) (?:the )?landlord/.test(lo)){out.priv=true;got.push('Private landlords')}
   if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+)?auctions?\b/.test(lo)){out.noAuction=true;got.push('No auctions')}
+  else if(/\b(?:off[- ]?market|probate|deceased estates?|repossess\w*|distressed|motivated (?:seller|vendor)s?|must sell|quick sale|unsold lots?|auction lots?)\b/.test(lo)){out.offmarket=true;out.mode='buy';if(!got.includes('To buy'))got.unshift('To buy');got.push('Off-market & distressed')}
   if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+|all\s+)?(?:flats?|apartments?)\b/.test(lo)){out.noFlats=true;got.push('No flats')}
   if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+|all\s+)?shared[\s-]?ownerships?\b/.test(lo)){out.noShared=true;got.push('No shared ownership')}
   if((m=lo.match(/\b(?:last|past|within)\s*(24 ?h(?:ours?)?|day|\d+ days?|week|fortnight)\b|\b(new today|just listed|newly listed|brand new listings?)\b/))){const w=m[1]||'';out.fresh=m[2]?'3':/24|day\b/.test(w)&&!/\d+ days?/.test(w)?'1':/fortnight/.test(w)?'14':/week/.test(w)?'7':String(Math.min(14,Math.max(1,parseInt(w)||7))).replace(/^(2|4|5|6)$/,'7').replace(/^(8|9|10|11|12|13)$/,'14');got.push('Listed recently')}
@@ -934,12 +941,13 @@ const findStrats=f=>{const L=(Array.isArray(f.strategies)&&f.strategies.length?f
 function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';{const L=findStrats(f);$$('input[name="fStrat"]').forEach(c=>{c.checked=L.includes(c.value)})}$('#fFresh').value=f.fresh||'any';
   $(f.mode==='buy'?'#fModeBuy':'#fModeRent').checked=true;
   f.beds=bedList(f.beds);$$('input[name="fBeds"]').forEach(c=>{c.checked=f.beds.includes(c.value)});$('#fBedsAny').checked=!f.beds.length;
-  $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fNoAuction').checked=!!f.noAuction;$('#fNoFlats').checked=!!f.noFlats;$('#fNoShared').checked=!!f.noShared;$('#fFurn').value=f.furn;$('#fType').value=f.type;
+  $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fNoAuction').checked=!!f.noAuction;$('#fOffMarket').checked=!!f.offmarket;$('#fNoFlats').checked=!!f.noFlats;$('#fNoShared').checked=!!f.noShared;$('#fFurn').value=f.furn;$('#fType').value=f.type;
   SITES.forEach(s=>{$('#fSite'+s).checked=!!f.sites[s]});findChrome()}
+$('#fOffMarket').addEventListener('change',e=>{if(e.target.checked){OFFMARKET_SITES.forEach(x=>{const c=$('#fSite'+x);if(c)c.checked=true});$('#fNoAuction').checked=false}});
 function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
   f.notes=$('#fNotes').value.slice(0,500);{const L=$$('input[name="fStrat"]:checked').map(c=>c.value),keep=findStrats(f).filter(x=>L.includes(x));
     f.strategies=[...keep,...L.filter(x=>!keep.includes(x))];if(!f.strategies.length)f.strategies=['auto'];f.strategy=f.strategies[0]}f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
-  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.noAuction=$('#fNoAuction').checked;f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
+  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.noAuction=$('#fNoAuction').checked&&!$('#fOffMarket').checked;f.offmarket=$('#fOffMarket').checked&&$('#fModeBuy').checked;f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
   SITES.forEach(s=>{f.sites[s]=$('#fSite'+s).checked})}
 function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;
   $('#fMinL').textContent=buy?'Min price':'Min rent';$('#fMaxL').textContent=buy?'Max price':'Max rent';
@@ -955,7 +963,7 @@ const ageTxt=d=>d==null?'':d===0?'Today':d===1?'Yesterday':d<14?`${d} days ago`:
 const isFreshNew=r=>{const d=ageDays(r);return (d!=null&&d<=3)||(!!r.newAt&&Date.now()-Date.parse(r.newAt)<3*DAY_MS)};
 function freshTags(r){const d=ageDays(r),t=[];if(isFreshNew(r))t.push('<span class="fr-tag new">New</span>');
   if(r.hot)t.push('<span class="fr-tag hot" title="The advert mentions high demand, a closing date or booked-up viewings">Going fast</span>');
-  else if(d!=null&&d>=21)t.push('<span class="fr-tag old" title="Listed 3+ weeks ago, so it may go soon or already be taken">Older</span>');return t.join('')}
+  else if(d!=null&&d>=21)t.push('<span class="fr-tag old" title="Listed 3+ weeks ago, so it may go soon or already be taken">Older</span>');t.push(sigTags(r));return t.join('')}
 const freshMatch=(r,f)=>!f.fresh||f.fresh==='any'||(ageDays(r)!=null&&ageDays(r)<=+f.fresh);
 // Only listings whose link was opened and confirmed live are shown, unless the member asks to see the rest.
 const confirmedLive=x=>x.verified==='available';
@@ -1107,7 +1115,7 @@ $('#fNotesFill').addEventListener('click',()=>{const text=$('#fNotes').value.tri
   const {f,got}=parseCriteria(text);readFind();
   // No price in the text: drop the starting £1,200–£5,000 range so it doesn't hide matches.
   const d=FIND_DEF();if(f.min==null&&f.max==null&&+S.find.f.min===d.min&&+S.find.f.max===d.max){f.min='';f.max=''}
-  Object.assign(S.find.f,f);bindFind();save();renderFind();
+  Object.assign(S.find.f,f);if(f.offmarket)OFFMARKET_SITES.forEach(x=>{S.find.f.sites[x]=true});bindFind();save();renderFind();
   msg.textContent=got.length?`Filled in: ${got.join(' · ')}. Check the filters, then search.`:'No filters to fill in. It will still search with what you wrote.'});
 const FIND_MSG=m=>{const n=$('#nFind');n.classList.remove('share-note');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
 // Checks on an AI job every 2 seconds. A dropped connection, a busy server or a sign-in being renewed
@@ -1189,6 +1197,8 @@ const RENT_ONLY_SITES=['OpenRent','SpareRoom'];
 async function startSearch(refresh=false,auto=false){if(FS.busy)return;if(!auto)FS.auto=0;FS.lastRefresh=refresh;readFind();let sites=SITES.filter(s=>S.find.f.sites[s]);
   // OpenRent and SpareRoom only list homes to rent, so they're left out of a search for property to buy.
   if(S.find.f.mode==='buy'&&sites.some(s=>!RENT_ONLY_SITES.includes(s))){const skip=sites.filter(s=>RENT_ONLY_SITES.includes(s));sites=sites.filter(s=>!RENT_ONLY_SITES.includes(s));if(skip.length)toast(`${skip.map(SITE_LABEL).join(' and ')} only list rentals, so they're left out of this purchase search.`)}
+  // Auction and sale-only sites have nothing to rent, so they're left out of a rental search.
+  if(S.find.f.mode!=='buy'&&sites.some(s=>!BUY_ONLY_SITES.includes(s)))sites=sites.filter(s=>!BUY_ONLY_SITES.includes(s));
   if(!sites.length){toast('Tick at least one site to search');return}
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0],btn=$('#fSearch');
   const existing=refresh&&LIVE?LIVE.map(r=>({site:r.site,url:r.url,title:r.title,type:r.type,beds:r.beds,area:r.area,postcode:r.postcode,price:r.price,mode:r.mode,private:r.private,furnished:r.furnished,found:r.found,listedAt:r.listedAt})):[];
@@ -1266,6 +1276,7 @@ function cardFacts(r,i){const buy=r.mode==='buy',town=String(r.area||'').replace
     ['📍',where],['🛏',[r.type,r.furnished&&r.furnished!=='Not stated'?r.furnished:''].filter(Boolean).join(' · ')],['🎯',`Strategy: ${STRAT_NAME[SF.st]||SF.st}`],
     ...SF.lines,...extraKeys(r).map(([n,l,v])=>['🔁',`As ${n}: ${l} ${v} (est.)`]),
     ...(r.ai>=0?[['⭐',`Deal score ${r.ai}/100${r.aiv?' · '+r.aiv:''}`]]:[]),
+    ...(sigList(r).length?[['🔎',`Off-market signals: ${sigList(r).join(', ')}${r.daysOnMarket!=null?` · listed ${r.daysOnMarket} days`:''}`]]:[]),
     ...(ageDays(r)!=null?[['🆕',`Listed ${ageTxt(ageDays(r)).toLowerCase()}${r.hot?' · going fast':''}`]]:r.hot?[['🔥','Going fast']]:[]),
     ...(live?[['✅',`Listing checked live ${live}`]]:[]),...(r.pack?[['📊',`Analysed: ${r.pack.verdict||'see pack'}${r.pack.score!=null?` · ${r.pack.score}/100`:''}`],['📄',`Deal pack: ${location.origin}/pack/${r.pack.id}`]]:[]),...(preNDA()?[]:[['🔗',r.url]])]}}
 function cardsTitle(n){const f=S.find.f,today=new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
@@ -1435,6 +1446,7 @@ function listingBrief(ls){const st=stratFor(ls[0]);
   const one=x=>[`${x.type} in ${x.area}${x.postcode&&!x.area.includes(x.postcode)?` (${x.postcode})`:''}, listed on ${x.site}`,
     x.mode==='buy'?`Asking price ${gbp(x.price)}`:`Rent ${gbp(x.price)} a month`,
     ...(st==='R2SA'?[`Deposit about ${gbp(x.price)} (estimated, not stated in the listing)`,`Nightly rate about ${gbp(RATE_EST(x.beds,x.area+' '+x.postcode))} (estimated)`]:[]),
+    ...(sigList(x).length?[`Why it may be a motivated sale: ${sigList(x).join(', ')}${x.daysOnMarket!=null?` (on the market ${x.daysOnMarket} days)`:''}`]:[]),
     `Furnished: ${x.furnished}`,`Listing: ${x.url}`].join('\n');
   return `${STRAT_NAME[st]&&st!=='none'?STRAT_NAME[st]+' ':''}deal found with Deal Finder.${S.find.f.notes?`\nInvestor criteria: ${S.find.f.notes}`:''}\n\n`+(ls.length>1?ls.map((x,i)=>`Unit ${i+1}: ${one(x)}`).join('\n\n'):one(ls[0]))}
 $('#fResults').addEventListener('click',e=>{

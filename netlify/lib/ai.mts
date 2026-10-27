@@ -517,6 +517,8 @@ Judge each listing on the user's strategy from the filters ("strategy"; "auto" m
 Never talk about occupancy or nightly rates unless the strategy is short lets. Do not use the following R2SA method for other strategies.
 For R2SA rentals, likely monthly profit at 80% occupancy (revenue = 24 nights x nightly rate, minus 15% platform fees, £45 cleaning per 3-night stay, rent and about £150 other costs), break-even occupancy, for purchases, gross yield and cash flow; price or rent level against the area, demand for short stays in that location, and compliance risk (in London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights don't count, so note when a London deal would need them; HMO and Article 4 where relevant). Treat nightly rates as estimates and say so. If the filters include "notes" (the user's own criteria in their words), rank listings that meet them higher and say which criteria each pick meets or misses. Never invent facts about a specific listing. The id is only for matching your picks to the results: never mention ids anywhere in your text. When you compare listings, name them by type and street or area (for example "the 1 bed flat on Adam & Eve Court").
 
+For an off-market and distressed search (filters.offmarket is true), each listing may have off_market_signals (for example probate, repossession, auction lot, needs modernisation, cash buyers only, price reduced, motivated seller) and days_on_market. Rank the strongest opportunities first: how likely the seller is to accept a discount, how far below market value the price is (where given), how much work the property needs, and the risks that come with that route (for auction lots: legal pack, buyer's fees and the completion deadline; for probate: timing; for repossessions and cash-only: condition, tenure and mortgageability). Explain which signals each pick has. These are signals found in public adverts, not proof of motivation: never say a property is truly off-market or that a seller will accept a lower price.
+
 You may also get "search_summary": how many listings each site returned, how many links were removed as dead or taken, and how many couldn't be confirmed. Use it to explain the search.
 
 Return valid JSON with these keys:
@@ -543,12 +545,21 @@ export const runRank = (payload: string, level: LevelId) => complete(`${RANK_PRO
 // shape. Search-results, area and category pages don't match, so they are never shown as listings.
 // Sites that only list homes to rent, so they're skipped when searching for property to buy.
 export const RENT_ONLY = new Set(["OpenRent", "SpareRoom"]);
+// Sites that only sell property (auctions), so they are skipped when searching to rent.
+export const BUY_ONLY = new Set(["EIG", "AuctionHouse", "Allsop", "SDL", "SavillsAuctions", "iamsold", "OnTheMarket"]);
 export const SITES: Record<string, { label: string; domains: string[]; what: string; listing: RegExp; example: string }> = {
   OpenRent: { label: "OpenRent", domains: ["openrent.co.uk"], what: "property to rent, mostly from private landlords", listing: /openrent\.co\.uk\/(?:property-to-rent\/[^?#]+\/)?\d{5,}\/?(?:[?#]|$)/i, example: "https://www.openrent.co.uk/property-to-rent/leeds/2-bed-flat-park-lane/1234567" },
   SpareRoom: { label: "SpareRoom", domains: ["spareroom.co.uk"], what: "whole properties and rooms to rent", listing: /spareroom\.co\.uk\/(?:flatshare\/[^#]*[?&](?:flatshare_id|advert_id)=\d+|flatshare\/[^?#]+\/\d{5,}\/?(?:[?#]|$))/i, example: "https://www.spareroom.co.uk/flatshare/flatshare_detail.pl?flatshare_id=12345678" },
   Gumtree: { label: "Gumtree", domains: ["gumtree.com"], what: "property to rent or buy", listing: /gumtree\.com\/p\/[^/?#]+\/[^/?#]+\/\d{6,}/i, example: "https://www.gumtree.com/p/property-to-rent/2-bed-flat-in-leeds/1234567890" },
   Rightmove: { label: "Rightmove", domains: ["rightmove.co.uk"], what: "residential property to rent or buy", listing: /rightmove\.co\.uk\/properties\/\d{6,}/i, example: "https://www.rightmove.co.uk/properties/123456789" },
   Zoopla: { label: "Zoopla", domains: ["zoopla.co.uk"], what: "residential property to rent or buy", listing: /zoopla\.co\.uk\/(?:to-rent|for-sale|new-homes)\/details\/\d{6,}/i, example: "https://www.zoopla.co.uk/to-rent/details/12345678/" },
+  OnTheMarket: { label: "OnTheMarket", domains: ["onthemarket.com"], what: "residential property for sale, including probate, repossession and reduced listings", listing: /onthemarket\.com\/details\/\d{6,}/i, example: "https://www.onthemarket.com/details/12345678/" },
+  EIG: { label: "EIG Auctions", domains: ["eigpropertyauctions.co.uk"], what: "UK property auction lots from many auctioneers, including unsold lots", listing: /eigpropertyauctions\.co\.uk\/[^?#]*\d{4,}/i, example: "https://www.eigpropertyauctions.co.uk/lot/12345" },
+  AuctionHouse: { label: "Auction House UK", domains: ["auctionhouse.co.uk"], what: "UK property auction lots from Auction House branches", listing: /auctionhouse\.co\.uk\/[^?#]*(?:lot|property)[^?#]*\d{3,}/i, example: "https://www.auctionhouse.co.uk/london/auction/lot/details/12345" },
+  Allsop: { label: "Allsop", domains: ["allsop.co.uk"], what: "residential and commercial auction lots", listing: /allsop\.co\.uk\/[^?#]*(?:lot|propert)[^?#]*\d{3,}/i, example: "https://www.allsop.co.uk/lot/12345" },
+  SDL: { label: "SDL Auctions", domains: ["sdlauctions.co.uk"], what: "UK property auction lots", listing: /sdlauctions\.co\.uk\/[^?#]*(?:lot|propert)[^?#]*\d{3,}/i, example: "https://www.sdlauctions.co.uk/property-auctions/lot/12345" },
+  SavillsAuctions: { label: "Savills Auctions", domains: ["auctions.savills.co.uk", "savills.co.uk"], what: "residential and commercial auction lots", listing: /savills\.co\.uk\/[^?#]*(?:lot|auction)[^?#]*\d{3,}/i, example: "https://auctions.savills.co.uk/auctions/lot/12345" },
+  iamsold: { label: "iamsold", domains: ["iamsold.co.uk"], what: "online property auction lots (modern method of auction)", listing: /iamsold\.co\.uk\/[^?#]*(?:propert|lot)[^?#]*\d{3,}/i, example: "https://www.iamsold.co.uk/property/12345" },
   Facebook: { label: "Facebook Marketplace", domains: ["facebook.com"], what: "Facebook Marketplace property listings", listing: /facebook\.com\/marketplace\/item\/\d{6,}/i, example: "https://www.facebook.com/marketplace/item/1234567890123456/" },
   RightmoveCommercial: { label: "Rightmove Commercial", domains: ["rightmove.co.uk"], what: "commercial property to let or buy (rightmove.co.uk/commercial-property)", listing: /rightmove\.co\.uk\/(?:properties\/\d{6,}|commercial-property-(?:to-let|for-sale)\/property-\d{6,})/i, example: "https://www.rightmove.co.uk/properties/123456789" },
   Realla: { label: "Realla", domains: ["realla.co"], what: "commercial property to let or buy", listing: /realla\.co\/(?:m|p|listing|properties)\/[^?#]*\d{4,}/i, example: "https://realla.co/m/12345678-office-to-let-high-street-leeds" },
@@ -572,6 +583,40 @@ const SEARCH_LEVEL: Record<LevelId, { passes: number; perPass: number; context: 
   deep: { passes: 8, perPass: 15, context: "high", effort: "medium", verify: 60 },
 };
 
+// Signals that a seller may be motivated or the property may be a below-market opportunity, read from an advert's own words.
+const SIGNALS: Array<[string, RegExp]> = [
+  ["Probate or deceased estate", /\b(?:probate|deceased\s+estate|executors?|late\s+owner|estate\s+of\s+the\s+late|sold\s+on\s+behalf\s+of\s+the\s+(?:estate|executors?))\b/i],
+  ["Repossession", /\b(?:repossess(?:ed|ion)|mortgagee\s+(?:in\s+possession|sale)|lpa\s+receivers?|receivership|administrators?)\b/i],
+  ["Auction lot", /\b(?:auction|lot\s+\d+|guide\s+price|modern\s+method\s+of\s+auction|buyer'?s?\s+premium|reserve\s+price)\b/i],
+  ["Unsold at auction", /\b(?:unsold|post[-\s]?auction|available\s+after\s+auction)\b/i],
+  ["Needs modernisation", /\b(?:in\s+need\s+of\s+(?:modernisation|updating|renovation|refurbishment|improvement)|needs?\s+(?:modernising|modernisation|updating|renovation|refurbishment|work)|unmodernised|requires?\s+(?:modernisation|refurbishment|renovation)|renovation\s+project|project\s+property|fixer[-\s]?upper|derelict|dated\s+throughout)\b/i],
+  ["Cash buyers only", /\b(?:cash\s+buyers?(?:\s+only)?|cash\s+purchase\s+only|unmortgageable|not\s+(?:currently\s+)?mortgageable|non[-\s]?standard\s+construction)\b/i],
+  ["Price reduced", /\b(?:price\s+(?:reduced|reduction|drop)|reduced\s+(?:by|price|again|to)|reduced\s+on|now\s+only)\b/i],
+  ["Motivated seller", /\b(?:must\s+sell|motivated\s+(?:seller|vendor)|quick\s+sale|urgent\s+sale|vendor\s+(?:is\s+)?keen|keen\s+to\s+sell|offers\s+(?:invited|considered)|below\s+(?:market\s+)?valuation|priced\s+to\s+sell|bargain)\b/i],
+  ["Chain free", /\b(?:chain[-\s]?free|no\s+(?:onward\s+)?chain|vacant\s+possession)\b/i],
+  ["Tenanted investment", /\b(?:tenanted|sold\s+with\s+tenants?|investment\s+(?:property|opportunity)|currently\s+let)\b/i],
+  ["Direct from owner", /\b(?:private\s+sale|direct\s+from\s+(?:the\s+)?owner|no\s+agents?|owner\s+selling|for\s+sale\s+by\s+owner)\b/i],
+  ["Development potential", /\b(?:stpp|subject\s+to\s+planning|planning\s+(?:granted|permission|potential)|potential\s+to\s+(?:convert|extend|develop|split)|development\s+(?:potential|opportunity)|hmo\s+potential)\b/i],
+];
+export const SIGNAL_NAMES = SIGNALS.map(([n]) => n);
+// A whole scraped page also holds menus and "similar properties", so reading it only trusts the signals that are rarely boilerplate.
+const STRICT_SIGNALS = new Set(["Probate or deceased estate", "Repossession", "Unsold at auction", "Needs modernisation", "Cash buyers only", "Direct from owner"]);
+export function signalsIn(text: string, strict = false): string[] {
+  const body = String(text || "").slice(0, 12_000);
+  return SIGNALS.filter(([n, re]) => (!strict || STRICT_SIGNALS.has(n)) && re.test(body)).map(([n]) => n);
+}
+export const AUCTION_SITES = new Set(["EIG", "AuctionHouse", "Allsop", "SDL", "SavillsAuctions", "iamsold"]);
+// Off-market and distressed searches look for motivated sellers: each round uses different signals.
+const OFF_ANGLES = [
+  "Look for probate, deceased estate and executor sales, and properties 'sold as seen' or 'to be sold with vacant possession'.",
+  "Look for repossessions, mortgagee sales and receiver sales, and properties described as 'cash buyers only', 'unmortgageable' or 'non-standard construction'.",
+  "Look for auction lots and unsold lots from the last 30 days, 'guide price', 'modern method of auction' and 'available now after auction'.",
+  "Look for properties needing modernisation, renovation or refurbishment: 'in need of updating', 'unmodernised', 'investment opportunity', 'tenanted'.",
+  "Look for motivated sellers: 'must sell', 'quick sale', 'price reduced', 'reduced again', 'chain free', 'back on the market', 'below valuation'.",
+  "Look for listings that have been on the market a long time (6 months or more) or reduced several times, and for private sellers advertising directly.",
+  "Look for development or conversion angles: 'planning granted', 'potential to convert', 'HMO potential', 'could be split', 'derelict'.",
+  "Now try neighbouring postcode districts and any areas you haven't covered yet, with the same signals.",
+];
 // Each round searches from a different angle so later rounds find listings earlier ones missed.
 const ANGLES = [
   "Start with the newest listings (added in the last few days), then the most relevant current ones.",
@@ -586,6 +631,8 @@ const ANGLES = [
 export type Filters = {
   mode?: string; beds?: string | string[]; min?: number | string; max?: number | string; loc?: string;
   priv?: boolean; furn?: string; type?: string; notes?: string; fresh?: string; strategy?: string; strategies?: string[]; noAuction?: boolean; noFlats?: boolean; noShared?: boolean;
+  // Off-market and distressed search (purchases only): auction lots, probate, repossession, motivated sellers and other signals.
+  offmarket?: boolean;
 };
 
 export type Listing = {
@@ -597,6 +644,9 @@ export type Listing = {
   listedAt?: string;
   // The advert says it's in high demand, has a closing date or viewings are booked up: likely to go soon.
   hot?: boolean;
+  // Why a listing looks like an off-market or motivated-seller opportunity (probate, auction, reduced, long on the market...), and how long it has been listed.
+  signals?: string[];
+  daysOnMarket?: number;
   // "live": the page opened and shows the advert; "gone": 404, removed, or bounced to a search page;
   // "unknown": the site blocked the check, so the AI has to open it instead.
   link?: "live" | "gone" | "unknown";
@@ -648,10 +698,11 @@ function describe(f: Filters) {
   const fresh = Number(f.fresh) > 0 ? Number(f.fresh) : 0;
   // Every ticked strategy adds what suits it, so the search looks for listings that fit any of them.
   const picked = [...new Set([String(f.strategy || ""), ...(Array.isArray(f.strategies) ? f.strategies.map(String) : [])])].slice(0, 6);
-  for (const k of picked) { const hint = STRATEGY_SEARCH[k]; if (hint) parts.push(f.noAuction ? hint.replace(/ auction,/g, "") : hint); }
+  for (const k of picked) { const hint = STRATEGY_SEARCH[k]; if (hint) parts.push(f.noAuction && !f.offmarket ? hint.replace(/ auction,/g, "") : hint); }
+  if (f.offmarket && buy) parts.push("off-market style and motivated-seller opportunities only: probate or deceased estate sales, repossessions, auction lots and unsold lots, properties needing modernisation or renovation, 'cash buyers only' or unmortgageable properties, listings reduced several times or on the market for months, 'must sell' or quick-sale vendors, tenanted investments and sales direct from owners");
   if (f.noFlats) parts.push("no flats: leave out flats, apartments, maisonettes, studios and penthouses (houses, bungalows and other non-flat property only)");
   if (f.noShared) parts.push("no shared ownership: leave out shared ownership, part buy part rent, shared equity and staircasing properties");
-  if (f.noAuction) parts.push("no auction properties: leave out anything sold by auction, auction lots, online or timed auctions, \"modern method of auction\" and listings saying \"subject to reserve\" or \"auction guide price\"");
+  if (f.noAuction && !f.offmarket) parts.push("no auction properties: leave out anything sold by auction, auction lots, online or timed auctions, \"modern method of auction\" and listings saying \"subject to reserve\" or \"auction guide price\"");
   if (fresh) parts.push(`only listings added or updated in the last ${fresh === 1 ? "24 hours" : `${fresh} days`} (newest first)`);
   return parts.filter(Boolean).join(", ") + (notes ? `. The user's own criteria, in their words (follow them where the listing shows it): "${notes}"` : "");
 }
@@ -739,7 +790,7 @@ async function searchSite(site: string, f: Filters, level: LevelId, pass: number
   const buy = f.mode === "buy";
   const skip = exclude.length ? `\nYou've already found these, so don't return them again:\n${exclude.slice(-80).join("\n")}` : "";
   const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
-${ANGLES[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only return individual listing pages: one property per URL, shaped like ${conf.example}. Never return search-results, area, category or map pages, even if they show listings; open the individual advert and use its URL. Skip adverts marked let agreed, under offer, sold STC or no longer available.${skip}
+${(f.offmarket && buy ? OFF_ANGLES : ANGLES)[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only return individual listing pages: one property per URL, shaped like ${conf.example}. Never return search-results, area, category or map pages, even if they show listings; open the individual advert and use its URL. Skip adverts marked let agreed, under offer, sold STC or no longer available.${skip}
 Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "auction": true | false (true if the advert is a sale by auction, an auction lot, an online or timed auction or a modern method of auction), "shared_ownership": true | false (true if it is shared ownership, part buy part rent or shared equity), "private_landlord": true | false | null, "added": string (when the advert was added, reduced or updated, exactly as the site shows it, e.g. "Added today", "Added on 28/09/2026", "3 days ago"; "" if not shown)}]}.
 Prefer the newest listings. Only include listings you actually found in the search results, with the URL exactly as the search returned it. Never build or guess a URL from an ID or address, and never invent a listing or price. If you find none, return {"listings": []}.`;
   const { parsed, seen } = await webJson(prompt, conf.domains, level, lv.context, lv.effort);
@@ -750,13 +801,14 @@ Prefer the newest listings. Only include listings you actually found in the sear
     if (!/^https:\/\//.test(url) || !hostMatches(url, conf.domains) || !isListingUrl(site, url)) continue;
     // Listings found by reading a site's search page aren't in the search sources, so they aren't dropped
     // here: every link is opened and checked before it is shown, which removes anything made up.
-    if (f.noAuction && (x.auction === true || /auction/i.test(`${x.title || ""} ${url}`))) continue;
+    if (f.noAuction && !f.offmarket && (x.auction === true || /auction/i.test(`${x.title || ""} ${url}`))) continue;
     if (f.noShared && (x.shared_ownership === true || /shared[\s-]?ownership|part[\s-]?buy|shared[\s-]?equity|staircasing/i.test(`${x.title || ""} ${x.type || ""} ${url}`))) continue;
     if (f.noFlats && /\b(?:flats?|apartments?|maisonettes?|studios?|penthouses?)\b/i.test(`${x.type || ""} ${x.title || ""}`)) continue;
     const price = Math.round(Number(x.price));
     if (!Number.isFinite(price) || price <= 0) continue;
     const beds = x.beds === null || x.beds === undefined || x.beds === "" ? null : Math.max(0, Math.round(Number(x.beds)));
     out.push({
+      ...(f.offmarket && AUCTION_SITES.has(site) ? { signals: ["Auction lot"] } : {}),
       site, id: normalise(url), url,
       title: String(x.title || "").slice(0, 140),
       type: String(x.type || (beds === 0 ? "Studio" : beds ? `${beds} bed property` : "Property")).slice(0, 60),
@@ -774,12 +826,12 @@ Prefer the newest listings. Only include listings you actually found in the sear
 }
 
 // Expert only: open listing pages to confirm they're still available and fill in details.
-async function verifyBatch(batch: Listing[], level: LevelId) {
+async function verifyBatch(batch: Listing[], level: LevelId, f: Filters = {}) {
   const domains = [...new Set(batch.flatMap((l) => SITES[l.site].domains))];
   const prompt = `Open each of these property listing pages and check them:
 ${batch.map((l, i) => `${i + 1}. ${l.url}`).join("\n")}
 For each, confirm the page opens (not a 404 or "page not found"), is a single property advert (not a search-results or area page), and whether it is still available (not let agreed, under offer, sold STC, expired or removed), and read the details from the page itself.
-Return JSON: {"checks": [{"url": string (exactly as given), "opened": true | false (false if you could not open this exact page), "is_listing": true | false, "available": true | false | null, "title": string (the advert's own title), "type": string (e.g. "2 bed flat"), "area": string (street/area and town as the advert shows), "listed": string (the date it was added or last updated, if shown), "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "postcode": string (the full postcode or postcode district shown, "" if none), "photos": [up to 5 strings: the full https URLs of the advert's own property photos exactly as the page uses them, [] if you can't see them], "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not]}]}.
+Return JSON: {"checks": [{"url": string (exactly as given), "opened": true | false (false if you could not open this exact page), "is_listing": true | false, "available": true | false | null, "title": string (the advert's own title), "type": string (e.g. "2 bed flat"), "area": string (street/area and town as the advert shows), "listed": string (the date it was added or last updated, if shown), "price": number or null (${batch[0].mode === "buy" ? "asking price" : "monthly rent"} in GBP), "beds": number or null, "deposit": string, "available_from": string, "furnished": string, "private_landlord": true | false | null, "postcode": string (the full postcode or postcode district shown, "" if none), "photos": [up to 5 strings: the full https URLs of the advert's own property photos exactly as the page uses them, [] if you can't see them], "highlights": [short strings: key features, restrictions, bills, pets, DSS, short lets allowed or not]${f.offmarket ? `, "signals": [strings from this list only, each one only if the advert shows it: ${SIGNAL_NAMES.map((n) => `"${n}"`).join(", ")}], "days_on_market": number or null (how many days it has been listed, if shown, or can be worked out from the listed or reduced dates)` : ""}}]}.
 Only report what the pages actually say. Use null or "" when a detail isn't shown.`;
   const { parsed } = await webJson(prompt, domains, level, level === "quick" ? "medium" : "high", level === "quick" ? "low" : "medium");
   const byUrl = new Map(batch.map((l) => [normalise(l.url), l]));
@@ -798,6 +850,12 @@ Only report what the pages actually say. Use null or "" when a detail isn't show
       if (c.area) l.area = String(c.area).slice(0, 120);
     }
     l.checkedAt = new Date().toISOString();
+    if (f.offmarket) {
+      const seen = Array.isArray(c.signals) ? c.signals.map(String).filter((n: string) => SIGNAL_NAMES.includes(n)) : [];
+      l.signals = [...new Set([...(l.signals || []), ...seen])];
+      const dom = Math.round(Number(c.days_on_market));
+      if (Number.isFinite(dom) && dom >= 0 && dom < 5000) l.daysOnMarket = dom;
+    }
     const price = Math.round(Number(c.price));
     if (Number.isFinite(price) && price > 0) l.price = price;
     if (Number.isFinite(Number(c.beds)) && c.beds !== null) l.beds = Math.round(Number(c.beds));
@@ -833,7 +891,8 @@ export function newSearch(input: string, level: LevelId): SearchState {
   const { filters = {}, sites = [], existing = [] } = JSON.parse(input) as { filters?: Filters; sites?: string[]; existing?: Array<Record<string, unknown>> };
   const ticked = sites.filter((s) => s in SITES);
   // Rental-only sites can't have property for sale; keep them out of a purchase search.
-  const wanted = filters.mode === "buy" && ticked.some((s) => !RENT_ONLY.has(s)) ? ticked.filter((s) => !RENT_ONLY.has(s)) : ticked;
+  const noRent = (s: string) => !RENT_ONLY.has(s), noBuy = (s: string) => !BUY_ONLY.has(s);
+  const wanted = filters.mode === "buy" && ticked.some(noRent) ? ticked.filter(noRent) : filters.mode !== "buy" && ticked.some(noBuy) ? ticked.filter(noBuy) : ticked;
   // Current results to re-check: only real listing links on the ticked sites, with their checks reset.
   const keep: Listing[] = [];
   for (const x of Array.isArray(existing) ? existing.slice(0, 200) : []) {
@@ -868,7 +927,7 @@ export const searchProgress = (st: SearchState) => ({ phase: st.phase, sites: st
 const GONE_TEXT = /(no longer available|no longer on the market|no longer listed|has been removed|been taken down|advert has expired|ad has expired|listing (?:has )?expired|listing not found|property not found|advert not found|page not found|page (?:you|you're|you are) looking for|couldn['’]t find (?:that|the|this) page|this (?:ad|advert|listing|property) is no longer|\b404\b\W{0,3}(?:error|not found|page))/i;
 const HOT_TEXT = /high demand|multiple (?:offers|applications|enquiries)|viewings? (?:are )?(?:now )?(?:fully )?booked|closing date|best and final|limited viewings|lots of interest/i;
 const TAKEN_TITLE = /\b(let agreed|under offer|sold stc|sold subject to contract|reserved)\b/i;
-export async function checkLink(l: Listing): Promise<"live" | "gone" | "unknown"> {
+export async function checkLink(l: Listing, f: Filters = {}): Promise<"live" | "gone" | "unknown"> {
   const ctl = new AbortController();
   const timer = setTimeout(() => ctl.abort(), 9000);
   try {
@@ -892,6 +951,7 @@ export async function checkLink(l: Listing): Promise<"live" | "gone" | "unknown"
     const added = text.match(/\b(?:added|listed|posted|reduced|updated)\b[^.\n]{0,30}?(?:today|yesterday|\d+\s*(?:hours?|days?|weeks?|months?)\s+ago|\d{1,2}[/.-]\d{1,2}[/.-]\d{2,4}|\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]{3,9}\.?,?\s+\d{4})/i)?.[0];
     if (added) { const at = parseListed(added); if (at) l.listedAt = at; }
     if (HOT_TEXT.test(text.slice(0, 6000))) l.hot = true;
+    if (f.offmarket) { const sg = signalsIn(text, true); if (sg.length) l.signals = [...new Set([...(l.signals || []), ...sg])]; }
     if (title && !/rightmove|zoopla|openrent|spareroom|gumtree|facebook/i.test(title.replace(/[|\-–].*$/, "").trim())) l.title = title.replace(/\s*[|–-]\s*(Rightmove|Zoopla|OpenRent|SpareRoom|Gumtree|Facebook).*$/i, "").slice(0, 140);
     return "live";
   } catch { return "unknown"; } finally { clearTimeout(timer); }
@@ -948,7 +1008,7 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
     while (st.checkAt < st.listings.length) {
       if (timeLeft() < 4 * 60_000) return st;
       const group = st.listings.slice(st.checkAt, st.checkAt + 8);
-      await Promise.all(group.map(async (l) => { l.link = await checkLink(l); if (l.link === "live") { l.verified = "available"; l.checkedAt = new Date().toISOString(); } }));
+      await Promise.all(group.map(async (l) => { l.link = await checkLink(l, st.filters); if (l.link === "live") { l.verified = "available"; l.checkedAt = new Date().toISOString(); } }));
       st.checkAt += group.length;
       if (st.checkAt % 24 === 0 || st.checkAt >= st.listings.length) await save(st);
     }
@@ -975,7 +1035,7 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
       if (timeLeft() < 4 * 60_000) return st;
       const group = targets.slice(st.verifyAt, st.verifyAt + 20);
       const batches = Array.from({ length: Math.ceil(group.length / 5) }, (_, i) => group.slice(i * 5, i * 5 + 5));
-      await Promise.all(batches.map((batch) => verifyBatch(batch, level).catch((error) => console.error("Verify failed", error))));
+      await Promise.all(batches.map((batch) => verifyBatch(batch, level, st.filters).catch((error) => console.error("Verify failed", error))));
       st.verifyAt += group.length;
       await save(st);
     }
@@ -1006,6 +1066,8 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
             id: String(i), site: SITES[l.site].label, type: l.type, beds: l.beds, area: l.area, postcode: l.postcode,
             [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price,
             ...(l.details ? { checked_details: l.details, still_available: l.verified } : {}),
+            ...(l.signals?.length ? { off_market_signals: l.signals } : {}),
+            ...(l.daysOnMarket != null ? { days_on_market: l.daysOnMarket } : {}),
           })),
         }), level);
       } catch (error) {
