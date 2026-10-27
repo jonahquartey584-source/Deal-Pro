@@ -947,13 +947,13 @@ function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';{const L=fin
   $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fNoAuction').checked=!!f.noAuction;$('#fOffMarket').checked=!!f.offmarket;$('#fNoFlats').checked=!!f.noFlats;$('#fNoShared').checked=!!f.noShared;$('#fFurn').value=f.furn;$('#fType').value=f.type;
   SITES.forEach(s=>{$('#fSite'+s).checked=!!f.sites[s]});findChrome()}
 $('#fOffMarket').addEventListener('change',e=>{if(e.target.checked&&offLocked()){e.target.checked=false;go('plans');toast('Off-market properties only is included with Premium and Max.');return}
-  if(e.target.checked){OFFMARKET_SITES.forEach(x=>{const c=$('#fSite'+x);if(c)c.checked=true});$('#fNoAuction').checked=false}setTimeout(()=>{try{renderAILevels()}catch(x){}},0)});
+  if(e.target.checked){$('#fModeBuy').checked=true;OFFMARKET_SITES.forEach(x=>{const c=$('#fSite'+x);if(c)c.checked=true});$('#fNoAuction').checked=false}setTimeout(()=>{try{renderAILevels()}catch(x){}},0)});
 function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
   f.notes=$('#fNotes').value.slice(0,500);{const L=$$('input[name="fStrat"]:checked').map(c=>c.value),keep=findStrats(f).filter(x=>L.includes(x));
     f.strategies=[...keep,...L.filter(x=>!keep.includes(x))];if(!f.strategies.length)f.strategies=['auto'];f.strategy=f.strategies[0]}f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
   f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.noAuction=$('#fNoAuction').checked&&!$('#fOffMarket').checked;f.offmarket=$('#fOffMarket').checked&&$('#fModeBuy').checked&&!offLocked();f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
   SITES.forEach(s=>{f.sites[s]=$('#fSite'+s).checked})}
-function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;{const lk=offLocked(),cb=$('#fOffMarket');cb.disabled=false;$('#fOffLock').hidden=!lk;if(lk&&f.offmarket){f.offmarket=false;cb.checked=false}$('#fOffNote').hidden=lk}
+function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;{const lk=offLocked(),cb=$('#fOffMarket');cb.disabled=false;$('#fOffLock').hidden=!lk;if(lk&&f.offmarket){f.offmarket=false;cb.checked=false}$('#fOffNote').hidden=lk||!f.offmarket}
   $('#fMinL').textContent=buy?'Min price':'Min rent';$('#fMaxL').textContent=buy?'Max price':'Max rent';
   $('#fFurnNote').hidden=f.furn==='any';$('#fRmNote').hidden=!f.sites.Rightmove}
 function locMatch(x,q){q=q.trim().toLowerCase();if(!q)return true;const pc=x.postcode.toLowerCase();
