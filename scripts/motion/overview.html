@@ -239,6 +239,7 @@ body{font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
     <div class="slam" id="w2" style="top:400px;font-size:128px">Every strategy.</div>
     <div class="slam" id="w3" style="top:550px;font-size:128px">Every location.</div>
     <div class="slam" id="w4" style="top:700px;font-size:128px">On and off market.</div>
+    <div class="serif" id="w6" style="position:absolute;right:140px;bottom:70px;font-size:96px;color:#fff">Happy sourcing.</div>
     <div class="slam" id="w5" style="top:850px;font-size:128px">Numbers <span class="serif" style="font-weight:400;letter-spacing:0;font-size:150px">done.</span></div>
   </div>
   <!-- Comparables: its own narration clip -->
@@ -458,18 +459,19 @@ window.render = (t) => {
   // S11 end: the wordmark, then the five lines slam in with the narration (te = seconds since 50.15)
   { const te = t - 50.15;
     set($("s11"), vis(t, ...S.s11));
-    const moveK = inOut(T(te, 0.45, 0.85));
+    const moveK = inOut(T(te, 0.3, 0.65));
     const lx = 610 + (150 - 610) * moveK, ly = 440 + (90 - 440) * moveK, sc = 1 - 0.55 * moveK;
-    set($("s11logo"), T(te, 0.0, 0.2), `translate(${lx}px, ${ly}px) scale(${pop(te, 0.0, 0.45) * sc})`); $("s11logo").style.transformOrigin = "0 0";
-    [["w1", 0.7], ["w2", 1.55], ["w3", 3.0], ["w4", 4.45], ["w5", 6.55]].forEach(([id, a]) => set($(id), T(te, a, a + 0.08), `scale(${1.5 - 0.5 * out3(T(te, a, a + 0.22))})`));
-    ["w1", "w2", "w3", "w4", "w5"].forEach((id) => ($(id).style.transformOrigin = "0 50%")); }
+    set($("s11logo"), T(te, 0.0, 0.15), `translate(${lx}px, ${ly}px) scale(${pop(te, 0.0, 0.35) * sc})`); $("s11logo").style.transformOrigin = "0 0";
+    [["w1", 0.3], ["w2", 1.1], ["w3", 2.3], ["w4", 3.55], ["w5", 5.4]].forEach(([id, a]) => set($(id), T(te, a, a + 0.08), `scale(${1.5 - 0.5 * out3(T(te, a, a + 0.22))})`));
+    ["w1", "w2", "w3", "w4", "w5"].forEach((id) => ($(id).style.transformOrigin = "0 50%"));
+    set($("w6"), T(te, 6.5, 6.9), `translateY(${(1 - out3(T(te, 6.5, 7.1))) * 30}px)`); }
 };
 window.render(0);
 
 /* New timeline: one narration clip per scene (see docs/overview-video-script.md). Old scenes are played at the pace of their new clip,
    and three scenes (off-market, comparables, due diligence) are overlays that sit on top of a held frame. */
-const ND = [6.460181, 1.991791, 7.085397, 10.000045, 11.472948, 6.782971, 6.101406, 11.137596, 9.068277, 5.360748, 8.800045, 6.400045, 8.480045], GAP = 0.3;
-const NS = []; { let a = 0; for (const d of ND) { NS.push(a); a += d + GAP; } }
+const NS = [0, 5.55, 7.6, 14.0, 22.0, 31.3, 36.75, 42.45, 52.2, 59.9, 64.95, 73.1, 78.8]; // where each scene's narration starts (scripts/overview-narration.mp3)
+const lenOf = (i) => (i + 1 < NS.length ? NS[i + 1] - NS[i] : 99);
 const SEG = [{ o: [0, 6.85] }, { o: [6.85, 9.4] }, { o: [9.4, 13.35] }, { o: [13.35, 21.65] }, { k: "off", hold: 21.65 }, { o: [21.65, 25.65] }, { o: [25.65, 31.65] },
   { o: [31.65, 40.6] }, { k: "comps", hold: 40.6 }, { o: [40.6, 45.75] }, { k: "dd", hold: 45.75 }, { o: [45.75, 50.15] }, { k: "end" }];
 const fadeIO = (u, len) => T(u, 0, 0.35) * (1 - T(u, len - 0.35, len));
@@ -478,46 +480,46 @@ function drawOff(u, len) {
   set($("soff"), fadeIO(u, len));
   set($("soffEy"), T(u, 0.1, 0.4), rise(u, 0.1, 0.4, 24));
   set($("soffMode"), T(u, 0.25, 0.65), rise(u, 0.25, 0.5, 40));
-  const on = out3(T(u, 0.9, 1.4));
+  const on = out3(T(u, 0.7, 1.2));
   $("soffSw").style.background = on > 0.5 ? "#E0142B" : "#3a3c52";
   $("soffKnob").style.transform = `translateX(${on * 74}px)`;
   $("soffOn").style.color = on > 0.5 ? "#fff" : "#9a9cb0"; $("soffStd").style.color = on > 0.5 ? "#9a9cb0" : "#fff";
-  const rent = u >= 1.7 && u < 2.3, buy = u >= 2.3;
+  const rent = u >= 1.3 && u < 1.9, buy = u >= 1.9;
   for (const [id, a] of [["soffRent", rent], ["soffBuy", buy]]) { $(id).style.background = a ? "#E0142B" : "transparent"; $(id).style.color = a ? "#fff" : "#9a9cb0"; }
-  set($("soffH"), T(u, 2.2, 2.8), rise(u, 2.2, 0.6, 40));
-  set($("soffEv"), T(u, 3.4, 3.8));
+  set($("soffH"), T(u, 2.4, 3.0), rise(u, 2.4, 0.6, 40));
+  set($("soffEv"), T(u, 3.3, 3.7));
   $("soffEv").textContent = "Searching everywhere, at Expert level" + ".".repeat(Math.floor(u * 3) % 4);
-  [[5.35, 0], [6.65, 1], [8.0, 2], [9.2, 3]].forEach(([a, i]) => { set($("soffT" + i), pop(u, a), `scale(${0.7 + 0.3 * pop(u, a)})`); });
-  set($("soffNote"), T(u, 10.3, 10.7), rise(u, 10.3, 0.4, 20));
+  [[4.3, 0], [5.35, 1], [6.45, 2], [7.4, 3]].forEach(([a, i]) => { set($("soffT" + i), pop(u, a), `scale(${0.7 + 0.3 * pop(u, a)})`); });
+  set($("soffNote"), T(u, 8.0, 8.4), rise(u, 8.0, 0.4, 20));
 }
 
 function drawComps(u, len) {
   set($("scomps"), fadeIO(u, len));
   set($("scEy"), T(u, 0.1, 0.4), rise(u, 0.1, 0.4, 24));
   set($("scH"), T(u, 0.2, 0.8), rise(u, 0.2, 0.6, 40));
-  set($("scSub"), T(u, 0.6, 0.9), `scale(${0.9 + 0.1 * pop(u, 0.6)})`);
-  [1.7, 2.7, 3.7].forEach((a, i) => set($("scC" + i), T(u, a, a + 0.3), `translateX(${(1 - out3(T(u, a, a + 0.4))) * 60}px)`));
-  set($("scRent"), T(u, 4.7, 5.0), rise(u, 4.7, 0.4, 24));
-  set($("scMV"), T(u, 5.9, 6.2), `scale(${0.92 + 0.08 * pop(u, 5.9)})`);
-  set($("scBadge"), T(u, 6.8, 7.05), `scale(${pop(u, 6.8, 0.4)})`);
-  const rk = out3(T(u, 7.7, 8.3)); $("scRentBig").textContent = "£" + Math.round(825 + 25 * rk) + " pcm";
-  set($("scRentBox"), T(u, 7.6, 7.9), rise(u, 7.6, 0.4, 24));
+  set($("scSub"), T(u, 0.5, 0.8), `scale(${0.9 + 0.1 * pop(u, 0.5)})`);
+  [1.2, 1.9, 2.5].forEach((a, i) => set($("scC" + i), T(u, a, a + 0.3), `translateX(${(1 - out3(T(u, a, a + 0.4))) * 60}px)`));
+  set($("scRent"), T(u, 2.9, 3.2), rise(u, 2.9, 0.4, 24));
+  set($("scMV"), T(u, 5.3, 5.6), `scale(${0.92 + 0.08 * pop(u, 5.3)})`);
+  set($("scBadge"), T(u, 5.9, 6.15), `scale(${pop(u, 5.9, 0.4)})`);
+  const rk = out3(T(u, 6.7, 7.3)); $("scRentBig").textContent = "£" + Math.round(825 + 25 * rk) + " pcm";
+  set($("scRentBox"), T(u, 6.5, 6.8), rise(u, 6.5, 0.4, 24));
 }
 
-const DD_ITEMS = [2.3, 3.2, 4.2, 5.2, 5.7, 5.95, 6.2, 6.45];
+const DD_ITEMS = [2.05, 2.75, 3.65, 4.4, 4.9, 5.1, 5.3, 5.5];
 function drawDD(u, len) {
   set($("sdd"), fadeIO(u, len));
   set($("sdEy"), T(u, 0.1, 0.4), rise(u, 0.1, 0.4, 24));
   set($("sdH"), T(u, 0.2, 0.8), rise(u, 0.2, 0.6, 40));
-  DD_ITEMS.forEach((a, i) => { set($("sdR" + i), T(u, a, a + 0.25), `translateY(${(1 - out3(T(u, a, a + 0.35))) * 26}px)`); $("sdT" + i).style.opacity = T(u, a + 0.2, a + 0.4); set($("sdS" + i), T(u, 6.9 + i * 0.1, 7.1 + i * 0.1)); });
+  DD_ITEMS.forEach((a, i) => { set($("sdR" + i), T(u, a, a + 0.25), `translateY(${(1 - out3(T(u, a, a + 0.35))) * 26}px)`); $("sdT" + i).style.opacity = T(u, a + 0.2, a + 0.4); set($("sdS" + i), T(u, 6.0 + i * 0.1, 6.2 + i * 0.1)); });
   const n = DD_ITEMS.filter((a) => u >= a + 0.3).length; $("sdCount").textContent = `${n} of 8 checks`;
-  set($("sdFoot"), T(u, 6.5, 6.9), rise(u, 6.5, 0.4, 20));
+  set($("sdFoot"), T(u, 6.3, 6.7), rise(u, 6.3, 0.4, 20));
 }
 
 const render0 = window.render;
 window.render = (t) => {
   let i = NS.length - 1; while (i > 0 && t < NS[i]) i--;
-  const seg = SEG[i], u = t - NS[i], len = ND[i] + GAP;
+  const seg = SEG[i], u = t - NS[i], len = lenOf(i);
   set($("soff"), 0); set($("scomps"), 0); set($("sdd"), 0);
   if (seg.k === "off") { render0(seg.hold); drawOff(u, len); }
   else if (seg.k === "comps") { render0(seg.hold); drawComps(u, len); }
