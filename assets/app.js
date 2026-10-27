@@ -956,6 +956,8 @@ function setOffMarket(on){const f=S.find.f;
   readFind();f.offmarket=on;
   if(on){(f.mode==='buy'?OFFMARKET_SITES:OFFMARKET_SITES_RENT).forEach(x=>{f.sites[x]=true});f.noAuction=false}
   bindFind();save();renderFind();try{renderAILevels()}catch(e){}}
+// Switching to Buy clears the rental starting range (£1,200 to £5,000) so it doesn't hide every property for sale.
+$$('input[name="fMode"]').forEach(r=>r.addEventListener('change',()=>{const mn=$('#fMin'),mx=$('#fMax');if(r.value==='buy'&&r.checked&&mn.value==='1200'&&mx.value==='5000'){mn.value='';mx.value=''}}));
 document.addEventListener('click',e=>{const b=e.target.closest('#fOffSwitch,#fOffBack');if(b)setOffMarket(!S.find.f.offmarket)});
 function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
   f.notes=$('#fNotes').value.slice(0,500);{const L=$$('input[name="fStrat"]:checked').map(c=>c.value),keep=findStrats(f).filter(x=>L.includes(x));
@@ -984,10 +986,15 @@ function freshTags(r){const d=ageDays(r),t=[];if(isFreshNew(r))t.push('<span cla
 const freshMatch=(r,f)=>!f.fresh||f.fresh==='any'||(ageDays(r)!=null&&ageDays(r)<=+f.fresh);
 // Only listings whose link was opened and confirmed live are shown, unless the member asks to see the rest.
 const confirmedLive=x=>x.verified==='available';
-function findRows(all=false){const f=S.find.f;
+// The price boxes start at the rental defaults (£1,200 to £5,000); for a purchase that range can't be meant, so it is ignored (the server does the same).
+const priceRng=f=>{let min=f.min,max=f.max;if(f.mode==='buy'&&max!==''&&+max<20000){min='';max=''}if(f.mode!=='buy'&&min!==''&&+min>=20000){min='';max=''}return {min,max}};
+// What an off-market search did, so an empty or thin result says why.
+function offStatsTxt(){const o=S.find.offStats;if(!offOn()||!o)return '';const c=o.candidates||0;
+  return `It searched everywhere${o.extraRounds?`, widening the area ${o.extraRounds} time${o.extraRounds===1?'':'s'}`:''}, and found ${c} possible propert${c===1?'y':'ies'}. ${o.noSignal?`${o.noSignal} showed no off-market signal in the advert and ${o.noSignal===1?'was':'were'} left out. `:''}${o.priceFiltered?`${o.priceFiltered} were outside your price range. `:''}`}
+function findRows(all=false){const f=S.find.f,PR=priceRng(f);
   return SRC().map((x,i)=>Object.assign({k:i,listedTs:Date.parse(x.listedAt||'')||0},x)).filter(x=>(all||FS.showUnconfirmed||FS.autoUnc||confirmedLive(x))&&freshMatch(x,f)&&x.mode===f.mode
     &&bedsMatch(bedList(f.beds),x.beds)
-    &&(f.min===''||x.price>=f.min)&&(f.max===''||x.price<=f.max)
+    &&(PR.min===''||x.price>=PR.min)&&(PR.max===''||x.price<=PR.max)
     &&(LIVE||locMatch(x,f.loc))&&(!f.priv||x.private!==false)&&(!f.noAuction||!/auction/i.test((x.title||'')+' '+(x.url||'')))&&(!f.noFlats||!/\b(?:flats?|apartments?|maisonettes?|studios?|penthouses?)\b/i.test((x.type||'')+' '+(x.title||'')))&&(!f.noShared||!/shared[\s-]?ownership|part[\s-]?buy|shared[\s-]?equity|staircasing/i.test((x.title||'')+' '+(x.type||'')))
     &&(f.furn==='any'||x.furnished==='Not stated'||x.furnished.toLowerCase()===f.furn)
     &&(f.type==='any'||(f.type==='studio'?x.beds===0:f.type==='flat'?x.beds>=1&&/flat/i.test(x.type):f.type==='commercial'?/commercial|office|retail|shop|industrial/i.test(x.type):/house/i.test(x.type)))
@@ -1085,6 +1092,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   const pr=rows.map(r=>r.price).sort((a,b)=>a-b),m=pr.length,med=m?(m%2?pr[(m-1)/2]:(pr[m/2-1]+pr[m/2])/2):NaN,nOpen=keys.size;
   const ll=new Set(rows.map(r=>r.site)).size,buy=S.find.f.mode==='buy',so=S.find.sort,sv=so?`${so.k}:${so.dir}`:'';
   const hidden=FS.showUnconfirmed||FS.autoUnc?0:findRows(true).length-rows.length,nUnc=findRows(true).filter(x=>!confirmedLive(x)).length;
+  const sumOff=offOn()&&S.find.offStats&&m<15?`<div class="fsub">${offStatsTxt()}</div>`:'';
   const sum=`<b class="mono">${m}</b> ${FS.showUnconfirmed?'':'live '}listing${m===1?'':'s'}${offOn()?'':` from <b class="mono">${ll}</b> site${ll===1?'':'s'}`}${m?` · median <b class="mono">${gbp(med)}</b>${buy?'':' pcm'}`:''}${S.find.liveAt?` · searched ${fmtDate(S.find.liveAt)}`:''}`;
   const unc=FS.autoUnc?`<div class="fsub warn-note">These sites wouldn't let Deal Pro confirm the listings automatically, so they're shown unconfirmed. Open each link to check it's still available, or run Analyst or Expert, which confirm more.</div>`:nUnc?`<div class="fsub">${FS.showUnconfirmed?`Showing ${nUnc} listing${nUnc===1?'':'s'} that couldn't be confirmed live. Their links may not work.`:`${hidden} more couldn't be confirmed live, so they're hidden.`} <button class="linkbtn" type="button" id="fShowUnc">${FS.showUnconfirmed?'Hide them':'Show them anyway'}</button></div>`:'';
   const th=(k,lab,cls='')=>{const on=so&&so.k===k;return `<th class="${cls}" aria-sort="${on?(so.dir>0?'ascending':'descending'):'none'}"><button class="sort" data-sort="${k}">${lab}<span class="sa" aria-hidden="true">${on?(so.dir>0?'↑':'↓'):''}</span></button></th>`};
@@ -1097,7 +1105,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
     :`<button class="btn sm primary" id="fBuildSel" disabled>Analyse selected</button><button class="btn sm" id="fCopyCards"${nOpen?'':' disabled'}>${cardsLabel(nOpen)}</button><button class="btn sm" id="fShareLink"${nOpen?'':' disabled'} title="Make a web page of these deal cards and get a link to send on WhatsApp">Share as link</button>${packBtn(nOpen)}<label class="cardlinks" title="Untick for a pre-NDA version: no listing links or street names"><input type="checkbox" id="fCardLinks"${S.find.cardLinks===false?'':' checked'}${nOpen?'':' disabled'}> Include links</label><button class="btn sm" id="fCopy"${nOpen?'':' disabled'}>Copy ${nOpen} to Google Sheets</button>`;
   const L=`<span class="lockc">${LOCK}Locked</span>`;
   let body;
-  if(!m)body=`<div class="fempty"><h2>${hidden?'No listings confirmed live':'No listings match these filters'}</h2><p>${hidden?'Every listing found either had a dead link or its site blocked the check. Try Analyst or Expert, which open more listings to confirm them, or show the unconfirmed ones.':'Try a wider price range, a different location or more sites.'}</p></div>`;
+  if(!m)body=`<div class="fempty"><h2>${hidden?'No listings confirmed live':'No listings match these filters'}</h2><p>${offStatsTxt()}${hidden?'Every listing found either had a dead link or its site blocked the check. Try Analyst or Expert, which open more listings to confirm them, or show the unconfirmed ones.':offOn()?'Try a wider price range or area, or clear the bedrooms and type filters.':'Try a wider price range, a different location or more sites.'}</p></div>`;
   else if(view==='map'){const nPin=rows.filter(r=>Number.isFinite(r.lat)&&Number.isFinite(r.lng)).length,nAp=rows.filter(r=>Number.isFinite(r.lat)&&r.geo!=='exact').length;
     body=`<div class="pmap"><div class="pgrid" id="fPhotos" role="list" aria-label="Listings with photos">${rows.map((r,i)=>photoCard(r,i)).join('')}</div>
       <div class="pm-side"><div class="pm-map" id="fMap" role="region" aria-label="Map of the listings">${nPin?'':`<div class="pm-msg">${S.find.liveAt&&!rows.some(r=>'lat' in r)?'Run Refresh &amp; find new to put these listings on the map.':'These listings have no location to show on the map.'}</div>`}</div>
@@ -1111,7 +1119,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
         <td>${o?`<a class="xlink" href="${esc(r.url)}" target="_blank" rel="noopener">Open ↗</a>${r.pack?` <a class="xlink" href="/pack/${esc(r.pack.id)}" target="_blank" rel="noopener">Pack ↗</a>`:''}`:L}</td><td>${o?`<button class="btn xs" data-build="${r.k}">Analyse deal</button>`:`<button class="btn xs" data-unlock="${r.k}" data-n="${i+1}">Unlock · ${gbp(dealFee())}</button>`}</td></tr>`}).join('')}</tbody></table></div>`;
   const ageH=S.find.liveAt?(Date.now()-Date.parse(S.find.liveAt))/36e5:0,stale=ageH>=24,nNew=rows.filter(isFreshNew).length;
   const fresh=`<div class="fresh-bar${stale?' stale':''}"><span>${stale?`These results are from ${ageH<48?'yesterday':Math.round(ageH/24)+' days ago'}. Some listings may have gone.`:`Searched ${ageH<1?'just now':Math.round(ageH)+'h ago'}.`}${nNew?` <b>${nNew} new</b> in the last 3 days.`:''}</span><button class="btn sm ghost" type="button" id="fEditSearch" title="Change the criteria for this search">Edit search</button><button class="btn sm${stale?' primary':''}" type="button" id="fRefresh" title="Re-check every listing, remove ones that have gone, and look for new ones">Refresh &amp; find new</button></div>`;
-  box.innerHTML=rankHTML()+fresh+`<div class="ftool"><div><div class="fsum" id="fSummary">${sum}</div>${unc}${view==='sheet'?'<div class="fsub">Copy, then paste into cell A1 of a Google Sheet.</div>':''}</div>
+  box.innerHTML=rankHTML()+fresh+`<div class="ftool"><div><div class="fsum" id="fSummary">${sum}</div>${sumOff}${unc}${view==='sheet'?'<div class="fsub">Copy, then paste into cell A1 of a Google Sheet.</div>':''}</div>
     <div class="ph-actions">${acts}${toggle}</div></div>${body}`;
   const c=$('#fCards');if(c){c.style.scrollBehavior='auto';c.scrollLeft=prevScroll;c.style.scrollBehavior='';
     const upd=()=>{const p=$('#fPrev'),n=$('#fNext');if(p)p.disabled=c.scrollLeft<=2;if(n)n.disabled=c.scrollLeft+c.clientWidth>=c.scrollWidth-2};c.addEventListener('scroll',upd,{passive:true});upd()}
@@ -1195,7 +1203,7 @@ async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LE
     LIVE=(res.listings||[]).slice(0,500);/* the server only returns single-listing links */
     // After a refresh, mark listings that weren't in the previous results as new.
     if(p.prev){const prev=new Set(p.prev),now=new Date().toISOString();LIVE.forEach(x=>{if(!prev.has(x.url))x.newAt=now;else if(p.prevNew&&p.prevNew[x.url])x.newAt=p.prevNew[x.url]})}S.find.live=LIVE;S.find.liveAt=new Date().toISOString();S.find.liveSites=res.sites||{};S.find.searched=true;FS.sel.clear();
-    FS.rank=res.ranking?{status:'done',level:lv,data:res.ranking}:null;S.find.rank=res.ranking?{level:lv.id,data:res.ranking}:null;S.find.removed=res.removed||0;
+    FS.rank=res.ranking?{status:'done',level:lv,data:res.ranking}:null;S.find.rank=res.ranking?{level:lv.id,data:res.ranking}:null;S.find.removed=res.removed||0;S.find.offStats=res.offStats||null;
     const missed=Object.entries(res.sites||{}).filter(([,v])=>v.status==='error').map(([k])=>SRC_LABEL(k));
     const live=LIVE.filter(confirmedLive).length;FS.showUnconfirmed=false;
     const rf=res.refreshed;if(!LIVE.length){toast(`No listings found${S.find.f.loc?` in ${S.find.f.loc}`:''}, even after searching nearby areas. Try a wider price range, more sites or Analyst.`);return}
