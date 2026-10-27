@@ -114,7 +114,7 @@ const OFFLIST = [
 const OFF_SITES = ["Gumtree", "Rightmove", "Zoopla", "Facebook", "RightmoveCommercial", "Realla", "NovaLoca", "LoopNet", "OnTheMarket", "EIG", "AuctionHouse", "Allsop", "SDL", "SavillsAuctions", "iamsold"];
 let offStart = 0;
 function offPoll() {
-  const t = now(), VERIFY_FROM = A_OFF + 16.0, DONE = A_OFF + 22.8, ROUNDS = 12, k = Math.min(1, (t - offStart) / (VERIFY_FROM - offStart));
+  const t = now(), VERIFY_FROM = A_OFF + 16.0, DONE = A_OFF + 21.2, ROUNDS = 12, k = Math.min(1, (t - offStart) / (VERIFY_FROM - offStart));
   const sites = Object.fromEntries(OFF_SITES.map((site, i) => { const round = Math.min(ROUNDS, Math.floor(k * ROUNDS + (i % 4) * 0.3)); return [site, { status: round >= ROUNDS ? "done" : "searching", found: Math.min(round * 2 + (i % 3), 18), round, rounds: ROUNDS }]; }));
   const total = Object.values(sites).reduce((a, x) => a + x.found, 0);
   if (t < VERIFY_FROM) return { status: "running", credits: CREDITS, progress: { phase: "search", sites, found: total } };
@@ -260,11 +260,11 @@ await until0(A_OFF + 9.6);
 await scroll(0, 0.9);
 await until0(A_OFF + 15.0);
 await move("#fResults .fprog-t", 0.9);
-await until0(A_OFF + 23.2);
+await until0(A_OFF + 24.0);
 await moveClick("#fViewCards", 0.7);
-await until0(A_OFF + 24.8);
+await until0(A_OFF + 25.3);
 await move(".pcard .fr-tag.sig", 1.0);
-await until0(A_OFF + 27.0);
+await until0(A_OFF + 27.2);
 await move(".pcard:nth-child(2) .fr-tag.sig", 0.9);
 
 // 3:09 Analysing a deal
