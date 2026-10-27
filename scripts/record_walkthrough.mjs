@@ -212,6 +212,9 @@ await move("#fResults .fprog .fnote b", 0.9);
 
 // 2:23 Results and AI picks
 await until(143.2);
+// Results now open in Photos + map; this part of the narration walks through the table, so switch to Sheet.
+await page.evaluate(() => { const b = document.querySelector("#fViewSheet"); if (b) b.click(); });
+await page.waitForSelector(".sheet", { timeout: 8000 });
 await scroll(".sheet", 0.9, 120);
 await move(".sheet tbody tr:nth-child(2) td.clip", 0.8);
 await until(148.5);
