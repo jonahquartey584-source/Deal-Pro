@@ -944,21 +944,26 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
 // Several strategies can be ticked; the first is the main one (it drives the search, ranking and analysis).
 const findStrats=f=>{const L=(Array.isArray(f.strategies)&&f.strategies.length?f.strategies:[f.strategy||'auto']).filter(x=>x);return L.length?L:['auto']};
 function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';{const L=findStrats(f);$$('input[name="fStrat"]').forEach(c=>{c.checked=L.includes(c.value)})}$('#fFresh').value=f.fresh||'any';
-  $(f.mode==='buy'?(f.offmarket&&!offLocked()?'#fModeOff':'#fModeBuy'):'#fModeRent').checked=true;
+  $(f.mode==='buy'?'#fModeBuy':'#fModeRent').checked=true;
   f.beds=bedList(f.beds);$$('input[name="fBeds"]').forEach(c=>{c.checked=f.beds.includes(c.value)});$('#fBedsAny').checked=!f.beds.length;
   $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fNoAuction').checked=!!f.noAuction;$('#fNoFlats').checked=!!f.noFlats;$('#fNoShared').checked=!!f.noShared;$('#fFurn').value=f.furn;$('#fType').value=f.type;
   SITES.forEach(s=>{$('#fSite'+s).checked=!!f.sites[s]});findChrome()}
-// Off-market is its own mode next to Rent and Buy. It is for Premium and Max, ticks the auction and off-market sources, and always runs at Expert.
-$('#fModeOff').addEventListener('change',e=>{if(!e.target.checked)return;
-  if(offLocked()){$(S.find.f.mode==='buy'?'#fModeBuy':'#fModeRent').checked=true;go('plans');toast('Off-market mode is included with Premium and Max.');return}
-  OFFMARKET_SITES.forEach(x=>{const c=$('#fSite'+x);if(c)c.checked=true});$('#fNoAuction').checked=false});
+// Off-market is a separate mode the whole Deal Finder switches into (and back out of) with one button. It is for Premium and Max,
+// searches everywhere at Expert level, and the sources are never listed.
+function setOffMarket(on){const f=S.find.f;
+  if(on&&offLocked()){go('plans');toast('Off-market mode is included with Premium and Max.');return}
+  readFind();f.offmarket=on;
+  if(on){f.mode='buy';$('#fModeBuy').checked=true;OFFMARKET_SITES.forEach(x=>{f.sites[x]=true});f.noAuction=false}
+  bindFind();save();renderFind();try{renderAILevels()}catch(e){}}
+document.addEventListener('click',e=>{const b=e.target.closest('#fOffSwitch,#fOffBack');if(b)setOffMarket(!S.find.f.offmarket)});
 function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
   f.notes=$('#fNotes').value.slice(0,500);{const L=$$('input[name="fStrat"]:checked').map(c=>c.value),keep=findStrats(f).filter(x=>L.includes(x));
-    f.strategies=[...keep,...L.filter(x=>!keep.includes(x))];if(!f.strategies.length)f.strategies=['auto'];f.strategy=f.strategies[0]}f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked||$('#fModeOff').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
-  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.offmarket=$('#fModeOff').checked&&!offLocked();f.noAuction=$('#fNoAuction').checked&&!f.offmarket;f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
+    f.strategies=[...keep,...L.filter(x=>!keep.includes(x))];if(!f.strategies.length)f.strategies=['auto'];f.strategy=f.strategies[0]}f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
+  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.offmarket=!!f.offmarket&&!offLocked();if(f.offmarket)f.mode='buy';f.noAuction=$('#fNoAuction').checked&&!f.offmarket;f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
   SITES.forEach(s=>{f.sites[s]=$('#fSite'+s).checked})}
-function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;{const lk=offLocked();$('#fOffLock').hidden=!lk;if(lk&&f.offmarket){f.offmarket=false;$('#fModeBuy').checked=true}
-    const off=!!f.offmarket&&f.mode==='buy';$('#fPanel').dataset.off=off?'1':'';$('#fOffNote').hidden=!off;
+function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;{const lk=offLocked();if(lk&&f.offmarket){f.offmarket=false;$('#fModeBuy').checked=true}
+    const off=!!f.offmarket&&f.mode==='buy';$('#fPanel').dataset.off=off?'1':'';$('#fOffBar').hidden=!off;{const ld=$('#fLede');if(ld){if(!ld.dataset.std)ld.dataset.std=ld.textContent;ld.textContent=off?'Find off-market and motivated-seller property, then analyse any of it in the Deal Analyser.':ld.dataset.std}}
+    const sw=$('#fOffSwitch');sw.textContent=off?'Switch to standard search':'Switch to off-market mode';sw.classList.toggle('lockd',lk);sw.title=lk?'Off-market mode is included with Premium and Max':'';
     // The power level switches to Expert only while Off-market is chosen.
     if(FS.offShown!==off){FS.offShown=off;try{renderAILevels()}catch(x){}}}
   $('#fMinL').textContent=buy?'Min price':'Min rent';$('#fMaxL').textContent=buy?'Max price':'Max rent';
@@ -1079,7 +1084,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
   const pr=rows.map(r=>r.price).sort((a,b)=>a-b),m=pr.length,med=m?(m%2?pr[(m-1)/2]:(pr[m/2-1]+pr[m/2])/2):NaN,nOpen=keys.size;
   const ll=new Set(rows.map(r=>r.site)).size,buy=S.find.f.mode==='buy',so=S.find.sort,sv=so?`${so.k}:${so.dir}`:'';
   const hidden=FS.showUnconfirmed||FS.autoUnc?0:findRows(true).length-rows.length,nUnc=findRows(true).filter(x=>!confirmedLive(x)).length;
-  const sum=`<b class="mono">${m}</b> ${FS.showUnconfirmed?'':'live '}listing${m===1?'':'s'} from <b class="mono">${ll}</b> site${ll===1?'':'s'}${m?` · median <b class="mono">${gbp(med)}</b>${buy?'':' pcm'}`:''}${S.find.liveAt?` · searched ${fmtDate(S.find.liveAt)}`:''}`;
+  const sum=`<b class="mono">${m}</b> ${FS.showUnconfirmed?'':'live '}listing${m===1?'':'s'}${offOn()?'':` from <b class="mono">${ll}</b> site${ll===1?'':'s'}`}${m?` · median <b class="mono">${gbp(med)}</b>${buy?'':' pcm'}`:''}${S.find.liveAt?` · searched ${fmtDate(S.find.liveAt)}`:''}`;
   const unc=FS.autoUnc?`<div class="fsub warn-note">These sites wouldn't let Deal Pro confirm the listings automatically, so they're shown unconfirmed. Open each link to check it's still available, or run Analyst or Expert, which confirm more.</div>`:nUnc?`<div class="fsub">${FS.showUnconfirmed?`Showing ${nUnc} listing${nUnc===1?'':'s'} that couldn't be confirmed live. Their links may not work.`:`${hidden} more couldn't be confirmed live, so they're hidden.`} <button class="linkbtn" type="button" id="fShowUnc">${FS.showUnconfirmed?'Hide them':'Show them anyway'}</button></div>`:'';
   const th=(k,lab,cls='')=>{const on=so&&so.k===k;return `<th class="${cls}" aria-sort="${on?(so.dir>0?'ascending':'descending'):'none'}"><button class="sort" data-sort="${k}">${lab}<span class="sa" aria-hidden="true">${on?(so.dir>0?'↑':'↓'):''}</span></button></th>`};
   const toggle=`<div class="seg segb" role="group" aria-label="Results view"><button id="fViewMap" aria-pressed="${view==='map'}">Photos + map</button><button id="fViewCards" aria-pressed="${view==='cards'}">Cards</button><button id="fViewSheet" aria-pressed="${view==='sheet'}">Sheet</button></div>`;
