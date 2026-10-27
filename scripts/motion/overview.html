@@ -80,7 +80,6 @@ body{font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .modebox .sw i{position:absolute;top:8px;left:8px;width:60px;height:60px;border-radius:50%;background:#fff}
 .modebox .seg2{margin-left:auto;display:flex;gap:10px;background:rgba(255,255,255,.08);padding:8px;border-radius:20px;font-size:38px}
 .modebox .seg2 b{padding:12px 34px;border-radius:14px;color:#9a9cb0;font-weight:700}
-.soffrow{position:absolute;left:0;right:0;top:800px;display:flex;justify-content:center;gap:26px}.stag{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:999px;padding:16px 30px;font-size:38px;font-weight:700;white-space:nowrap}
 .stag i{width:18px;height:18px;border-radius:50%;background:#ff3049;box-shadow:0 0 16px #ff3049}
 .ocard{position:absolute;left:400px;top:520px;width:1120px;border-radius:30px;background:#fff;box-shadow:0 40px 90px rgba(0,0,0,.5);padding:44px 54px;color:#111}
 .ocard .t{display:inline-block;margin:6px 12px 0 0;padding:10px 22px;border-radius:999px;font-size:30px;font-weight:700;background:#FDECEE;color:#C20F24}
@@ -274,8 +273,6 @@ body{font-family:Geist,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
     <div class="c serif" style="top:210px;font-size:112px;color:#fff;line-height:1.04" id="soffH">Where the usual<br>pages don't look.</div>
     <div class="modebox" id="soffMode"><span id="soffStd" style="color:#9a9cb0">Standard</span><div class="sw" id="soffSw"><i id="soffKnob"></i></div><span id="soffOn">Off-market mode</span><div class="seg2"><b id="soffRent">Rent</b><b id="soffBuy">Buy</b></div></div>
     <div class="c" style="top:660px;font-size:36px;color:#9a9cb0;font-weight:600" id="soffEv">Searching everywhere, at Expert level</div>
-    <div class="soffrow"><div class="stag" id="soffT0">Probate sales<i></i></div><div class="stag" id="soffT1">Repossessions<i></i></div><div class="stag" id="soffT2">Auction lots<i></i></div><div class="stag" id="soffT3">Landlords letting direct<i></i></div></div>
-    <div class="c" style="top:930px;font-size:40px;color:#c9cadb;font-weight:600" id="soffNote">Every result is tagged with why it stands out.</div>
   </div>
 
 </div>
@@ -462,15 +459,15 @@ window.render = (t) => {
     const moveK = inOut(T(te, 0.3, 0.65));
     const lx = 610 + (150 - 610) * moveK, ly = 440 + (90 - 440) * moveK, sc = 1 - 0.55 * moveK;
     set($("s11logo"), T(te, 0.0, 0.15), `translate(${lx}px, ${ly}px) scale(${pop(te, 0.0, 0.35) * sc})`); $("s11logo").style.transformOrigin = "0 0";
-    [["w1", 0.3], ["w2", 1.1], ["w3", 2.3], ["w4", 3.55], ["w5", 5.4]].forEach(([id, a]) => set($(id), T(te, a, a + 0.08), `scale(${1.5 - 0.5 * out3(T(te, a, a + 0.22))})`));
+    [["w1", 0.3], ["w2", 1.1], ["w3", 2.3], ["w4", 3.45], ["w5", 5.1]].forEach(([id, a]) => set($(id), T(te, a, a + 0.08), `scale(${1.5 - 0.5 * out3(T(te, a, a + 0.22))})`));
     ["w1", "w2", "w3", "w4", "w5"].forEach((id) => ($(id).style.transformOrigin = "0 50%"));
-    set($("w6"), T(te, 6.5, 6.9), `translateY(${(1 - out3(T(te, 6.5, 7.1))) * 30}px)`); }
+    set($("w6"), T(te, 6.2, 6.6), `translateY(${(1 - out3(T(te, 6.2, 6.8))) * 30}px)`); }
 };
 window.render(0);
 
 /* New timeline: one narration clip per scene (see docs/overview-video-script.md). Old scenes are played at the pace of their new clip,
    and three scenes (off-market, comparables, due diligence) are overlays that sit on top of a held frame. */
-const NS = [0, 5.55, 7.6, 14.0, 22.0, 31.3, 36.75, 42.45, 52.2, 59.9, 64.95, 73.1, 78.8]; // where each scene's narration starts (scripts/overview-narration.mp3)
+const NS = [0, 5.7, 7.93, 14.3, 22.7, 26.87, 32.33, 37.9, 47.5, 54.85, 59.77, 67.95, 73.57]; // where each scene's narration starts (scripts/overview-narration.mp3)
 const lenOf = (i) => (i + 1 < NS.length ? NS[i + 1] - NS[i] : 99);
 const SEG = [{ o: [0, 6.85] }, { o: [6.85, 9.4] }, { o: [9.4, 13.35] }, { o: [13.35, 21.65] }, { k: "off", hold: 21.65 }, { o: [21.65, 25.65] }, { o: [25.65, 31.65] },
   { o: [31.65, 40.6] }, { k: "comps", hold: 40.6 }, { o: [40.6, 45.75] }, { k: "dd", hold: 45.75 }, { o: [45.75, 50.15] }, { k: "end" }];
@@ -480,17 +477,15 @@ function drawOff(u, len) {
   set($("soff"), fadeIO(u, len));
   set($("soffEy"), T(u, 0.1, 0.4), rise(u, 0.1, 0.4, 24));
   set($("soffMode"), T(u, 0.25, 0.65), rise(u, 0.25, 0.5, 40));
-  const on = out3(T(u, 0.7, 1.2));
+  const on = out3(T(u, 0.5, 0.9));
   $("soffSw").style.background = on > 0.5 ? "#E0142B" : "#3a3c52";
   $("soffKnob").style.transform = `translateX(${on * 74}px)`;
   $("soffOn").style.color = on > 0.5 ? "#fff" : "#9a9cb0"; $("soffStd").style.color = on > 0.5 ? "#9a9cb0" : "#fff";
-  const rent = u >= 1.3 && u < 1.9, buy = u >= 1.9;
+  const rent = u >= 1.0 && u < 1.6, buy = u >= 1.6;
   for (const [id, a] of [["soffRent", rent], ["soffBuy", buy]]) { $(id).style.background = a ? "#E0142B" : "transparent"; $(id).style.color = a ? "#fff" : "#9a9cb0"; }
-  set($("soffH"), T(u, 2.4, 3.0), rise(u, 2.4, 0.6, 40));
-  set($("soffEv"), T(u, 3.3, 3.7));
+  set($("soffH"), T(u, 2.0, 2.5), rise(u, 2.0, 0.5, 40));
+  set($("soffEv"), T(u, 2.9, 3.2));
   $("soffEv").textContent = "Searching everywhere, at Expert level" + ".".repeat(Math.floor(u * 3) % 4);
-  [[4.3, 0], [5.35, 1], [6.45, 2], [7.4, 3]].forEach(([a, i]) => { set($("soffT" + i), pop(u, a), `scale(${0.7 + 0.3 * pop(u, a)})`); });
-  set($("soffNote"), T(u, 8.0, 8.4), rise(u, 8.0, 0.4, 20));
 }
 
 function drawComps(u, len) {
@@ -502,8 +497,8 @@ function drawComps(u, len) {
   set($("scRent"), T(u, 2.9, 3.2), rise(u, 2.9, 0.4, 24));
   set($("scMV"), T(u, 5.3, 5.6), `scale(${0.92 + 0.08 * pop(u, 5.3)})`);
   set($("scBadge"), T(u, 5.9, 6.15), `scale(${pop(u, 5.9, 0.4)})`);
-  const rk = out3(T(u, 6.7, 7.3)); $("scRentBig").textContent = "£" + Math.round(825 + 25 * rk) + " pcm";
-  set($("scRentBox"), T(u, 6.5, 6.8), rise(u, 6.5, 0.4, 24));
+  const rk = out3(T(u, 6.5, 7.0)); $("scRentBig").textContent = "£" + Math.round(825 + 25 * rk) + " pcm";
+  set($("scRentBox"), T(u, 6.3, 6.6), rise(u, 6.3, 0.4, 24));
 }
 
 const DD_ITEMS = [2.05, 2.75, 3.65, 4.4, 4.9, 5.1, 5.3, 5.5];

@@ -32,7 +32,7 @@ Full text, to read straight through:
 
 ---
 
-## 2. "What Deal Pro does" overview: rewritten (about 1 minute 43 seconds)
+## 2. "What Deal Pro does" overview: rewritten (about 1 minute 21 seconds)
 
 The overview now says Deal Pro finds any deal, on or off the market, for any
 strategy and any location, and then analyses it, pulls comparables, runs due
@@ -45,7 +45,7 @@ diligence and packages the deal. Narration was generated in Higgsfield
 | Logo | Deal Pro does the work for you. | Red wipe and the Deal Pro wordmark. |
 | Find | It finds any deal, on the market or off it, for any strategy, in any location in the UK. | Radar of pins: "Deals found, on and off market". "Any strategy. Any location. On and off market." |
 | Strategies | Rent to rent, serviced accommodation, buy to let, HMOs, BRRR, flips, lease options and commercial. | The strategy tiles. |
-| Off-market | And with off-market mode, it goes where the usual property pages don't: probate sales, repossessions, auction lots, and landlords letting direct. | Mode switch flips on, Rent/Buy, four tags pop in: "Every result is tagged with why it stands out." |
+| Off-market | And with off-market mode, it goes where the usual property pages don't. | Mode switch flips on, Rent/Buy, "Where the usual pages don't look." No sources are listed. |
 | Listing | Every deal comes with the full details and a live link, checked so you know it still exists. | A listing with its details called out. |
 | Judges | But Deal Pro doesn't just find deals. It judges them, and only the strongest make it through. | "Doesn't just find deals. It judges them." and the funnel. |
 | Numbers | It works out the numbers for your strategy: the cash you need upfront, the profit each month, the break-even, and whether the deal survives a rate rise or an empty month. | Profit sum, upfront cash bar, break-even and stress tests. |
@@ -62,8 +62,7 @@ Full text, as one paragraph to copy:
 > market or off it, for any strategy, in any location in the UK. Rent to rent,
 > serviced accommodation, buy to let, HMOs, BRRR, flips, lease options and
 > commercial. And with off-market mode, it goes where the usual property pages
-> don't: probate sales, repossessions, auction lots, and landlords letting
-> direct. Every deal comes with the full details and a live link, checked so
+> don't. Every deal comes with the full details and a live link, checked so
 > you know it still exists. But Deal Pro doesn't just find deals. It judges
 > them, and only the strongest make it through. It works out the numbers for
 > your strategy: the cash you need upfront, the profit each month, the
