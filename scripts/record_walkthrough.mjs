@@ -263,9 +263,9 @@ await move("#fResults .fprog-t", 0.9);
 await until0(A_OFF + 24.0);
 await moveClick("#fViewCards", 0.7);
 await until0(A_OFF + 25.3);
-await move(".pcard .fr-tag.sig", 1.0);
+await move(".dcard .fr-tag.sig", 1.0);
 await until0(A_OFF + 27.2);
-await move(".pcard:nth-child(2) .fr-tag.sig", 0.9);
+await move(".dcard:nth-child(2) .fr-tag.sig", 0.9);
 
 // 3:09 Analysing a deal
 await until(189.8);
