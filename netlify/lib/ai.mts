@@ -517,6 +517,8 @@ Judge each listing on the user's strategy from the filters ("strategy"; "auto" m
 Never talk about occupancy or nightly rates unless the strategy is short lets. Do not use the following R2SA method for other strategies.
 For R2SA rentals, likely monthly profit at 80% occupancy (revenue = 24 nights x nightly rate, minus 15% platform fees, £45 cleaning per 3-night stay, rent and about £150 other costs), break-even occupancy, for purchases, gross yield and cash flow; price or rent level against the area, demand for short stays in that location, and compliance risk (in London, stays of under 90 consecutive nights are limited to 90 nights a year without planning permission; corporate and mid-term lets of 90+ nights don't count, so note when a London deal would need them; HMO and Article 4 where relevant). Treat nightly rates as estimates and say so. If the filters include "notes" (the user's own criteria in their words), rank listings that meet them higher and say which criteria each pick meets or misses. Never invent facts about a specific listing. The id is only for matching your picks to the results: never mention ids anywhere in your text. When you compare listings, name them by type and street or area (for example "the 1 bed flat on Adam & Eve Court").
 
+For an off-market lettings search (filters.offmarket is true and filters.mode is rent), rank by how well the home suits rent-to-rent, serviced accommodation or HMO use: landlord-direct lets, landlords open to a company let or sublet, rents reduced or long available, and rent level against the area; say what to confirm with the landlord (written consent to sublet, HMO licensing, Article 4), and never claim a landlord will agree.
+
 For an off-market and distressed search (filters.offmarket is true), each listing may have off_market_signals (for example probate, repossession, auction lot, needs modernisation, cash buyers only, price reduced, motivated seller) and days_on_market. Rank the strongest opportunities first: how likely the seller is to accept a discount, how far below market value the price is (where given), how much work the property needs, and the risks that come with that route (for auction lots: legal pack, buyer's fees and the completion deadline; for probate: timing; for repossessions and cash-only: condition, tenure and mortgageability). Explain which signals each pick has. These are signals found in public adverts, not proof of motivation: never say a property is truly off-market or that a seller will accept a lower price.
 
 For an off-market search (filters.offmarket is true), never name or hint at any website, portal, auction house or agent the listings came from, and never say where they were searched: refer to them only as listings and describe them by type and area.
@@ -600,6 +602,8 @@ const SIGNALS: Array<[string, RegExp]> = [
   ["Cash buyers only", /\b(?:cash\s+buyers?(?:\s+only)?|cash\s+purchase\s+only|unmortgageable|not\s+(?:currently\s+)?mortgageable|non[-\s]?standard\s+construction)\b/i],
   ["Price reduced", /\b(?:price\s+(?:reduced|reduction|drop)|reduced\s+(?:by|price|again|to)|reduced\s+on|now\s+only)\b/i],
   ["Motivated seller", /\b(?:must\s+sell|motivated\s+(?:seller|vendor)|quick\s+sale|urgent\s+sale|vendor\s+(?:is\s+)?keen|keen\s+to\s+sell|offers\s+(?:invited|considered)|below\s+(?:market\s+)?valuation|priced\s+to\s+sell|bargain)\b/i],
+  ["Private landlord", /\b(?:private\s+landlord|landlord\s+(?:let|direct)|direct\s+(?:from|with)\s+(?:the\s+)?landlord|no\s+(?:agent|admin|letting)\s+fees?|let\s+directly|managed\s+by\s+the\s+landlord)\b/i],
+  ["Open to company let or sublet", /\b(?:company\s+lets?|corporate\s+lets?|professional\s+lets?|sub-?lets?\s+(?:allowed|considered|permitted|ok)|rent[-\s]to[-\s]rent|serviced\s+accommodation|short\s+lets?\s+(?:considered|allowed|welcome)|hmo\s+(?:licensed|potential|ready)|sharers?\s+(?:welcome|considered|allowed))\b/i],
   ["Chain free", /\b(?:chain[-\s]?free|no\s+(?:onward\s+)?chain|vacant\s+possession)\b/i],
   ["Tenanted investment", /\b(?:tenanted|sold\s+with\s+tenants?|investment\s+(?:property|opportunity)|currently\s+let)\b/i],
   ["Direct from owner", /\b(?:private\s+sale|direct\s+from\s+(?:the\s+)?owner|no\s+agents?|owner\s+selling|for\s+sale\s+by\s+owner)\b/i],
@@ -607,7 +611,7 @@ const SIGNALS: Array<[string, RegExp]> = [
 ];
 export const SIGNAL_NAMES = SIGNALS.map(([n]) => n);
 // A whole scraped page also holds menus and "similar properties", so reading it only trusts the signals that are rarely boilerplate.
-const STRICT_SIGNALS = new Set(["Probate or deceased estate", "Repossession", "Unsold at auction", "Needs modernisation", "Cash buyers only", "Direct from owner"]);
+const STRICT_SIGNALS = new Set(["Probate or deceased estate", "Repossession", "Unsold at auction", "Needs modernisation", "Cash buyers only", "Direct from owner", "Private landlord", "Open to company let or sublet"]);
 export function signalsIn(text: string, strict = false): string[] {
   const body = String(text || "").slice(0, 12_000);
   return SIGNALS.filter(([n, re]) => (!strict || STRICT_SIGNALS.has(n)) && re.test(body)).map(([n]) => n);
@@ -627,6 +631,21 @@ const OFF_ANGLES = [
   "Cover the property types one at a time with the same signals: terraced houses, bungalows, flats above shops, mixed-use buildings, houses with large plots, ex-council homes, HMOs and tenanted investments.",
   "Search the auction side: current catalogue lots, 'unsold lots', 'post-auction', 'available now' and low guide prices.",
   "Search again with every keyword not yet tried: 'sold as seen', 'no chain', 'executors', 'lender', 'LPA receivers', 'needs work', 'investor', 'discounted', 'offers invited'.",
+];
+// Off-market lettings: landlords who let directly, or are keen, rather than portal listings that every agent sees.
+const OFF_RENT_ANGLES = [
+  "Look for private landlords letting directly with no agent fees: 'no agent fees', 'direct from landlord', 'private landlord', 'landlord let'.",
+  "Look for landlords open to a company let, sublet, rent to rent or serviced accommodation: 'company let', 'professional let', 'corporate let', 'sublet allowed', 'short lets considered'.",
+  "Look for rents that were reduced or homes available for weeks: 'reduced', 'price drop', 'available now', 'been on the market', 'landlord flexible'.",
+  "Look for tired, unfurnished or unmodernised homes a landlord wants let quickly: 'needs updating', 'unfurnished', 'as seen', 'landlord keen', 'quick let'.",
+  "Look for HMO and multi-let potential: 'HMO licensed', 'HMO potential', 'sharers welcome', 'room by room', 'five bedroom', 'student let'.",
+  "Look for properties with long leases or landlords wanting a long guaranteed let: 'long term let', 'guaranteed rent', 'five year', 'tenant wanted'.",
+  "Sweep the rent bands one at a time (lower, middle and upper end of the range) with the same signals, so cheaper homes are not drowned out.",
+  "Cover the property types one at a time with these signals: terraced houses, flats above shops, bungalows, mixed-use, large family homes and ex-council homes.",
+  "Now try neighbouring postcode districts and any areas you haven't covered yet, with the same signals.",
+  "Search again with every keyword not yet tried: 'landlord direct', 'no fees', 'professional tenants', 'bills included', 'flexible terms', 'offers considered'.",
+  "Look for older adverts still live (listed a month or more ago) and homes that have come back on after a failed let.",
+  "Now look for the newest private-landlord listings added in the last few days, with the same signals.",
 ];
 // Each round searches from a different angle so later rounds find listings earlier ones missed.
 const ANGLES = [
@@ -710,6 +729,7 @@ function describe(f: Filters) {
   // Every ticked strategy adds what suits it, so the search looks for listings that fit any of them.
   const picked = [...new Set([String(f.strategy || ""), ...(Array.isArray(f.strategies) ? f.strategies.map(String) : [])])].slice(0, 6);
   for (const k of picked) { const hint = STRATEGY_SEARCH[k]; if (hint) parts.push(f.noAuction && !f.offmarket ? hint.replace(/ auction,/g, "") : hint); }
+  if (f.offmarket && !buy) parts.push("off-market style lettings only: landlords letting directly without an agent, homes that have been available for weeks or were reduced, tired or unfurnished property a landlord wants let quickly, landlords open to a company let, sublet, rent-to-rent or serviced accommodation, and HMO or multi-let potential");
   if (f.offmarket && buy) parts.push("off-market style and motivated-seller opportunities only: probate or deceased estate sales, repossessions, auction lots and unsold lots, properties needing modernisation or renovation, 'cash buyers only' or unmortgageable properties, listings reduced several times or on the market for months, 'must sell' or quick-sale vendors, tenanted investments and sales direct from owners");
   if (f.noFlats) parts.push("no flats: leave out flats, apartments, maisonettes, studios and penthouses (houses, bungalows and other non-flat property only)");
   if (f.noShared) parts.push("no shared ownership: leave out shared ownership, part buy part rent, shared equity and staircasing properties");
@@ -801,7 +821,7 @@ async function searchSite(site: string, f: Filters, level: LevelId, pass: number
   const buy = f.mode === "buy";
   const skip = exclude.length ? `\nYou've already found these, so don't return them again:\n${exclude.slice(-80).join("\n")}` : "";
   const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
-${f.offmarket && buy ? `${OFF_ANGLES[pass % OFF_ANGLES.length]} Run a separate search for each signal in this angle, using the site's own keyword and filter options where it has them (for example 'reduced', 'auction', 'needs modernisation', 'probate'), and only return adverts that themselves show the signal.` : ANGLES[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only return individual listing pages: one property per URL, shaped like ${conf.example}. Never return search-results, area, category or map pages, even if they show listings; open the individual advert and use its URL. Skip adverts marked let agreed, under offer, sold STC or no longer available.${skip}
+${f.offmarket ? `${(buy ? OFF_ANGLES : OFF_RENT_ANGLES)[pass % OFF_ANGLES.length]} Run a separate search for each signal in this angle, using the site's own keyword and filter options where it has them (for example 'reduced', 'auction', 'needs modernisation', 'probate'), and only return adverts that themselves show the signal.` : ANGLES[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only return individual listing pages: one property per URL, shaped like ${conf.example}. Never return search-results, area, category or map pages, even if they show listings; open the individual advert and use its URL. Skip adverts marked let agreed, under offer, sold STC or no longer available.${skip}
 Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "auction": true | false (true if the advert is a sale by auction, an auction lot, an online or timed auction or a modern method of auction), "shared_ownership": true | false (true if it is shared ownership, part buy part rent or shared equity), "private_landlord": true | false | null, "added": string (when the advert was added, reduced or updated, exactly as the site shows it, e.g. "Added today", "Added on 28/09/2026", "3 days ago"; "" if not shown)}]}.
 Prefer the newest listings. Only include listings you actually found in the search results, with the URL exactly as the search returned it. Never build or guess a URL from an ID or address, and never invent a listing or price. If you find none, return {"listings": []}.`;
   const { parsed, seen } = await webJson(prompt, conf.domains, level, lv.context, lv.effort);
@@ -904,7 +924,7 @@ export function newSearch(input: string, level: LevelId): SearchState {
   // Rental-only sites can't have property for sale; keep them out of a purchase search.
   const noRent = (s: string) => !RENT_ONLY.has(s), noBuy = (s: string) => !BUY_ONLY.has(s);
   // Off-market searches always go everywhere there is property for sale, whatever was ticked.
-  const wanted = filters.offmarket && filters.mode === "buy" ? Object.keys(SITES).filter(noRent)
+  const wanted = filters.offmarket ? Object.keys(SITES).filter(filters.mode === "buy" ? noRent : noBuy)
     : filters.mode === "buy" && ticked.some(noRent) ? ticked.filter(noRent) : filters.mode !== "buy" && ticked.some(noBuy) ? ticked.filter(noBuy) : ticked;
   // Current results to re-check: only real listing links on the ticked sites, with their checks reset.
   const keep: Listing[] = [];

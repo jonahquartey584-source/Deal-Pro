@@ -121,7 +121,7 @@ export default async (request: Request, _context: Context) => {
     const existing = Array.isArray(body?.existing) ? body.existing.slice(0, 200) : [];
     if (JSON.stringify(body?.filters ?? {}).length > 5_000) return json({ error: "The search filters are too long." }, 413);
     // "Off-market properties only" is a Premium and Max feature and always runs at Expert level.
-    const wantsOffMarket = !!(body?.filters as { offmarket?: unknown; mode?: unknown } | undefined)?.offmarket && (body?.filters as { mode?: unknown }).mode === "buy";
+    const wantsOffMarket = !!(body?.filters as { offmarket?: unknown } | undefined)?.offmarket;
     if (wantsOffMarket) {
       if (!isAdmin && (plan === "Free" || SCOUT_ONLY_PLANS.has(plan))) return json({ error: "Off-market properties only is included with Premium and Max. Upgrade to use it." }, 402);
       level = "deep";

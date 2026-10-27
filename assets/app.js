@@ -816,9 +816,10 @@ const SITES=['OpenRent','SpareRoom','Gumtree','Rightmove','Zoopla','Facebook','R
 const SITE_LABEL=s=>({Facebook:'Facebook Marketplace',RightmoveCommercial:'Rightmove Commercial',EIG:'EIG Auctions',AuctionHouse:'Auction House UK',SDL:'SDL Auctions',SavillsAuctions:'Savills Auctions'})[s]||s;
 // "Off-market mode" is for Premium and Max (and the admin) and always runs at Expert level.
 const offLocked=()=>{const i=AIC.info;return !!i&&!!(i.free||i.scoutOnly)};// the server checks the plan again on every search
-const offOn=()=>!!(S.find&&S.find.f&&S.find.f.offmarket&&S.find.f.mode==='buy'&&!offLocked());
+const offOn=()=>!!(S.find&&S.find.f&&S.find.f.offmarket&&!offLocked());
 // Sources where off-market and distressed property shows up: ticking "Off-market & distressed" switches these on.
 const OFFMARKET_SITES=['Rightmove','Zoopla','OnTheMarket','Gumtree','EIG','AuctionHouse','Allsop','SDL','SavillsAuctions','iamsold'];
+const OFFMARKET_SITES_RENT=['OpenRent','SpareRoom','Gumtree','Facebook','Rightmove','Zoopla','OnTheMarket'];
 const BUY_ONLY_SITES=['OnTheMarket','EIG','AuctionHouse','Allsop','SDL','SavillsAuctions','iamsold'];
 // Signals the search found in a listing (probate, auction, reduced...), as short tags.
 // In Off-market mode the websites that were searched are never shown: results are labelled 'Off-market' and the progress is one combined line.
@@ -909,7 +910,7 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   if(/\bunfurnished\b/.test(lo))out.furn='unfurnished';else if(/\bfurnished\b/.test(lo))out.furn='furnished';if(out.furn)got.push(out.furn[0].toUpperCase()+out.furn.slice(1));
   if(/private landlords?|no agents?|direct(?:ly)? (?:from|with) (?:the )?landlord/.test(lo)){out.priv=true;got.push('Private landlords')}
   if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+)?auctions?\b/.test(lo)){out.noAuction=true;got.push('No auctions')}
-  else if(/\b(?:off[- ]?market|probate|deceased estates?|repossess\w*|distressed|motivated (?:seller|vendor)s?|must sell|quick sale|unsold lots?|auction lots?)\b/.test(lo)){out.offmarket=true;out.mode='buy';if(!got.includes('To buy'))got.unshift('To buy');got.push('Off-market mode')}
+  else if(/\b(?:off[- ]?market|probate|deceased estates?|repossess\w*|distressed|motivated (?:seller|vendor)s?|must sell|quick sale|unsold lots?|auction lots?)\b/.test(lo)){out.offmarket=true;if(!out.mode)out.mode='buy';got.push('Off-market mode')}
   if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+|all\s+)?(?:flats?|apartments?)\b/.test(lo)){out.noFlats=true;got.push('No flats')}
   if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+|all\s+)?shared[\s-]?ownerships?\b/.test(lo)){out.noShared=true;got.push('No shared ownership')}
   if((m=lo.match(/\b(?:last|past|within)\s*(24 ?h(?:ours?)?|day|\d+ days?|week|fortnight)\b|\b(new today|just listed|newly listed|brand new listings?)\b/))){const w=m[1]||'';out.fresh=m[2]?'3':/24|day\b/.test(w)&&!/\d+ days?/.test(w)?'1':/fortnight/.test(w)?'14':/week/.test(w)?'7':String(Math.min(14,Math.max(1,parseInt(w)||7))).replace(/^(2|4|5|6)$/,'7').replace(/^(8|9|10|11|12|13)$/,'14');got.push('Listed recently')}
@@ -953,16 +954,16 @@ function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';{const L=fin
 function setOffMarket(on){const f=S.find.f;
   if(on&&offLocked()){go('plans');toast('Off-market mode is included with Premium and Max.');return}
   readFind();f.offmarket=on;
-  if(on){f.mode='buy';$('#fModeBuy').checked=true;OFFMARKET_SITES.forEach(x=>{f.sites[x]=true});f.noAuction=false}
+  if(on){(f.mode==='buy'?OFFMARKET_SITES:OFFMARKET_SITES_RENT).forEach(x=>{f.sites[x]=true});f.noAuction=false}
   bindFind();save();renderFind();try{renderAILevels()}catch(e){}}
 document.addEventListener('click',e=>{const b=e.target.closest('#fOffSwitch,#fOffBack');if(b)setOffMarket(!S.find.f.offmarket)});
 function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
   f.notes=$('#fNotes').value.slice(0,500);{const L=$$('input[name="fStrat"]:checked').map(c=>c.value),keep=findStrats(f).filter(x=>L.includes(x));
     f.strategies=[...keep,...L.filter(x=>!keep.includes(x))];if(!f.strategies.length)f.strategies=['auto'];f.strategy=f.strategies[0]}f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
-  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.offmarket=!!f.offmarket&&!offLocked();if(f.offmarket)f.mode='buy';f.noAuction=$('#fNoAuction').checked&&!f.offmarket;f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
+  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.offmarket=!!f.offmarket&&!offLocked();f.noAuction=$('#fNoAuction').checked&&!f.offmarket;f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
   SITES.forEach(s=>{f.sites[s]=$('#fSite'+s).checked})}
 function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;{const lk=offLocked();if(lk&&f.offmarket){f.offmarket=false;$('#fModeBuy').checked=true}
-    const off=!!f.offmarket&&f.mode==='buy';$('#fPanel').dataset.off=off?'1':'';$('#fOffBar').hidden=!off;{const ld=$('#fLede');if(ld){if(!ld.dataset.std)ld.dataset.std=ld.textContent;ld.textContent=off?'Find off-market and motivated-seller property, then analyse any of it in the Deal Analyser.':ld.dataset.std}}
+    const off=!!f.offmarket;$('#fPanel').dataset.off=off?'1':'';$('#fOffBar').hidden=!off;{const ld=$('#fLede');if(ld){if(!ld.dataset.std)ld.dataset.std=ld.textContent;ld.textContent=off?'Find off-market and motivated-seller property, then analyse any of it in the Deal Analyser.':ld.dataset.std}}
     const sw=$('#fOffSwitch');sw.textContent=off?'Switch to standard search':'Switch to off-market mode';sw.classList.toggle('lockd',lk);sw.title=lk?'Off-market mode is included with Premium and Max':'';
     // The power level switches to Expert only while Off-market is chosen.
     if(FS.offShown!==off){FS.offShown=off;try{renderAILevels()}catch(x){}}}
@@ -1211,7 +1212,7 @@ function editSearch(){const panel=$('#fPanel');if(!panel)return;panel.scrollInto
 document.addEventListener('click',e=>{if(e.target.closest('#fCancel'))cancelSearch(false);else if(e.target.closest('#fEditRun'))cancelSearch(true);else if(e.target.closest('#fEditSearch'))editSearch()});
 // refresh: re-check the current results, drop the ones that have gone, and look for new listings
 const RENT_ONLY_SITES=['OpenRent','SpareRoom'];
-async function startSearch(refresh=false,auto=false){if(FS.busy)return;if(!auto)FS.auto=0;FS.lastRefresh=refresh;readFind();let sites=offOn()?SITES.filter(s=>!RENT_ONLY_SITES.includes(s)):SITES.filter(s=>S.find.f.sites[s]);
+async function startSearch(refresh=false,auto=false){if(FS.busy)return;if(!auto)FS.auto=0;FS.lastRefresh=refresh;readFind();let sites=offOn()?SITES.filter(s=>S.find.f.mode==='buy'?!RENT_ONLY_SITES.includes(s):!BUY_ONLY_SITES.includes(s)):SITES.filter(s=>S.find.f.sites[s]);
   // OpenRent and SpareRoom only list homes to rent, so they're left out of a search for property to buy.
   if(S.find.f.mode==='buy'&&sites.some(s=>!RENT_ONLY_SITES.includes(s))){const skip=sites.filter(s=>RENT_ONLY_SITES.includes(s));sites=sites.filter(s=>!RENT_ONLY_SITES.includes(s));if(skip.length)toast(`${skip.map(SITE_LABEL).join(' and ')} only list rentals, so they're left out of this purchase search.`)}
   // Auction and sale-only sites have nothing to rent, so they're left out of a rental search.
@@ -1765,7 +1766,7 @@ async function histPost(kind,summary,data){try{const r=await fetch('/api/history
 function saveFindHistory(lv,nSites){const f=S.find.f,buy=f.mode==='buy',live=(LIVE||[]).filter(confirmedLive).length;
   const beds=Array.isArray(f.beds)&&f.beds.length?` · ${f.beds.join(', ')} bed`:'',price=f.min||f.max?` · ${f.min?'£'+(+f.min).toLocaleString('en-GB'):'Any'}–${f.max?'£'+(+f.max).toLocaleString('en-GB'):'any'}${buy?'':' pcm'}`:'';
   const st=f.strategy&&f.strategy!=='auto'?` · ${STRAT_NAME[f.strategy]||f.strategy}`:'';
-  histPost('finder',{title:`${f.loc||'Anywhere in the UK'} · ${f.offmarket&&buy?'Off-market':buy?'Buy':'Rent'}${beds}${price}`,detail:`${lv.name} · ${live} live listing${live===1?'':'s'}${f.offmarket&&buy?'':` · ${nSites} site${nSites===1?'':'s'}`}${st}${f.notes?` · “${f.notes.slice(0,90)}”`:''}`,count:live},
+  histPost('finder',{title:`${f.loc||'Anywhere in the UK'} · ${f.offmarket?'Off-market · ':''}${buy?'Buy':'Rent'}${beds}${price}`,detail:`${lv.name} · ${live} live listing${live===1?'':'s'}${f.offmarket?'':` · ${nSites} site${nSites===1?'':'s'}`}${st}${f.notes?` · “${f.notes.slice(0,90)}”`:''}`,count:live},
     {f,live:LIVE,liveAt:S.find.liveAt,liveSites:S.find.liveSites||{},rank:S.find.rank||null,removed:S.find.removed||0})}
 function saveAIHistory(input,lv){const a=S.deal.aiAnalysis||{},first=(input.split('\n').map(x=>x.trim()).find(Boolean)||'Deal').slice(0,120);
   histPost('analyser',{title:first,detail:`${String(a.verdict||'Analysis')} · ${lv.name} · ${stratName(aiStrat())==='auto'?'Strategy chosen automatically':(STRAT_OPTS.find(x=>x[0]===aiStrat())||[,''])[1]}`,score:+a.score},
