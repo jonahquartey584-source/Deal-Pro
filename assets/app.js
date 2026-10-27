@@ -814,13 +814,15 @@ const LISTINGS=[
 ];
 const SITES=['OpenRent','SpareRoom','Gumtree','Rightmove','Zoopla','Facebook','RightmoveCommercial','Realla','NovaLoca','LoopNet','OnTheMarket','EIG','AuctionHouse','Allsop','SDL','SavillsAuctions','iamsold'];
 const SITE_LABEL=s=>({Facebook:'Facebook Marketplace',RightmoveCommercial:'Rightmove Commercial',EIG:'EIG Auctions',AuctionHouse:'Auction House UK',SDL:'SDL Auctions',SavillsAuctions:'Savills Auctions'})[s]||s;
-// "Off-market properties only" is for Premium and Max (and the admin) and always runs at Expert level.
+// "Off-market mode" is for Premium and Max (and the admin) and always runs at Expert level.
 const offLocked=()=>{const i=AIC.info;return !!i&&!!(i.free||i.scoutOnly)};// the server checks the plan again on every search
 const offOn=()=>!!(S.find&&S.find.f&&S.find.f.offmarket&&S.find.f.mode==='buy'&&!offLocked());
 // Sources where off-market and distressed property shows up: ticking "Off-market & distressed" switches these on.
 const OFFMARKET_SITES=['Rightmove','Zoopla','OnTheMarket','Gumtree','EIG','AuctionHouse','Allsop','SDL','SavillsAuctions','iamsold'];
 const BUY_ONLY_SITES=['OnTheMarket','EIG','AuctionHouse','Allsop','SDL','SavillsAuctions','iamsold'];
 // Signals the search found in a listing (probate, auction, reduced...), as short tags.
+// In Off-market mode the websites that were searched are never shown: results are labelled 'Off-market' and the progress is one combined line.
+const SRC_LABEL=s=>offOn()?'Off-market':SITE_LABEL(s);
 const sigList=r=>Array.isArray(r.signals)?r.signals:[];
 const sigTags=(r,n=2)=>sigList(r).slice(0,n).map(x=>`<span class="fr-tag sig" title="${esc(x)}">${esc(x)}</span>`).join('')+(sigList(r).length>n?`<span class="fr-tag sig" title="${esc(sigList(r).slice(n).join(', '))}">+${sigList(r).length-n}</span>`:'');
 const FIND_DEF=()=>({strategy:'auto',noAuction:false,noFlats:false,noShared:false,offmarket:false,fresh:'any',notes:'',mode:'rent',beds:[],min:1200,max:5000,loc:'',priv:false,furn:'any',type:'any',sites:{Gumtree:true,SpareRoom:true,OpenRent:true,Rightmove:true,Zoopla:true,Facebook:true,RightmoveCommercial:false,Realla:false,NovaLoca:false,LoopNet:false,OnTheMarket:false,EIG:false,AuctionHouse:false,Allsop:false,SDL:false,SavillsAuctions:false,iamsold:false}});
@@ -907,7 +909,7 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   if(/\bunfurnished\b/.test(lo))out.furn='unfurnished';else if(/\bfurnished\b/.test(lo))out.furn='furnished';if(out.furn)got.push(out.furn[0].toUpperCase()+out.furn.slice(1));
   if(/private landlords?|no agents?|direct(?:ly)? (?:from|with) (?:the )?landlord/.test(lo)){out.priv=true;got.push('Private landlords')}
   if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+)?auctions?\b/.test(lo)){out.noAuction=true;got.push('No auctions')}
-  else if(/\b(?:off[- ]?market|probate|deceased estates?|repossess\w*|distressed|motivated (?:seller|vendor)s?|must sell|quick sale|unsold lots?|auction lots?)\b/.test(lo)){out.offmarket=true;out.mode='buy';if(!got.includes('To buy'))got.unshift('To buy');got.push('Off-market properties only')}
+  else if(/\b(?:off[- ]?market|probate|deceased estates?|repossess\w*|distressed|motivated (?:seller|vendor)s?|must sell|quick sale|unsold lots?|auction lots?)\b/.test(lo)){out.offmarket=true;out.mode='buy';if(!got.includes('To buy'))got.unshift('To buy');got.push('Off-market mode')}
   if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+|all\s+)?(?:flats?|apartments?)\b/.test(lo)){out.noFlats=true;got.push('No flats')}
   if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+|all\s+)?shared[\s-]?ownerships?\b/.test(lo)){out.noShared=true;got.push('No shared ownership')}
   if((m=lo.match(/\b(?:last|past|within)\s*(24 ?h(?:ours?)?|day|\d+ days?|week|fortnight)\b|\b(new today|just listed|newly listed|brand new listings?)\b/))){const w=m[1]||'';out.fresh=m[2]?'3':/24|day\b/.test(w)&&!/\d+ days?/.test(w)?'1':/fortnight/.test(w)?'14':/week/.test(w)?'7':String(Math.min(14,Math.max(1,parseInt(w)||7))).replace(/^(2|4|5|6)$/,'7').replace(/^(8|9|10|11|12|13)$/,'14');got.push('Listed recently')}
@@ -942,18 +944,23 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
 // Several strategies can be ticked; the first is the main one (it drives the search, ranking and analysis).
 const findStrats=f=>{const L=(Array.isArray(f.strategies)&&f.strategies.length?f.strategies:[f.strategy||'auto']).filter(x=>x);return L.length?L:['auto']};
 function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';{const L=findStrats(f);$$('input[name="fStrat"]').forEach(c=>{c.checked=L.includes(c.value)})}$('#fFresh').value=f.fresh||'any';
-  $(f.mode==='buy'?'#fModeBuy':'#fModeRent').checked=true;
+  $(f.mode==='buy'?(f.offmarket&&!offLocked()?'#fModeOff':'#fModeBuy'):'#fModeRent').checked=true;
   f.beds=bedList(f.beds);$$('input[name="fBeds"]').forEach(c=>{c.checked=f.beds.includes(c.value)});$('#fBedsAny').checked=!f.beds.length;
-  $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fNoAuction').checked=!!f.noAuction;$('#fOffMarket').checked=!!f.offmarket;$('#fNoFlats').checked=!!f.noFlats;$('#fNoShared').checked=!!f.noShared;$('#fFurn').value=f.furn;$('#fType').value=f.type;
+  $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fNoAuction').checked=!!f.noAuction;$('#fNoFlats').checked=!!f.noFlats;$('#fNoShared').checked=!!f.noShared;$('#fFurn').value=f.furn;$('#fType').value=f.type;
   SITES.forEach(s=>{$('#fSite'+s).checked=!!f.sites[s]});findChrome()}
-$('#fOffMarket').addEventListener('change',e=>{if(e.target.checked&&offLocked()){e.target.checked=false;go('plans');toast('Off-market properties only is included with Premium and Max.');return}
-  if(e.target.checked){$('#fModeBuy').checked=true;OFFMARKET_SITES.forEach(x=>{const c=$('#fSite'+x);if(c)c.checked=true});$('#fNoAuction').checked=false}setTimeout(()=>{try{renderAILevels()}catch(x){}},0)});
+// Off-market is its own mode next to Rent and Buy. It is for Premium and Max, ticks the auction and off-market sources, and always runs at Expert.
+$('#fModeOff').addEventListener('change',e=>{if(!e.target.checked)return;
+  if(offLocked()){$(S.find.f.mode==='buy'?'#fModeBuy':'#fModeRent').checked=true;go('plans');toast('Off-market mode is included with Premium and Max.');return}
+  OFFMARKET_SITES.forEach(x=>{const c=$('#fSite'+x);if(c)c.checked=true});$('#fNoAuction').checked=false});
 function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
   f.notes=$('#fNotes').value.slice(0,500);{const L=$$('input[name="fStrat"]:checked').map(c=>c.value),keep=findStrats(f).filter(x=>L.includes(x));
-    f.strategies=[...keep,...L.filter(x=>!keep.includes(x))];if(!f.strategies.length)f.strategies=['auto'];f.strategy=f.strategies[0]}f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
-  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.noAuction=$('#fNoAuction').checked&&!$('#fOffMarket').checked;f.offmarket=$('#fOffMarket').checked&&$('#fModeBuy').checked&&!offLocked();f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
+    f.strategies=[...keep,...L.filter(x=>!keep.includes(x))];if(!f.strategies.length)f.strategies=['auto'];f.strategy=f.strategies[0]}f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked||$('#fModeOff').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
+  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.offmarket=$('#fModeOff').checked&&!offLocked();f.noAuction=$('#fNoAuction').checked&&!f.offmarket;f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
   SITES.forEach(s=>{f.sites[s]=$('#fSite'+s).checked})}
-function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;{const lk=offLocked(),cb=$('#fOffMarket');cb.disabled=false;$('#fOffLock').hidden=!lk;if(lk&&f.offmarket){f.offmarket=false;cb.checked=false}$('#fOffNote').hidden=lk||!f.offmarket}
+function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;{const lk=offLocked();$('#fOffLock').hidden=!lk;if(lk&&f.offmarket){f.offmarket=false;$('#fModeBuy').checked=true}
+    const off=!!f.offmarket&&f.mode==='buy';$('#fPanel').dataset.off=off?'1':'';$('#fOffNote').hidden=!off;
+    // The power level switches to Expert only while Off-market is chosen.
+    if(FS.offShown!==off){FS.offShown=off;try{renderAILevels()}catch(x){}}}
   $('#fMinL').textContent=buy?'Min price':'Min rent';$('#fMaxL').textContent=buy?'Max price':'Max rent';
   $('#fFurnNote').hidden=f.furn==='any';$('#fRmNote').hidden=!f.sites.Rightmove}
 function locMatch(x,q){q=q.trim().toLowerCase();if(!q)return true;const pc=x.postcode.toLowerCase();
@@ -1055,7 +1062,7 @@ function dealCard(r,i,o={}){const SF=o.preview?null:stratFigures(r),open=!o.prev
     <h3>Deal ${i+1} (${gbp(r.price)} ${bedWord(r.beds)})${r.ai>=0?` <span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="Score · ${esc(r.aiv||'')}">${r.ai}</span>`:''}</h3>${o.preview?'':`<p class="dc-live">${liveTag(r)}${ageDays(r)!=null?` <span class="muted">· listed ${ageTxt(ageDays(r)).toLowerCase()}</span>`:''} ${freshTags(r)}</p>`}
     <ul class="adv">${li('📍',`${esc(o.preview?String(r.area||r.postcode).replace(/\s*\(.*\)$/,''):[r.postcode,(r.area||'').split(',').pop().trim()].filter(Boolean).join(', '))}${o.plain?'':' <span class="em" aria-hidden="true">📍</span>'}`)}${open?li('🏠',esc(r.area)):''}${li('🛏',esc(r.type))}</ul>
     <ul class="adv">${(o.preview?{lines:[['💸',`Rent ${gbp(r.price)}/month (${gbp(r.price*12)}/year)`],['💰',`Nightly rate about £${u.rate} (est.)`],...OCC.map((x,j)=>['💷',`${gbp(occ[j])} at ${pct(x)} occupancy`])]}:SF).lines.map(([e,t])=>li(e,esc(t))).join('')}</ul>${o.preview?'':(()=>{const X=extraKeys(r);return X.length?`<ul class="adv">${X.map(([n,l,v])=>li('🔁',esc(`As ${n}: ${l} ${v} (est.)`))).join('')}</ul>`:''})()}
-    ${open?`<ul class="adv">${r.title?li('📝',esc(r.title)):''}${li('🔗',`Source: ${esc(SITE_LABEL(r.site))}`)}</ul>`:''}
+    ${open?`<ul class="adv">${r.title?li('📝',esc(r.title)):''}${li('🔗',`Source: ${esc(SRC_LABEL(r.site))}`)}</ul>`:''}
     <div class="dc-foot"><div class="dc-note"><span>${o.preview?'Figures illustrative. Nightly rate estimated.':esc(SF.note)}${SF?` · <b>${esc(STRAT_NAME[SF.st]||SF.st)}</b>`:''}</span></div>
       <div class="dc-act">${act}</div></div>
   </article>`}
@@ -1094,7 +1101,7 @@ function renderFind(){findChrome();syncFee();if(FS.busy)return;const box=$('#fRe
     <div class="sheet" tabindex="0" role="region" aria-label="Search results"><table><thead><tr><th class="rn"><span class="sr">Row</span></th><th class="ck"><input type="checkbox" id="fSelAll" aria-label="Select all rows"${nOpen?'':' disabled'}></th>
       ${SC.size?th('ai','Score','nr'):''}${th('site','Site')}${th('title','Listing')}${th('type','Type')}${th('beds','Beds','nr')}${th('area','Area')}${th('postcode','Postcode')}${th('price',S.find.f.mode==='buy'?'Price':'Rent pcm','nr')}<th class="nr" title="The main figure for your strategy (estimate)">${esc(keyHead)}</th><th>Furnished</th>${th('listedTs','Listed')}<th>Checked</th><th>Link</th><th>Action</th></tr></thead>
       <tbody>${rows.map((r,i)=>{const o=isOpen(r);return `<tr data-k="${r.k}"><td class="rn">${i+1}</td><td class="ck">${o?`<input type="checkbox" id="fsel${r.k}" data-sel="${r.k}" aria-label="Select ${esc(r.type)}, ${esc(r.area)}"${FS.sel.has(r.k)?' checked':''}>`:''}</td>
-        ${SC.size?`<td class="nr">${r.ai>=0?`<span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="${esc(r.aiv)}">${r.ai}</span>`:'<span class="muted">–</span>'}</td>`:''}<td>${esc(SITE_LABEL(r.site))}</td><td class="clip" title="${esc(r.title||'')}">${esc(r.title||'')}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td>${(()=>{const k=stratFigures(r).key;return `<td class="nr mono${k[2]?' neg':''}" title="${esc(k[0])} (estimate)">${esc(k[1])}</td>`})()}<td class="muted">${esc(r.furnished)}</td><td class="fr-cell"><span class="muted">${ageTxt(ageDays(r))||'–'}</span>${freshTags(r)}</td><td>${liveTag(r)}</td>
+        ${SC.size?`<td class="nr">${r.ai>=0?`<span class="ai-sc ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="${esc(r.aiv)}">${r.ai}</span>`:'<span class="muted">–</span>'}</td>`:''}<td>${esc(SRC_LABEL(r.site))}</td><td class="clip" title="${esc(r.title||'')}">${esc(r.title||'')}</td><td>${esc(r.type)}</td><td class="nr" style="font-variant-numeric:tabular-nums">${bedsTxt(r.beds)}</td><td class="clip wide"${o?` title="${esc(r.area)}"`:''}>${o?esc(r.area):L}</td><td class="mono">${esc(r.postcode)}</td><td class="nr mono">${gbp(r.price)}</td>${(()=>{const k=stratFigures(r).key;return `<td class="nr mono${k[2]?' neg':''}" title="${esc(k[0])} (estimate)">${esc(k[1])}</td>`})()}<td class="muted">${esc(r.furnished)}</td><td class="fr-cell"><span class="muted">${ageTxt(ageDays(r))||'–'}</span>${freshTags(r)}</td><td>${liveTag(r)}</td>
         <td>${o?`<a class="xlink" href="${esc(r.url)}" target="_blank" rel="noopener">Open ↗</a>${r.pack?` <a class="xlink" href="/pack/${esc(r.pack.id)}" target="_blank" rel="noopener">Pack ↗</a>`:''}`:L}</td><td>${o?`<button class="btn xs" data-build="${r.k}">Analyse deal</button>`:`<button class="btn xs" data-unlock="${r.k}" data-n="${i+1}">Unlock · ${gbp(dealFee())}</button>`}</td></tr>`}).join('')}</tbody></table></div>`;
   const ageH=S.find.liveAt?(Date.now()-Date.parse(S.find.liveAt))/36e5:0,stale=ageH>=24,nNew=rows.filter(isFreshNew).length;
   const fresh=`<div class="fresh-bar${stale?' stale':''}"><span>${stale?`These results are from ${ageH<48?'yesterday':Math.round(ageH/24)+' days ago'}. Some listings may have gone.`:`Searched ${ageH<1?'just now':Math.round(ageH)+'h ago'}.`}${nNew?` <b>${nNew} new</b> in the last 3 days.`:''}</span><button class="btn sm ghost" type="button" id="fEditSearch" title="Change the criteria for this search">Edit search</button><button class="btn sm${stale?' primary':''}" type="button" id="fRefresh" title="Re-check every listing, remove ones that have gone, and look for new ones">Refresh &amp; find new</button></div>`;
@@ -1119,9 +1126,9 @@ $('#fNotesFill').addEventListener('click',()=>{const text=$('#fNotes').value.tri
   const {f,got}=parseCriteria(text);readFind();
   // No price in the text: drop the starting £1,200–£5,000 range so it doesn't hide matches.
   const d=FIND_DEF();if(f.min==null&&f.max==null&&+S.find.f.min===d.min&&+S.find.f.max===d.max){f.min='';f.max=''}
-  const offBlocked=!!f.offmarket&&offLocked();if(offBlocked){delete f.offmarket;const k=got.indexOf('Off-market properties only');if(k>=0)got.splice(k,1)}
+  const offBlocked=!!f.offmarket&&offLocked();if(offBlocked){delete f.offmarket;const k=got.indexOf('Off-market mode');if(k>=0)got.splice(k,1)}
   Object.assign(S.find.f,f);if(f.offmarket)OFFMARKET_SITES.forEach(x=>{S.find.f.sites[x]=true});bindFind();save();renderFind();
-  msg.textContent=(got.length?`Filled in: ${got.join(' · ')}. Check the filters, then search.`:'No filters to fill in. It will still search with what you wrote.')+(offBlocked?' Off-market properties only needs Premium or Max.':'')});
+  msg.textContent=(got.length?`Filled in: ${got.join(' · ')}. Check the filters, then search.`:'No filters to fill in. It will still search with what you wrote.')+(offBlocked?' Off-market mode needs Premium or Max.':'')});
 const FIND_MSG=m=>{const n=$('#nFind');n.classList.remove('share-note');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
 // Checks on an AI job every 2 seconds. A dropped connection, a busy server or a sign-in being renewed
 // is retried for up to 3 minutes (the job carries on in the background), and the result is confirmed
@@ -1162,12 +1169,12 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-ferr]');if
     try{navigator.clipboard.writeText(t).then(ok).catch(()=>{prompt('Copy these error details:',t)})}catch(x){prompt('Copy these error details:',t)}}});
 function drawSearch(sites,lv,prog,sec){const P=(prog&&prog.sites)||{},phase=prog&&prog.phase||'search',box=$('#fResults');
   const done=sites.filter(s=>P[s]&&P[s].status!=='searching').length;
-  const head=phase==='check'?`Opening every link to make sure each listing exists… ${prog.checked||0} of ${prog.found||0}`:phase==='verify'?`Confirming listings are still available… ${prog.verified||0} opened${prog.removed?` · ${prog.removed} dead link${prog.removed===1?'':'s'} removed`:''}`:phase==='rank'||phase==='done'?'Ranking the best deals…':`${esc(lv.name)} is searching ${sites.length} site${sites.length>1?'s':''} for live listings…`;
+  const head=phase==='check'?`Opening every link to make sure each listing exists… ${prog.checked||0} of ${prog.found||0}`:phase==='verify'?`Confirming listings are still available… ${prog.verified||0} opened${prog.removed?` · ${prog.removed} dead link${prog.removed===1?'':'s'} removed`:''}`:phase==='rank'||phase==='done'?'Ranking the best deals…':offOn()?`${esc(lv.name)} is searching everywhere for off-market listings…`:`${esc(lv.name)} is searching ${sites.length} site${sites.length>1?'s':''} for live listings…`;
   box.innerHTML=`<div class="fprog" role="status" aria-live="polite"><div class="fprog-t">${head}${sec?` <span class="muted">${sec<120?sec+'s':Math.round(sec/60)+' min'}</span>`:''}</div>
     <div class="meter"><span style="width:${phase==='search'?Math.round(done/sites.length*100):100}%"></span></div>
-    <ol>${sites.map(s=>{const st=P[s]||{status:'searching',found:0};const rounds=st.rounds>1?` · round ${Math.min(st.round+(st.status==='searching'?1:0),st.rounds)} of ${st.rounds}`:'';
+    <ol>${offOn()?(()=>{const all=sites.map(s=>P[s]||{status:'searching',found:0}),run=all.some(x=>x.status==='searching'),rd=Math.max(0,...all.map(x=>x.round||0)),rs=Math.max(0,...all.map(x=>x.rounds||0)),n=all.reduce((a,x)=>a+(x.found||0),0);return `<li class="${run?'act':'done'}"><span class="dot ${run?'none':'good'}"></span>Searching everywhere<span class="mono muted">${n} found${rs>1?` · round ${Math.min(rd+(run?1:0),rs)} of ${rs}`:''}</span></li>`})():sites.map(s=>{const st=P[s]||{status:'searching',found:0};const rounds=st.rounds>1?` · round ${Math.min(st.round+(st.status==='searching'?1:0),st.rounds)} of ${st.rounds}`:'';
       return `<li class="${st.status==='searching'?'act':'done'}"><span class="dot ${st.status==='done'?'good':st.status==='error'?'bad':'none'}"></span>${SITE_LABEL(s)}<span class="mono muted">${st.status==='error'?'unavailable':`${st.found||0} found${rounds}`}</span></li>`}).join('')}</ol>
-    ${prog&&prog.found?`<p class="fnote">${prog.found} unique listings so far.</p>`:''}<p class="fnote"><b>${leftTxt(estSecs('search',lv.id,sites.length),sec||0,searchFrac(sites,prog,lv))}</b> · usually takes ${estTxt('search',lv.id,sites.length)}.${lv.id==='deep'?' Expert searches every site round after round, then opens the best listings to check they are still available. You can leave this page and come back.':''}</p>
+    ${prog&&prog.found?`<p class="fnote">${prog.found} unique listings so far.</p>`:''}<p class="fnote"><b>${leftTxt(estSecs('search',lv.id,sites.length),sec||0,searchFrac(sites,prog,lv))}</b> · usually takes ${estTxt('search',lv.id,sites.length)}.${lv.id==='deep'?(offOn()?' Expert searches round after round from every angle, then opens the best listings to check they are still available. You can leave this page and come back.':' Expert searches every site round after round, then opens the best listings to check they are still available. You can leave this page and come back.'):''}</p>
     <div class="fprog-acts"><button class="btn sm" type="button" id="fCancel">Cancel search</button><button class="btn sm ghost" type="button" id="fEditRun">Edit search</button></div></div>`}
 // Share of the search done: the rounds across all sites, then (Expert) the listing checks, then ranking.
 const VERIFY_N={quick:10,standard:25,deep:60};/* listings each level opens to check; matches SEARCH_LEVEL in netlify/lib/ai.mts */
@@ -1183,12 +1190,12 @@ async function followSearch(p){const lv=AI_LEVELS.find(l=>l.id===p.level)||AI_LE
     // After a refresh, mark listings that weren't in the previous results as new.
     if(p.prev){const prev=new Set(p.prev),now=new Date().toISOString();LIVE.forEach(x=>{if(!prev.has(x.url))x.newAt=now;else if(p.prevNew&&p.prevNew[x.url])x.newAt=p.prevNew[x.url]})}S.find.live=LIVE;S.find.liveAt=new Date().toISOString();S.find.liveSites=res.sites||{};S.find.searched=true;FS.sel.clear();
     FS.rank=res.ranking?{status:'done',level:lv,data:res.ranking}:null;S.find.rank=res.ranking?{level:lv.id,data:res.ranking}:null;S.find.removed=res.removed||0;
-    const missed=Object.entries(res.sites||{}).filter(([,v])=>v.status==='error').map(([k])=>SITE_LABEL(k));
+    const missed=Object.entries(res.sites||{}).filter(([,v])=>v.status==='error').map(([k])=>SRC_LABEL(k));
     const live=LIVE.filter(confirmedLive).length;FS.showUnconfirmed=false;
     const rf=res.refreshed;if(!LIVE.length){toast(`No listings found${S.find.f.loc?` in ${S.find.f.loc}`:''}, even after searching nearby areas. Try a wider price range, more sites or Analyst.`);return}
     saveFindHistory(lv,p.sites.length);
     toast(rf?`Refreshed: ${rf.gone} listing${rf.gone===1?' has':'s have'} gone and ${rf.gone===1?'was':'were'} removed, ${rf.added} new one${rf.added===1?'':'s'} found. ${live} live now.${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`
-      :`${live} live listing${live===1?'':'s'} across ${p.sites.length} site${p.sites.length>1?'s':''}, every link checked.${res.removed?` Removed ${res.removed} dead or taken link${res.removed===1?'':'s'}.`:''}${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
+      :`${live} live listing${live===1?'':'s'} ${offOn()?'found':`across ${p.sites.length} site${p.sites.length>1?'s':''}`}, every link checked.${res.removed?` Removed ${res.removed} dead or taken link${res.removed===1?'':'s'}.`:''}${missed.length?` Couldn't reach: ${missed.join(', ')}.`:''}`)}
   catch(e){if(e.cancelled||gone())return;keep=!!e.resume;if(e.retry&&!keep&&FS.auto<AUTO_TRIES)autoRetry(netMsg(e)||e.message);else findError(netMsg(e)||'The search failed. Please try again.',keep)}
   finally{if(!gone()){if(!keep)delete S.find.pending;save();FS.busy=false;btn.disabled=false;renderFind()}}}
 // Cancel the running search (credits refunded); "Edit" also takes you back to the criteria to change them.
@@ -1199,7 +1206,7 @@ function editSearch(){const panel=$('#fPanel');if(!panel)return;panel.scrollInto
 document.addEventListener('click',e=>{if(e.target.closest('#fCancel'))cancelSearch(false);else if(e.target.closest('#fEditRun'))cancelSearch(true);else if(e.target.closest('#fEditSearch'))editSearch()});
 // refresh: re-check the current results, drop the ones that have gone, and look for new listings
 const RENT_ONLY_SITES=['OpenRent','SpareRoom'];
-async function startSearch(refresh=false,auto=false){if(FS.busy)return;if(!auto)FS.auto=0;FS.lastRefresh=refresh;readFind();let sites=SITES.filter(s=>S.find.f.sites[s]);
+async function startSearch(refresh=false,auto=false){if(FS.busy)return;if(!auto)FS.auto=0;FS.lastRefresh=refresh;readFind();let sites=offOn()?SITES.filter(s=>!RENT_ONLY_SITES.includes(s)):SITES.filter(s=>S.find.f.sites[s]);
   // OpenRent and SpareRoom only list homes to rent, so they're left out of a search for property to buy.
   if(S.find.f.mode==='buy'&&sites.some(s=>!RENT_ONLY_SITES.includes(s))){const skip=sites.filter(s=>RENT_ONLY_SITES.includes(s));sites=sites.filter(s=>!RENT_ONLY_SITES.includes(s));if(skip.length)toast(`${skip.map(SITE_LABEL).join(' and ')} only list rentals, so they're left out of this purchase search.`)}
   // Auction and sale-only sites have nothing to rent, so they're left out of a rental search.
@@ -1237,7 +1244,7 @@ async function rankNow(){const conf=SRC().map((r,i)=>({r,i})).filter(x=>confirme
   // Confirmed listings come first in the results, so their positions double as ids.
   const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0];FS.rank={status:'loading',level:lv};renderFind();
   try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'rank',level:lv.id,filters:S.find.f,
-      listings:conf.slice(0,80).map(({r,i})=>({id:String(i),site:SITE_LABEL(r.site),type:r.type,beds:r.beds,area:r.area,postcode:r.postcode,[r.mode==='buy'?'asking_price':'rent_pcm']:r.price,...(r.details?{checked_details:r.details}:{})}))})});
+      listings:conf.slice(0,80).map(({r,i})=>({id:String(i),site:SRC_LABEL(r.site),type:r.type,beds:r.beds,area:r.area,postcode:r.postcode,[r.mode==='buy'?'asking_price':'rent_pcm']:r.price,...(r.details?{checked_details:r.details}:{})}))})});
     const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'The ranking could not be started.');if(d.credits){AIC.info=d.credits;renderAILevels()}
     const data=await pollJob(d.jobId);FS.rank={status:'done',level:lv,data};S.find.rank={level:lv.id,data};save()}
   catch(e){FS.rank={status:'error',level:lv,error:e.message||'The ranking could not be completed.'}}renderFind()}
@@ -1251,7 +1258,7 @@ function rankHTML(){restoreRank();const R=FS.rank;
   if(R.status==='error')return `<div class="rank lv-${lv.id}"><div class="rank-h"><i class="lv-dot" aria-hidden="true"></i><b>Ranking unavailable</b></div><p class="muted">${esc(R.error)}</p><button class="btn sm" type="button" id="fRankNow">Try again</button></div>`;
   const a=R.data||{},picks=(Array.isArray(a.picks)?a.picks:[]).filter(p=>SRC()[+p.id]);
   const li=p=>{const r=SRC()[+p.id];const notes=Array.isArray(p.notes)&&p.notes.length?`<ul class="rank-notes">${p.notes.map(n=>`<li>${esc(rankText(n))}</li>`).join('')}</ul>`:'';
-    return `<li><div class="rank-top"><b>${esc(r.type)} · ${esc(r.area)}</b><span class="mono">${gbp(r.price)}${r.mode==='buy'?'':' pcm'}</span><span class="muted">${esc(SITE_LABEL(r.site))}</span><span class="rank-score">${Math.max(0,Math.min(100,+p.score||0))}/100 · ${esc(String(p.verdict||''))}</span></div>
+    return `<li><div class="rank-top"><b>${esc(r.type)} · ${esc(r.area)}</b><span class="mono">${gbp(r.price)}${r.mode==='buy'?'':' pcm'}</span><span class="muted">${esc(SRC_LABEL(r.site))}</span><span class="rank-score">${Math.max(0,Math.min(100,+p.score||0))}/100 · ${esc(String(p.verdict||''))}</span></div>
       <p>${esc(rankText(p.reason))}${p.key_figure?` <span class="muted">${esc(String(p.key_figure))}</span>`:p.monthly_profit_80?` <span class="muted">Est. at 80%: ${esc(String(p.monthly_profit_80))}</span>`:''}</p>${notes}
       <div class="rank-act"><button class="btn xs primary" data-build="${+p.id}">Analyse deal</button><a class="btn xs" href="${esc(r.url)}" target="_blank" rel="noopener">Open listing ↗</a></div></li>`};
   const hl=Array.isArray(a.highlights)?a.highlights.filter(Boolean).slice(0,6):[];
@@ -1265,7 +1272,7 @@ function rankHTML(){restoreRank();const R=FS.rank;
 function openRows(){return sortRows(findRows()).filter(isOpen)}
 function findTsv(){const c=v=>{const s=String(v??'').replace(/[\t\r\n]+/g,' ');return /^[=+\-@]/.test(s)?"'"+s:s};
   return [['Site','Listing','Type','Beds','Area','Postcode',S.find.f.mode==='buy'?'Price':'Rent pcm','Furnished','Checked','URL'],
-    ...openRows().map(r=>[SITE_LABEL(r.site),r.title||'',r.type,bedsTxt(r.beds),r.area,r.postcode,r.price,r.furnished,r.verified==='available'?'Live '+(r.checkedAt||'').slice(0,10):r.verified==='unknown'?"Couldn't confirm":'Not checked',r.url])].map(a=>a.map(c).join('\t')).join('\n')}
+    ...openRows().map(r=>[SRC_LABEL(r.site),r.title||'',r.type,bedsTxt(r.beds),r.area,r.postcode,r.price,r.furnished,r.verified==='available'?'Live '+(r.checkedAt||'').slice(0,10):r.verified==='unknown'?"Couldn't confirm":'Not checked',r.url])].map(a=>a.map(c).join('\t')).join('\n')}
 function copyTsv(){const n=openRows().length;if(!n){toast('No deals to copy.');return}const t=findTsv(),lab=`${n} deal${n>1?'s':''}`;
   const fb=()=>{const w=$('#fTsvWrap'),ta=$('#fTsv');if(!w)return;w.hidden=false;ta.value=t;ta.focus();ta.select();ta.scrollTop=0;ta.scrollLeft=0;toast(`Selected ${lab}. Press Ctrl/Cmd+C, then paste into cell A1 of a Google Sheet.`)};
   try{navigator.clipboard.writeText(t).then(()=>toast(`Copied ${lab}. Paste into cell A1 of a Google Sheet.`)).catch(fb)}catch(e){fb()}}
@@ -1309,7 +1316,7 @@ function photoCard(r,i){const ph=rowPhotos(r),SF=stratFigures(r),k=SF.key,buy=r.
   return `<article class="pcard" data-k="${r.k}" id="pc${r.k}" role="listitem" aria-label="Deal ${i+1}: ${esc(r.type)}, ${esc(gbp(r.price))}">
     <div class="pc-photo">${ph.length?`<img src="${esc(PHOTO(ph[0]))}" alt="${esc(r.type)} in ${esc(r.area||r.postcode)}, photo 1 of ${ph.length}" loading="${i<6?'eager':'lazy'}" decoding="async" referrerpolicy="no-referrer" data-i="0">`:''}
       <div class="pc-none"${ph.length?' hidden':''}>${NO_PHOTO}<span>Photos on the listing</span></div>
-      <div class="pc-tags"><span class="pc-chip">${esc(SITE_LABEL(r.site))}</span>${SF.st&&SF.st!=='none'?`<span class="pc-chip">${esc(STRAT_NAME[SF.st]||SF.st)}</span>`:''}</div>
+      <div class="pc-tags"><span class="pc-chip">${esc(SRC_LABEL(r.site))}</span>${SF.st&&SF.st!=='none'?`<span class="pc-chip">${esc(STRAT_NAME[SF.st]||SF.st)}</span>`:''}</div>
       ${r.ai>=0?`<span class="pc-score ${r.ai>=75?'hi':r.ai>=55?'mid':'lo'}" title="Deal score${r.aiv?' · '+esc(r.aiv):''}">${r.ai}</span>`:''}
       ${ph.length>1?`<button class="pc-arr l" type="button" data-ph-step="-1" aria-label="Previous photo">${CHEV(-1)}</button><button class="pc-arr r" type="button" data-ph-step="1" aria-label="Next photo">${CHEV(1)}</button><span class="pc-cnt" aria-hidden="true">1/${ph.length}</span>`:''}</div>
     <div class="pc-body"><div class="pc-price">${gbp(r.price)}${buy?'':' <small>pcm</small>'}</div>
@@ -1448,7 +1455,7 @@ function buildDeal(ls){ls=ls.filter(Boolean).filter(isOpen);if(!ls.length)return
   $('#aiDealInput').value=listingBrief(ls);renderAIAnalysis(null);$('#analyseWithAI').click();
   toast(`Analysing ${ls.length} listing${ls.length>1?'s':''} as ${STRAT_NAME[d.strat]||d.strat}.`)})}
 function listingBrief(ls){const st=stratFor(ls[0]);
-  const one=x=>[`${x.type} in ${x.area}${x.postcode&&!x.area.includes(x.postcode)?` (${x.postcode})`:''}, listed on ${x.site}`,
+  const one=x=>[`${x.type} in ${x.area}${x.postcode&&!x.area.includes(x.postcode)?` (${x.postcode})`:''}${offOn()?'':', listed on '+x.site}`,
     x.mode==='buy'?`Asking price ${gbp(x.price)}`:`Rent ${gbp(x.price)} a month`,
     ...(st==='R2SA'?[`Deposit about ${gbp(x.price)} (estimated, not stated in the listing)`,`Nightly rate about ${gbp(RATE_EST(x.beds,x.area+' '+x.postcode))} (estimated)`]:[]),
     ...(sigList(x).length?[`Why it may be a motivated sale: ${sigList(x).join(', ')}${x.daysOnMarket!=null?` (on the market ${x.daysOnMarket} days)`:''}`]:[]),
@@ -1753,7 +1760,7 @@ async function histPost(kind,summary,data){try{const r=await fetch('/api/history
 function saveFindHistory(lv,nSites){const f=S.find.f,buy=f.mode==='buy',live=(LIVE||[]).filter(confirmedLive).length;
   const beds=Array.isArray(f.beds)&&f.beds.length?` · ${f.beds.join(', ')} bed`:'',price=f.min||f.max?` · ${f.min?'£'+(+f.min).toLocaleString('en-GB'):'Any'}–${f.max?'£'+(+f.max).toLocaleString('en-GB'):'any'}${buy?'':' pcm'}`:'';
   const st=f.strategy&&f.strategy!=='auto'?` · ${STRAT_NAME[f.strategy]||f.strategy}`:'';
-  histPost('finder',{title:`${f.loc||'Anywhere in the UK'} · ${buy?'Buy':'Rent'}${beds}${price}`,detail:`${lv.name} · ${live} live listing${live===1?'':'s'} · ${nSites} site${nSites===1?'':'s'}${st}${f.notes?` · “${f.notes.slice(0,90)}”`:''}`,count:live},
+  histPost('finder',{title:`${f.loc||'Anywhere in the UK'} · ${f.offmarket&&buy?'Off-market':buy?'Buy':'Rent'}${beds}${price}`,detail:`${lv.name} · ${live} live listing${live===1?'':'s'}${f.offmarket&&buy?'':` · ${nSites} site${nSites===1?'':'s'}`}${st}${f.notes?` · “${f.notes.slice(0,90)}”`:''}`,count:live},
     {f,live:LIVE,liveAt:S.find.liveAt,liveSites:S.find.liveSites||{},rank:S.find.rank||null,removed:S.find.removed||0})}
 function saveAIHistory(input,lv){const a=S.deal.aiAnalysis||{},first=(input.split('\n').map(x=>x.trim()).find(Boolean)||'Deal').slice(0,120);
   histPost('analyser',{title:first,detail:`${String(a.verdict||'Analysis')} · ${lv.name} · ${stratName(aiStrat())==='auto'?'Strategy chosen automatically':(STRAT_OPTS.find(x=>x[0]===aiStrat())||[,''])[1]}`,score:+a.score},

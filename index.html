@@ -1002,7 +1002,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
 .rank-stats{font-size:12px!important;color:var(--muted)}.rank-exp{font-size:14px!important;line-height:1.6;color:var(--ink);max-width:80ch}.rank-hl{margin:6px 0 4px;padding-left:18px;display:grid;gap:3px;font-size:13px;color:var(--ink-2)}.rank-sub{font-size:13px;margin:12px 0 2px}
 .cardlinks{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2);white-space:nowrap;cursor:pointer}.cardlinks input{accent-color:var(--brand)}
 .fresh-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:10px}.fresh-bar.stale{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--surface))}
-.fr-tag.sig{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}.fr-cell{white-space:nowrap}.fr-tag{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;letter-spacing:.02em;border-radius:4px;padding:1px 5px;vertical-align:1px}.fr-tag.new{background:var(--brand);color:#fff}.fr-tag.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}.fr-tag.old{border:1px solid var(--line-2);color:var(--muted)}
+.fr-tag.sig{background:color-mix(in srgb,var(--warn) 20%,transparent);color:var(--warn)}.fpanel[data-off="1"] label:has(#fNoAuction){display:none}.fpanel[data-off="1"] #fSites{display:none}.fr-cell{white-space:nowrap}.fr-tag{display:inline-block;margin-left:6px;font-size:10.5px;font-weight:700;letter-spacing:.02em;border-radius:4px;padding:1px 5px;vertical-align:1px}.fr-tag.new{background:var(--brand);color:#fff}.fr-tag.hot{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}.fr-tag.old{border:1px solid var(--line-2);color:var(--muted)}
 .warn-note{color:var(--warn)!important}
 .fprog-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.fresh-bar>span{flex:1 1 260px}
 .lv-time{font-size:11.5px!important;color:var(--muted)!important}
@@ -1206,11 +1206,10 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
               <p class="fnotes-note">Your search uses everything you write here, as well as the filters below.</p>
             </div>
             <fieldset class="fg"><legend>Listing</legend>
-              <div class="seg"><input type="radio" name="fMode" id="fModeRent" value="rent" checked><label for="fModeRent">Rent</label><input type="radio" name="fMode" id="fModeBuy" value="buy"><label for="fModeBuy">Buy</label></div>
+              <div class="seg"><input type="radio" name="fMode" id="fModeRent" value="rent" checked><label for="fModeRent">Rent</label><input type="radio" name="fMode" id="fModeBuy" value="buy"><label for="fModeBuy">Buy</label><input type="radio" name="fMode" id="fModeOff" value="off"><label for="fModeOff" title="Searches deeply, at Expert level, only for property with an off-market or motivated-seller signal">Off-market</label></div>
             </fieldset>
-            <label class="check" title="Searches deeply, at Expert level, only for property with an off-market or motivated-seller signal: probate and deceased estates, repossessions, auction and unsold lots, tired or cash-only property, reduced and long-listed homes, and direct sellers"><input type="checkbox" id="fOffMarket"><span><b>Off-market properties only</b> <span class="muted">· Premium, Expert level</span></span></label>
-            <p class="fnote" id="fOffLock" hidden>Off-market properties only is included with Premium and Max. <button class="linkbtn" type="button" data-go="plans">See plans</button></p>
-            <p class="fnote" id="fOffNote">Always runs at Expert level, searching as deeply as it can and keeping only property that shows an off-market signal. It searches the public places where motivated sellers show up: auction lots (EIG, Auction House, Allsop, SDL, Savills, iamsold), probate, repossessions, tired or cash-only property and reduced listings, and tags why each one stands out. Properties that are never advertised, such as agents' private lists or closed groups, can't be searched.</p>
+            <p class="fnote" id="fOffLock" hidden>Off-market mode is included with Premium and Max. <button class="linkbtn" type="button" data-go="plans">See plans</button></p>
+            <p class="fnote" id="fOffNote" hidden><b>Off-market mode.</b> Searches everywhere it can, at Expert level and as deeply as it can, and keeps only property that shows an off-market or motivated-seller signal such as probate, repossession, auction, cash-only, tired or heavily reduced. Each result is tagged with why it stands out. Properties that are never advertised, such as agents' private lists or closed groups, can't be searched.</p>
             <fieldset class="fg"><legend>Bedrooms <span class="muted" style="font-weight:400">· pick one or more</span></legend>
               <div class="seg" id="fBedsSeg" role="group" aria-label="Bedrooms, pick one or more"><input type="checkbox" id="fBedsAny" checked><label for="fBedsAny">Any</label><input type="checkbox" name="fBeds" id="fBeds0" value="0"><label for="fBeds0">Studio</label><input type="checkbox" name="fBeds" id="fBeds1" value="1"><label for="fBeds1">1</label><input type="checkbox" name="fBeds" id="fBeds2" value="2"><label for="fBeds2">2</label><input type="checkbox" name="fBeds" id="fBeds3" value="3"><label for="fBeds3">3</label><input type="checkbox" name="fBeds" id="fBeds4" value="4"><label for="fBeds4">4+</label></div>
             </fieldset>
@@ -1230,7 +1229,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
               <label class="f"><span>Property type</span><select class="inp" id="fType"><option value="any">Any</option><option value="studio">Studio</option><option value="flat">Flat</option><option value="house">House</option><option value="commercial">Commercial</option></select></label>
             </div>
             <p class="fnote" id="fFurnNote" hidden>Furnishing isn't stated on these listings, so they're kept.</p>
-            <fieldset class="fg"><legend>Sites</legend>
+            <fieldset class="fg" id="fSites"><legend>Sites</legend>
               <div class="checks">
                 <label class="check"><input type="checkbox" id="fSiteGumtree" checked><span>Gumtree</span></label>
                 <label class="check"><input type="checkbox" id="fSiteSpareRoom" checked><span>SpareRoom</span></label>
@@ -1696,7 +1695,7 @@ html.fx .rv.in{opacity:1;transform:none;transition:opacity .7s var(--ease) var(-
   <div class="dr-foot"><span class="hint" id="sgHint" aria-live="polite"></span><button class="btn" id="ulBack" type="button" hidden>Back</button><button class="btn" id="sgCancel" type="button">Cancel</button><button class="btn primary" id="sgSign" type="button" disabled>Continue to payment</button><button class="btn primary" id="payBtn" type="button" hidden>Pay £500</button></div>
 </dialog>
 
-<script src="/assets/app.js?v=11" defer></script>
+<script src="/assets/app.js?v=13" defer></script>
 <script type="module" src="/assets/auth.js"></script>
 
 </body>

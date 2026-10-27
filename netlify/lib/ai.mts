@@ -519,6 +519,8 @@ For R2SA rentals, likely monthly profit at 80% occupancy (revenue = 24 nights x 
 
 For an off-market and distressed search (filters.offmarket is true), each listing may have off_market_signals (for example probate, repossession, auction lot, needs modernisation, cash buyers only, price reduced, motivated seller) and days_on_market. Rank the strongest opportunities first: how likely the seller is to accept a discount, how far below market value the price is (where given), how much work the property needs, and the risks that come with that route (for auction lots: legal pack, buyer's fees and the completion deadline; for probate: timing; for repossessions and cash-only: condition, tenure and mortgageability). Explain which signals each pick has. These are signals found in public adverts, not proof of motivation: never say a property is truly off-market or that a seller will accept a lower price.
 
+For an off-market search (filters.offmarket is true), never name or hint at any website, portal, auction house or agent the listings came from, and never say where they were searched: refer to them only as listings and describe them by type and area.
+
 You may also get "search_summary": how many listings each site returned, how many links were removed as dead or taken, and how many couldn't be confirmed. Use it to explain the search.
 
 Return valid JSON with these keys:
@@ -901,7 +903,9 @@ export function newSearch(input: string, level: LevelId): SearchState {
   const ticked = sites.filter((s) => s in SITES);
   // Rental-only sites can't have property for sale; keep them out of a purchase search.
   const noRent = (s: string) => !RENT_ONLY.has(s), noBuy = (s: string) => !BUY_ONLY.has(s);
-  const wanted = filters.mode === "buy" && ticked.some(noRent) ? ticked.filter(noRent) : filters.mode !== "buy" && ticked.some(noBuy) ? ticked.filter(noBuy) : ticked;
+  // Off-market searches always go everywhere there is property for sale, whatever was ticked.
+  const wanted = filters.offmarket && filters.mode === "buy" ? Object.keys(SITES).filter(noRent)
+    : filters.mode === "buy" && ticked.some(noRent) ? ticked.filter(noRent) : filters.mode !== "buy" && ticked.some(noBuy) ? ticked.filter(noBuy) : ticked;
   // Current results to re-check: only real listing links on the ticked sites, with their checks reset.
   const keep: Listing[] = [];
   for (const x of Array.isArray(existing) ? existing.slice(0, 200) : []) {
@@ -1076,12 +1080,12 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
         st.ranking = await runRank(JSON.stringify({
           filters: st.filters,
           search_summary: {
-            sites: Object.fromEntries(st.sites.map((site) => [SITES[site].label, st.sites_status[site]?.status === "error" ? "couldn't be searched" : st.listings.filter((l) => l.site === site && l.confirmed).length])),
+            ...(st.filters.offmarket ? {} : { sites: Object.fromEntries(st.sites.map((site) => [SITES[site].label, st.sites_status[site]?.status === "error" ? "couldn't be searched" : st.listings.filter((l) => l.site === site && l.confirmed).length])) }),
             removed_dead_or_taken_links: st.removed || 0,
             unconfirmed_hidden: st.listings.filter((l) => !l.confirmed).length,
           },
           listings: st.listings.filter((l) => l.confirmed).slice(0, level === "quick" ? 40 : 120).map((l, i) => ({
-            id: String(i), site: SITES[l.site].label, type: l.type, beds: l.beds, area: l.area, postcode: l.postcode,
+            id: String(i), ...(st.filters.offmarket ? {} : { site: SITES[l.site].label }), type: l.type, beds: l.beds, area: l.area, postcode: l.postcode,
             [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price,
             ...(l.details ? { checked_details: l.details, still_available: l.verified } : {}),
             ...(l.signals?.length ? { off_market_signals: l.signals } : {}),
@@ -1092,7 +1096,7 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
         console.error("Ranking failed, retrying with Scout", error);
         try {
           st.ranking = await runRank(JSON.stringify({ filters: st.filters, listings: st.listings.filter((l) => l.confirmed).slice(0, 40).map((l, i) => ({
-            id: String(i), site: SITES[l.site].label, type: l.type, beds: l.beds, area: l.area, postcode: l.postcode, [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price,
+            id: String(i), ...(st.filters.offmarket ? {} : { site: SITES[l.site].label }), type: l.type, beds: l.beds, area: l.area, postcode: l.postcode, [l.mode === "buy" ? "asking_price" : "rent_pcm"]: l.price,
           })) }), "quick");
         } catch (again) { console.error("Ranking failed", again); st.ranking = null; }
       }
