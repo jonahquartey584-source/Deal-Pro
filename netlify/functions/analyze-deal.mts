@@ -99,7 +99,7 @@ export default async (request: Request, _context: Context) => {
   // kind "dd": web research for the due diligence checks of one deal.
   const body = await request.json().catch(() => null) as { kind?: string; deal?: string; level?: string; listings?: unknown; filters?: unknown; sites?: unknown; checks?: unknown; strategy?: string; existing?: unknown } | null;
   const kind = body?.kind === "search" ? "search" : body?.kind === "rank" ? "rank" : body?.kind === "dd" ? "dd" : "analyse";
-  const level = (body?.level && body.level in LEVELS ? body.level : "quick") as LevelId;
+  let level = (body?.level && body.level in LEVELS ? body.level : "quick") as LevelId;
   let input: string;
   if (kind === "analyse") {
     input = body?.deal?.trim() || "";
@@ -120,6 +120,12 @@ export default async (request: Request, _context: Context) => {
     // A refresh sends the current results so they can be re-checked and new ones found.
     const existing = Array.isArray(body?.existing) ? body.existing.slice(0, 200) : [];
     if (JSON.stringify(body?.filters ?? {}).length > 5_000) return json({ error: "The search filters are too long." }, 413);
+    // "Off-market properties only" is a Premium and Max feature and always runs at Expert level.
+    const wantsOffMarket = !!(body?.filters as { offmarket?: unknown; mode?: unknown } | undefined)?.offmarket && (body?.filters as { mode?: unknown }).mode === "buy";
+    if (wantsOffMarket) {
+      if (!isAdmin && (plan === "Free" || SCOUT_ONLY_PLANS.has(plan))) return json({ error: "Off-market properties only is included with Premium and Max. Upgrade to use it." }, 402);
+      level = "deep";
+    }
     input = JSON.stringify({ filters: body?.filters ?? {}, sites, existing });
     if (input.length > 250_000) return json({ error: "Too many results to refresh. Run a new search instead." }, 413);
   } else {

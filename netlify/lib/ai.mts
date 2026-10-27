@@ -582,6 +582,11 @@ const SEARCH_LEVEL: Record<LevelId, { passes: number; perPass: number; context: 
   standard: { passes: 2, perPass: 12, context: "medium", effort: "low", verify: 25 },
   deep: { passes: 8, perPass: 15, context: "high", effort: "medium", verify: 60 },
 };
+// Off-market searches go deeper than any other: every round angle is used, more listings are asked for per round, and more adverts are read.
+const OFF_ROUNDS = 12;
+const searchLevel = (level: LevelId, f: Filters) => f.offmarket
+  ? { ...SEARCH_LEVEL[level], passes: Math.max(SEARCH_LEVEL[level].passes, OFF_ROUNDS), perPass: Math.max(SEARCH_LEVEL[level].perPass, 20), verify: Math.max(SEARCH_LEVEL[level].verify, 120) }
+  : SEARCH_LEVEL[level];
 
 // Signals that a seller may be motivated or the property may be a below-market opportunity, read from an advert's own words.
 const SIGNALS: Array<[string, RegExp]> = [
@@ -616,6 +621,10 @@ const OFF_ANGLES = [
   "Look for listings that have been on the market a long time (6 months or more) or reduced several times, and for private sellers advertising directly.",
   "Look for development or conversion angles: 'planning granted', 'potential to convert', 'HMO potential', 'could be split', 'derelict'.",
   "Now try neighbouring postcode districts and any areas you haven't covered yet, with the same signals.",
+  "Sweep the price bands one at a time (under £60,000, then £60,000 to £100,000, then £100,000 to £150,000, then above) with the same signals, so cheaper lots are not drowned out.",
+  "Cover the property types one at a time with the same signals: terraced houses, bungalows, flats above shops, mixed-use buildings, houses with large plots, ex-council homes, HMOs and tenanted investments.",
+  "Search the auction side: current catalogue lots, 'unsold lots', 'post-auction', 'available now' and low guide prices.",
+  "Search again with every keyword not yet tried: 'sold as seen', 'no chain', 'executors', 'lender', 'LPA receivers', 'needs work', 'investor', 'discounted', 'offers invited'.",
 ];
 // Each round searches from a different angle so later rounds find listings earlier ones missed.
 const ANGLES = [
@@ -786,11 +795,11 @@ export function splitLocations(loc: unknown): string[] {
 
 async function searchSite(site: string, f: Filters, level: LevelId, pass: number, exclude: string[], want?: number): Promise<Listing[]> {
   const conf = SITES[site];
-  const lv = { ...SEARCH_LEVEL[level], ...(want ? { perPass: want } : {}) };
+  const lv = { ...searchLevel(level, f), ...(want ? { perPass: want } : {}) };
   const buy = f.mode === "buy";
   const skip = exclude.length ? `\nYou've already found these, so don't return them again:\n${exclude.slice(-80).join("\n")}` : "";
   const prompt = `Search ${conf.domains[0]} (${conf.what}) for listings that are currently available: ${describe(f)}.
-${(f.offmarket && buy ? OFF_ANGLES : ANGLES)[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only return individual listing pages: one property per URL, shaped like ${conf.example}. Never return search-results, area, category or map pages, even if they show listings; open the individual advert and use its URL. Skip adverts marked let agreed, under offer, sold STC or no longer available.${skip}
+${f.offmarket && buy ? `${OFF_ANGLES[pass % OFF_ANGLES.length]} Run a separate search for each signal in this angle, using the site's own keyword and filter options where it has them (for example 'reduced', 'auction', 'needs modernisation', 'probate'), and only return adverts that themselves show the signal.` : ANGLES[pass % ANGLES.length]} ${level === "quick" ? `Do one quick search and return up to ${lv.perPass} matching individual listings.` : `Search several times with different wording until you have up to ${lv.perPass} matching individual listings.`} Only return individual listing pages: one property per URL, shaped like ${conf.example}. Never return search-results, area, category or map pages, even if they show listings; open the individual advert and use its URL. Skip adverts marked let agreed, under offer, sold STC or no longer available.${skip}
 Return JSON: {"listings": [{"title": string, "type": string (e.g. "2 bed flat", "Office"), "beds": number or null (0 for studio), "area": string (street/area and town), "postcode": string (postcode district like "M1" or "SE1", "" if unknown), "price": number (${buy ? "asking price in GBP" : "monthly rent in GBP; convert weekly rents x 52 / 12"}), "url": string (the listing page URL exactly as found), "furnished": "Furnished" | "Unfurnished" | "Part furnished" | "Not stated", "auction": true | false (true if the advert is a sale by auction, an auction lot, an online or timed auction or a modern method of auction), "shared_ownership": true | false (true if it is shared ownership, part buy part rent or shared equity), "private_landlord": true | false | null, "added": string (when the advert was added, reduced or updated, exactly as the site shows it, e.g. "Added today", "Added on 28/09/2026", "3 days ago"; "" if not shown)}]}.
 Prefer the newest listings. Only include listings you actually found in the search results, with the URL exactly as the search returned it. Never build or guess a URL from an ID or address, and never invent a listing or price. If you find none, return {"listings": []}.`;
   const { parsed, seen } = await webJson(prompt, conf.domains, level, lv.context, lv.effort);
@@ -883,7 +892,7 @@ export type SearchState = {
   // A refresh starts from the member's current results: they are re-checked and new ones added.
   previous?: string[];
   widened?: boolean;
-  sites_status: Record<string, { status: string; found: number; round?: number; rounds?: number; error?: string; detail?: string }>;
+  sites_status: Record<string, { status: string; found: number; round?: number; rounds?: number; error?: string; detail?: string; dry?: number }>;
   ranking?: Record<string, unknown> | null; startedAt: string;
 };
 
@@ -914,7 +923,7 @@ export function newSearch(input: string, level: LevelId): SearchState {
   }
   return {
     filters, sites: wanted, phase: "search", round: 0, verifyAt: 0, listings: keep, previous: keep.map((l) => l.id), startedAt: new Date().toISOString(),
-    sites_status: Object.fromEntries(wanted.map((s) => [s, { status: "searching", found: 0, round: 0, rounds: SEARCH_LEVEL[level].passes }])),
+    sites_status: Object.fromEntries(wanted.map((s) => [s, { status: "searching", found: 0, round: 0, rounds: searchLevel(level, filters).passes }])),
   };
 }
 
@@ -958,7 +967,7 @@ export async function checkLink(l: Listing, f: Filters = {}): Promise<"live" | "
 }
 
 export async function stepSearch(st: SearchState, level: LevelId, deadline: number, save: (st: SearchState) => Promise<void>) {
-  const lv = SEARCH_LEVEL[level];
+  const lv = searchLevel(level, st.filters);
   const min = Number(st.filters.min) || 0, max = Number(st.filters.max) || Infinity;
   const known = () => new Set(st.listings.map((l) => l.id));
   const timeLeft = () => deadline - Date.now();
@@ -967,11 +976,11 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
   while (st.phase === "search") {
     // Nothing found at all: run one more, wider round (the next angle: nearby areas or different wording).
     if (st.round >= lv.passes && !st.widened && !st.listings.length && st.sites.some((s) => st.sites_status[s]?.status !== "error")) st.widened = true;
-    if (st.round >= lv.passes + (st.widened ? 1 : 0)) { st.phase = "check"; break; }
+    if (st.round >= lv.passes + (st.widened ? 1 : 0) || (st.filters.offmarket && st.round > 0 && st.sites.every((x) => st.sites_status[x]?.status !== "searching"))) { st.phase = "check"; break; }
     if (timeLeft() < 4 * 60_000) return st;
     const round = st.round;
     await Promise.all(st.sites.map(async (site) => {
-      if (st.sites_status[site]?.status === "error") return;
+      if (st.sites_status[site]?.status === "error" || (st.filters.offmarket && st.sites_status[site]?.status === "done")) return;
       try {
         const mine = st.listings.filter((l) => l.site === site).map((l) => l.url);
         // Each place is searched separately on this site, sharing out the listings wanted per round.
@@ -982,9 +991,13 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
         if (!ok.length) throw (runs[0] as PromiseRejectedResult).reason;
         const found = ok.flatMap((r) => r.value).filter((l) => l.price >= min && l.price <= max);
         const have = known();
-        for (const l of found) if (!have.has(l.id) && st.listings.length < 500) { st.listings.push(l); have.add(l.id); }
+        let added = 0;
+        for (const l of found) if (!have.has(l.id) && st.listings.length < 500) { st.listings.push(l); have.add(l.id); added++; }
         const count = st.listings.filter((l) => l.site === site).length;
-        st.sites_status[site] = { status: round + 1 >= lv.passes ? "done" : "searching", found: count, round: round + 1, rounds: lv.passes };
+        // Off-market searches stop asking a site once two rounds in a row turn up nothing new, so the time goes to sites that still have more.
+        const dry = added ? 0 : (st.sites_status[site]?.dry || 0) + 1;
+        const finished = round + 1 >= lv.passes || (!!st.filters.offmarket && round >= 3 && dry >= 2);
+        st.sites_status[site] = { status: finished ? "done" : "searching", found: count, round: round + 1, rounds: lv.passes, dry };
       } catch (error) {
         console.error(`Search failed for ${site} (round ${round + 1})`, error);
         const count = st.listings.filter((l) => l.site === site).length;
@@ -1030,7 +1043,10 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
       for (let i = 0; out.length < list.length; i++) for (const sl of bySite.values()) if (sl[i]) out.push(sl[i]);
       return out;
     };
-    const targets = [...roundRobin(st.listings.filter((l) => l.link !== "live")), ...roundRobin(st.listings.filter((l) => l.link === "live"))].slice(0, lv.verify);
+    // Off-market searches read the adverts that still need it: links the direct check couldn't confirm, and those with no signal found yet.
+    const targets = st.filters.offmarket
+      ? roundRobin(st.listings.filter((l) => l.link !== "live" || !l.signals?.length)).slice(0, lv.verify)
+      : [...roundRobin(st.listings.filter((l) => l.link !== "live")), ...roundRobin(st.listings.filter((l) => l.link === "live"))].slice(0, lv.verify);
     while (st.verifyAt < targets.length) {
       if (timeLeft() < 4 * 60_000) return st;
       const group = targets.slice(st.verifyAt, st.verifyAt + 20);
@@ -1043,6 +1059,8 @@ export async function stepSearch(st: SearchState, level: LevelId, deadline: numb
     const before = st.listings.length;
     st.listings = st.listings.filter((l) => l.verified !== "unavailable");
     st.removed = (st.removed || 0) + before - st.listings.length;
+    // "Off-market properties only": keep what shows an off-market or motivated-seller signal.
+    if (st.filters.offmarket) st.listings = st.listings.filter((l) => l.signals?.length);
     for (const l of st.listings) l.confirmed = l.verified === "available";
     st.listings.sort((a, b) => Number(!!b.confirmed) - Number(!!a.confirmed));
     // Put every listing on the map; a failed lookup only leaves pins off.

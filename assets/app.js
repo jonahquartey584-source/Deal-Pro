@@ -814,6 +814,9 @@ const LISTINGS=[
 ];
 const SITES=['OpenRent','SpareRoom','Gumtree','Rightmove','Zoopla','Facebook','RightmoveCommercial','Realla','NovaLoca','LoopNet','OnTheMarket','EIG','AuctionHouse','Allsop','SDL','SavillsAuctions','iamsold'];
 const SITE_LABEL=s=>({Facebook:'Facebook Marketplace',RightmoveCommercial:'Rightmove Commercial',EIG:'EIG Auctions',AuctionHouse:'Auction House UK',SDL:'SDL Auctions',SavillsAuctions:'Savills Auctions'})[s]||s;
+// "Off-market properties only" is for Premium and Max (and the admin) and always runs at Expert level.
+const offLocked=()=>{const i=AIC.info;return !!i&&!!(i.free||i.scoutOnly)};// the server checks the plan again on every search
+const offOn=()=>!!(S.find&&S.find.f&&S.find.f.offmarket&&S.find.f.mode==='buy'&&!offLocked());
 // Sources where off-market and distressed property shows up: ticking "Off-market & distressed" switches these on.
 const OFFMARKET_SITES=['Rightmove','Zoopla','OnTheMarket','Gumtree','EIG','AuctionHouse','Allsop','SDL','SavillsAuctions','iamsold'];
 const BUY_ONLY_SITES=['OnTheMarket','EIG','AuctionHouse','Allsop','SDL','SavillsAuctions','iamsold'];
@@ -904,7 +907,7 @@ function parseCriteria(text){const raw=String(text||''),out={},got=[];
   if(/\bunfurnished\b/.test(lo))out.furn='unfurnished';else if(/\bfurnished\b/.test(lo))out.furn='furnished';if(out.furn)got.push(out.furn[0].toUpperCase()+out.furn.slice(1));
   if(/private landlords?|no agents?|direct(?:ly)? (?:from|with) (?:the )?landlord/.test(lo)){out.priv=true;got.push('Private landlords')}
   if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+)?auctions?\b/.test(lo)){out.noAuction=true;got.push('No auctions')}
-  else if(/\b(?:off[- ]?market|probate|deceased estates?|repossess\w*|distressed|motivated (?:seller|vendor)s?|must sell|quick sale|unsold lots?|auction lots?)\b/.test(lo)){out.offmarket=true;out.mode='buy';if(!got.includes('To buy'))got.unshift('To buy');got.push('Off-market & distressed')}
+  else if(/\b(?:off[- ]?market|probate|deceased estates?|repossess\w*|distressed|motivated (?:seller|vendor)s?|must sell|quick sale|unsold lots?|auction lots?)\b/.test(lo)){out.offmarket=true;out.mode='buy';if(!got.includes('To buy'))got.unshift('To buy');got.push('Off-market properties only')}
   if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+|all\s+)?(?:flats?|apartments?)\b/.test(lo)){out.noFlats=true;got.push('No flats')}
   if(/\b(?:no|not|exclude|excluding|without|avoid|skip)\s+(?:any\s+|all\s+)?shared[\s-]?ownerships?\b/.test(lo)){out.noShared=true;got.push('No shared ownership')}
   if((m=lo.match(/\b(?:last|past|within)\s*(24 ?h(?:ours?)?|day|\d+ days?|week|fortnight)\b|\b(new today|just listed|newly listed|brand new listings?)\b/))){const w=m[1]||'';out.fresh=m[2]?'3':/24|day\b/.test(w)&&!/\d+ days?/.test(w)?'1':/fortnight/.test(w)?'14':/week/.test(w)?'7':String(Math.min(14,Math.max(1,parseInt(w)||7))).replace(/^(2|4|5|6)$/,'7').replace(/^(8|9|10|11|12|13)$/,'14');got.push('Listed recently')}
@@ -943,13 +946,14 @@ function bindFind(){const f=S.find.f;$('#fNotes').value=f.notes||'';{const L=fin
   f.beds=bedList(f.beds);$$('input[name="fBeds"]').forEach(c=>{c.checked=f.beds.includes(c.value)});$('#fBedsAny').checked=!f.beds.length;
   $('#fMin').value=f.min;$('#fMax').value=f.max;$('#fLoc').value=f.loc;$('#fPrivate').checked=f.priv;$('#fNoAuction').checked=!!f.noAuction;$('#fOffMarket').checked=!!f.offmarket;$('#fNoFlats').checked=!!f.noFlats;$('#fNoShared').checked=!!f.noShared;$('#fFurn').value=f.furn;$('#fType').value=f.type;
   SITES.forEach(s=>{$('#fSite'+s).checked=!!f.sites[s]});findChrome()}
-$('#fOffMarket').addEventListener('change',e=>{if(e.target.checked){OFFMARKET_SITES.forEach(x=>{const c=$('#fSite'+x);if(c)c.checked=true});$('#fNoAuction').checked=false}});
+$('#fOffMarket').addEventListener('change',e=>{if(e.target.checked&&offLocked()){e.target.checked=false;go('plans');toast('Off-market properties only is included with Premium and Max.');return}
+  if(e.target.checked){OFFMARKET_SITES.forEach(x=>{const c=$('#fSite'+x);if(c)c.checked=true});$('#fNoAuction').checked=false}setTimeout(()=>{try{renderAILevels()}catch(x){}},0)});
 function readFind(){const f=S.find.f,n=v=>String(v).trim()===''?'':Math.max(0,+v||0);
   f.notes=$('#fNotes').value.slice(0,500);{const L=$$('input[name="fStrat"]:checked').map(c=>c.value),keep=findStrats(f).filter(x=>L.includes(x));
     f.strategies=[...keep,...L.filter(x=>!keep.includes(x))];if(!f.strategies.length)f.strategies=['auto'];f.strategy=f.strategies[0]}f.fresh=$('#fFresh').value;f.mode=$('#fModeBuy').checked?'buy':'rent';f.beds=$$('input[name="fBeds"]:checked').map(c=>c.value);
-  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.noAuction=$('#fNoAuction').checked&&!$('#fOffMarket').checked;f.offmarket=$('#fOffMarket').checked&&$('#fModeBuy').checked;f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
+  f.min=n($('#fMin').value);f.max=n($('#fMax').value);f.loc=$('#fLoc').value;f.priv=$('#fPrivate').checked;f.noAuction=$('#fNoAuction').checked&&!$('#fOffMarket').checked;f.offmarket=$('#fOffMarket').checked&&$('#fModeBuy').checked&&!offLocked();f.noFlats=$('#fNoFlats').checked;f.noShared=$('#fNoShared').checked;f.furn=$('#fFurn').value;f.type=$('#fType').value;
   SITES.forEach(s=>{f.sites[s]=$('#fSite'+s).checked})}
-function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;
+function findChrome(){const f=S.find.f,buy=f.mode==='buy';$('#fPanel').dataset.mode=f.mode;{const lk=offLocked(),cb=$('#fOffMarket');cb.disabled=false;$('#fOffLock').hidden=!lk;if(lk&&f.offmarket){f.offmarket=false;cb.checked=false}$('#fOffNote').hidden=lk}
   $('#fMinL').textContent=buy?'Min price':'Min rent';$('#fMaxL').textContent=buy?'Max price':'Max rent';
   $('#fFurnNote').hidden=f.furn==='any';$('#fRmNote').hidden=!f.sites.Rightmove}
 function locMatch(x,q){q=q.trim().toLowerCase();if(!q)return true;const pc=x.postcode.toLowerCase();
@@ -1115,8 +1119,9 @@ $('#fNotesFill').addEventListener('click',()=>{const text=$('#fNotes').value.tri
   const {f,got}=parseCriteria(text);readFind();
   // No price in the text: drop the starting £1,200–£5,000 range so it doesn't hide matches.
   const d=FIND_DEF();if(f.min==null&&f.max==null&&+S.find.f.min===d.min&&+S.find.f.max===d.max){f.min='';f.max=''}
+  const offBlocked=!!f.offmarket&&offLocked();if(offBlocked){delete f.offmarket;const k=got.indexOf('Off-market properties only');if(k>=0)got.splice(k,1)}
   Object.assign(S.find.f,f);if(f.offmarket)OFFMARKET_SITES.forEach(x=>{S.find.f.sites[x]=true});bindFind();save();renderFind();
-  msg.textContent=got.length?`Filled in: ${got.join(' · ')}. Check the filters, then search.`:'No filters to fill in. It will still search with what you wrote.'});
+  msg.textContent=(got.length?`Filled in: ${got.join(' · ')}. Check the filters, then search.`:'No filters to fill in. It will still search with what you wrote.')+(offBlocked?' Off-market properties only needs Premium or Max.':'')});
 const FIND_MSG=m=>{const n=$('#nFind');n.classList.remove('share-note');n.innerHTML=`<div>${esc(m)}</div><div class="ln-a"><button class="btn sm primary" data-go="plans">Upgrade</button><button class="btn sm" data-ln-close>Dismiss</button></div>`;n.hidden=false};
 // Checks on an AI job every 2 seconds. A dropped connection, a busy server or a sign-in being renewed
 // is retried for up to 3 minutes (the job carries on in the background), and the result is confirmed
@@ -1200,7 +1205,7 @@ async function startSearch(refresh=false,auto=false){if(FS.busy)return;if(!auto)
   // Auction and sale-only sites have nothing to rent, so they're left out of a rental search.
   if(S.find.f.mode!=='buy'&&sites.some(s=>!BUY_ONLY_SITES.includes(s)))sites=sites.filter(s=>!BUY_ONLY_SITES.includes(s));
   if(!sites.length){toast('Tick at least one site to search');return}
-  const lv=AI_LEVELS.find(l=>l.id===AIC.level)||AI_LEVELS[0],btn=$('#fSearch');
+  const lv=AI_LEVELS.find(l=>l.id===(offOn()?'deep':AIC.level))||AI_LEVELS[0],btn=$('#fSearch');
   const existing=refresh&&LIVE?LIVE.map(r=>({site:r.site,url:r.url,title:r.title,type:r.type,beds:r.beds,area:r.area,postcode:r.postcode,price:r.price,mode:r.mode,private:r.private,furnished:r.furnished,found:r.found,listedAt:r.listedAt})):[];
   FS.busy=true;btn.disabled=true;$('#nFind').hidden=true;clearFindError();drawSearch(sites,lv,null,0);
   try{const r=await fetch('/api/analyze-deal',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'search',level:lv.id,filters:S.find.f,sites,...(refresh?{existing}:{})})});
@@ -1689,22 +1694,22 @@ const EST_S={analyse:{quick:40,standard:100,deep:240},dd:{quick:30,standard:90,d
 function estSecs(kind,lv,sites){const b=EST_S[kind][lv]||60;let n=1;try{n=Math.max(1,String(S.find.f.loc||'').split(/\s*(?:[,;/]|\band\b|\bor\b|&)\s*/i).filter(x=>x.trim().length>1).length)}catch(e){}
   return kind==='search'?Math.round(b*(1+Math.max(0,(sites||6)-4)*.08)*(1+Math.min(5,n-1)*.25)):b}
 const durTxt=s=>s<60?`${Math.max(5,Math.round(s/5)*5)} sec`:`${Math.round(s/60)} min`;
-function estTxt(kind,lv,sites){if(kind==='search'&&lv==='deep')return '15–30 min';const s=estSecs(kind,lv,sites);
+function estTxt(kind,lv,sites){if(kind==='search'&&lv==='deep')return offOn()?'30–60 min':'15–30 min';const s=estSecs(kind,lv,sites);
   return s<60?durTxt(s):s<120?'1–2 min':`${Math.round(s/60*.8)}–${Math.round(s/60*1.3)} min`}
 // Time left: starts from the estimate and, once real progress is known, follows the actual pace.
 function leftTxt(est,elapsed,frac){let total=est;if(frac>.1&&elapsed>15)total=(est+elapsed/frac)/2;const left=total-elapsed;
   return left>10?`about ${durTxt(left)} left`:elapsed>est*1.5?'taking a little longer than usual':'almost done'}
 const LEVEL_KIND={aiLevel:'analyse',fLevel:'search',ddLevel:'dd'};
 const findSiteCount=()=>{try{return SITES.filter(s=>S.find.f.sites[s]).length||1}catch(e){return 6}};
-function levelOpts(name){const i=AIC.info,free=!i||i.free||i.scoutOnly;// locked until the server confirms a plan with every level
-  return AI_LEVELS.map(l=>{const locked=free&&l.id!=='quick';
-    return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="${name}" value="${l.id}"${AIC.level===l.id?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)}</span><span class="lv-use">${locked?'Premium and Max':esc(l.use)}</span><span class="lv-time" data-kind="${LEVEL_KIND[name]}" data-lv="${l.id}">Takes ~${estTxt(LEVEL_KIND[name],l.id,findSiteCount())}</span></label>`}).join('')}
+function levelOpts(name){const i=AIC.info,free=!i||i.free||i.scoutOnly,off=name==='fLevel'&&offOn();// locked until the server confirms a plan with every level
+  return AI_LEVELS.map(l=>{const locked=off?l.id!=='deep':free&&l.id!=='quick';
+    return `<label class="ai-level lv-${l.id}${locked?' locked':''}"><input type="radio" name="${name}" value="${l.id}"${(off?l.id==='deep':AIC.level===l.id)?' checked':''}${locked?' disabled':''}><b><i class="lv-dot" aria-hidden="true"></i>${esc(l.name)}</b><span>${esc(l.desc)}</span><span class="lv-use">${off&&locked?'Off-market search uses Expert':locked?'Premium and Max':esc(l.use)}</span><span class="lv-time" data-kind="${LEVEL_KIND[name]}" data-lv="${l.id}">Takes ~${estTxt(LEVEL_KIND[name],l.id,findSiteCount())}</span></label>`}).join('')}
 function renderAILevels(){const i=AIC.info,free=!i||i.free||i.scoutOnly;if(free&&AIC.level!=='quick')AIC.level='quick';
   $('#aiLevelOpts').innerHTML=levelOpts('aiLevel');$('#fLevelOpts').innerHTML=levelOpts('fLevel');$('#ddLevelOpts').innerHTML=levelOpts('ddLevel');
   const paid=i?(i.plan==='Admin'?'Admin: unlimited credits.':`${i.creditsLeft} of ${i.weeklyCredits} credits left this week${i.resetsAt?`, resets ${fmtDate(i.resetsAt)}`:''}.${i.scoutOnly?' Upgrade to Premium for Analyst and Expert.':''}`):'';
   $('#aiCredits').textContent=!i?'':i.free?`Free plan: ${i.freeLeft} of 2 free analyses left. Upgrade for Analyst and Expert.`:paid;
   $('#fCredits').textContent=!i?'':i.free?`Free plan: ${i.freeSearchesLeft} of 3 searches left this week. Upgrade for Analyst and Expert.`:paid}
-async function loadAICredits(){if(!document.body.dataset.userId)return;try{const r=await fetch('/api/analyze-deal',{credentials:'same-origin'});if(r.ok){AIC.info=await r.json();renderAILevels()}}catch(e){}}
+async function loadAICredits(){if(!document.body.dataset.userId)return;try{const r=await fetch('/api/analyze-deal',{credentials:'same-origin'});if(r.ok){AIC.info=await r.json();renderAILevels();try{findChrome()}catch(e){}}}catch(e){}}
 ['#aiLevelOpts','#fLevelOpts','#ddLevelOpts'].forEach(id=>$(id).addEventListener('change',e=>{if(e.target.type==='radio'){AIC.level=e.target.value;try{localStorage.setItem('dealpro:ai-level',AIC.level)}catch(err){}renderAILevels()}}));
 renderAILevels();window.addEventListener('dealpro:signed-in',loadAICredits);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
