@@ -256,6 +256,8 @@ await moveClick('label[for="fModeBuy"]', 0.5);
 await until0(A_OFF + 8.4);
 await scroll("#fSearch", 0.9, 420);
 await moveClick("#fSearch", 0.9);
+await until0(A_OFF + 9.6);
+await scroll(0, 0.9);
 await until0(A_OFF + 15.0);
 await move("#fResults .fprog-t", 0.9);
 await until0(A_OFF + 23.2);
