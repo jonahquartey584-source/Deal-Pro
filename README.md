@@ -2,6 +2,10 @@
 
 Find UK rent-to-rent and serviced accommodation deals and analyse them with AI.
 
+## Day Planner
+
+[`day-planner/`](day-planner/) is a separate app: a personal daily task tracker that runs on your own computer at http://localhost:4321, pulls each day's tasks from an imported schedule, and has a Claude assistant. See [`day-planner/README.md`](day-planner/README.md) to set it up.
+
 ## Deployment
 
 This project is deployed on Netlify.

@@ -1,0 +1,9 @@
+{
+  "name": "Day Planner",
+  "short_name": "Planner",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6f4ef",
+  "theme_color": "#2f6b5a",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }]
+}
