@@ -16,6 +16,15 @@ if [[ "${1:-}" == "--uninstall" ]]; then
   exit 0
 fi
 
+case "$APP_DIR" in
+  "$HOME/Downloads"*|"$HOME/Desktop"*|"$HOME/Documents"*)
+    echo "macOS won't let a background app read files in Downloads, Desktop or Documents." >&2
+    echo "Move the folder to your home folder first, then run this again:" >&2
+    echo "  mv \"$APP_DIR\" ~/day-planner && cd ~/day-planner && bash install/install-mac.sh" >&2
+    exit 1
+    ;;
+esac
+
 NODE="$(command -v node || true)"
 if [[ -z "$NODE" ]]; then
   echo "Node.js isn't installed. Get it from https://nodejs.org (LTS), then run this again." >&2
