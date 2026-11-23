@@ -49,8 +49,10 @@ with a daily backup in `data/backups/`. It runs on port 4400 and Tailscale port
 
 ## The moving background
 
-The same liquid-chrome loop as Qp Homebase (made in OpenArt with Veo 3.1),
-recoloured for each theme and cropped to portrait for phones:
+Liquid-chrome loops made in OpenArt with Veo 3.1, the same model, prompt and
+start-equals-end-frame loop method as Qp Homebase's background, generated in
+pink & black, pink & white, green & black and green & white, filmed vertically
+for phones and crossfaded so the loop has no seam:
 `public/media/{pink-dark,pink-light,green-dark,green-light}.mp4`, with a still
 `.jpg` of each that shows instantly. If an iPhone is in Low Power Mode and
 blocks video, the still frame stays. It can be turned off in Settings to save

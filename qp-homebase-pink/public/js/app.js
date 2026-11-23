@@ -1,7 +1,7 @@
 // Qp Homebase — core: data, sync with the home computer, navigation, themes.
 import { startLiquid, setLiquidColours } from "./liquid.js";
 
-export const VERSION = "1.1.0";
+export const VERSION = "1.2.0";
 const LS_KEY = "qp-homebase-cache";
 
 // ---------- helpers ----------
