@@ -1,7 +1,7 @@
 // Qp Homebase — core: data, sync with the home computer, navigation, themes.
 import { startLiquid, setLiquidColours } from "./liquid.js";
 
-export const VERSION = "1.0.0";
+export const VERSION = "1.1.0";
 const LS_KEY = "qp-homebase-cache";
 
 // ---------- helpers ----------
@@ -138,15 +138,28 @@ export function applyTheme(id) {
   const v = (n) => cs.getPropertyValue(n).trim();
   document.querySelector('meta[name="theme-color"]').content = v("--bg");
   setLiquidColours([v("--blob1"), v("--blob2"), v("--blob3")], v("--bg"));
-  const vid = document.getElementById("bgVideo");
-  const src = `media/${id}.mp4`;
-  if (S.settings.bgVideo !== false) {
-    if (!vid.src.endsWith(src)) {
-      vid.classList.remove("on");
-      fetch(src, { method: "HEAD" }).then((r) => { if (r.ok) { vid.src = src; vid.oncanplay = () => vid.classList.add("on"); vid.play().catch(() => {}); } else vid.removeAttribute("src"); }).catch(() => {});
-    }
-  } else { vid.classList.remove("on"); vid.removeAttribute("src"); }
+  setBackgroundVideo(id);
 }
+// The Homebase liquid-chrome loop (OpenArt, Veo 3.1), recoloured per theme and
+// cropped to portrait for phones. The poster frame shows instantly (and stays
+// if iOS Low Power Mode blocks autoplay); the canvas liquid is only a fallback.
+let liquidOn = false;
+function showLiquid() { const c = document.getElementById("liquid"); c.hidden = false; if (!liquidOn) { liquidOn = true; startLiquid(c); } }
+function setBackgroundVideo(id) {
+  const vid = document.getElementById("bgVideo"), canvas = document.getElementById("liquid");
+  if (S.settings.bgVideo === false) { vid.pause(); vid.removeAttribute("src"); vid.load(); vid.classList.remove("on"); showLiquid(); return; }
+  const src = `media/${id}.mp4`;
+  if (vid.getAttribute("src") === src) return;
+  vid.poster = `media/${id}.jpg`;
+  vid.src = src;
+  vid.classList.add("on");
+  vid.onerror = () => { vid.classList.remove("on"); showLiquid(); };
+  vid.onplaying = () => { canvas.hidden = true; };
+  vid.play().catch(() => {});
+}
+document.addEventListener("visibilitychange", () => { const v = document.getElementById("bgVideo"); if (!document.hidden && v?.getAttribute("src")) v.play().catch(() => {}); });
+// iOS only allows playback after a touch in some modes: retry on first tap.
+document.addEventListener("touchstart", () => document.getElementById("bgVideo")?.play().catch(() => {}), { once: true, passive: true });
 export function themeDots(container, onPick) {
   container.innerHTML = THEMES.map((t) => `<button class="theme-dot ${S.theme === t.id ? "on" : ""}" data-theme-id="${t.id}" title="${t.name}" aria-label="${t.name}" style="--a:${t.a};--b:${t.b}"></button>`).join("");
   container.onclick = (e) => {
@@ -232,7 +245,6 @@ function reminderTick() {
 
 // ---------- boot ----------
 async function boot() {
-  startLiquid(document.getElementById("liquid"));
   await load();
   applyTheme(S.theme);
   document.getElementById("tabs").onclick = (e) => { const b = e.target.closest("[data-go]"); if (b) go(b.dataset.go); };

@@ -45,3 +45,14 @@ test("settings never return the key itself", async () => {
   assert.equal(s.hasApiKey, true);
   assert.ok(!JSON.stringify(s).includes("1234567890"));
 });
+
+test("serves video with Range support for iPhone Safari", async () => {
+  const r = await fetch(base + "/media/pink-dark.mp4", { headers: { Range: "bytes=0-1" } });
+  assert.equal(r.status, 206);
+  assert.match(r.headers.get("content-range"), /^bytes 0-1\/\d+$/);
+  assert.equal((await r.arrayBuffer()).byteLength, 2);
+  for (const t of ["pink-dark", "pink-light", "green-dark", "green-light"]) {
+    assert.equal((await fetch(base + `/media/${t}.mp4`, { method: "HEAD" })).status, 200);
+    assert.equal((await fetch(base + `/media/${t}.jpg`, { method: "HEAD" })).status, 200);
+  }
+});

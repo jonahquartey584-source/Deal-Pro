@@ -76,13 +76,29 @@ async function readBody(req, limit = 20 * 1024 * 1024) {
   try { return JSON.parse(Buffer.concat(chunks).toString("utf8")); } catch { throw new HttpError(400, "Invalid JSON"); }
 }
 
-function serveStatic(res, pathname) {
+function serveStatic(req, res, pathname) {
   const rel = pathname === "/" ? "index.html" : decodeURIComponent(pathname).replace(/^\/+/, "");
   const file = path.normalize(path.join(PUBLIC, rel));
   if (!file.startsWith(PUBLIC + path.sep) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
     res.writeHead(404, { "Content-Type": "text/plain" }); return res.end("Not found");
   }
-  res.writeHead(200, { "Content-Type": MIME[path.extname(file)] || "application/octet-stream", "Cache-Control": "no-cache" });
+  const type = MIME[path.extname(file)] || "application/octet-stream";
+  const size = fs.statSync(file).size;
+  // Media files are big and never change: cache them. Safari on iPhone only
+  // plays video when the server answers Range requests with 206.
+  const isMedia = pathname.startsWith("/media/");
+  const headers = { "Content-Type": type, "Accept-Ranges": "bytes", "Cache-Control": isMedia ? "public, max-age=604800" : "no-cache" };
+  const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || "");
+  if (range && (range[1] || range[2])) {
+    let start = range[1] ? +range[1] : Math.max(0, size - +range[2]);
+    let end = range[1] && range[2] ? Math.min(+range[2], size - 1) : size - 1;
+    if (start >= size || start > end) { res.writeHead(416, { "Content-Range": `bytes */${size}` }); return res.end(); }
+    res.writeHead(206, { ...headers, "Content-Range": `bytes ${start}-${end}/${size}`, "Content-Length": end - start + 1 });
+    if (req.method === "HEAD") return res.end();
+    return fs.createReadStream(file, { start, end }).pipe(res);
+  }
+  res.writeHead(200, { ...headers, "Content-Length": size });
+  if (req.method === "HEAD") return res.end();
   fs.createReadStream(file).pipe(res);
 }
 
@@ -105,7 +121,7 @@ export const server = http.createServer(async (req, res) => {
     if (!hostAllowed(req.headers.host)) throw new HttpError(403, "Host not allowed");
     const url = new URL(req.url, "http://x");
     const p = url.pathname;
-    if (!p.startsWith("/api/")) return serveStatic(res, p);
+    if (!p.startsWith("/api/")) return serveStatic(req, res, p);
     if (req.method !== "GET" && req.headers["x-homebase"] !== "1") throw new HttpError(403, "Missing header");
 
     if (req.method === "GET" && p === "/api/health") return send(res, 200, { ok: true, version: VERSION });

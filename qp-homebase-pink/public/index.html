@@ -2,7 +2,8 @@
 <html lang="en-GB" data-theme="pink-dark">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="format-detection" content="telephone=no">
   <title>Qp Homebase</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
@@ -12,11 +13,12 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon-180.png">
-  <link rel="stylesheet" href="style.css?v=1.0.0">
+  <link rel="stylesheet" href="style.css?v=1.1.0">
 </head>
 <body>
-  <canvas id="liquid" aria-hidden="true"></canvas>
-  <video id="bgVideo" muted loop playsinline autoplay aria-hidden="true"></video>
+  <canvas id="liquid" aria-hidden="true" hidden></canvas>
+  <video id="bgVideo" muted loop playsinline webkit-playsinline autoplay preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true" poster="media/pink-dark.jpg"></video>
+  <div id="veil" aria-hidden="true"></div>
 
   <!-- Welcome screen -->
   <section id="welcome" class="welcome" hidden>

@@ -6,7 +6,7 @@ export function render(el) {
   el.innerHTML = `
   <div class="card"><h2>Theme</h2><div class="theme-dots" id="dots" style="margin:6px 0 4px"></div>
     <div class="small muted" id="tname">${esc(THEMES.find((t) => t.id === S.theme)?.name || "")}</div>
-    <label class="row" style="gap:8px;margin-top:10px"><input type="checkbox" id="vid" ${S.settings.bgVideo !== false ? "checked" : ""}> Use animated background video when available</label></div>
+    <label class="row" style="gap:8px;margin-top:10px"><input type="checkbox" id="vid" ${S.settings.bgVideo !== false ? "checked" : ""}> Moving liquid background (turn off to save battery)</label></div>
   <div class="card"><h2>Your name</h2><input class="input" id="name" value="${esc(S.profile.name)}"></div>
   <div class="card"><h2>Reminders</h2>
     <p class="small muted" style="margin-top:0">A notification 5 minutes before planner items with a time, while the app is open. On iPhone, add the app to your Home Screen first.</p>

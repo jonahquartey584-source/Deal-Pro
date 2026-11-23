@@ -34,9 +34,9 @@ export function startLiquid(canvas) {
       // darken/lighten veil so text stays readable
       ctx.fillStyle = hexA(bg, 0.35); ctx.fillRect(0, 0, W, H);
     }
-    if (!document.hidden) requestAnimationFrame(frame);
+    if (!document.hidden && !canvas.hidden) requestAnimationFrame(frame);
   }
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) requestAnimationFrame(frame); });
+  document.addEventListener("visibilitychange", () => { if (!document.hidden && !canvas.hidden) requestAnimationFrame(frame); });
   requestAnimationFrame(frame);
 }
 
