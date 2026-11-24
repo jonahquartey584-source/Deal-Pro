@@ -1,5 +1,6 @@
 // Jay, the built-in assistant. Talks to Claude through the Messages API with
 // plain fetch (no SDK needed) and can add things to the app through tools.
+// Runs on her phone (key saved on the phone) or on the Mac server.
 const API = "https://api.anthropic.com/v1/messages";
 const id = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -69,7 +70,7 @@ function summary(d, today) {
   });
 }
 
-export async function runAssistant({ apiKey, model, messages, data, today, now }) {
+export async function runAssistant({ apiKey, model, messages, data, today, now, browser = false }) {
   const d = ensure(structuredClone(data || {}));
   today ||= new Date().toISOString().slice(0, 10);
   const wd = DAYS[new Date(today + "T12:00").getDay()];
@@ -80,7 +81,7 @@ export async function runAssistant({ apiKey, model, messages, data, today, now }
   for (let i = 0; i < 8; i++) {
     const r = await fetch(API, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01" },
+      headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", ...(browser && { "anthropic-dangerous-direct-browser-access": "true" }) },
       body: JSON.stringify({ model, max_tokens: 2000, system, tools: TOOLS, messages: convo }),
     });
     const body = await r.json().catch(() => ({}));

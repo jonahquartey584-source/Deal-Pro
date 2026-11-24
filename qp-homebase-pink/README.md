@@ -43,8 +43,11 @@ bash ~/qp-homebase-pink/scripts/phone.sh
 
 3. Open the address it prints in **Safari** on the iPhone, tap **Share → Add to Home Screen**.
 
-The Mac needs to be on and awake. Data lives in `data/homebase.json` on the Mac,
-with a daily backup in `data/backups/`. It runs on port 4400 and Tailscale port
+**The MacBook does not need to be on.** After the first open, the whole app
+lives on her iPhone and her data is saved on the phone itself, so it works
+anywhere, even offline. Whenever the MacBook is on, the phone automatically
+backs her data up to it (`data/homebase.json`, plus a daily copy in
+`data/backups/`). The Mac only needs to be on to install an update. It runs on port 4400 and Tailscale port
 8443, so it never clashes with another Homebase on the same Mac.
 
 ## The moving background
@@ -62,7 +65,9 @@ Made for phones: on a computer it stays phone-width in the middle of the screen.
 
 ## Jay
 
-Settings → paste an Anthropic API key. Everything else works without one.
+On her phone: Settings → paste an Anthropic API key → **Save on this phone**.
+Jay then works straight from the phone, without the MacBook. Everything else
+works without a key.
 
 ## Tests
 

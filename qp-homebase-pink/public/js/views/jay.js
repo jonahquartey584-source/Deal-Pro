@@ -1,4 +1,5 @@
-import { S, api, today, nowHM, esc, replaceData, go } from "../app.js";
+import { S, api, today, nowHM, esc, replaceData, go, idbGet } from "../app.js";
+import { runAssistant } from "../assistant.js";
 
 export const title = "Ask Jay";
 export const subtitle = () => "Your assistant";
@@ -22,11 +23,15 @@ export function render(el) {
     box.insertAdjacentHTML("beforeend", `<div class="msg user">${esc(text)}</div><div class="msg assistant" id="typing">…</div>`);
     el.querySelector("#q").value = ""; window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     try {
-      const r = await api("POST", "/api/assistant", { messages: chat, today: today(), now: nowHM() });
-      if (r.changed && r.data) replaceData(r.data, r.rev);
+      // on the phone with her own key (works anywhere), otherwise through the MacBook
+      const k = await idbGet("jay");
+      const r = k?.apiKey
+        ? await runAssistant({ apiKey: k.apiKey, model: k.model || "claude-opus-5-5", messages: chat, data: S, today: today(), now: nowHM(), browser: true })
+        : await api("POST", "/api/assistant", { messages: chat, data: S, today: today(), now: nowHM() }, 90000);
+      if (r.changed && r.data) replaceData(r.data);
       chat.push({ role: "assistant", content: r.reply || "Done." });
     } catch (e) {
-      chat.push({ role: "assistant", content: e.status === 401 ? "I need an Anthropic API key first — add one in Settings ⚙︎." : `Sorry, something went wrong: ${e.message}` });
+      chat.push({ role: "assistant", content: e.status === 401 ? "I need an Anthropic API key first — add one in Settings ⚙︎." : e.name === "AbortError" || e instanceof TypeError ? "I can't connect right now. Add your API key in Settings ⚙︎ so I work straight from your phone." : `Sorry, something went wrong: ${e.message}` });
     }
     go("jay", {}, false);
     setTimeout(() => window.scrollTo({ top: document.body.scrollHeight }), 50);

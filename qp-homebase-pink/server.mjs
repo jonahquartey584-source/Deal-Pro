@@ -7,7 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
-import { runAssistant } from "./lib/assistant.mjs";
+import { runAssistant } from "./public/js/assistant.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(here, "public");
@@ -157,7 +157,7 @@ export const server = http.createServer(async (req, res) => {
     if (req.method === "PUT" && p === "/api/state") {
       const body = await readBody(req);
       if (!body.data || typeof body.data !== "object") throw new HttpError(400, "data missing");
-      try { return send(res, 200, { rev: saveData(body.data, body.force ? undefined : body.rev).rev }); }
+      try { const d = saveData(body.data, body.force ? undefined : body.rev); return send(res, 200, { rev: d.rev, savedAt: d.savedAt }); }
       catch (e) { if (e.status === 409) return send(res, 409, { error: e.message, current: e.current }); throw e; }
     }
     if (req.method === "GET" && p === "/api/settings") return send(res, 200, settingsView());
@@ -174,7 +174,7 @@ export const server = http.createServer(async (req, res) => {
       if (!apiKey) throw new HttpError(401, "Add your Anthropic API key in Settings to use the assistant.");
       const out = await runAssistant({
         apiKey, model: settings.model || "claude-opus-5-5",
-        messages: body.messages || [], data: doc.data || {}, today: body.today, now: body.now,
+        messages: body.messages || [], data: body.data || doc.data || {}, today: body.today, now: body.now,
       });
       let rev = doc.rev;
       if (out.changed) rev = saveData(out.data).rev;

@@ -3,7 +3,7 @@ import { startLiquid, setLiquidColours } from "./liquid.js";
 import { icon } from "./icons.js";
 export { icon };
 
-export const VERSION = "1.5.0";
+export const VERSION = "1.6.0";
 const LS_KEY = "qp-homebase-cache";
 
 // ---------- helpers ----------
@@ -48,66 +48,95 @@ function merge(base, d) {
 }
 
 export let S = defaults();
-let rev = null, online = false, saveTimer = null, saving = false, pending = false;
 
-function cache() { try { localStorage.setItem(LS_KEY, JSON.stringify({ rev, data: S })); } catch {} }
-async function api(method, path, body) {
-  const r = await fetch(path, { method, headers: { "Content-Type": "application/json", "X-Homebase": "1" }, body: body ? JSON.stringify(body) : undefined });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) { const e = new Error(j.error || `Error ${r.status}`); e.status = r.status; e.body = j; throw e; }
-  return j;
+// ---------- storage: her iPhone is the home of her data ----------
+// Everything is saved on the device (IndexedDB), so the app works with the Mac
+// off and with no internet. When the Mac is reachable, the phone copies her
+// data to it as a backup (and picks up anything changed on the Mac).
+const DB = "ruby-homebase";
+function idb() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open(DB, 1);
+    r.onupgradeneeded = () => r.result.createObjectStore("kv");
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+export async function idbGet(key) {
+  try { const db = await idb(); return await new Promise((res, rej) => { const q = db.transaction("kv").objectStore("kv").get(key); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); }
+  catch { try { return JSON.parse(localStorage.getItem("rh-" + key)); } catch { return undefined; } }
+}
+export async function idbSet(key, value) {
+  try { const db = await idb(); await new Promise((res, rej) => { const tx = db.transaction("kv", "readwrite"); tx.objectStore("kv").put(value, key); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); }
+  catch { try { localStorage.setItem("rh-" + key, JSON.stringify(value)); } catch {} }
+}
+
+let meta = { savedAt: null, backedUpSavedAt: null, backedUpAt: null, serverSavedAt: null };
+let macReachable = false, writeTimer = null, backupTimer = null, syncing = false;
+export const backupStatus = () => ({ macReachable, backedUpAt: meta.backedUpAt, pending: meta.savedAt !== meta.backedUpSavedAt });
+
+async function api(method, path, body, timeoutMs = 6000) {
+  const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), timeoutMs);
+  try {
+    const r = await fetch(path, { method, signal: ctl.signal, headers: { "Content-Type": "application/json", "X-Homebase": "1" }, body: body ? JSON.stringify(body) : undefined });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) { const e = new Error(j.error || `Error ${r.status}`); e.status = r.status; e.body = j; throw e; }
+    return j;
+  } finally { clearTimeout(t); }
 }
 export { api };
 
+const persist = () => idbSet("state", { data: S, ...meta });
+
 async function load() {
+  let local = await idbGet("state");
+  if (!local) { // updating from an older version: its phone copy is only a cache, the Mac copy wins
+    try { const c = JSON.parse(localStorage.getItem(LS_KEY)); if (c?.data) { const t = new Date(0).toISOString(); local = { data: c.data, savedAt: t, backedUpSavedAt: t, serverSavedAt: null }; } } catch {}
+  }
+  if (local?.data) {
+    S = merge(defaults(), local.data);
+    meta = { savedAt: local.savedAt || null, backedUpSavedAt: local.backedUpSavedAt || null, backedUpAt: local.backedUpAt || null, serverSavedAt: local.serverSavedAt || null };
+    syncWithMac(); // in the background: the app opens straight away
+  } else {
+    // first time on this phone: bring over anything already saved on the Mac
+    try {
+      const j = await api("GET", "/api/state", null, 4000); macReachable = true;
+      if (j.data) { S = merge(defaults(), j.data); meta = { savedAt: j.savedAt, backedUpSavedAt: j.savedAt, backedUpAt: new Date().toISOString(), serverSavedAt: j.savedAt }; }
+    } catch { macReachable = false; }
+    await persist();
+  }
+  try { navigator.storage?.persist?.(); } catch {} // ask the phone to never clear it
+}
+
+export function save() {
+  meta.savedAt = new Date().toISOString();
+  clearTimeout(writeTimer); writeTimer = setTimeout(persist, 150);
+  clearTimeout(backupTimer); backupTimer = setTimeout(syncWithMac, 2000);
+}
+export function flushNow() { clearTimeout(writeTimer); return persist(); }
+
+async function syncWithMac() {
+  if (syncing) return; syncing = true;
   try {
-    const j = await api("GET", "/api/state");
-    online = true;
-    if (j.data) { S = merge(defaults(), j.data); rev = j.rev; }
-    else {
-      // first run: keep anything typed while offline
-      try { const c = JSON.parse(localStorage.getItem(LS_KEY)); if (c?.data) S = merge(defaults(), c.data); } catch {}
-      rev = j.rev; save(true);
+    if (meta.savedAt && meta.savedAt !== meta.backedUpSavedAt) {
+      const savedAt = meta.savedAt;
+      const r = await api("PUT", "/api/state", { data: S, force: true });
+      meta.backedUpSavedAt = savedAt; meta.serverSavedAt = r.savedAt || meta.serverSavedAt;
+    } else {
+      const j = await api("GET", "/api/state");
+      // changed on the Mac (e.g. in its browser) since this phone last synced? take it
+      if (j.data && j.savedAt && j.savedAt !== meta.serverSavedAt && meta.savedAt === meta.backedUpSavedAt) {
+        S = merge(defaults(), j.data); meta.savedAt = meta.backedUpSavedAt = meta.serverSavedAt = j.savedAt; rerender();
+      } else if (j.savedAt) meta.serverSavedAt = j.savedAt;
     }
-  } catch {
-    online = false;
-    try { const c = JSON.parse(localStorage.getItem(LS_KEY)); if (c?.data) { S = merge(defaults(), c.data); rev = c.rev; } } catch {}
-  }
-  cache();
+    macReachable = true; meta.backedUpAt = new Date().toISOString(); await persist();
+  } catch { macReachable = false; }
+  finally { syncing = false; }
 }
-
-export function save(now = false) {
-  cache();
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(flush, now ? 0 : 400);
-}
-async function flush() {
-  if (saving) { pending = true; return; }
-  saving = true;
-  try {
-    const j = await api("PUT", "/api/state", { data: S, rev });
-    rev = j.rev; online = true;
-  } catch (e) {
-    if (e.status === 409 && e.body?.current) {
-      S = merge(defaults(), e.body.current.data); rev = e.body.current.rev; cache();
-      toast("Updated with changes from your other device"); rerender();
-    } else online = false;
-  } finally {
-    saving = false;
-    if (pending) { pending = false; flush(); }
-  }
-}
-export function replaceData(data, newRev) { S = merge(defaults(), data); if (newRev != null) rev = newRev; cache(); }
-export function importData(data) { S = merge(defaults(), data); save(true); }
-
-async function refresh() {
-  if (saving || saveTimer && pending) return;
-  try {
-    const j = await api("GET", "/api/state");
-    if (j.data && j.rev !== rev) { S = merge(defaults(), j.data); rev = j.rev; cache(); rerender(); }
-    online = true;
-  } catch { online = false; }
-}
+export function replaceData(data) { S = merge(defaults(), data); save(); }
+export function importData(data) { S = merge(defaults(), data); save(); flushNow(); }
+const refresh = () => syncWithMac();
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") { flushNow(); } });
+window.addEventListener("pagehide", () => flushNow());
 
 // ---------- UI helpers ----------
 let toastTimer;
@@ -305,7 +334,6 @@ async function boot() {
   setInterval(reminderTick, 30000);
   if (!sessionStorage.getItem("qp-welcomed")) showWelcome();
   else { document.getElementById("app").hidden = false; go(location.hash.slice(1) || "home", {}, false); }
-  if (!online) setTimeout(() => toast("Working offline — changes will sync when your computer is reachable"), 800);
   history.replaceState({ name: location.hash.slice(1) || "home", params: {} }, "");
 }
 boot();
