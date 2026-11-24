@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Puts Qp Homebase on the phone privately through Tailscale (only devices
+# Puts Qp Homebase Ruby Edition on the phone privately through Tailscale (only devices
 # signed in to the same Tailscale account can open it).
 # Uses its own HTTPS port (8443 by default) so it never clashes with another
 # Homebase already shared on the same computer.
@@ -9,7 +9,7 @@ HTTPS_PORT="${HTTPS_PORT:-8443}"
 TS="$(command -v tailscale || true)"
 [[ -z "$TS" && -x /Applications/Tailscale.app/Contents/MacOS/Tailscale ]] && TS=/Applications/Tailscale.app/Contents/MacOS/Tailscale
 [[ -n "$TS" ]] || { echo "Install Tailscale first: https://tailscale.com/download (and sign in), then run this again." >&2; exit 1; }
-curl -fsS "http://localhost:$PORT/api/health" >/dev/null || { echo "Qp Homebase isn't running. Run: bash scripts/install-mac.sh" >&2; exit 1; }
+curl -fsS "http://localhost:$PORT/api/health" >/dev/null || { echo "Qp Homebase Ruby Edition isn't running. Run: bash scripts/install-mac.sh" >&2; exit 1; }
 
 echo "Sharing http://localhost:$PORT on your private Tailscale network (HTTPS port $HTTPS_PORT)…"
 echo "If it shows a link to enable Serve/HTTPS, open it, press Enable, then wait."

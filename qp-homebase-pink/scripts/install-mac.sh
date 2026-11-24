@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Keeps Qp Homebase (pink & green) running on a Mac: starts it now, at every
+# Keeps Qp Homebase Ruby Edition running on a Mac: starts it now, at every
 # login, and restarts it if it stops.   Run:  bash scripts/install-mac.sh
 # Remove with:                                bash scripts/install-mac.sh --uninstall
 set -euo pipefail
@@ -11,7 +11,7 @@ PORT="${PORT:-4400}"
 if [[ "${1:-}" == "--uninstall" ]]; then
   launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || launchctl unload "$PLIST" 2>/dev/null || true
   rm -f "$PLIST"
-  echo "Qp Homebase will no longer start automatically. Your data is still in $APP_DIR/data"
+  echo "Qp Homebase Ruby Edition will no longer start automatically. Your data is still in $APP_DIR/data"
   exit 0
 fi
 
@@ -45,7 +45,7 @@ launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
 launchctl bootstrap "gui/$(id -u)" "$PLIST" 2>/dev/null || launchctl load -w "$PLIST"
 sleep 2
 if curl -fsS "http://localhost:$PORT/api/health" >/dev/null 2>&1; then
-  echo "Qp Homebase is running at http://localhost:$PORT and will start every time you log in."
+  echo "Qp Homebase Ruby Edition is running at http://localhost:$PORT and will start every time you log in."
   open "http://localhost:$PORT" || true
   echo "Next, for the phone:  bash scripts/phone.sh"
 else

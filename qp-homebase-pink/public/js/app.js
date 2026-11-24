@@ -1,4 +1,4 @@
-// Qp Homebase — core: data, sync with the home computer, navigation, themes.
+// Qp Homebase "Ruby Edition" — core: data, sync with the home computer, navigation, themes.
 import { startLiquid, setLiquidColours } from "./liquid.js";
 
 export const VERSION = "1.3.0";
@@ -260,7 +260,7 @@ function reminderTick() {
     const [h, m] = x.start.split(":").map(Number), at = h * 60 + m, key = `${t}|${x.id}`;
     if (at - mins <= 5 && at - mins >= 0 && !notified.has(key)) {
       notified.add(key);
-      try { new Notification("Qp Homebase", { body: `${x.start} · ${x.title}`, icon: "icon.svg" }); } catch {}
+      try { new Notification("Qp Homebase Ruby Edition", { body: `${x.start} · ${x.title}`, icon: "icon.svg" }); } catch {}
     }
   }
 }

@@ -19,7 +19,7 @@ export function render(el) {
   <div class="card"><h2>Backup</h2>
     <p class="small muted" style="margin-top:0">Everything is saved on the home computer (with a daily backup). You can also download a copy.</p>
     <div class="row wrap"><button class="btn" id="export">Download backup</button><label class="btn">Restore from file<input type="file" id="import" accept="application/json" hidden></label></div></div>
-  <p class="small muted center">Qp Homebase ${VERSION} · pink & green edition</p>`;
+  <p class="small muted center">Qp Homebase &quot;Ruby Edition&quot; · v${VERSION}</p>`;
 
   themeDots(el.querySelector("#dots"), () => (el.querySelector("#tname").textContent = THEMES.find((t) => t.id === S.theme).name));
   el.querySelector("#vid").onchange = (e) => { S.settings.bgVideo = e.target.checked; save(); applyTheme(S.theme); };
@@ -28,7 +28,7 @@ export function render(el) {
     if (S.settings.notify) { S.settings.notify = false; save(); return rerender(); }
     if (!("Notification" in window)) return toast("This browser can't show notifications — add the app to your Home Screen first");
     const p = await Notification.requestPermission();
-    if (p === "granted") { S.settings.notify = true; save(); new Notification("Qp Homebase", { body: "Reminders are on 💕" }); rerender(); } else toast("Notifications were not allowed");
+    if (p === "granted") { S.settings.notify = true; save(); new Notification("Qp Homebase Ruby Edition", { body: "Reminders are on 💕" }); rerender(); } else toast("Notifications were not allowed");
   };
   const info = el.querySelector("#keyInfo"), model = el.querySelector("#model");
   api("GET", "/api/settings").then((s) => { info.textContent = s.hasApiKey ? `Connected ${s.keyHint ? "(" + s.keyHint + ")" : ""}. Jay is ready.` : "Add an Anthropic API key to chat with Jay. Everything else works without one."; model.value = s.model; }).catch(() => (info.textContent = "Can't reach the home computer right now."));
@@ -44,6 +44,6 @@ export function render(el) {
   el.querySelector("#import").onchange = async (e) => {
     const f = e.target.files[0]; if (!f) return;
     try { const d = JSON.parse(await f.text()); if (!confirm("Replace everything in the app with this backup?")) return; importData(d); applyTheme(S.theme); toast("Backup restored"); rerender(); }
-    catch { toast("That file isn't a Qp Homebase backup"); }
+    catch { toast("That file isn't a Qp Homebase Ruby Edition backup"); }
   };
 }

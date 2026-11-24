@@ -1,4 +1,4 @@
-// Qp Homebase (pink & green edition): a private personal app that runs on
+// Qp Homebase "Ruby Edition": a private personal app that runs on
 // your own computer. Start with `node server.mjs`, then open
 // http://localhost:4400 (or the Tailscale address from scripts/phone.sh on a phone).
 // No npm packages needed. Everything is saved in data/homebase.json.
@@ -161,5 +161,5 @@ export const server = http.createServer(async (req, res) => {
 });
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  server.listen(PORT, HOST, () => console.log(`Qp Homebase ${VERSION} running at http://localhost:${PORT}`));
+  server.listen(PORT, HOST, () => console.log(`Qp Homebase Ruby Edition ${VERSION} running at http://localhost:${PORT}`));
 }

@@ -1,4 +1,4 @@
-/* Qp Homebase — pink & green edition */
+/* Qp Homebase "Ruby Edition" */
 :root, [data-theme="pink-dark"] {
   --bg: #0b0709; --bg2: #160c11; --text: #fbeef4; --muted: #b996a7;
   --accent: #ff5fa2; --accent2: #ff9cc6; --accent-ink: #1a0610;
@@ -100,6 +100,8 @@ h1, h2, h3 { margin: 0; letter-spacing: -.02em; }
 .brand { font-weight: 750; font-size: 1.25rem; display: flex; align-items: center; gap: 8px; }
 .mini-logo { display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 9px; background: linear-gradient(145deg, var(--accent), var(--accent2)); color: var(--accent-ink); font-size: .82rem; font-weight: 800; }
 .sub { color: var(--muted); font-size: .85rem; }
+.edition { font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); padding: 2px 7px; border-radius: 999px; margin-left: 2px; }
+.edition-badge { font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--text); padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--bg) 55%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .icon-btn { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); font-size: 1.3rem; display: grid; place-items: center; }
 .view { flex: 1; padding: 4px 16px calc(env(safe-area-inset-bottom) + 96px); max-width: 760px; width: 100%; margin: 0 auto; }
 .view.enter { animation: viewIn .32s cubic-bezier(.2,.8,.2,1) both; }

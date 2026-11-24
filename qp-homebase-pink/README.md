@@ -1,4 +1,4 @@
-# Qp Homebase — pink & green edition
+# Qp Homebase "Ruby Edition"
 
 A private personal app for RubyQp. It runs on a computer at home and opens on
 the phone like a normal app. Nothing goes to the internet except Jay's chats
