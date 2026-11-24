@@ -140,26 +140,43 @@ export function applyTheme(id) {
   setLiquidColours([v("--blob1"), v("--blob2"), v("--blob3")], v("--bg"));
   setBackgroundVideo(id);
 }
-// The Homebase liquid-chrome loop (OpenArt, Veo 3.1), recoloured per theme and
-// cropped to portrait for phones. The poster frame shows instantly (and stays
-// if iOS Low Power Mode blocks autoplay); the canvas liquid is only a fallback.
+// Liquid-chrome loops made in OpenArt (Veo 3.1, 4K) per theme, 60fps, portrait.
+// iPhones get HEVC (sharper for the size), everything else H.264. Switching
+// theme crossfades between two video layers. The poster frame shows instantly
+// (and stays if iOS Low Power Mode blocks autoplay); the canvas is a fallback.
 let liquidOn = false;
 function showLiquid() { const c = document.getElementById("liquid"); c.hidden = false; if (!liquidOn) { liquidOn = true; startLiquid(c); } }
+const HEVC = (() => { try { const v = document.createElement("video"); return /probably|maybe/.test(v.canPlayType('video/mp4; codecs="hvc1"')); } catch { return false; } })();
+let activeVideo = null;
 function setBackgroundVideo(id) {
-  const vid = document.getElementById("bgVideo"), canvas = document.getElementById("liquid");
-  if (S.settings.bgVideo === false) { vid.pause(); vid.removeAttribute("src"); vid.load(); vid.classList.remove("on"); showLiquid(); return; }
-  const src = `media/${id}.mp4`;
-  if (vid.getAttribute("src") === src) return;
-  vid.poster = `media/${id}.jpg`;
+  const canvas = document.getElementById("liquid");
+  const cur = activeVideo || document.getElementById("bgVideo");
+  if (S.settings.bgVideo === false) { document.querySelectorAll(".bg-video").forEach((v) => { v.pause(); v.classList.remove("on"); }); showLiquid(); return; }
+  const src = `media/${id}${HEVC ? ".hevc" : ""}.mp4`;
+  if (cur.dataset.src === src && cur.classList.contains("on")) return;
+  // first video: use the element in the page; later: a fresh layer on top that fades in
+  const vid = cur.dataset.src ? cur.cloneNode(false) : cur;
+  vid.removeAttribute("id"); vid.classList.add("bg-video"); vid.classList.remove("on");
+  vid.muted = true; vid.playsInline = true; vid.loop = true;
+  vid.poster = `media/${id}.jpg`; vid.dataset.src = src;
+  if (vid !== cur) cur.after(vid);
+  let tried264 = false;
+  vid.onerror = () => {
+    if (HEVC && !tried264) { tried264 = true; vid.src = `media/${id}.mp4`; vid.play().catch(() => {}); return; }
+    vid.classList.remove("on"); showLiquid();
+  };
+  const show = () => {
+    vid.classList.add("on"); canvas.hidden = true;
+    if (vid !== cur) setTimeout(() => { cur.pause(); cur.remove(); }, 900);
+  };
+  vid.addEventListener("playing", show, { once: true });
   vid.src = src;
-  vid.classList.add("on");
-  vid.onerror = () => { vid.classList.remove("on"); showLiquid(); };
-  vid.onplaying = () => { canvas.hidden = true; };
-  vid.play().catch(() => {});
+  activeVideo = vid;
+  vid.play().catch(() => { vid.addEventListener("loadeddata", show, { once: true }); });
 }
-document.addEventListener("visibilitychange", () => { const v = document.getElementById("bgVideo"); if (!document.hidden && v?.getAttribute("src")) v.play().catch(() => {}); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) activeVideo?.play().catch(() => {}); });
 // iOS only allows playback after a touch in some modes: retry on first tap.
-document.addEventListener("touchstart", () => document.getElementById("bgVideo")?.play().catch(() => {}), { once: true, passive: true });
+document.addEventListener("touchstart", () => activeVideo?.play().catch(() => {}), { once: true, passive: true });
 export function themeDots(container, onPick) {
   container.innerHTML = THEMES.map((t) => `<button class="theme-dot ${S.theme === t.id ? "on" : ""}" data-theme-id="${t.id}" title="${t.name}" aria-label="${t.name}" style="--a:${t.a};--b:${t.b}"></button>`).join("");
   container.onclick = (e) => {
@@ -182,7 +199,7 @@ const VIEWS = {
 const TAB_OF = { home: "home", planner: "planner", meals: "meals", money: "money" };
 let current = { name: "home", params: {} }, cleanup = null;
 
-export async function go(name, params = {}, push = true) {
+export async function go(name, params = {}, push = true, animate = true) {
   if (!VIEWS[name]) name = "home";
   cleanup?.(); cleanup = null;
   current = { name, params };
@@ -195,11 +212,14 @@ export async function go(name, params = {}, push = true) {
   document.getElementById("viewTitle").textContent = mod.title || "Homebase";
   document.getElementById("viewSub").textContent = mod.subtitle ? mod.subtitle() : "";
   cleanup = mod.render(el, params) || null;
-  window.scrollTo({ top: 0 });
+  if (animate) {
+    window.scrollTo({ top: 0 });
+    el.classList.remove("enter"); void el.offsetWidth; el.classList.add("enter");
+  }
 }
 export function rerender() {
   const y = window.scrollY;
-  go(current.name, current.params, false).then(() => window.scrollTo({ top: y }));
+  go(current.name, current.params, false, false).then(() => window.scrollTo({ top: y }));
 }
 export function setParams(p) { current.params = { ...current.params, ...p }; rerender(); }
 
@@ -219,7 +239,9 @@ function showWelcome() {
   document.getElementById("welcomeGo").onclick = () => {
     S.profile.welcomed = true; save();
     sessionStorage.setItem("qp-welcomed", "1");
-    w.hidden = true; document.getElementById("app").hidden = false;
+    w.classList.add("leaving");
+    setTimeout(() => { w.hidden = true; w.classList.remove("leaving"); }, 450);
+    document.getElementById("app").hidden = false;
     go(location.hash.slice(1) || "home", {}, false);
   };
 }
