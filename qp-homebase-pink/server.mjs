@@ -174,7 +174,7 @@ export const server = http.createServer(async (req, res) => {
       if (!apiKey) throw new HttpError(401, "Add your Anthropic API key in Settings to use the assistant.");
       const out = await runAssistant({
         apiKey, model: settings.model || "claude-opus-5-5",
-        messages: body.messages || [], data: body.data || doc.data || {}, today: body.today, now: body.now,
+        messages: body.messages || [], data: body.data || doc.data || {}, today: body.today, now: body.now, hidden: Array.isArray(body.hidden) ? body.hidden : [],
       });
       let rev = doc.rev;
       if (out.changed) rev = saveData(out.data).rev;

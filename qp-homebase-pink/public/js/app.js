@@ -1,9 +1,10 @@
 // Qp Homebase "Ruby Edition" — core: data, sync with the home computer, navigation, themes.
 import { startLiquid, setLiquidColours } from "./liquid.js";
 import { icon } from "./icons.js";
+import { lockConfig, isLocked, unlockWithFaceId, unlockWithPin, LOCKABLE } from "./lock.js";
 export { icon };
 
-export const VERSION = "1.6.0";
+export const VERSION = "1.7.0";
 const LS_KEY = "qp-homebase-cache";
 
 // ---------- helpers ----------
@@ -240,8 +241,10 @@ export async function go(name, params = {}, push = true, animate = true) {
   document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.go === (TAB_OF[name] || "more")));
   moveTabPill();
   document.getElementById("backBtn").hidden = ["home", "planner", "meals", "money", "more"].includes(name);
-  const mod = await VIEWS[name]();
   const el = document.getElementById("view");
+  await lockConfig();
+  if (isLocked(name)) { el.onclick = el.oninput = el.onchange = el.onsubmit = null; return showLockScreen(el, name, params, animate); }
+  const mod = await VIEWS[name]();
   el.onclick = el.oninput = el.onchange = el.onsubmit = null;
   document.getElementById("viewTitle").textContent = mod.title || "Homebase";
   document.getElementById("viewSub").textContent = mod.subtitle ? mod.subtitle() : "";
@@ -256,6 +259,26 @@ export function rerender() {
   go(current.name, current.params, false, false).then(() => window.scrollTo({ top: y }));
 }
 export function setParams(p) { current.params = { ...current.params, ...p }; rerender(); }
+
+// ---------- Face ID lock screen for private sections ----------
+async function showLockScreen(el, name, params, animate) {
+  const cfg = await lockConfig();
+  document.getElementById("viewTitle").textContent = LOCKABLE[name] || "Private";
+  document.getElementById("viewSub").textContent = "Private";
+  el.innerHTML = `<div class="card lock-card">
+      <div class="lock-ico">${icon("lock")}</div>
+      <h2>${esc(LOCKABLE[name] || "This section")} is private</h2>
+      <p class="muted small">Unlock with Face ID to open it. It locks again when you leave the app.</p>
+      ${cfg.credId ? `<button class="btn primary wide" id="unlockFace">${icon("faceid")} Unlock with Face ID</button>` : ""}
+      ${cfg.pinHash ? `<form id="pinForm" class="row" style="margin-top:12px;width:100%;max-width:320px"><input class="input grow center" id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="Passcode"><button class="btn">Unlock</button></form>` : ""}
+      <p class="small" id="lockErr" style="color:var(--bad);min-height:1.2em;margin:8px 0 0"></p>
+    </div>`;
+  if (animate) { window.scrollTo({ top: 0 }); el.classList.remove("enter"); void el.offsetWidth; el.classList.add("enter"); }
+  const done = () => go(name, params, false);
+  const fail = (e) => (el.querySelector("#lockErr").textContent = e?.name === "NotAllowedError" ? "Face ID was cancelled. Try again." : e?.message || "Couldn't unlock");
+  el.querySelector("#unlockFace")?.addEventListener("click", () => unlockWithFaceId().then(done, fail));
+  el.querySelector("#pinForm")?.addEventListener("submit", (e) => { e.preventDefault(); unlockWithPin(el.querySelector("#pin").value).then(done, fail); });
+}
 
 // ---------- welcome ----------
 const LINES = [

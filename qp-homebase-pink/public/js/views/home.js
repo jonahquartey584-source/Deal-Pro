@@ -1,4 +1,5 @@
 import { S, save, go, today, fmtDate, money, dur, esc, rerender, icon } from "../app.js";
+import { isLocked } from "../lock.js";
 import { dayItems, itemRow, toggleItem, dayCalories, SLOTS, mealEntry, mealName, mealCalories, cycleInfo, readingOn, monthTx, sum } from "./shared.js";
 
 export const title = "Homebase";
@@ -45,18 +46,18 @@ export function render(el) {
     </button>
     <button data-act="go" data-to="bible">
       <span class="label">${icon("bible")} Bible ${S.bible.timer?.running ? "· live" : ""}</span>
-      <span class="foot"><span class="num" id="bibleNum">${dur(read)}</span>${ring((read / goal) * 100, "", 44)}</span>
-      <span>${read >= goal ? "Goal reached 🙏" : `Goal ${S.bible.goalMinutes || 15} min`}</span>
+      ${isLocked("bible") ? `<span class="num">${icon("lock")}</span><span class="foot">Private</span>` : `<span class="foot"><span class="num" id="bibleNum">${dur(read)}</span>${ring((read / goal) * 100, "", 44)}</span>
+      <span>${read >= goal ? "Goal reached 🙏" : `Goal ${S.bible.goalMinutes || 15} min`}</span>`}
     </button>
     <button data-act="go" data-to="cycle">
       <span class="label">${icon("cycle")} Cycle</span>
-      <span class="num">${ci.lastStart ? `Day ${ci.dayOf}` : "—"}</span>
-      <span class="foot">${ci.lastStart ? (ci.daysUntil > 0 ? `Period in ${ci.daysUntil}d` : ci.daysUntil === 0 ? "Due today" : "Late") : "Log your period"}</span>
+      ${isLocked("cycle") ? `<span class="num">${icon("lock")}</span><span class="foot">Private</span>` : `<span class="num">${ci.lastStart ? `Day ${ci.dayOf}` : "—"}</span>
+      <span class="foot">${ci.lastStart ? (ci.daysUntil > 0 ? `Period in ${ci.daysUntil}d` : ci.daysUntil === 0 ? "Due today" : "Late") : "Log your period"}</span>`}
     </button>
     <button data-act="go" data-to="money">
       <span class="label">${icon("money")} ${new Date().toLocaleDateString("en-GB", { month: "long" })}</span>
-      <span class="num" style="color:${inc - exp < 0 ? "var(--bad)" : "inherit"}">${money(inc - exp).replace(".00", "")}</span>
-      <span class="foot">left to spend</span>
+      ${isLocked("money") ? `<span class="num">${icon("lock")}</span><span class="foot">Private</span>` : `<span class="num" style="color:${inc - exp < 0 ? "var(--bad)" : "inherit"}">${money(inc - exp).replace(".00", "")}</span>
+      <span class="foot">left to spend</span>`}
     </button>
     <button class="wide" data-act="go" data-to="todo">
       <span class="foot"><span class="label">${icon("todo")} To-do list</span><span class="num" style="font-size:1.4rem">${openTodos}<small> open</small></span></span>

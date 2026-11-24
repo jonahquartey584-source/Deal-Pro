@@ -63,6 +63,16 @@ battery.
 
 Made for phones: on a computer it stays phone-width in the middle of the screen.
 
+## Privacy: Face ID
+
+Settings → **Privacy** → **Turn on Face ID** (and optionally a backup
+passcode). Choose which sections need Face ID: Journal (on by default),
+Period tracker, Budget, Bible. A locked section asks for Face ID when opened
+and locks again as soon as she leaves the app (or after 5 minutes). Locked
+sections are hidden on the Home page and from Jay. Face ID must be set up
+from the Home Screen app on her iPhone. It locks the screens on the phone;
+the backup copy on the MacBook is not encrypted.
+
 ## Jay
 
 On her phone: Settings → paste an Anthropic API key → **Save on this phone**.

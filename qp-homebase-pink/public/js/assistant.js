@@ -58,23 +58,23 @@ function applyTool(d, name, a, today) {
   return "Unknown tool";
 }
 
-function summary(d, today) {
+function summary(d, today, hidden = []) {
   const upcoming = (d.tasks || []).filter((t) => t.date >= today).slice(0, 40);
   return JSON.stringify({
     name: d.profile?.name, today,
     tasks: upcoming, routine: d.routine, todos: (d.todos || []).filter((t) => !t.done),
     chores: d.chores, recipes: (d.recipes || []).map((r) => ({ name: r.name, fav: r.fav, calories: r.calories })),
     mealPlan: Object.fromEntries(Object.entries(d.mealPlan || {}).filter(([k]) => k >= today).slice(0, 14)),
-    calorieTarget: d.calorieTarget, budgets: d.money?.budgets, goals: d.money?.goals,
-    recentMoney: (d.money?.tx || []).slice(-30),
+    calorieTarget: d.calorieTarget,
+    ...(!hidden.includes("money") && { budgets: d.money?.budgets, goals: d.money?.goals, recentMoney: (d.money?.tx || []).slice(-30) }),
   });
 }
 
-export async function runAssistant({ apiKey, model, messages, data, today, now, browser = false }) {
+export async function runAssistant({ apiKey, model, messages, data, today, now, browser = false, hidden = [] }) {
   const d = ensure(structuredClone(data || {}));
   today ||= new Date().toISOString().slice(0, 10);
   const wd = DAYS[new Date(today + "T12:00").getDay()];
-  const system = `You are Jay, the warm, upbeat assistant inside Qp Homebase "Ruby Edition", a private personal app (planner, to-dos, housework, meal planner, period tracker, budget, Bible notes and journal). Today is ${wd} ${today}${now ? `, time ${now}` : ""}. Use British English and £. Keep replies short and friendly, phone-sized. When asked to add or plan things, use the tools, then confirm briefly. Never give medical diagnoses; for health worries suggest a GP.\n\nHer current data:\n${summary(d, today)}`;
+  const system = `You are Jay, the warm, upbeat assistant inside Qp Homebase "Ruby Edition", a private personal app (planner, to-dos, housework, meal planner, period tracker, budget, Bible notes and journal). Today is ${wd} ${today}${now ? `, time ${now}` : ""}. Use British English and £. Keep replies short and friendly, phone-sized. When asked to add or plan things, use the tools, then confirm briefly. Never give medical diagnoses; for health worries suggest a GP.\n\nHer current data:\n${summary(d, today, hidden)}${hidden.length ? `\n\nThese sections are locked with Face ID, so you cannot see them and must not guess about them: ${hidden.join(", ")}. Do not add entries to them either.` : ""}`;
   const convo = messages.filter((m) => m && typeof m.content === "string" && m.content.trim()).slice(-20)
     .map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content }));
   let changed = false;
@@ -96,7 +96,8 @@ export async function runAssistant({ apiKey, model, messages, data, today, now, 
       return { reply, changed, data: d };
     }
     const results = uses.map((u) => {
-      let out; try { out = applyTool(d, u.name, u.input || {}, today); changed = true; } catch (e) { out = "Error: " + e.message; }
+      const blocked = (u.name === "add_journal" && hidden.includes("journal")) || (u.name === "log_money" && hidden.includes("money"));
+      let out; try { if (blocked) throw new Error("That section is locked with Face ID. Ask her to unlock it first."); out = applyTool(d, u.name, u.input || {}, today); changed = true; } catch (e) { out = "Error: " + e.message; }
       return { type: "tool_result", tool_use_id: u.id, content: out };
     });
     convo.push({ role: "user", content: results });
