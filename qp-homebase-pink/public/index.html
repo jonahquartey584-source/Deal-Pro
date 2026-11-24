@@ -11,23 +11,27 @@
   <meta name="apple-mobile-web-app-title" content="Ruby Homebase">
   <meta name="theme-color" content="#0b0709">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon-32.png" type="image/png">
   <link rel="apple-touch-icon" href="icon-180.png">
+  <link rel="preload" href="brand/logo-full.png" as="image">
+  <link rel="preload" href="fonts/great-vibes-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css?v=1.2.0">
 </head>
 <body>
   <canvas id="liquid" aria-hidden="true" hidden></canvas>
-  <video id="bgVideo" class="bg-video" muted loop playsinline webkit-playsinline autoplay preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true" poster="media/pink-dark.jpg"></video>
+  <div id="bgPoster" aria-hidden="true"></div>
+  <video id="bgVideo" class="bg-video" muted loop playsinline webkit-playsinline autoplay preload="auto" disablepictureinpicture disableremoteplayback aria-hidden="true"></video>
   <div id="veil" aria-hidden="true"></div>
 
   <!-- Welcome screen -->
   <section id="welcome" class="welcome" hidden>
     <div class="theme-dots" id="welcomeDots" aria-label="Theme"></div>
     <div class="welcome-mid">
-      <div class="logo-badge"><svg class="qp-badge" viewBox="0 0 100 100" role="img" aria-label="Ruby Homebase"><circle cx="50" cy="50" r="50" class="qp-disc"/><text x="50" y="44" text-anchor="middle" dominant-baseline="central" font-family="Archivo, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="31" font-weight="700" letter-spacing="-0.6" class="qp-ink">Ruby</text><text x="50" y="71" text-anchor="middle" dominant-baseline="central" font-family="Archivo, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="11.5" font-weight="600" letter-spacing="1.3" class="qp-ink">HOMEBASE</text></svg></div>
+      <div class="logo-halo"><div class="logo-full" role="img" aria-label="Ruby Homebase"></div></div>
       <div class="edition-badge">Qp Homebase · Ruby Edition</div>
       <h1 id="welcomeHello">Welcome RubyQp</h1>
+      <p class="love-note">I love you my smudge <span class="heart" aria-hidden="true">♥</span></p>
       <p id="welcomeLine" class="muted"></p>
     </div>
     <button id="welcomeGo" class="btn primary wide">Continue</button>
@@ -37,7 +41,7 @@
     <header class="top">
       <button class="icon-btn" id="backBtn" aria-label="Back" hidden>‹</button>
       <div class="top-title">
-        <div class="brand"><svg class="qp-mini" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="50" class="qp-disc"/><text x="50" y="52" text-anchor="middle" dominant-baseline="central" font-family="Archivo, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="33" font-weight="700" letter-spacing="-0.8" class="qp-ink">Ruby</text></svg> <span id="viewTitle">Homebase</span><span class="edition">Ruby Edition</span></div>
+        <div class="brand"><span class="logo-mono" aria-hidden="true"></span> <span id="viewTitle">Homebase</span><span class="edition">Ruby Edition</span></div>
         <div class="sub" id="viewSub"></div>
       </div>
       <button class="icon-btn" data-go="settings" aria-label="Settings">⚙︎</button>

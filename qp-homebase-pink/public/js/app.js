@@ -158,7 +158,8 @@ function setBackgroundVideo(id) {
   const vid = cur.dataset.src ? cur.cloneNode(false) : cur;
   vid.removeAttribute("id"); vid.classList.add("bg-video"); vid.classList.remove("on");
   vid.muted = true; vid.playsInline = true; vid.loop = true;
-  vid.poster = `media/${id}.jpg`; vid.dataset.src = src;
+  document.getElementById("bgPoster").style.backgroundImage = `url(media/${id}.jpg)`;
+  vid.removeAttribute("poster"); vid.controls = false; vid.disablePictureInPicture = true; vid.dataset.src = src;
   if (vid !== cur) cur.after(vid);
   let tried264 = false;
   vid.onerror = () => {
@@ -172,7 +173,7 @@ function setBackgroundVideo(id) {
   vid.addEventListener("playing", show, { once: true });
   vid.src = src;
   activeVideo = vid;
-  vid.play().catch(() => { vid.addEventListener("loadeddata", show, { once: true }); });
+  vid.play().catch(() => {});
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden) activeVideo?.play().catch(() => {}); });
 // iOS only allows playback after a touch in some modes: retry on first tap.
@@ -260,7 +261,7 @@ function reminderTick() {
     const [h, m] = x.start.split(":").map(Number), at = h * 60 + m, key = `${t}|${x.id}`;
     if (at - mins <= 5 && at - mins >= 0 && !notified.has(key)) {
       notified.add(key);
-      try { new Notification("Qp Homebase Ruby Edition", { body: `${x.start} · ${x.title}`, icon: "icon.svg" }); } catch {}
+      try { new Notification("Qp Homebase Ruby Edition", { body: `${x.start} · ${x.title}`, icon: "icon-180.png" }); } catch {}
     }
   }
 }

@@ -1,4 +1,5 @@
 /* Qp Homebase "Ruby Edition" */
+@font-face { font-family: "Great Vibes"; font-style: normal; font-weight: 400; font-display: swap; src: url(fonts/great-vibes-latin.woff2) format("woff2"); }
 @font-face { font-family: "Archivo"; font-style: normal; font-weight: 400 800; font-display: swap; src: url(fonts/archivo-latin.woff2) format("woff2"); }
 :root, [data-theme="pink-dark"] {
   --bg: #0b0709; --bg2: #160c11; --text: #fbeef4; --muted: #b996a7;
@@ -51,6 +52,10 @@ body {
 #liquid, .bg-video { position: fixed; inset: 0; width: 100vw; height: 100lvh; z-index: 0; pointer-events: none; }
 .bg-video { object-fit: cover; opacity: 0; transition: opacity .8s ease; background: var(--bg) center / cover no-repeat; transform: translateZ(0); will-change: opacity; }
 .bg-video.on { opacity: 1; }
+.bg-video::-webkit-media-controls, .bg-video::-webkit-media-controls-panel, .bg-video::-webkit-media-controls-play-button,
+.bg-video::-webkit-media-controls-start-playback-button, .bg-video::-webkit-media-controls-overlay-play-button { display: none !important; -webkit-appearance: none; opacity: 0 !important; }
+/* still frame shown underneath until the video is really playing (and stays if iOS blocks autoplay) */
+#bgPoster { position: fixed; inset: 0; height: 100lvh; z-index: 0; pointer-events: none; background: var(--bg) center / cover no-repeat; transition: background-image .6s; }
 /* keeps text readable over the moving chrome */
 body:has(#welcome:not([hidden])) #veil { opacity: 0; }
 #veil { transition: opacity .6s; position: fixed; inset: 0; height: 100lvh; z-index: 0; pointer-events: none; background: var(--veil); }
@@ -69,17 +74,31 @@ h1, h2, h3 { margin: 0; letter-spacing: -.02em; }
   padding: calc(env(safe-area-inset-top) + 18px) 24px calc(env(safe-area-inset-bottom) + 24px);
   animation: fadeIn .6s ease;
 }
-.welcome-mid { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; max-width: 420px; }
-.welcome h1 { font-size: clamp(2rem, 9vw, 3rem); text-shadow: 0 2px 24px var(--bg), 0 1px 3px var(--bg); }
+.welcome-mid { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; max-width: 420px; }
+.welcome h1 { font-size: clamp(1.7rem, 7.5vw, 2.4rem); text-shadow: 0 2px 24px var(--bg), 0 1px 3px var(--bg); }
 .welcome p { text-shadow: 0 1px 12px var(--bg); color: var(--text) !important; opacity: .85; }
 .welcome p { margin: 0; font-size: 1.05rem; }
-.logo-badge { width: 132px; height: 132px; border-radius: 50%; animation: float 5s ease-in-out infinite; filter: drop-shadow(0 18px 40px rgba(224, 68, 127, .55)); }
-.qp-badge, .qp-mini { display: block; width: 100%; height: 100%; }
-/* the Ruby Homebase logo is always pink & white, whatever the theme */
-.qp-disc { fill: #e0447f; }
-.qp-ink { fill: #ffffff; }
-.qp-mini .qp-disc, .logo-badge .qp-disc { stroke: #ffffff; stroke-width: 2.5; }
-@keyframes float { 50% { transform: translateY(-8px) rotate(-2deg); } }
+/* Ruby Homebase logo (OpenArt, Ideogram 4.5): drawn as a mask so it takes the theme's logo colour */
+:root, [data-theme="pink-light"], [data-theme="green-light"] { --logo: #d63a79; --logo-glow: rgba(214, 58, 121, .28); --note: #c42a6a; --note-halo: rgba(255, 255, 255, .95); }
+[data-theme="pink-dark"], [data-theme="green-dark"] { --logo: #ffa3cc; --logo-glow: rgba(255, 140, 192, .45); --note: #ffffff; --note-halo: rgba(20, 4, 12, .9); }
+.logo-full {
+  width: min(180px, 24vh); aspect-ratio: 1000 / 1381; background: var(--logo);
+  -webkit-mask: url(brand/logo-full.png) center / contain no-repeat; mask: url(brand/logo-full.png) center / contain no-repeat;
+  filter: drop-shadow(0 0 18px var(--logo-glow)); animation: float 6s ease-in-out infinite;
+}
+.logo-halo { position: relative; display: grid; place-items: center; padding: 18px 26px 14px; border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--bg) 78%, transparent) 55%, color-mix(in srgb, var(--bg) 0%, transparent) 100%); }
+.welcome .love-note { font-family: "Great Vibes", "Snell Roundhand", cursive; font-size: clamp(2.3rem, 11vw, 3.1rem) !important; line-height: 1.15; margin: 4px 0 2px !important; letter-spacing: .01em;
+  color: var(--note) !important; opacity: 1 !important; text-shadow: 0 0 6px var(--note-halo), 0 0 16px var(--note-halo), 0 0 30px var(--logo-glow), 0 2px 26px var(--note-halo);
+  animation: noteIn 1.6s .4s cubic-bezier(.2,.8,.2,1) both; }
+.love-note .heart { color: #ff4f93; font-family: -apple-system, sans-serif; font-size: .55em; vertical-align: .35em; display: inline-block; animation: beat 1.6s ease-in-out 2s infinite; }
+@keyframes noteIn { from { opacity: 0; transform: translateY(8px); filter: blur(6px); } }
+@keyframes beat { 0%, 100% { transform: scale(1); } 15% { transform: scale(1.25); } 30% { transform: scale(1); } 45% { transform: scale(1.15); } }
+.logo-mono { width: 34px; height: 34px; flex: none; display: inline-block; background: var(--logo);
+  -webkit-mask: url(brand/logo-mono.png) center / contain no-repeat; mask: url(brand/logo-mono.png) center / contain no-repeat; }
+.brand { position: relative; }
+.brand::before { content: ""; position: absolute; left: -3px; top: 50%; width: 40px; height: 40px; margin-top: -20px; border-radius: 50%; background: color-mix(in srgb, var(--bg) 80%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--logo) 30%, transparent); z-index: -1; }
+@keyframes float { 50% { transform: translateY(-6px); } }
 @keyframes slideUp { from { transform: translateY(40%); } }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } }
 .theme-dots { display: flex; gap: 12px; }
@@ -98,7 +117,7 @@ h1, h2, h3 { margin: 0; letter-spacing: -.02em; }
 }
 .top-title { flex: 1; min-width: 0; }
 .brand { font-weight: 750; font-size: 1.25rem; display: flex; align-items: center; gap: 8px; }
-.qp-mini { width: 32px; height: 32px; flex: none; }
+
 .sub { color: var(--muted); font-size: .85rem; }
 .edition { font-size: .62rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); padding: 2px 7px; border-radius: 999px; margin-left: 2px; }
 .edition-badge { font-size: .72rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--text); padding: 6px 12px; border-radius: 999px; background: color-mix(in srgb, var(--bg) 55%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
