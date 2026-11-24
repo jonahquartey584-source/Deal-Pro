@@ -5,6 +5,7 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
 import { runAssistant } from "./lib/assistant.mjs";
 
@@ -20,7 +21,7 @@ const VERSION = JSON.parse(fs.readFileSync(path.join(here, "package.json"), "utf
 const MIME = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
   ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".png": "image/png",
-  ".jpg": "image/jpeg", ".mp4": "video/mp4", ".webm": "video/webm",
+  ".jpg": "image/jpeg", ".mp4": "video/mp4", ".webm": "video/webm", ".webp": "image/webp",
   ".json": "application/json", ".webmanifest": "application/manifest+json",
 };
 
@@ -65,8 +66,10 @@ export function saveData(data, baseRev) {
 class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
 
 function send(res, status, body) {
-  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
-  res.end(JSON.stringify(body));
+  const json = Buffer.from(JSON.stringify(body));
+  const gz = json.length > 1024 && /\bgzip\b/.test(res.req?.headers["accept-encoding"] || "");
+  res.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...(gz && { "Content-Encoding": "gzip", Vary: "Accept-Encoding" }) });
+  res.end(gz ? zlib.gzipSync(json, { level: 6 }) : json);
 }
 
 async function readBody(req, limit = 20 * 1024 * 1024) {
@@ -76,18 +79,37 @@ async function readBody(req, limit = 20 * 1024 * 1024) {
   try { return JSON.parse(Buffer.concat(chunks).toString("utf8")); } catch { throw new HttpError(400, "Invalid JSON"); }
 }
 
+// Fast static files: ETags (so the phone can reuse what it has), gzip/brotli
+// for text, long caching for fonts/images/videos, and Range support (Safari on
+// iPhone only plays video when the server answers Range requests with 206).
+const COMPRESSIBLE = new Set([".html", ".js", ".css", ".json", ".webmanifest", ".svg"]);
+const zipCache = new Map(); // file -> { key, br, gz }
+function compressed(file, stat) {
+  const key = `${stat.size}-${stat.mtimeMs}`;
+  let c = zipCache.get(file);
+  if (!c || c.key !== key) {
+    const raw = fs.readFileSync(file);
+    c = { key, br: zlib.brotliCompressSync(raw, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 10 } }), gz: zlib.gzipSync(raw, { level: 9 }) };
+    zipCache.set(file, c);
+  }
+  return c;
+}
+function cachePolicy(rel) {
+  if (/^(media|fonts)\//.test(rel)) return "public, max-age=2592000, immutable"; // requested with ?v=version
+  if (/^brand\/|\.png$|\.jpg$/.test(rel)) return "public, max-age=86400";
+  return "no-cache"; // html, js, css, sw: revalidate (cheap 304s); the service worker serves them instantly
+}
 function serveStatic(req, res, pathname) {
   const rel = pathname === "/" ? "index.html" : decodeURIComponent(pathname).replace(/^\/+/, "");
   const file = path.normalize(path.join(PUBLIC, rel));
   if (!file.startsWith(PUBLIC + path.sep) || !fs.existsSync(file) || fs.statSync(file).isDirectory()) {
     res.writeHead(404, { "Content-Type": "text/plain" }); return res.end("Not found");
   }
-  const type = MIME[path.extname(file)] || "application/octet-stream";
-  const size = fs.statSync(file).size;
-  // Media files are big and never change: cache them. Safari on iPhone only
-  // plays video when the server answers Range requests with 206.
-  const isMedia = pathname.startsWith("/media/");
-  const headers = { "Content-Type": type, "Accept-Ranges": "bytes", "Cache-Control": isMedia ? "public, max-age=604800" : "no-cache" };
+  const stat = fs.statSync(file), ext = path.extname(file), size = stat.size;
+  const etag = `"${size.toString(36)}-${Math.floor(stat.mtimeMs).toString(36)}"`;
+  const headers = { "Content-Type": MIME[ext] || "application/octet-stream", "Accept-Ranges": "bytes", "Cache-Control": cachePolicy(rel), ETag: etag, Vary: "Accept-Encoding" };
+  if (rel === "sw.js") headers["Service-Worker-Allowed"] = "/";
+  if (req.headers["if-none-match"] === etag) { res.writeHead(304, headers); return res.end(); }
   const range = /^bytes=(\d*)-(\d*)$/.exec(req.headers.range || "");
   if (range && (range[1] || range[2])) {
     let start = range[1] ? +range[1] : Math.max(0, size - +range[2]);
@@ -96,6 +118,12 @@ function serveStatic(req, res, pathname) {
     res.writeHead(206, { ...headers, "Content-Range": `bytes ${start}-${end}/${size}`, "Content-Length": end - start + 1 });
     if (req.method === "HEAD") return res.end();
     return fs.createReadStream(file, { start, end }).pipe(res);
+  }
+  const ae = req.headers["accept-encoding"] || "";
+  if (COMPRESSIBLE.has(ext) && /\b(br|gzip)\b/.test(ae)) {
+    const c = compressed(file, stat), useBr = /\bbr\b/.test(ae), body = useBr ? c.br : c.gz;
+    res.writeHead(200, { ...headers, "Content-Encoding": useBr ? "br" : "gzip", "Content-Length": body.length });
+    return res.end(req.method === "HEAD" ? undefined : body);
   }
   res.writeHead(200, { ...headers, "Content-Length": size });
   if (req.method === "HEAD") return res.end();

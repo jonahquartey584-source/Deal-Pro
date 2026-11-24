@@ -1,7 +1,9 @@
 // Qp Homebase "Ruby Edition" — core: data, sync with the home computer, navigation, themes.
 import { startLiquid, setLiquidColours } from "./liquid.js";
+import { icon } from "./icons.js";
+export { icon };
 
-export const VERSION = "1.4.0";
+export const VERSION = "1.5.0";
 const LS_KEY = "qp-homebase-cache";
 
 // ---------- helpers ----------
@@ -152,18 +154,18 @@ function setBackgroundVideo(id) {
   const canvas = document.getElementById("liquid");
   const cur = activeVideo || document.getElementById("bgVideo");
   if (S.settings.bgVideo === false) { document.querySelectorAll(".bg-video").forEach((v) => { v.pause(); v.classList.remove("on"); }); showLiquid(); return; }
-  const src = `media/${id}${HEVC ? ".hevc" : ""}.mp4`;
+  const src = `media/${id}${HEVC ? ".hevc" : ""}.mp4?v=${VERSION}`;
   if (cur.dataset.src === src && cur.classList.contains("on")) return;
   // first video: use the element in the page; later: a fresh layer on top that fades in
   const vid = cur.dataset.src ? cur.cloneNode(false) : cur;
   vid.removeAttribute("id"); vid.classList.add("bg-video"); vid.classList.remove("on");
   vid.muted = true; vid.playsInline = true; vid.loop = true;
-  document.getElementById("bgPoster").style.backgroundImage = `url(media/${id}.jpg)`;
+  document.getElementById("bgPoster").style.backgroundImage = `url(media/${id}.jpg?v=${VERSION})`;
   vid.removeAttribute("poster"); vid.controls = false; vid.disablePictureInPicture = true; vid.dataset.src = src;
   if (vid !== cur) cur.after(vid);
   let tried264 = false;
   vid.onerror = () => {
-    if (HEVC && !tried264) { tried264 = true; vid.src = `media/${id}.mp4`; vid.play().catch(() => {}); return; }
+    if (HEVC && !tried264) { tried264 = true; vid.src = `media/${id}.mp4?v=${VERSION}`; vid.play().catch(() => {}); return; }
     vid.classList.remove("on"); showLiquid();
   };
   const show = () => {
@@ -171,9 +173,10 @@ function setBackgroundVideo(id) {
     if (vid !== cur) setTimeout(() => { cur.pause(); cur.remove(); }, 900);
   };
   vid.addEventListener("playing", show, { once: true });
-  vid.src = src;
+  // the still frame shows instantly; the video only starts downloading once the app is up
+  const start = () => { vid.src = src; vid.play().catch(() => {}); };
+  if (document.readyState === "complete") start(); else window.addEventListener("load", () => setTimeout(start, 150), { once: true });
   activeVideo = vid;
-  vid.play().catch(() => {});
 }
 document.addEventListener("visibilitychange", () => { if (!document.hidden) activeVideo?.play().catch(() => {}); });
 // iOS only allows playback after a touch in some modes: retry on first tap.
@@ -206,6 +209,7 @@ export async function go(name, params = {}, push = true, animate = true) {
   current = { name, params };
   if (push) history.pushState({ name, params }, "", "#" + name);
   document.querySelectorAll("#tabs button").forEach((b) => b.classList.toggle("on", b.dataset.go === (TAB_OF[name] || "more")));
+  moveTabPill();
   document.getElementById("backBtn").hidden = ["home", "planner", "meals", "money", "more"].includes(name);
   const mod = await VIEWS[name]();
   const el = document.getElementById("view");
@@ -261,13 +265,36 @@ function reminderTick() {
     const [h, m] = x.start.split(":").map(Number), at = h * 60 + m, key = `${t}|${x.id}`;
     if (at - mins <= 5 && at - mins >= 0 && !notified.has(key)) {
       notified.add(key);
-      try { new Notification("Qp Homebase Ruby Edition", { body: `${x.start} · ${x.title}`, icon: "icon-180.png" }); } catch {}
+      try { new Notification("Qp Homebase Ruby Edition", { body: `${x.start} · ${x.title}`, icon: "ruby-icon-180.png" }); } catch {}
     }
   }
 }
 
+// sliding glass highlight behind the selected tab
+function moveTabPill() {
+  const nav = document.getElementById("tabs"), on = nav.querySelector("button.on"), pill = nav.querySelector(".tab-pill");
+  if (!on || !pill) return;
+  const r = on.getBoundingClientRect(), n = nav.getBoundingClientRect();
+  if (!r.width) return void setTimeout(moveTabPill, 250);
+  pill.style.width = r.width + "px"; pill.style.transform = `translateX(${r.left - n.left}px)`;
+}
+window.addEventListener("resize", moveTabPill);
+// large title shrinks into the bar as you scroll
+window.addEventListener("scroll", () => document.body.classList.toggle("scrolled", window.scrollY > 24), { passive: true });
+
+// ---------- instant loading ----------
+if ("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
+  window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
+  // after an update, switch to the new version once (quietly, only before she starts using the page)
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController && !document.getElementById("welcome").hidden) location.reload(); });
+}
+
 // ---------- boot ----------
 async function boot() {
+  document.querySelectorAll("#tabs button[data-icon]").forEach((b) => b.insertAdjacentHTML("afterbegin", icon(b.dataset.icon)));
+  document.getElementById("backBtn").innerHTML = icon("back");
+  document.getElementById("settingsBtn").innerHTML = icon("settings");
   await load();
   applyTheme(S.theme);
   document.getElementById("tabs").onclick = (e) => { const b = e.target.closest("[data-go]"); if (b) go(b.dataset.go); };

@@ -12,11 +12,17 @@
   <meta name="theme-color" content="#0b0709">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="favicon-32.png" type="image/png">
-  <link rel="apple-touch-icon" href="icon-180.png">
-  <link rel="preload" href="brand/logo-full.png" as="image">
+  <link rel="apple-touch-icon" href="ruby-icon-180.png">
+  <link rel="preload" href="brand/logo-full.webp" as="image">
   <link rel="preload" href="fonts/great-vibes-latin.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
-  <link rel="stylesheet" href="style.css?v=1.2.0">
+  <link rel="stylesheet" href="style.css">
+  <link rel="modulepreload" href="js/app.js">
+  <link rel="modulepreload" href="js/icons.js">
+  <link rel="modulepreload" href="js/liquid.js">
+  <link rel="modulepreload" href="js/views/home.js">
+  <link rel="modulepreload" href="js/views/shared.js">
+  <link rel="preload" href="brand/logo-mono.webp" as="image">
 </head>
 <body>
   <canvas id="liquid" aria-hidden="true" hidden></canvas>
@@ -39,20 +45,23 @@
 
   <div id="app" class="app" hidden>
     <header class="top">
-      <button class="icon-btn" id="backBtn" aria-label="Back" hidden>‹</button>
-      <div class="top-title">
-        <div class="brand"><span class="logo-mono" aria-hidden="true"></span> <span id="viewTitle">Homebase</span><span class="edition">Ruby Edition</span></div>
-        <div class="sub" id="viewSub"></div>
+      <div class="top-row">
+        <button class="icon-btn glass" id="backBtn" aria-label="Back" hidden></button>
+        <span class="logo-mono" aria-hidden="true"></span><span class="edition">Ruby Edition</span>
+        <span class="grow"></span>
+        <button class="icon-btn glass" id="settingsBtn" data-go="settings" aria-label="Settings"></button>
       </div>
-      <button class="icon-btn" data-go="settings" aria-label="Settings">⚙︎</button>
+      <div class="sub" id="viewSub"></div>
+      <h1 class="large-title" id="viewTitle">Homebase</h1>
     </header>
     <main id="view" class="view"></main>
-    <nav class="tabs" id="tabs">
-      <button data-go="home"><i>⌂</i><span>Home</span></button>
-      <button data-go="planner"><i>◷</i><span>Planner</span></button>
-      <button data-go="meals"><i>❦</i><span>Meals</span></button>
-      <button data-go="money"><i>£</i><span>Budget</span></button>
-      <button data-go="more"><i>☰</i><span>More</span></button>
+    <nav class="tabs glass" id="tabs">
+      <span class="tab-pill" aria-hidden="true"></span>
+      <button data-go="home" data-icon="home"><span>Home</span></button>
+      <button data-go="planner" data-icon="planner"><span>Planner</span></button>
+      <button data-go="meals" data-icon="meals"><span>Meals</span></button>
+      <button data-go="money" data-icon="money"><span>Budget</span></button>
+      <button data-go="more" data-icon="more"><span>More</span></button>
     </nav>
   </div>
 

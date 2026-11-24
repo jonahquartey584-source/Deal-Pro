@@ -1,4 +1,5 @@
 {
+  "id": "/ruby-homebase",
   "name": "Qp Homebase Ruby Edition",
   "short_name": "Ruby Homebase",
   "start_url": "/",
@@ -6,7 +7,7 @@
   "background_color": "#fff4f8",
   "theme_color": "#0b0709",
   "icons": [
-        { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "icon-180.png", "sizes": "180x180", "type": "image/png" }
+        { "src": "ruby-icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "ruby-icon-180.png", "sizes": "180x180", "type": "image/png" }
   ]
 }
