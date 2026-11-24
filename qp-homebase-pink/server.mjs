@@ -19,7 +19,7 @@ const VERSION = JSON.parse(fs.readFileSync(path.join(here, "package.json"), "utf
 
 const MIME = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
-  ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".png": "image/png",
+  ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml", ".woff2": "font/woff2", ".png": "image/png",
   ".jpg": "image/jpeg", ".mp4": "video/mp4", ".webm": "video/webm",
   ".json": "application/json", ".webmanifest": "application/manifest+json",
 };
