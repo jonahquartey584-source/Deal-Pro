@@ -44,7 +44,7 @@ function build() {
     <button type="button" class="jay-close-bottom" id="jayCloseBottom">Close</button>
   </div>`);
   const state = () => jay.phase, level = () => { jay.level *= 0.9; return jay.level; };
-  mount($("#jayFabCanvas"), { state, level, detail: 0.5 });
+  mount($("#jayFabCanvas"), { state, level, detail: 1 });
   mount($("#jayBigCanvas"), { state, level, detail: 1 });
   $("#jayFab").onclick = () => (jay.open ? closeJay() : openJay());
   $("#jayOrb").onclick = () => { if (jay.phase === "listening") { try { jay.rec?.stop(); } catch { /* fine */ } } else if (jay.phase === "speaking") { stopSpeaking(); jayPhase("idle"); } else jayListen(); };

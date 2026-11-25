@@ -4,7 +4,7 @@ import { icon } from "./icons.js";
 import { lockConfig, isLocked, unlockWithFaceId, unlockWithPin, LOCKABLE } from "./lock.js";
 export { icon };
 
-export const VERSION = "2.0.1";
+export const VERSION = "2.1.0";
 const LS_KEY = "qp-homebase-cache";
 
 // ---------- helpers ----------
@@ -383,7 +383,13 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
   // after an update, switch to the new version once (quietly, only before she starts using the page)
   const hadController = !!navigator.serviceWorker.controller;
-  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController && !document.getElementById("welcome").hidden && !sessionStorage.getItem("rh-reloaded")) { sessionStorage.setItem("rh-reloaded", "1"); location.reload(); } });
+  // An update arrived: switch to it straight away if she's only just opened the app (or is on the welcome screen)
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    const fresh = performance.now() < 20000 || !document.getElementById("welcome").hidden;
+    if (hadController && fresh && sessionStorage.getItem("rh-reloaded") !== VERSION) { sessionStorage.setItem("rh-reloaded", VERSION); location.reload(); }
+  });
+  // check the MacBook for a newer version every time she comes back to the app
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) navigator.serviceWorker.getRegistration().then((r) => r?.update()).catch(() => {}); });
 }
 
 // ---------- boot ----------

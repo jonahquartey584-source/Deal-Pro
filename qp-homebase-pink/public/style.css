@@ -400,15 +400,13 @@ html, body { overflow-x: clip; max-width: 100%; }
 .tile-lock .ico { width: 13px; height: 13px; }
 
 /* =================== Jay (from Qp Homebase) =================== */
-:root, [data-theme="pink-dark"] { --jay-rgb: 255, 135, 195; }
-[data-theme="pink-light"] { --jay-rgb: 226, 62, 132; }
-[data-theme="green-dark"] { --jay-rgb: 110, 240, 175; }
-[data-theme="green-light"] { --jay-rgb: 24, 160, 96; }
+/* Jay: Qp Homebase's hologram, in Ruby's pink (bright rose, so the rings stay crisp like the original) */
+:root, [data-theme] { --jay-rgb: 255, 150, 205; }
 canvas.jay-holo { display: block; width: 100%; height: 100%; pointer-events: none; border-radius: 50%; }
 /* the floating orb, just above the tab bar on the right */
-.jay-fab { position: fixed; z-index: 7; right: 10px; bottom: calc(env(safe-area-inset-bottom) + 84px); width: 74px; height: 74px; padding: 0; border: 0; border-radius: 50%; background: transparent;
+.jay-fab { position: fixed; z-index: 7; right: 8px; bottom: calc(env(safe-area-inset-bottom) + 80px); width: 92px; height: 92px; padding: 0; border: 0; border-radius: 50%; background: radial-gradient(circle, rgba(10, 12, 16, .55) 0 46%, rgba(10, 12, 16, 0) 70%);
   animation: jayFloat 6s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
-.jay-fab canvas.jay-holo { filter: drop-shadow(0 0 4px rgba(var(--jay-rgb), .6)); }
+.jay-fab canvas.jay-holo { filter: drop-shadow(0 0 4px rgba(var(--jay-rgb), .6)) drop-shadow(0 0 12px rgba(var(--jay-rgb), .25)); }
 .jay-fab:active { transform: scale(.94); }
 @keyframes jayFloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
 body:has(#welcome:not([hidden])) .jay-fab, body:has(#app[hidden]) .jay-fab, body.jay-open .jay-fab, body:has(.sheet:not([hidden])) .jay-fab { display: none; }
@@ -419,7 +417,7 @@ body:has(#welcome:not([hidden])) .jay-fab, body:has(#app[hidden]) .jay-fab, body
 /* the full-screen Jay view */
 .jay { position: fixed; inset: 0; z-index: 40; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center;
   padding: calc(env(safe-area-inset-top) + 56px) 22px calc(env(safe-area-inset-bottom) + 18px); opacity: 0; transition: opacity .35s ease;
-  background: radial-gradient(120% 80% at 50% 30%, rgba(var(--jay-rgb), .16), transparent 60%), rgba(6, 4, 8, .9);
+  background: radial-gradient(120% 80% at 50% 32%, rgba(var(--jay-rgb), .16), transparent 60%), rgba(12, 6, 10, .93);
   -webkit-backdrop-filter: blur(26px) saturate(1.4); backdrop-filter: blur(26px) saturate(1.4); color: #fff; overflow-y: auto; }
 .jay.show { opacity: 1; }
 .jay[hidden] { display: none; }
@@ -443,3 +441,9 @@ body:has(#welcome:not([hidden])) .jay-fab, body:has(#app[hidden]) .jay-fab, body
 .recipe-card { flex: 0 0 auto; min-width: 180px; max-width: 240px; border-radius: 22px; background: var(--glass), var(--glass-tint); border: 1px solid var(--glass-edge); box-shadow: var(--glass-hi); }
 .recipe-card .body { padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
 .recipe-card .fav-heart { color: var(--accent); font-size: 1rem; }
+
+/* phone: Jay docks into the right end of the tab bar (like Qp Homebase), never covering the page */
+.tabs { right: 104px; }
+.jay-fab { right: 8px !important; bottom: calc(env(safe-area-inset-bottom) + 2px) !important; width: 90px !important; height: 90px !important; animation: none; }
+.view { padding-bottom: calc(env(safe-area-inset-bottom) + 110px); }
+@media (min-width: 700px) { .tabs { right: auto; } .jay-fab { right: calc(50% - 330px) !important; bottom: 8px !important; } }
