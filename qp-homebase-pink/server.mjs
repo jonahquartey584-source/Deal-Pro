@@ -7,7 +7,7 @@ import fs from "node:fs";
 import path from "node:path";
 import zlib from "node:zlib";
 import { fileURLToPath } from "node:url";
-import { runAssistant } from "./public/js/assistant.js";
+import { runAssistant, DEFAULT_MODEL } from "./public/js/assistant.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC = path.join(here, "public");
@@ -38,7 +38,8 @@ function writeJson(file, value) {
 }
 
 let doc = readJson(DATA_FILE, { rev: 0, data: null, savedAt: null });
-let settings = readJson(SETTINGS_FILE, { apiKey: "", model: "claude-opus-5-5" });
+let settings = readJson(SETTINGS_FILE, { apiKey: "", model: DEFAULT_MODEL });
+if (!settings.model || settings.model.startsWith("claude")) settings.model = DEFAULT_MODEL;
 
 // Keep a daily backup of the data file (last 14 days).
 function dailyBackup() {
@@ -131,8 +132,8 @@ function serveStatic(req, res, pathname) {
 }
 
 const settingsView = () => ({
-  model: settings.model || "claude-opus-5-5",
-  hasApiKey: Boolean(settings.apiKey || process.env.ANTHROPIC_API_KEY),
+  model: settings.model || DEFAULT_MODEL,
+  hasApiKey: Boolean(settings.apiKey || process.env.OPENAI_API_KEY),
   keyHint: settings.apiKey ? `${settings.apiKey.slice(0, 7)}…${settings.apiKey.slice(-4)}` : "",
 });
 
@@ -170,10 +171,10 @@ export const server = http.createServer(async (req, res) => {
     }
     if (req.method === "POST" && p === "/api/assistant") {
       const body = await readBody(req);
-      const apiKey = settings.apiKey || process.env.ANTHROPIC_API_KEY;
-      if (!apiKey) throw new HttpError(401, "Add your Anthropic API key in Settings to use the assistant.");
+      const apiKey = settings.apiKey || process.env.OPENAI_API_KEY;
+      if (!apiKey) throw new HttpError(401, "Add your OpenAI API key in Settings to use the assistant.");
       const out = await runAssistant({
-        apiKey, model: settings.model || "claude-opus-5-5",
+        apiKey, model: settings.model || DEFAULT_MODEL,
         messages: body.messages || [], data: body.data || doc.data || {}, today: body.today, now: body.now, hidden: Array.isArray(body.hidden) ? body.hidden : [],
       });
       let rev = doc.rev;

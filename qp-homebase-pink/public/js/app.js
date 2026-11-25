@@ -4,7 +4,7 @@ import { icon } from "./icons.js";
 import { lockConfig, isLocked, unlockWithFaceId, unlockWithPin, LOCKABLE } from "./lock.js";
 export { icon };
 
-export const VERSION = "1.8.0";
+export const VERSION = "1.9.0";
 const LS_KEY = "qp-homebase-cache";
 
 // ---------- helpers ----------

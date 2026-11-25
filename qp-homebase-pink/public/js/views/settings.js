@@ -1,4 +1,5 @@
 import { S, save, esc, toast, themeDots, THEMES, applyTheme, importData, rerender, today, VERSION, idbGet, idbSet, backupStatus, icon } from "../app.js";
+import { DEFAULT_MODEL } from "../assistant.js";
 import { lockConfig, LOCKABLE, hasProtection, isUnlocked, faceIdAvailable, setupFaceId, unlockWithFaceId, unlockWithPin, setPin, setSections, removeProtection } from "../lock.js";
 
 export const title = "Settings";
@@ -15,8 +16,8 @@ export function render(el) {
     <button class="btn" id="notify">${S.settings.notify ? "✓ Reminders on — turn off" : "Turn on reminders"}</button></div>
   <div class="card"><h2>Jay (assistant)</h2>
     <p class="small muted" style="margin-top:0" id="keyInfo">Checking…</p>
-    <input class="input" id="key" type="password" placeholder="Paste Anthropic API key (sk-ant-…)" autocomplete="off">
-    <input class="input" id="model" placeholder="Model" style="margin-top:8px">
+    <input class="input" id="key" type="password" placeholder="Paste your OpenAI API key (sk-…)" autocomplete="off">
+    <label class="field">OpenAI model</label><input class="input" id="model" placeholder="gpt-6.1-terra" autocapitalize="off" autocorrect="off" spellcheck="false">
     <div class="row" style="margin-top:8px"><button class="btn primary grow" id="saveKey">Save on this phone</button><button class="btn" id="delKey">Remove</button></div></div>
   <div class="card"><h2>Your data</h2>
     <p class="small muted" style="margin-top:0">Everything is saved on this phone, so the app works anywhere, even with no internet and the MacBook off. Whenever the MacBook is on, a backup copy is saved there automatically.</p>
@@ -34,11 +35,12 @@ export function render(el) {
     if (p === "granted") { S.settings.notify = true; save(); new Notification("Qp Homebase Ruby Edition", { body: "Reminders are on 💕" }); rerender(); } else toast("Notifications were not allowed");
   };
   const info = el.querySelector("#keyInfo"), model = el.querySelector("#model");
-  const showKey = (k) => { info.textContent = k?.apiKey ? `Saved on this phone (${k.apiKey.slice(0, 7)}…${k.apiKey.slice(-4)}). Jay is ready.` : "Add an Anthropic API key to chat with Jay. Everything else works without one."; model.value = k?.model || "claude-opus-5-5"; };
+  const showKey = (k) => { info.textContent = k?.apiKey ? `Saved on this phone (${k.apiKey.slice(0, 7)}…${k.apiKey.slice(-4)}). Jay is ready.` : "Add your OpenAI API key to chat with Jay (platform.openai.com → API keys). Everything else works without one."; model.value = (k?.model && !k.model.startsWith("claude")) ? k.model : DEFAULT_MODEL; };
   idbGet("jay").then(showKey);
   el.querySelector("#saveKey").onclick = async () => {
     const cur = (await idbGet("jay")) || {}, k = el.querySelector("#key").value.trim();
-    const next = { apiKey: k || cur.apiKey || "", model: model.value.trim() || "claude-opus-5-5" };
+    if (k && !/^sk-/.test(k)) return toast("That doesn't look like an OpenAI key (they start with sk-)");
+    const next = { apiKey: k || cur.apiKey || "", model: model.value.trim() || DEFAULT_MODEL };
     await idbSet("jay", next); el.querySelector("#key").value = ""; showKey(next); toast("Saved on this phone");
   };
   el.querySelector("#delKey").onclick = async () => { await idbSet("jay", {}); showKey({}); toast("Key removed"); };

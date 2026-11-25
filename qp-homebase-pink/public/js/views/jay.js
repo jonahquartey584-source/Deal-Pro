@@ -1,5 +1,5 @@
 import { S, api, today, nowHM, esc, replaceData, go, idbGet } from "../app.js";
-import { runAssistant } from "../assistant.js";
+import { runAssistant, DEFAULT_MODEL } from "../assistant.js";
 import { isLocked, LOCKABLE } from "../lock.js";
 
 export const title = "Ask Jay";
@@ -28,12 +28,12 @@ export function render(el) {
       const k = await idbGet("jay");
       const hidden = Object.keys(LOCKABLE).filter(isLocked);
       const r = k?.apiKey
-        ? await runAssistant({ apiKey: k.apiKey, model: k.model || "claude-opus-5-5", messages: chat, data: S, today: today(), now: nowHM(), browser: true, hidden })
+        ? await runAssistant({ apiKey: k.apiKey, model: k.model || DEFAULT_MODEL, messages: chat, data: S, today: today(), now: nowHM(), hidden })
         : await api("POST", "/api/assistant", { messages: chat, data: S, today: today(), now: nowHM(), hidden }, 90000);
       if (r.changed && r.data) replaceData(r.data);
       chat.push({ role: "assistant", content: r.reply || "Done." });
     } catch (e) {
-      chat.push({ role: "assistant", content: e.status === 401 ? "I need an Anthropic API key first — add one in Settings ⚙︎." : e.name === "AbortError" || e instanceof TypeError ? "I can't connect right now. Add your API key in Settings ⚙︎ so I work straight from your phone." : `Sorry, something went wrong: ${e.message}` });
+      chat.push({ role: "assistant", content: e.status === 401 ? (/rejected/.test(e.message) ? "OpenAI rejected the API key. Check it in Settings ⚙︎ (it should start with sk-)." : "I need an OpenAI API key first — add one in Settings ⚙︎.") : e.name === "AbortError" || e instanceof TypeError ? "I can't connect right now. Add your API key in Settings ⚙︎ so I work straight from your phone." : `Sorry, something went wrong: ${e.message}` });
     }
     go("jay", {}, false);
     setTimeout(() => window.scrollTo({ top: document.body.scrollHeight }), 50);

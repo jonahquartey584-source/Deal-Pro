@@ -1,7 +1,9 @@
-// Jay, the built-in assistant. Talks to Claude through the Messages API with
-// plain fetch (no SDK needed) and can add things to the app through tools.
-// Runs on her phone (key saved on the phone) or on the Mac server.
-const API = "https://api.anthropic.com/v1/messages";
+// Jay, the built-in assistant. Talks to OpenAI through the Chat Completions
+// API with plain fetch (no SDK needed) and can add things to the app through
+// tools (function calling). Runs on her phone (key saved on the phone) or on
+// the Mac server.
+const API = "https://api.openai.com/v1/chat/completions";
+export const DEFAULT_MODEL = "gpt-6.1-terra";
 const id = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
@@ -70,37 +72,38 @@ function summary(d, today, hidden = []) {
   });
 }
 
-export async function runAssistant({ apiKey, model, messages, data, today, now, browser = false, hidden = [] }) {
+export async function runAssistant({ apiKey, model, messages, data, today, now, hidden = [] }) {
   const d = ensure(structuredClone(data || {}));
   today ||= new Date().toISOString().slice(0, 10);
   const wd = DAYS[new Date(today + "T12:00").getDay()];
   const system = `You are Jay, the warm, upbeat assistant inside Qp Homebase "Ruby Edition", a private personal app (planner, to-dos, housework, meal planner, period tracker, budget, Bible notes and journal). Today is ${wd} ${today}${now ? `, time ${now}` : ""}. Use British English and £. Keep replies short and friendly, phone-sized. When asked to add or plan things, use the tools, then confirm briefly. Never give medical diagnoses; for health worries suggest a GP.\n\nHer current data:\n${summary(d, today, hidden)}${hidden.length ? `\n\nThese sections are locked with Face ID, so you cannot see them and must not guess about them: ${hidden.join(", ")}. Do not add entries to them either.` : ""}`;
-  const convo = messages.filter((m) => m && typeof m.content === "string" && m.content.trim()).slice(-20)
-    .map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content }));
+  const convo = [{ role: "system", content: system }, ...messages.filter((m) => m && typeof m.content === "string" && m.content.trim()).slice(-20)
+    .map((m) => ({ role: m.role === "assistant" ? "assistant" : "user", content: m.content }))];
+  const tools = TOOLS.map((t) => ({ type: "function", function: { name: t.name, description: t.description, parameters: t.input_schema } }));
   let changed = false;
   for (let i = 0; i < 8; i++) {
     const r = await fetch(API, {
       method: "POST",
-      headers: { "content-type": "application/json", "x-api-key": apiKey, "anthropic-version": "2023-06-01", ...(browser && { "anthropic-dangerous-direct-browser-access": "true" }) },
-      body: JSON.stringify({ model, max_tokens: 2000, system, tools: TOOLS, messages: convo }),
+      headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ model: model || DEFAULT_MODEL, messages: convo, tools, max_completion_tokens: 2000 }),
     });
     const body = await r.json().catch(() => ({}));
     if (!r.ok) {
-      const err = new Error(r.status === 401 ? "Your Anthropic API key was rejected. Check it in Settings." : `Claude error (${r.status}): ${body?.error?.message || "unknown"}`);
+      const msg = body?.error?.message || "unknown";
+      const err = new Error(r.status === 401 ? "Your OpenAI API key was rejected. Check it in Settings." : r.status === 429 ? `OpenAI says: ${msg} (check your OpenAI billing/credit)` : r.status === 404 ? `OpenAI doesn't recognise the model "${model}". Change it in Settings.` : `OpenAI error (${r.status}): ${msg}`);
       err.status = r.status === 401 ? 401 : 502; throw err;
     }
-    convo.push({ role: "assistant", content: body.content });
-    const uses = body.content.filter((b) => b.type === "tool_use");
-    if (body.stop_reason !== "tool_use" || !uses.length) {
-      const reply = body.content.filter((b) => b.type === "text").map((b) => b.text).join("\n").trim();
-      return { reply, changed, data: d };
+    const msg = body.choices?.[0]?.message || {};
+    const calls = msg.tool_calls || [];
+    if (!calls.length) return { reply: (msg.content || "").trim(), changed, data: d };
+    convo.push({ role: "assistant", content: msg.content || null, tool_calls: calls });
+    for (const c of calls) {
+      const name = c.function?.name; let args = {};
+      try { args = JSON.parse(c.function?.arguments || "{}"); } catch {}
+      const blocked = (name === "add_journal" && hidden.includes("journal")) || (name === "log_money" && hidden.includes("money"));
+      let out; try { if (blocked) throw new Error("That section is locked with Face ID. Ask her to unlock it first."); out = applyTool(d, name, args, today); changed = true; } catch (e) { out = "Error: " + e.message; }
+      convo.push({ role: "tool", tool_call_id: c.id, content: out });
     }
-    const results = uses.map((u) => {
-      const blocked = (u.name === "add_journal" && hidden.includes("journal")) || (u.name === "log_money" && hidden.includes("money"));
-      let out; try { if (blocked) throw new Error("That section is locked with Face ID. Ask her to unlock it first."); out = applyTool(d, u.name, u.input || {}, today); changed = true; } catch (e) { out = "Error: " + e.message; }
-      return { type: "tool_result", tool_use_id: u.id, content: out };
-    });
-    convo.push({ role: "user", content: results });
   }
   return { reply: "Done.", changed, data: d };
 }

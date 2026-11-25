@@ -2,7 +2,7 @@
 
 A private personal app for RubyQp. It runs on a computer at home and opens on
 the phone like a normal app. Nothing goes to the internet except Jay's chats
-(only if an Anthropic API key is added).
+(only if an OpenAI API key is added).
 
 **What's inside**
 
@@ -75,7 +75,7 @@ the backup copy on the MacBook is not encrypted.
 
 ## Jay
 
-On her phone: Settings → paste an Anthropic API key → **Save on this phone**.
+On her phone: Settings → paste an **OpenAI** API key (from platform.openai.com → API keys, with some billing credit) → **Save on this phone**. The model defaults to `gpt-6.1-terra` and can be changed there.
 Jay then works straight from the phone, without the MacBook. Everything else
 works without a key.
 
