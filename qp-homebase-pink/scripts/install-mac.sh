@@ -41,13 +41,23 @@ cat > "$PLIST" <<PL
 </dict></plist>
 PL
 
-launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null || true
-launchctl bootstrap "gui/$(id -u)" "$PLIST" 2>/dev/null || launchctl load -w "$PLIST"
-sleep 2
-if curl -fsS "http://localhost:$PORT/api/health" >/dev/null 2>&1; then
+DOMAIN="gui/$(id -u)"
+# stop the old copy and wait until macOS has really unloaded it (avoids "Load failed: 5: Input/output error")
+launchctl bootout "$DOMAIN/$LABEL" 2>/dev/null || true
+for _ in $(seq 1 20); do launchctl print "$DOMAIN/$LABEL" >/dev/null 2>&1 || break; sleep 0.5; done
+started=""
+for _ in 1 2 3 4 5; do
+  if launchctl bootstrap "$DOMAIN" "$PLIST" 2>/dev/null; then started=1; break; fi
+  if launchctl print "$DOMAIN/$LABEL" >/dev/null 2>&1; then launchctl kickstart -k "$DOMAIN/$LABEL" 2>/dev/null && { started=1; break; }; fi
+  sleep 1
+done
+[ -n "$started" ] || launchctl load -w "$PLIST" 2>/dev/null || true
+ok=""
+for _ in $(seq 1 20); do curl -fsS "http://localhost:$PORT/api/health" >/dev/null 2>&1 && { ok=1; break; }; sleep 0.5; done
+if [ -n "$ok" ]; then
   echo "Qp Homebase Ruby Edition is running at http://localhost:$PORT and will start every time you log in."
   open "http://localhost:$PORT" || true
   echo "Next, for the phone:  bash scripts/phone.sh"
 else
-  echo "Installed, but it didn't answer yet. Check $APP_DIR/data/server.log"
+  echo "Installed, but it didn't answer yet. Wait 10 seconds and run this script again, or check $APP_DIR/data/server.log"
 fi
