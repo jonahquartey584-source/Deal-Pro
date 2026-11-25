@@ -50,8 +50,9 @@ body {
   overscroll-behavior-y: none;
 }
 #liquid, .bg-video { position: fixed; inset: 0; width: 100vw; height: 100lvh; z-index: 0; pointer-events: none; }
-.bg-video { object-fit: cover; opacity: 0; visibility: visible; transition: opacity .6s ease; background: var(--bg) center / cover no-repeat; transform: translateZ(0); will-change: opacity; }
-.bg-video.on { opacity: 1; }
+.bg-video { object-fit: cover; opacity: 1; background: var(--bg) center / cover no-repeat; transform: translateZ(0); will-change: opacity; }
+#bgCanvas { position: fixed; inset: 0; width: 100vw; height: 100lvh; z-index: 0; pointer-events: none; display: block; background: var(--bg); }
+#bgCanvas[hidden] { display: none; }
 video::-webkit-media-controls-start-playback-button, video::-webkit-media-controls-overlay-play-button, video::-webkit-media-controls-overlay-enclosure, video::-webkit-media-controls-enclosure,
 .bg-video::-webkit-media-controls, .bg-video::-webkit-media-controls-panel, .bg-video::-webkit-media-controls-play-button,
 .bg-video::-webkit-media-controls-start-playback-button, .bg-video::-webkit-media-controls-overlay-play-button { display: none !important; -webkit-appearance: none; opacity: 0 !important; }

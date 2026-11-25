@@ -1,7 +1,7 @@
 // Ruby Homebase service worker: the app opens instantly from the phone's own
 // storage, then refreshes itself in the background. Your data (/api/) always
 // goes to the home computer; videos stream normally (with Range requests).
-const VERSION = "ruby-1.7.1";
+const VERSION = "ruby-1.8.0";
 const SHELL = [
   "./", "index.html", "style.css", "manifest.webmanifest",
   "js/app.js", "js/icons.js", "js/liquid.js", "js/assistant.js", "js/lock.js",
@@ -23,7 +23,18 @@ self.addEventListener("fetch", (e) => {
   const req = e.request, url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== location.origin) return;
   if (url.pathname.startsWith("/api/") || url.pathname.endsWith(".mp4") || req.headers.has("range")) return; // network as normal
-  const key = req.mode === "navigate" ? "index.html" : req;
+  if (req.mode === "navigate") {
+    // opening the app: newest version from the MacBook if it answers within 2 s, otherwise the copy on the phone
+    e.respondWith(caches.open(VERSION).then(async (cache) => {
+      const net = fetch(req, { cache: "no-cache" }).then((res) => { if (res.ok) cache.put("index.html", res.clone()); return res; });
+      const timeout = new Promise((r) => setTimeout(r, 2000));
+      const res = await Promise.race([net.catch(() => null), timeout]);
+      return res || (await cache.match("index.html")) || (await net.catch(() => new Response("Offline", { status: 503 })));
+    }));
+    e.waitUntil(self.registration.update().catch(() => {}));
+    return;
+  }
+  const key = req;
   e.respondWith(caches.open(VERSION).then(async (cache) => {
     const hit = await cache.match(key, { ignoreSearch: true });
     const fresh = fetch(req).then((res) => { if (res.ok && res.type === "basic") cache.put(key, res.clone()); return res; }).catch(() => null);

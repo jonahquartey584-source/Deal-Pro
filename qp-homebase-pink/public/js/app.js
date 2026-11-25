@@ -4,7 +4,7 @@ import { icon } from "./icons.js";
 import { lockConfig, isLocked, unlockWithFaceId, unlockWithPin, LOCKABLE } from "./lock.js";
 export { icon };
 
-export const VERSION = "1.7.1";
+export const VERSION = "1.8.0";
 const LS_KEY = "qp-homebase-cache";
 
 // ---------- helpers ----------
@@ -180,44 +180,76 @@ let liquidOn = false;
 function showLiquid() { const c = document.getElementById("liquid"); c.hidden = false; if (!liquidOn) { liquidOn = true; startLiquid(c); } }
 const HEVC = (() => { try { const v = document.createElement("video"); return /probably|maybe/.test(v.canPlayType('video/mp4; codecs="hvc1"')); } catch { return false; } })();
 let activeVideo = null;
+// The moving background is painted onto a canvas, frame by frame. The <video>
+// itself plays underneath and is always covered by the canvas, so whatever
+// iOS draws on a video (like its play button when it pauses one) can never be
+// seen. The canvas always shows something: the still frame first, then the
+// video's frames; if iOS pauses the video it simply holds the last frame.
+const bgc = document.getElementById("bgCanvas");
+const bctx = bgc.getContext("2d", { alpha: false });
+let fadeFrom = 0, drawing = null;
+function sizeCanvas() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 3), r = bgc.getBoundingClientRect();
+  const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+  if (bgc.width !== w || bgc.height !== h) { bgc.width = w; bgc.height = h; }
+}
+function paint(src, sw, sh, alpha = 1) {
+  if (!sw || !sh) return;
+  const W = bgc.width, H = bgc.height, k = Math.max(W / sw, H / sh), w = sw * k, h = sh * k;
+  bctx.globalAlpha = alpha; bctx.drawImage(src, (W - w) / 2, (H - h) / 2, w, h); bctx.globalAlpha = 1;
+}
+const fadeAlpha = () => Math.min(1, Math.max(0.08, (performance.now() - fadeFrom) / 700));
+function paintPoster(url) {
+  const img = new Image();
+  img.onload = () => {
+    sizeCanvas(); fadeFrom = performance.now();
+    const step = () => { if (activeVideo?.readyState >= 2 && !activeVideo.paused) return; const a = fadeAlpha(); paint(img, img.naturalWidth, img.naturalHeight, a); if (a < 1) requestAnimationFrame(step); };
+    step();
+  };
+  img.src = url;
+}
+function paintVideo(vid) {
+  if (drawing === vid) return; drawing = vid; fadeFrom = performance.now();
+  const next = (cb) => (vid.requestVideoFrameCallback ? vid.requestVideoFrameCallback(cb) : requestAnimationFrame(cb));
+  const step = () => {
+    if (vid !== activeVideo) { if (drawing === vid) drawing = null; return; }
+    if (vid.readyState >= 2) paint(vid, vid.videoWidth, vid.videoHeight, fadeAlpha());
+    if (vid.paused) { drawing = null; return; } // holds the last frame
+    next(step);
+  };
+  next(step);
+}
+window.addEventListener("resize", () => { sizeCanvas(); if (activeVideo?.readyState >= 2) paint(activeVideo, activeVideo.videoWidth, activeVideo.videoHeight); });
+
 function setBackgroundVideo(id) {
   const canvas = document.getElementById("liquid");
   const cur = activeVideo || document.getElementById("bgVideo");
-  if (S.settings.bgVideo === false) { document.querySelectorAll(".bg-video").forEach((v) => { v.pause(); v.classList.remove("on"); }); showLiquid(); return; }
+  sizeCanvas();
+  if (S.settings.bgVideo === false) {
+    document.querySelectorAll(".bg-video").forEach((v) => v.pause());
+    bgc.hidden = true; showLiquid(); return;
+  }
+  bgc.hidden = false; canvas.hidden = true;
   const src = `media/${id}${HEVC ? ".hevc" : ""}.mp4?v=${VERSION}`;
-  if (cur.dataset.src === src && cur.classList.contains("on")) return;
-  // first video: use the element in the page; later: a fresh layer on top that fades in
+  if (cur.dataset.src === src && !cur.paused) return;
+  const poster = `media/${id}.jpg?v=${VERSION}`;
+  document.getElementById("bgPoster").style.backgroundImage = `url(${poster})`;
+  paintPoster(poster);
   const vid = cur.dataset.src ? cur.cloneNode(false) : cur;
-  vid.removeAttribute("id"); vid.classList.add("bg-video"); vid.classList.remove("on");
-  vid.muted = true; vid.playsInline = true; vid.loop = true;
-  document.getElementById("bgPoster").style.backgroundImage = `url(media/${id}.jpg?v=${VERSION})`;
-  vid.removeAttribute("poster"); vid.controls = false; vid.disablePictureInPicture = true; vid.dataset.src = src;
-  if (vid !== cur) cur.after(vid);
+  vid.removeAttribute("id"); vid.classList.add("bg-video");
+  vid.muted = true; vid.playsInline = true; vid.loop = true; vid.controls = false;
+  vid.removeAttribute("poster"); vid.disablePictureInPicture = true; vid.dataset.src = src;
+  if (vid !== cur) { cur.after(vid); setTimeout(() => { cur.pause(); cur.removeAttribute("src"); cur.load(); cur.remove(); }, 1200); }
   let tried264 = false;
-  vid.onerror = () => {
-    if (HEVC && !tried264) { tried264 = true; vid.src = `media/${id}.mp4?v=${VERSION}`; vid.play().catch(() => {}); return; }
-    vid.classList.remove("on"); showLiquid();
-  };
-  // The video is only ever on screen while it is really playing. If iOS pauses
-  // it (Low Power Mode, switching apps, locking the phone) it fades out to the
-  // still frame underneath, so iOS never has a paused video to draw its play
-  // button on. It fades back in as soon as it plays again.
-  let replaced = false;
-  const show = () => {
-    if (vid !== activeVideo) return;
-    vid.classList.add("on"); canvas.hidden = true;
-    if (vid !== cur && !replaced) { replaced = true; setTimeout(() => { cur.pause(); cur.remove(); }, 900); }
-  };
-  const hide = () => vid.classList.remove("on");
-  vid.addEventListener("playing", show);
-  for (const ev of ["pause", "emptied", "ended", "abort"]) vid.addEventListener(ev, hide);
-  // the still frame shows instantly; the video only starts downloading once the app is up
-  const start = () => { vid.src = src; vid.play().catch(() => {}); };
-  if (document.readyState === "complete") start(); else window.addEventListener("load", () => setTimeout(start, 150), { once: true });
+  vid.onerror = () => { if (HEVC && !tried264) { tried264 = true; vid.src = `media/${id}.mp4?v=${VERSION}`; vid.play().catch(() => {}); } };
+  vid.addEventListener("playing", () => paintVideo(vid));
   activeVideo = vid;
+  // the still frame shows instantly; the video only starts downloading once the app is up
+  const start = () => { if (activeVideo === vid) { vid.src = src; vid.play().catch(() => {}); } };
+  if (document.readyState === "complete") start(); else window.addEventListener("load", () => setTimeout(start, 150), { once: true });
 }
 const resumeVideo = () => { if (activeVideo?.getAttribute("src") && activeVideo.paused && S.settings.bgVideo !== false) activeVideo.play().catch(() => {}); };
-document.addEventListener("visibilitychange", () => { if (document.hidden) activeVideo?.classList.remove("on"); else resumeVideo(); });
+document.addEventListener("visibilitychange", () => { if (!document.hidden) resumeVideo(); });
 window.addEventListener("pageshow", resumeVideo);
 // iOS sometimes only allows playback after a touch: every tap tries again while it's paused
 for (const ev of ["touchend", "click"]) document.addEventListener(ev, resumeVideo, { passive: true });
@@ -349,7 +381,7 @@ if ("serviceWorker" in navigator && (location.protocol === "https:" || location.
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));
   // after an update, switch to the new version once (quietly, only before she starts using the page)
   const hadController = !!navigator.serviceWorker.controller;
-  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController && !document.getElementById("welcome").hidden) location.reload(); });
+  navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController && !document.getElementById("welcome").hidden && !sessionStorage.getItem("rh-reloaded")) { sessionStorage.setItem("rh-reloaded", "1"); location.reload(); } });
 }
 
 // ---------- boot ----------
