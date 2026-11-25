@@ -2,9 +2,6 @@ import { S, save, today, addDays, mondayOf, fmtDate, DAY_LONG, esc, uid, rerende
 import { SLOTS, mealEntry, mealName, mealCalories, dayCalories, recipeById, shoppingFor } from "./shared.js";
 
 export const title = "Meal planner";
-const EMOJI = ["🥗", "🍝", "🍲", "🥘", "🍛", "🍳", "🥞", "🌮", "🍜", "🥑", "🍓", "🍰"];
-const emojiFor = (r) => r.emoji || EMOJI[[...r.name].reduce((a, c) => a + c.charCodeAt(0), 0) % EMOJI.length];
-const imgStyle = (r) => (r.image ? `background-image:url('${esc(r.image)}')` : "");
 
 export function render(el, p) {
   const tab = p.tab || "plan", date = p.date || today(), mon = mondayOf(date);
@@ -81,12 +78,10 @@ export function render(el, p) {
 
 function favCarousel(favs, big) {
   return `<div class="hscroll">${favs.map((r) => `<button class="recipe-card" data-act="open" data-id="${r.id}" style="text-align:left;padding:0">
-    <div class="img" style="${imgStyle(r)}${big ? ";height:170px" : ""}">${r.image ? "" : emojiFor(r)}</div>
-    <div class="body"><b>${esc(r.name)}</b><div class="small muted">${r.calories ? `${r.calories} kcal / serving` : "Calories not set"}</div></div></button>`).join("")}</div>`;
+    <div class="body"><span class="fav-heart">♥</span><b>${esc(r.name)}</b><div class="small muted">${r.calories ? `${r.calories} kcal / serving` : "Calories not set"} · serves ${r.servings || 1}</div></div></button>`).join("")}</div>`;
 }
 function recipeRow(r) {
   return `<li class="item"><button class="btn ghost small" data-act="open" data-id="${r.id}" style="flex:1;text-align:left;border:0;padding:0;display:flex;gap:10px;align-items:center">
-    <span style="width:46px;height:46px;border-radius:12px;flex:none;display:grid;place-items:center;font-size:1.4rem;background:linear-gradient(135deg,var(--blob1),var(--blob2));background-size:cover;background-position:center;${imgStyle(r)}">${r.image ? "" : emojiFor(r)}</span>
     <span class="t"><b>${esc(r.name)}</b><div class="small muted">${r.calories || 0} kcal · serves ${r.servings || 1}</div></span></button>
     <button class="x" data-act="fav" data-id="${r.id}" style="color:var(--accent);font-size:1.3rem" aria-label="Favourite">${r.fav ? "♥" : "♡"}</button></li>`;
 }
@@ -119,8 +114,7 @@ function slotSheet(date, slot) {
 function recipeSheet(r, mon) {
   if (!r) return;
   const days = Array.from({ length: 7 }, (_, i) => addDays(mon, i));
-  openSheet(`<div class="recipe-card" style="max-width:none;margin:-4px 0 10px"><div class="img" style="height:170px;${imgStyle(r)}">${r.image ? "" : emojiFor(r)}</div></div>
-    <div class="row spread"><h2>${esc(r.name)}</h2><button class="x" id="fav" style="font-size:1.5rem;color:var(--accent)">${r.fav ? "♥" : "♡"}</button></div>
+  openSheet(`<div class="row spread"><h2>${esc(r.name)}</h2><button class="x" id="fav" style="font-size:1.5rem;color:var(--accent)">${r.fav ? "♥" : "♡"}</button></div>
     <div class="small muted">${r.calories || 0} kcal per serving · serves ${r.servings || 1}</div>
     <div class="card" style="margin:10px 0"><h3 style="margin-top:0">Add to the week</h3>
       <div class="grid2"><select class="input" id="d">${days.map((d) => `<option value="${d}" ${d === today() ? "selected" : ""}>${DAY_LONG[weekday(d)]} ${+d.slice(8)}</option>`).join("")}</select>
@@ -136,40 +130,21 @@ function recipeSheet(r, mon) {
 }
 
 function editRecipe(r) {
-  const isNew = !r; r ||= { name: "", servings: 1, calories: "", ingredients: [], method: "", fav: true, image: "" };
-  let image = r.image || "";
+  const isNew = !r; r ||= { name: "", servings: 1, calories: "", ingredients: [], method: "", fav: true };
   openSheet(`<h2>${isNew ? "Save a recipe" : "Edit recipe"}</h2>
     <label class="field">Name</label><input class="input" id="n" value="${esc(r.name)}" autofocus>
     <div class="grid2"><div><label class="field">Calories per serving</label><input class="input" id="kc" type="number" inputmode="numeric" value="${r.calories || ""}"></div><div><label class="field">Serves</label><input class="input" id="sv" type="number" min="1" value="${r.servings || 1}"></div></div>
     <label class="field">Ingredients (one per line, e.g. “200 g chicken breast”)</label><textarea class="input" id="ing" rows="6">${esc((r.ingredients || []).join("\n"))}</textarea>
     <label class="field">Method</label><textarea class="input" id="m">${esc(r.method || "")}</textarea>
-    <label class="field">Photo (optional)</label><div class="row"><input type="file" accept="image/*" id="img" class="input grow">${image ? `<button class="btn small" id="noimg">Remove</button>` : ""}</div>
     <label class="row" style="margin-top:10px;gap:8px"><input type="checkbox" id="fv" ${r.fav ? "checked" : ""}> Favourite ♥</label>
     <div class="row" style="margin-top:14px"><button class="btn primary grow" id="ok">Save</button>${isNew ? "" : `<button class="btn danger" id="del">Delete</button>`}<button class="btn" data-close>Cancel</button></div>`, (c) => {
-    c.querySelector("#img").onchange = async (e) => { const f = e.target.files[0]; if (f) { image = await shrink(f); toast("Photo added"); } };
-    c.querySelector("#noimg")?.addEventListener("click", () => { image = ""; toast("Photo removed"); });
     c.querySelector("#ok").onclick = () => {
       const v = (id) => c.querySelector(id).value.trim();
       if (!v("#n")) return toast("Give the recipe a name");
-      Object.assign(r, { name: v("#n"), calories: +v("#kc") || 0, servings: +v("#sv") || 1, ingredients: v("#ing").split("\n").map((s) => s.trim()).filter(Boolean), method: v("#m"), fav: c.querySelector("#fv").checked, image });
+      Object.assign(r, { name: v("#n"), calories: +v("#kc") || 0, servings: +v("#sv") || 1, ingredients: v("#ing").split("\n").map((s) => s.trim()).filter(Boolean), method: v("#m"), fav: c.querySelector("#fv").checked, image: "" });
       if (isNew) S.recipes.push({ id: uid(), ...r });
       save(); closeSheet(); toast("Recipe saved"); rerender();
     };
     c.querySelector("#del")?.addEventListener("click", () => { if (!confirm(`Delete ${r.name}?`)) return; S.recipes = S.recipes.filter((x) => x !== r); save(); closeSheet(); rerender(); });
-  });
-}
-
-// resize a photo so it stays small in the saved data
-function shrink(file, max = 640) {
-  return new Promise((res) => {
-    const img = new Image(), url = URL.createObjectURL(file);
-    img.onload = () => {
-      const k = Math.min(1, max / Math.max(img.width, img.height)), cv = document.createElement("canvas");
-      cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
-      cv.getContext("2d").drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
-      res(cv.toDataURL("image/jpeg", 0.78));
-    };
-    img.onerror = () => res("");
-    img.src = url;
   });
 }
