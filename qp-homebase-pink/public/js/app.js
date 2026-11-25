@@ -4,7 +4,7 @@ import { icon } from "./icons.js";
 import { lockConfig, isLocked, unlockWithFaceId, unlockWithPin, LOCKABLE } from "./lock.js";
 export { icon };
 
-export const VERSION = "1.9.0";
+export const VERSION = "2.0.0";
 const LS_KEY = "qp-homebase-cache";
 
 // ---------- helpers ----------
@@ -269,13 +269,15 @@ const VIEWS = {
   todo: () => import("./views/todo.js"), house: () => import("./views/house.js"),
   meals: () => import("./views/meals.js"), cycle: () => import("./views/cycle.js"),
   money: () => import("./views/money.js"), bible: () => import("./views/bible.js"),
-  journal: () => import("./views/journal.js"), jay: () => import("./views/jay.js"),
+  journal: () => import("./views/journal.js"),
   settings: () => import("./views/settings.js"), more: () => import("./views/more.js"),
 };
 const TAB_OF = { home: "home", planner: "planner", meals: "meals", money: "money" };
 let current = { name: "home", params: {} }, cleanup = null;
 
 export async function go(name, params = {}, push = true, animate = true) {
+  if (name === "jay") { import("./jay.js").then((m) => m.openJay(params)); return; } // Jay opens over the current page
+  if (document.body.classList.contains("jay-open")) import("./jay.js").then((m) => m.closeJay());
   if (!VIEWS[name]) name = "home";
   cleanup?.(); cleanup = null;
   current = { name, params };
@@ -397,6 +399,8 @@ async function boot() {
   window.onpopstate = (e) => go(e.state?.name || location.hash.slice(1) || "home", e.state?.params || {}, false);
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refresh(); });
   setInterval(reminderTick, 30000);
+  setTimeout(() => import("./jay.js").then((m) => m.initJay()).catch(() => {}), 300);
+  window.addEventListener("jay-changed", () => { if (document.getElementById("welcome").hidden) rerender(); });
   if (!sessionStorage.getItem("qp-welcomed")) showWelcome();
   else { document.getElementById("app").hidden = false; go(location.hash.slice(1) || "home", {}, false); }
   history.replaceState({ name: location.hash.slice(1) || "home", params: {} }, "");

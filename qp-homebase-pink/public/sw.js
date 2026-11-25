@@ -1,13 +1,13 @@
 // Ruby Homebase service worker: the app opens instantly from the phone's own
 // storage, then refreshes itself in the background. Your data (/api/) always
 // goes to the home computer; videos stream normally (with Range requests).
-const VERSION = "ruby-1.9.0";
+const VERSION = "ruby-2.0.0";
 const SHELL = [
   "./", "index.html", "style.css", "manifest.webmanifest",
-  "js/app.js", "js/icons.js", "js/liquid.js", "js/assistant.js", "js/lock.js",
+  "js/app.js", "js/icons.js", "js/liquid.js", "js/assistant.js", "js/lock.js", "js/jay.js", "js/jayorb.js",
   "js/views/shared.js", "js/views/home.js", "js/views/planner.js", "js/views/todo.js", "js/views/house.js",
   "js/views/meals.js", "js/views/cycle.js", "js/views/money.js", "js/views/bible.js", "js/views/journal.js",
-  "js/views/jay.js", "js/views/settings.js", "js/views/more.js",
+  "js/views/settings.js", "js/views/more.js",
   "fonts/archivo-latin.woff2", "fonts/great-vibes-latin.woff2",
   "brand/logo-full.webp", "brand/logo-mono.webp", "ruby-icon-180.png", "favicon-32.png",
   "media/pink-dark.jpg", "media/pink-light.jpg", "media/green-dark.jpg", "media/green-light.jpg",

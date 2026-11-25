@@ -1,5 +1,4 @@
-import { S, save, esc, toast, themeDots, THEMES, applyTheme, importData, rerender, today, VERSION, idbGet, idbSet, backupStatus, icon } from "../app.js";
-import { DEFAULT_MODEL } from "../assistant.js";
+import { S, save, esc, toast, themeDots, THEMES, applyTheme, importData, rerender, today, VERSION, backupStatus, icon } from "../app.js";
 import { lockConfig, LOCKABLE, hasProtection, isUnlocked, faceIdAvailable, setupFaceId, unlockWithFaceId, unlockWithPin, setPin, setSections, removeProtection } from "../lock.js";
 
 export const title = "Settings";
@@ -14,11 +13,19 @@ export function render(el) {
   <div class="card"><h2>Reminders</h2>
     <p class="small muted" style="margin-top:0">A notification 5 minutes before planner items with a time, while the app is open. On iPhone, add the app to your Home Screen first.</p>
     <button class="btn" id="notify">${S.settings.notify ? "✓ Reminders on — turn off" : "Turn on reminders"}</button></div>
-  <div class="card"><h2>Jay (assistant)</h2>
+  <div class="card" id="jayCard"><h2>Jay (assistant)</h2>
     <p class="small muted" style="margin-top:0" id="keyInfo">Checking…</p>
-    <input class="input" id="key" type="password" placeholder="Paste your OpenAI API key (sk-…)" autocomplete="off">
-    <label class="field">OpenAI model</label><input class="input" id="model" placeholder="gpt-6.1-terra" autocapitalize="off" autocorrect="off" spellcheck="false">
-    <div class="row" style="margin-top:8px"><button class="btn primary grow" id="saveKey">Save on this phone</button><button class="btn" id="delKey">Remove</button></div></div>
+    <label class="field" for="key">OpenAI API key</label>
+    <input class="input" id="key" type="password" placeholder="Paste your OpenAI API key (sk-…)" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <div class="row" style="margin-top:8px"><button class="btn primary grow" id="saveKey">Save on this phone</button><button class="btn" id="delKey">Remove</button></div>
+    <label class="field" for="model">Brain</label>
+    <select class="input" id="model"><option value="">Auto: quick, smarter or smartest as needed (recommended)</option><option value="gpt-6-luna">Always Luna (quick, cheapest)</option><option value="gpt-6.1-terra">Always Terra (smarter)</option><option value="gpt-6.2-sol">Always Sol (smartest)</option></select>
+    <label class="row" style="gap:8px;margin-top:12px"><input type="checkbox" id="jaySpeak"> Jay talks out loud</label>
+    <div class="grid2"><div><label class="field" for="jayVoice">Voice</label><select class="input" id="jayVoice">${["onyx", "ash", "echo", "fable", "ballad", "verse", "cedar"].map((v) => `<option value="${v}">${v[0].toUpperCase() + v.slice(1)}</option>`).join("")}</select></div>
+    <div><label class="field" for="jaySpeed">Talking speed</label><select class="input" id="jaySpeed"><option value="normal">Normal</option><option value="quick">Quick</option><option value="fast">Fast</option></select></div></div>
+    <label class="row" style="gap:8px;margin-top:12px"><input type="checkbox" id="jayWake"> Listen for “Hey Jay” while the app is open</label>
+    <button class="btn" id="jayTest" style="margin-top:10px">▶ Hear Jay</button>
+  </div>
   <div class="card"><h2>Your data</h2>
     <p class="small muted" style="margin-top:0">Everything is saved on this phone, so the app works anywhere, even with no internet and the MacBook off. Whenever the MacBook is on, a backup copy is saved there automatically.</p>
     <div class="row" style="gap:10px;margin:6px 0 12px"><span id="bdot" style="width:10px;height:10px;border-radius:50%;flex:none"></span><span class="small" id="bstat"></span></div>
@@ -34,16 +41,32 @@ export function render(el) {
     const p = await Notification.requestPermission();
     if (p === "granted") { S.settings.notify = true; save(); new Notification("Qp Homebase Ruby Edition", { body: "Reminders are on 💕" }); rerender(); } else toast("Notifications were not allowed");
   };
-  const info = el.querySelector("#keyInfo"), model = el.querySelector("#model");
-  const showKey = (k) => { info.textContent = k?.apiKey ? `Saved on this phone (${k.apiKey.slice(0, 7)}…${k.apiKey.slice(-4)}). Jay is ready.` : "Add your OpenAI API key to chat with Jay (platform.openai.com → API keys). Everything else works without one."; model.value = (k?.model && !k.model.startsWith("claude")) ? k.model : DEFAULT_MODEL; };
-  idbGet("jay").then(showKey);
-  el.querySelector("#saveKey").onclick = async () => {
-    const cur = (await idbGet("jay")) || {}, k = el.querySelector("#key").value.trim();
-    if (k && !/^sk-/.test(k)) return toast("That doesn't look like an OpenAI key (they start with sk-)");
-    const next = { apiKey: k || cur.apiKey || "", model: model.value.trim() || DEFAULT_MODEL };
-    await idbSet("jay", next); el.querySelector("#key").value = ""; showKey(next); toast("Saved on this phone");
-  };
-  el.querySelector("#delKey").onclick = async () => { await idbSet("jay", {}); showKey({}); toast("Key removed"); };
+  const info = el.querySelector("#keyInfo");
+  import("../jay.js").then(async ({ loadJaySettings, saveJaySettings }) => {
+    const c = await loadJaySettings();
+    const showKey = (k) => (info.textContent = k.apiKey ? `Saved on this phone (${k.apiKey.slice(0, 7)}…${k.apiKey.slice(-4)}). Jay is ready.` : "Add your OpenAI API key to talk to Jay. Get one at platform.openai.com → API keys. Everything else works without one.");
+    showKey(c);
+    el.querySelector("#model").value = c.model || ""; el.querySelector("#jaySpeak").checked = c.speak !== false;
+    el.querySelector("#jayVoice").value = c.voice || "onyx"; el.querySelector("#jaySpeed").value = c.speed || "quick"; el.querySelector("#jayWake").checked = !!c.wake;
+    const save = async (patch, msg) => { showKey(await saveJaySettings(patch)); if (msg) toast(msg); };
+    el.querySelector("#saveKey").onclick = async () => {
+      const k = el.querySelector("#key").value.trim();
+      if (!k) return toast("Paste the key first");
+      if (!/^sk-/.test(k)) return toast("That doesn't look like an OpenAI key (they start with sk-)");
+      el.querySelector("#key").value = ""; await save({ apiKey: k }, "Saved on this phone");
+    };
+    el.querySelector("#delKey").onclick = () => save({ apiKey: "" }, "Key removed");
+    el.querySelector("#model").onchange = (e) => save({ model: e.target.value }, "Saved");
+    el.querySelector("#jaySpeak").onchange = (e) => save({ speak: e.target.checked });
+    el.querySelector("#jayVoice").onchange = (e) => save({ voice: e.target.value });
+    el.querySelector("#jaySpeed").onchange = (e) => save({ speed: e.target.value });
+    el.querySelector("#jayWake").onchange = (e) => save({ wake: e.target.checked }, e.target.checked ? "Say “Hey Jay” any time the app is open" : "“Hey Jay” is off");
+    el.querySelector("#jayTest").onclick = async () => {
+      const k = await loadJaySettings(); if (!k.apiKey) return toast("Add the OpenAI key first");
+      try { const { speechClip } = await import("../assistant.js"); const a = new Audio(await speechClip(k.apiKey, "Hi Ruby! It's Jay. I'm all set up and ready when you are.", k.voice, k.speed)); await a.play(); }
+      catch (e) { toast(e.message); }
+    };
+  });
   renderPrivacy(el.querySelector("#privBody"));
   const b = backupStatus();
   const when = b.backedUpAt ? new Date(b.backedUpAt).toLocaleString("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : null;
