@@ -4,7 +4,7 @@ import { icon } from "./icons.js";
 import { lockConfig, isLocked, unlockWithFaceId, unlockWithPin, LOCKABLE } from "./lock.js";
 export { icon };
 
-export const VERSION = "1.7.0";
+export const VERSION = "1.7.1";
 const LS_KEY = "qp-homebase-cache";
 
 // ---------- helpers ----------
@@ -198,19 +198,29 @@ function setBackgroundVideo(id) {
     if (HEVC && !tried264) { tried264 = true; vid.src = `media/${id}.mp4?v=${VERSION}`; vid.play().catch(() => {}); return; }
     vid.classList.remove("on"); showLiquid();
   };
+  // The video is only ever on screen while it is really playing. If iOS pauses
+  // it (Low Power Mode, switching apps, locking the phone) it fades out to the
+  // still frame underneath, so iOS never has a paused video to draw its play
+  // button on. It fades back in as soon as it plays again.
+  let replaced = false;
   const show = () => {
+    if (vid !== activeVideo) return;
     vid.classList.add("on"); canvas.hidden = true;
-    if (vid !== cur) setTimeout(() => { cur.pause(); cur.remove(); }, 900);
+    if (vid !== cur && !replaced) { replaced = true; setTimeout(() => { cur.pause(); cur.remove(); }, 900); }
   };
-  vid.addEventListener("playing", show, { once: true });
+  const hide = () => vid.classList.remove("on");
+  vid.addEventListener("playing", show);
+  for (const ev of ["pause", "emptied", "ended", "abort"]) vid.addEventListener(ev, hide);
   // the still frame shows instantly; the video only starts downloading once the app is up
   const start = () => { vid.src = src; vid.play().catch(() => {}); };
   if (document.readyState === "complete") start(); else window.addEventListener("load", () => setTimeout(start, 150), { once: true });
   activeVideo = vid;
 }
-document.addEventListener("visibilitychange", () => { if (!document.hidden) activeVideo?.play().catch(() => {}); });
-// iOS only allows playback after a touch in some modes: retry on first tap.
-document.addEventListener("touchstart", () => activeVideo?.play().catch(() => {}), { once: true, passive: true });
+const resumeVideo = () => { if (activeVideo?.getAttribute("src") && activeVideo.paused && S.settings.bgVideo !== false) activeVideo.play().catch(() => {}); };
+document.addEventListener("visibilitychange", () => { if (document.hidden) activeVideo?.classList.remove("on"); else resumeVideo(); });
+window.addEventListener("pageshow", resumeVideo);
+// iOS sometimes only allows playback after a touch: every tap tries again while it's paused
+for (const ev of ["touchend", "click"]) document.addEventListener(ev, resumeVideo, { passive: true });
 export function themeDots(container, onPick) {
   container.innerHTML = THEMES.map((t) => `<button class="theme-dot ${S.theme === t.id ? "on" : ""}" data-theme-id="${t.id}" title="${t.name}" aria-label="${t.name}" style="--a:${t.a};--b:${t.b}"></button>`).join("");
   container.onclick = (e) => {
