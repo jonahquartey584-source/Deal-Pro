@@ -1,0 +1,43 @@
+{
+  "ownerName": "Jonah",
+
+  "mode": "draft",
+  "_mode_help": "draft = AI writes a reply and sends it to you for approval; auto = AI replies straight away; off = nothing is sent, you just get alerts",
+
+  "notifyMe": true,
+  "replyToGroups": false,
+  "cooldownMinutes": 30,
+  "replyDelaySeconds": [8, 25],
+
+  "ai": {
+    "enabled": true,
+    "model": "claude-opus-5-5",
+    "effort": "low",
+    "persona": "Friendly and relaxed, British English, uses the odd emoji but not many. Busy with work during the day."
+  },
+
+  "quietHours": {
+    "enabled": true,
+    "start": "23:00",
+    "end": "07:30",
+    "message": "Hey, I'm offline for the night. I'll get back to you in the morning 🙏"
+  },
+
+  "keywordReplies": [
+    {
+      "match": ["urgent", "emergency"],
+      "reply": "Got it. If it's really urgent, please call me."
+    }
+  ],
+
+  "fallbackReply": "",
+
+  "vipList": [],
+  "_vipList_help": "Numbers that never get an automatic reply. You're alerted and reply yourself. Example: [\"+44 7700 900123\"]",
+
+  "allowList": [],
+  "_allowList_help": "If you put numbers here, ONLY these people get automatic replies. Leave empty for everyone.",
+
+  "blockList": [],
+  "_blockList_help": "Numbers the bot ignores completely (no reply, no alert)."
+}
