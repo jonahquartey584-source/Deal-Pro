@@ -29,14 +29,14 @@ What it does:
 ### Install (one time)
 
 1. Install **Node.js 20 or newer** from https://nodejs.org (the LTS download).
-2. Open **Terminal** and get the code. Use `git clone` if you haven't cloned this repo yet; otherwise skip it.
+2. Open **Terminal** and copy the bot into its own folder in your home directory (`~/whatsapp-bot`). These commands download it, keep only the bot, and delete the rest:
 
 ```bash
-git clone -b claude/keen-cerf-1ok1pd https://github.com/jonahquartey584-source/Deal-Pro.git
+git clone --depth 1 -b claude/keen-cerf-1ok1pd https://github.com/jonahquartey584-source/Deal-Pro.git /tmp/wa-download && cp -R /tmp/wa-download/whatsapp-bot ~/whatsapp-bot && rm -rf /tmp/wa-download
 ```
 
 ```bash
-cd Deal-Pro/whatsapp-bot
+cd ~/whatsapp-bot
 ```
 
 ```bash
@@ -101,10 +101,10 @@ Each AI reply is one Claude request at low effort, roughly a fraction of a penny
 
 Install the **WhatsApp Business** app on your phone and register your business number. Then open **Settings → Business tools**:
 
-- **Greeting message:** sent automatically the first time someone messages you, or after 14 days of no chat. Example: "Hi! Thanks for contacting Deal Pro 👋 How can we help? For deal analysis visit usedealpro.com".
+- **Greeting message:** sent automatically the first time someone messages you, or after 14 days of no chat. Example: "Hi! Thanks for getting in touch 👋 How can I help?"
 - **Away message:** set it to *Outside of business hours*, and fill in your hours under **Business profile → Business hours**.
 - **Quick replies:** saved answers you send by typing `/`, for example `/price` or `/howitworks`. These are good for questions you get often.
 - **Labels:** tag chats as *New lead*, *Pending payment*, *Follow up* and so on, so your inbox stays organised.
 - **Catalogue:** list your plans or services so customers can browse them in the chat.
 
-If you later want **AI replies on the business number** too, Meta's WhatsApp Business Platform (Cloud API) can be connected to the same number while you keep using the app on your phone ("coexistence"). That's the officially supported way to automate a business number, and it can be built as a Netlify function alongside the Deal Pro site.
+If you later want **AI replies on the business number** too, Meta's WhatsApp Business Platform (Cloud API) can be connected to the same number while you keep using the app on your phone ("coexistence"). That's the officially supported way to automate a business number.
