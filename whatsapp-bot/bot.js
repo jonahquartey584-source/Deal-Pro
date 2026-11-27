@@ -364,7 +364,7 @@ async function handleChat(chat, person) {
     return;
   }
 
-  // Let Claude reply as you, or hold.
+  // Let the AI reply as you, or hold.
   const history = recent.map((m) => ({ fromMe: m.fromMe, text: describe(m) })).filter((m) => !m.text.startsWith(BOT_TAG));
   let result;
   try {
@@ -377,7 +377,7 @@ async function handleChat(chat, person) {
       history,
     });
   } catch (err) {
-    console.error('Claude request failed:', err.message);
+    console.error('AI request failed:', err.message);
     await alert(chatId, person.name, `*${person.name}*: ${clip(latest)}\n_(couldn't auto-reply: ${err.message})_`);
     return;
   }
