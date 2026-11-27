@@ -1,4 +1,4 @@
-// Pure decision logic: given an incoming message and the config, decide what to do.
+// Pure decision logic: given an incoming message and the current state, decide what to do.
 // Kept free of WhatsApp and network code so it can be tested on its own.
 
 /** Strip everything but digits, so "+44 7700 900123" and "447700900123@c.us" compare equal. */
@@ -6,10 +6,19 @@ export function digits(value) {
   return String(value ?? '').replace(/@.*$/, '').replace(/\D/g, '');
 }
 
-/** True when the number appears in the list (entries may be written with +, spaces or dashes). */
-export function inList(number, list = []) {
+/**
+ * True when the person is in the list. Entries can be phone numbers in any format
+ * ("+44 7700 900123") or contact names as saved in your phone ("Mum").
+ */
+export function inList({ number, name }, list = []) {
   const n = digits(number);
-  return n !== '' && list.some((entry) => digits(entry) === n);
+  const nm = String(name ?? '').trim().toLowerCase();
+  return list.some((entry) => {
+    const e = String(entry).trim();
+    const d = digits(e);
+    if (d.length >= 6) return d === n; // looks like a phone number
+    return e.toLowerCase() === nm && nm !== '';
+  });
 }
 
 function toMinutes(hhmm) {
@@ -26,50 +35,38 @@ export function isQuietTime(quietHours, date = new Date()) {
   return start <= end ? now >= start && now < end : now >= start || now < end;
 }
 
-/** First keyword rule whose words appear in the message (whole-word, case-insensitive). */
-export function matchKeyword(text, keywordReplies = []) {
-  const lower = String(text ?? '').toLowerCase();
-  return (
-    keywordReplies.find((rule) =>
-      (rule.match ?? []).some((word) => {
-        const escaped = String(word).toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        return new RegExp(`(^|\\W)${escaped}($|\\W)`).test(lower);
-      }),
-    ) ?? null
-  );
-}
-
 /**
  * Decide how to handle one incoming message.
  *
- * Returns { action, reason, reply? } where action is one of:
- *   "ignore"  - do nothing at all
- *   "notify"  - only tell the owner about it
- *   "fixed"   - send a fixed reply (keyword or quiet-hours message)
- *   "ai"      - ask Claude for a reply (sent or drafted depending on mode)
+ * Returns { action, reason } where action is one of:
+ *   "ignore"  - do nothing (group, blocked, or you're chatting with them yourself right now)
+ *   "forward" - don't reply, just send it to your homebase chat
+ *   "ai"      - let the bot handle it (reply in your style, or "hold on" + forward)
  */
-export function decide({ config, number, isGroup, text, now = new Date(), lastAutoReplyAt }) {
+export function decide({
+  config,
+  person, // { number, name }
+  isGroup,
+  now = new Date(),
+  youRepliedAt, // last time YOU typed in this chat yourself
+  waitingOnYou, // the bot said "hold on" here and you haven't answered yet
+  repliesLastHour = 0,
+}) {
   if (isGroup && !config.replyToGroups) return { action: 'ignore', reason: 'group chat' };
-  if (inList(number, config.blockList)) return { action: 'ignore', reason: 'blocked contact' };
-  if (config.allowList?.length && !inList(number, config.allowList)) {
-    return { action: 'notify', reason: 'not on allow list' };
-  }
-  if (inList(number, config.vipList)) return { action: 'notify', reason: 'VIP: you reply yourself' };
-  if (config.mode === 'off') return { action: 'notify', reason: 'bot is paused' };
+  if (inList(person, config.blockList)) return { action: 'ignore', reason: 'blocked' };
 
-  const cooldownMs = (config.cooldownMinutes ?? 0) * 60_000;
-  if (lastAutoReplyAt && now - lastAutoReplyAt < cooldownMs) {
-    return { action: 'notify', reason: 'already replied recently' };
+  const takeoverMs = (config.youTakeOverMinutes ?? 15) * 60_000;
+  if (youRepliedAt && now - youRepliedAt < takeoverMs) {
+    return { action: 'ignore', reason: "you're chatting with them yourself" };
   }
 
-  const keyword = matchKeyword(text, config.keywordReplies);
-  if (keyword) return { action: 'fixed', reason: `keyword "${keyword.match[0]}"`, reply: keyword.reply };
-
-  if (isQuietTime(config.quietHours, now)) {
-    return { action: 'fixed', reason: 'quiet hours', reply: config.quietHours.message };
+  if (inList(person, config.excludeList)) return { action: 'forward', reason: 'excluded: you reply to them yourself' };
+  if (config.mode === 'off') return { action: 'forward', reason: 'bot is paused' };
+  if (waitingOnYou) return { action: 'forward', reason: 'waiting on you (already said hold on)' };
+  if (repliesLastHour >= (config.maxRepliesPerChatPerHour ?? 20)) {
+    return { action: 'forward', reason: 'reply limit for this chat reached' };
   }
+  if (isQuietTime(config.quietHours, now)) return { action: 'forward', reason: 'quiet hours' };
 
-  if (config.ai?.enabled) return { action: 'ai', reason: 'AI reply' };
-  if (config.fallbackReply) return { action: 'fixed', reason: 'fallback reply', reply: config.fallbackReply };
-  return { action: 'notify', reason: 'no rule matched' };
+  return { action: 'ai', reason: 'automated' };
 }

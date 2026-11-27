@@ -1,110 +1,94 @@
-# WhatsApp assistant
+# WhatsApp auto-replier
 
-Two setups:
+Runs on your MacBook, linked to your personal WhatsApp (like WhatsApp Web). Your phone keeps working normally.
 
-1. **Personal number → this bot, running on your MacBook.**
-2. **Business number → the WhatsApp Business app on your phone** (no code, see the bottom of this file).
+## What it does
 
----
+1. **Learns how you text.** When it first starts, it reads your recent chats: up to 60 chats and the last 300 messages in each. From these it works out exactly how you write: message length, capitals, punctuation, slang, emoji, how you say yes, no and lol. It also learns how you talk to each person, so your mum and your mates get different versions of you. It keeps learning from every message you send yourself, and relearns once a week.
+2. **Replies to everyone automatically, as you.** It waits 10–40 seconds, so a burst of messages gets one reply. Then it shows "typing…" and replies in your style. Where you'd normally split a reply into a couple of short messages, it does the same.
+3. **Says "hold on" when it needs you.** That covers money, plans and times, promises, serious topics, or anything it would have to guess. It sends **"hold on"** to the person and posts the message in your **Qp Homebase** chat, saying what it needs from you. Until you answer, it doesn't reply to that person again.
+4. **You answer from Qp Homebase.** Swipe-reply to the alert and type your answer. The bot sends it to the person as you, then carries on with that chat.
+5. **Leaves out anyone you choose.** People on your exclude list never get an automatic reply. Their messages come to Qp Homebase instead.
+6. **Steps back when you're there.** If you reply to someone yourself, the bot stays out of that chat for 15 minutes.
 
-## 1. Personal bot on your Mac
+Group chats are ignored.
 
-It links to your personal WhatsApp the way WhatsApp Web does. Your phone keeps working normally.
+> ⚠️ WhatsApp doesn't officially allow automation on personal accounts, so there's a small risk to your number. The human-like delays and the reply limit (20 per chat per hour) keep it low.
 
-What it does:
+## Before you start
 
-- **Alerts in your own chat:** every new message is forwarded to your "Message yourself" chat, with who sent it and why the bot did or didn't reply.
-- **AI replies (Claude):** it writes a reply in your style. In `draft` mode (the default), it sends you the draft and waits for your OK. In `auto` mode, it sends the reply straight away.
-- **Fixed auto-replies:** keyword replies (for example "urgent" → "please call me") and a quiet-hours message overnight.
-- **Control from your phone:** send commands like `!pause` to yourself. The full list is below.
-- **Safety rails:**
-  - Groups are ignored.
-  - People on the VIP list never get an automatic reply.
-  - Each chat gets at most one automatic reply every 30 minutes.
-  - Replies are sent after a short, human-like delay.
-  - If a message needs you personally (money, plans, anything sensitive), the AI hands it back to you instead of answering.
+1. **Create the homebase chat.** In WhatsApp, create a group called **Qp Homebase**. You can add one person and then remove them, so it's just you. The bot finds it by name. To use a different chat, change `homebaseChat` in `config.json`. If no chat has that name, alerts go to your "Message yourself" chat.
+2. **Install Node.js 20 or newer** from https://nodejs.org (the LTS download).
+3. **Get a Claude API key** at https://platform.claude.com (Settings → API keys).
 
-> ⚠️ **Read this first:** WhatsApp doesn't officially allow automation on personal accounts, and banning accounts for it is rare but possible. Draft mode, cooldowns and ignoring groups keep the risk low. Don't use it to bulk-message people.
+## Install (one time)
 
-### Install (one time)
-
-1. Install **Node.js 20 or newer** from https://nodejs.org (the LTS download).
-2. Open **Terminal** and copy the bot into its own folder in your home directory (`~/whatsapp-bot`). These commands download it, keep only the bot, and delete the rest:
+In **Terminal**:
 
 ```bash
 git clone --depth 1 -b claude/keen-cerf-1ok1pd https://github.com/jonahquartey584-source/Deal-Pro.git /tmp/wa-download && cp -R /tmp/wa-download/whatsapp-bot ~/whatsapp-bot && rm -rf /tmp/wa-download
 ```
 
 ```bash
-cd ~/whatsapp-bot
+cd ~/whatsapp-bot && npm install
 ```
-
-```bash
-npm install
-```
-
-3. Get a Claude API key at https://platform.claude.com (Settings → API keys). Then save it on your Mac:
 
 ```bash
 echo 'export ANTHROPIC_API_KEY="paste-your-key-here"' >> ~/.zshrc && source ~/.zshrc
 ```
 
-### Run it
+## Run it
 
 ```bash
-npm run start:awake
+cd ~/whatsapp-bot && npm run start:awake
 ```
 
-`start:awake` also stops the Mac from sleeping while the bot runs. Use `npm start` if you don't want that.
+The first time, a QR code appears. On your phone, open WhatsApp → **Settings → Linked devices → Link a device** and scan it. You won't need to scan again.
 
-The first time, a QR code appears in Terminal. On your phone, open WhatsApp → **Settings → Linked devices → Link a device** and scan it. Your login is saved, so later starts don't need the QR code.
+Next, it reads your chats to learn your style. This takes a few minutes, and Qp Homebase gets a message when it's done. Send `!style` there to see what it learned about how you text.
 
-You'll get "🤖 Bot is on" in your own chat. Leave the Terminal window open; closing it, or pressing Ctrl+C, stops the bot.
+Then open `config.json` and change `ownerName` to your name.
 
-### Commands (send them in your "Message yourself" chat)
+Leave the Terminal window open. Closing it, or pressing Ctrl+C, stops the bot. `start:awake` stops the Mac sleeping while the bot runs.
+
+## Commands (send them in Qp Homebase)
 
 | Command | What it does |
 | --- | --- |
+| *swipe-reply to an alert* | Send your answer to that person |
+| `!reply 4 yeah 7 works` | Same, using the alert number |
+| `!done 4` | You've dealt with it; the bot can carry on in that chat |
+| `!exclude Mum` | Never auto-reply to this person (a saved name or a number) |
+| `!include Mum` | Let the bot reply to them again |
+| `!excluded` | List excluded and blocked people |
+| `!block +44 7700 900123` | Ignore someone completely: no reply, no alert |
+| `!pause` / `!resume` | Stop / restart all auto-replies |
+| `!status` | Current settings |
+| `!learn` | Re-read your chats and relearn your style |
+| `!style` | Show what it learned about how you text |
+| `!digest` | AI summary of messages since the last digest |
 | `!help` | List commands |
-| `!status` | Current mode, quiet hours, drafts waiting |
-| `!mode draft` | AI writes replies, you approve them (default) |
-| `!mode auto` | AI replies on its own |
-| `!pause` / `!resume` | Stop / restart replying (you still get alerts) |
-| `!send 3` | Send draft #3 as written |
-| `!edit 3 On my way!` | Send your own text instead of draft #3 |
-| `!skip 3` | Throw draft #3 away |
-| `!drafts` | List drafts waiting |
-| `!digest` | AI summary of everything since the last digest |
-| `!quiet on` / `!quiet off` | Turn the overnight message on or off |
-| `!vip +44 7700 900123` | Never auto-reply to this person |
-| `!block +44 7700 900123` | Ignore this person completely |
 
-### Customise
+## Settings (`config.json`)
 
-When the bot first starts, it creates `config.json`. Edit that file and the bot reloads it on its own:
+The bot reloads this file by itself when you save it.
 
-- `ownerName` and `ai.persona` set how replies sound (tone, language, emoji).
-- `quietHours` sets the overnight times and message.
-- `keywordReplies` sets fixed replies triggered by words.
-- `vipList`, `allowList` and `blockList` take phone numbers in any format.
-- `cooldownMinutes` and `replyDelaySeconds` control how often and how fast it replies.
+- `excludeList`: people it never replies to, e.g. `["Mum", "+44 7700 900123"]`. You can also manage this with `!exclude`.
+- `holdFor`: the kinds of messages that get "hold on". You can add your own in plain English.
+- `holdMessage`: what it says when it needs you. The default is `"hold on"`.
+- `homebaseChat`: the chat where alerts go.
+- `reportReplies`: set this to `true` to see every reply the bot sends, in homebase.
+- `quietHours`: no auto-replies overnight if you turn it on.
+- `replyDelaySeconds`, `youTakeOverMinutes`, `maxRepliesPerChatPerHour`: timing and safety limits.
 
-`config.json` and your login (`.wwebjs_auth/`) stay on your Mac and are never committed to git.
+Your settings, your learned style (`style.json`) and your WhatsApp login stay on your Mac and are never uploaded anywhere except to Claude when writing a reply.
 
-### Costs
+## Limits
 
-Each AI reply is one Claude request at low effort, roughly a fraction of a penny per message. Fixed replies and alerts are free.
+- It only runs while your Mac is on and the bot is running.
+- It can't see photos or hear voice notes. It knows one was sent and usually holds.
+- It only knows what's in your chats, so for anything about your life it hasn't seen, it says "hold on".
 
----
+## Business number
 
-## 2. Business number on your phone (no code)
-
-Install the **WhatsApp Business** app on your phone and register your business number. Then open **Settings → Business tools**:
-
-- **Greeting message:** sent automatically the first time someone messages you, or after 14 days of no chat. Example: "Hi! Thanks for getting in touch 👋 How can I help?"
-- **Away message:** set it to *Outside of business hours*, and fill in your hours under **Business profile → Business hours**.
-- **Quick replies:** saved answers you send by typing `/`, for example `/price` or `/howitworks`. These are good for questions you get often.
-- **Labels:** tag chats as *New lead*, *Pending payment*, *Follow up* and so on, so your inbox stays organised.
-- **Catalogue:** list your plans or services so customers can browse them in the chat.
-
-If you later want **AI replies on the business number** too, Meta's WhatsApp Business Platform (Cloud API) can be connected to the same number while you keep using the app on your phone ("coexistence"). That's the officially supported way to automate a business number.
+Use the **WhatsApp Business** app on your phone. Under **Settings → Business tools** you'll find a greeting message, an away message (with business hours), quick replies (type `/`) and labels. None of this needs the bot.
