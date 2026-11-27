@@ -55,7 +55,15 @@ cd ~/whatsapp-bot && npm install
 ```
 
 ```bash
-echo 'export OPENAI_API_KEY="paste-your-key-here"' >> ~/.zshrc && source ~/.zshrc
+sed -i '' '/OPENAI_API_KEY/d' ~/.zshrc; echo 'export OPENAI_API_KEY="paste-your-key-here"' >> ~/.zshrc && source ~/.zshrc
+```
+
+Paste the **whole line**, with your key between the quotes. Never paste the key on its own.
+
+Then download the browser the bot uses (needed on newer versions of npm, which skip this during install):
+
+```bash
+npx puppeteer browsers install chrome
 ```
 
 If you installed an earlier version, move the old `whatsapp-bot` folder (in your home folder) to the Bin first, then run these again. Your old settings won't carry over.

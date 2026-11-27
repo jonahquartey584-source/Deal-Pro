@@ -203,6 +203,15 @@ async function relearn({ announce = true } = {}) {
 }
 
 // ---------- WhatsApp client ----------
+// Stop early with a clear message if the OpenAI key hasn't been set up properly.
+const apiKey = process.env.OPENAI_API_KEY || '';
+if (!apiKey.startsWith('sk-') || apiKey.includes('paste-your-key')) {
+  console.error('\nYour OpenAI key isn\'t set up yet.');
+  console.error('Run this, with your real key between the quotes, then start the bot again:\n');
+  console.error('  sed -i \'\' \'/OPENAI_API_KEY/d\' ~/.zshrc; echo \'export OPENAI_API_KEY="your-key"\' >> ~/.zshrc && source ~/.zshrc\n');
+  process.exit(1);
+}
+
 const QR_CODES_BEFORE_GIVING_UP = 5; // too many unscanned codes in a row makes WhatsApp block linking for a while
 const executablePath = process.env.CHROME_PATH || undefined; // optional: use an installed Chrome instead of the downloaded one
 const linkPhone = normalisePhone(config.linkWithPhoneNumber);
@@ -552,4 +561,12 @@ process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
 console.log('Starting WhatsApp… (first start downloads a browser and can take a minute)');
-client.initialize();
+client.initialize().catch((err) => {
+  if (/could not find chrome|browser was not found|executable doesn't exist|failed to launch/i.test(err.message)) {
+    console.error('\nThe browser the bot needs isn\'t installed yet. Run this, then start the bot again:\n');
+    console.error('  npx puppeteer browsers install chrome\n');
+  } else {
+    console.error('\nCould not start WhatsApp:', err.message);
+  }
+  process.exit(1);
+});
