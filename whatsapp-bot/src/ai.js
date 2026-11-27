@@ -1,35 +1,42 @@
-// Claude: learning how you text, replying like you, and summaries.
-import Anthropic from '@anthropic-ai/sdk';
+// OpenAI: learning how you text, replying like you, and summaries.
+import OpenAI from 'openai';
 
 let client;
 function getClient() {
-  // Reads ANTHROPIC_API_KEY (or an `ant auth login` profile) from the environment.
-  client ??= new Anthropic();
+  // Reads OPENAI_API_KEY from the environment.
+  client ??= new OpenAI();
   return client;
 }
 
-async function ask({ config, system, prompt, maxTokens = 4000, effort, schema }) {
-  const response = await getClient().beta.messages.create({
-    model: config.ai?.model || 'claude-opus-5-5',
-    max_tokens: maxTokens,
-    output_config: {
-      effort: effort || config.ai?.effort || 'low',
-      ...(schema ? { format: { type: 'json_schema', schema } } : {}),
-    },
-    // If the main model declines a message, the API retries it on a fallback model.
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
-    system,
-    messages: [{ role: 'user', content: prompt }],
+async function callModel({ model, effort, system, prompt, maxTokens, schema }) {
+  const response = await getClient().chat.completions.create({
+    model,
+    max_completion_tokens: maxTokens,
+    reasoning_effort: effort,
+    messages: [
+      { role: 'system', content: system },
+      { role: 'user', content: prompt },
+    ],
+    ...(schema ? { response_format: { type: 'json_schema', json_schema: { name: 'result', strict: true, schema } } } : {}),
   });
-
-  if (response.stop_reason === 'refusal') return null;
-  const text = response.content
-    .filter((block) => block.type === 'text')
-    .map((block) => block.text)
-    .join('')
-    .trim();
+  const message = response.choices[0]?.message;
+  if (!message || message.refusal) return null;
+  const text = (message.content ?? '').trim();
+  if (!text) return null;
   return schema ? JSON.parse(text) : text;
+}
+
+async function ask({ config, system, prompt, maxTokens = 4000, effort, schema }) {
+  const options = { effort: effort || config.ai?.effort || 'low', system, prompt, maxTokens: maxTokens * 4, schema };
+  const main = config.ai?.model || 'gpt-5.5';
+  try {
+    return await callModel({ model: main, ...options });
+  } catch (err) {
+    const backup = config.ai?.fallbackModel ?? 'gpt-5-mini';
+    if (!backup || backup === main || err instanceof OpenAI.AuthenticationError) throw err;
+    console.error(`${main} failed (${err.message}), trying ${backup}`);
+    return callModel({ model: backup, ...options });
+  }
 }
 
 /**
