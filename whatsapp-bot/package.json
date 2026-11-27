@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node bot.js",
     "start:awake": "caffeinate -i node bot.js",
+    "show": "caffeinate -i node bot.js --show",
     "reset": "node scripts/reset.js",
     "test": "node --test test/*.test.js"
   },

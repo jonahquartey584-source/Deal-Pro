@@ -81,6 +81,14 @@ A QR code appears in Terminal, and a large copy opens in Preview. On the phone w
 - **Scan straight away.** Each code works for about 20 seconds, then a new one replaces it.
 - **The bot stops after 5 unscanned codes.** That's on purpose: too many attempts make WhatsApp block linking for a while. Start it again when you're ready.
 
+### See the bot's WhatsApp in a window
+
+```bash
+npm run show -- business
+```
+
+This opens a Chrome window with WhatsApp Web in it. Scan the QR code shown there, then watch the bot read and reply. Leave the window open (you can minimise it); closing it stops the bot. Avoid clicking around in it: opening a chat there marks it as read.
+
 ### Rather type a code than scan?
 
 Put the business number in `config.business.json`, for example `"linkWithPhoneNumber": "+44 7700 900123"`, and start the bot. It shows an 8-character code.

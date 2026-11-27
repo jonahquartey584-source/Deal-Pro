@@ -215,7 +215,8 @@ if (!apiKey.startsWith('sk-') || apiKey.includes('paste-your-key')) {
 const QR_CODES_BEFORE_GIVING_UP = 5; // too many unscanned codes in a row makes WhatsApp block linking for a while
 const executablePath = process.env.CHROME_PATH || undefined; // optional: use an installed Chrome instead of the downloaded one
 const linkPhone = normalisePhone(config.linkWithPhoneNumber);
-console.log(`Profile: ${paths.profile}`);
+const showWindow = process.argv.includes('--show') || config.showWindow === true;
+console.log(`Profile: ${paths.profile}${showWindow ? ' (showing the WhatsApp window)' : ''}`);
 
 const client = new Client({
   authStrategy: new LocalAuth({ dataPath: paths.authDir, clientId: paths.clientId }),
@@ -223,7 +224,8 @@ const client = new Client({
   qrMaxRetries: QR_CODES_BEFORE_GIVING_UP - 1,
   ...(linkPhone ? { pairWithPhoneNumber: { phoneNumber: linkPhone, showNotification: true } } : {}),
   puppeteer: {
-    headless: true,
+    headless: !showWindow, // --show opens a real Chrome window with the bot's WhatsApp in it
+    defaultViewport: null,
     executablePath,
     args: process.env.CHROME_NO_SANDBOX ? ['--no-sandbox'] : [],
   },
