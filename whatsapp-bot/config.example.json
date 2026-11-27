@@ -1,6 +1,9 @@
 {
   "ownerName": "Your name",
 
+  "linkWithPhoneNumber": "",
+  "_linkWithPhoneNumber_help": "Optional. Put the WhatsApp number here (e.g. \"+44 7700 900123\") to link with an 8-character pairing code instead of scanning a QR code.",
+
   "homebaseChat": "Qp Homebase",
   "_homebaseChat_help": "Name of the WhatsApp chat (or group) where the bot sends anything that needs you. You control the bot from there too.",
 

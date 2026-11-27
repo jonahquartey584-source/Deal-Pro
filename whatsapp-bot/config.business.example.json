@@ -1,0 +1,63 @@
+{
+  "ownerName": "Your name",
+
+  "linkWithPhoneNumber": "",
+  "_linkWithPhoneNumber_help": "Optional. Your business WhatsApp number (e.g. \"+44 7700 900123\") to link with an 8-character pairing code instead of scanning a QR code.",
+
+  "homebaseChat": "Qp Homebase",
+  "holdMessage": "hold on",
+  "mode": "auto",
+
+  "replyAfterMinutes": 60,
+  "_replyAfterMinutes_help": "Replies go out this many minutes after the person's latest message. If they send another message, the hour starts again.",
+
+  "about": "I'm a UK property deal sourcer. I find investment property deals and I'm looking for investors to send them to. Most people messaging this number found me on social media and are investors or want to be.\n\nWhen someone asks about deals or investing:\n- Be friendly and keen, and find out what property they're looking for: strategy (BTL, HMO, SA/serviced accommodation, R2R, flips, BRR, commercial), areas, budget / how much they can put in, cash or mortgage, and timeline. Ask one or two things at a time, not a list.\n- Once you know what they want, tell them you'll keep an eye out for deals that match and send them over.\n- Also point them to Deal Pro (usedealpro.com), which is built for finding and analysing UK deals, so they can search all the deals themselves too. Mention it naturally, once, not in every message.\n- Never promise a specific deal, price, yield or return, and never quote figures you haven't been given.",
+
+  "notifyTopics": [
+    {
+      "name": "Joint venture",
+      "description": "joint ventures (JVs), partnering up, splitting profits or equity, or putting money in together on a deal",
+      "suggestReply": false
+    },
+    {
+      "name": "Qp Digital",
+      "description": "anything to do with Qp Digital (the business, its services, work or projects)",
+      "suggestReply": true
+    }
+  ],
+  "_notifyTopics_help": "The bot never replies to these. It tells you in Qp Homebase that you have to respond to who, about what, with a picture of the chat. suggestReply: true also gives you a reply you could send.",
+
+  "remindAfterHours": 3,
+  "_remindAfterHours_help": "If you still haven't answered something the bot flagged, it reminds you again after this many hours (0 = never).",
+
+  "leadTasks": {
+    "enabled": true,
+    "plan": "Deal sourcing"
+  },
+  "_leadTasks_help": "When an investor says what they're looking for, a 'deal sourcing task' with their criteria is posted in Qp Homebase. 'plan' is the label shown on each task.",
+
+  "chatPictures": true,
+  "_chatPictures_help": "Send a picture of the conversation with every alert in Qp Homebase.",
+
+  "holdFor": [
+    "agreeing to a specific deal, price, fee or terms",
+    "sending documents, contracts or bank details",
+    "making, changing or cancelling meetings, calls or viewings",
+    "complaints or anything heated",
+    "questions only you can answer"
+  ],
+
+  "excludeList": [],
+  "blockList": [],
+  "replyToGroups": false,
+  "notifyMe": true,
+  "reportReplies": true,
+  "youTakeOverMinutes": 15,
+  "maxRepliesPerChatPerHour": 10,
+
+  "quietHours": { "enabled": false, "start": "23:00", "end": "07:30" },
+
+  "learn": { "chats": 60, "messagesPerChat": 300, "relearnEveryDays": 7 },
+
+  "ai": { "model": "claude-opus-5-5", "effort": "low" }
+}

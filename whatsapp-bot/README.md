@@ -1,23 +1,42 @@
 # WhatsApp auto-replier
 
-Runs on your MacBook, linked to your personal WhatsApp (like WhatsApp Web). Your phone keeps working normally.
+Runs on your MacBook and links to WhatsApp (personal or **WhatsApp Business**) the way WhatsApp Web does. Your phone keeps working normally.
+
+Each number runs as its own **profile**, with its own login, settings and learned style. You can run both at once in two Terminal windows:
+
+| Number | Start it with | Settings file |
+| --- | --- | --- |
+| Business number (WhatsApp Business app) | `npm run start:awake -- business` | `config.business.json` |
+| Personal number | `npm run start:awake` | `config.json` |
 
 ## What it does
 
-1. **Learns how you text.** When it first starts, it reads your recent chats: up to 60 chats and the last 300 messages in each. From these it works out exactly how you write: message length, capitals, punctuation, slang, emoji, how you say yes, no and lol. It also learns how you talk to each person, so your mum and your mates get different versions of you. It keeps learning from every message you send yourself, and relearns once a week.
-2. **Replies to everyone automatically, as you.** It waits 10–40 seconds, so a burst of messages gets one reply. Then it shows "typing…" and replies in your style. Where you'd normally split a reply into a couple of short messages, it does the same.
-3. **Says "hold on" when it needs you.** That covers money, plans and times, promises, serious topics, or anything it would have to guess. It sends **"hold on"** to the person and posts the message in your **Qp Homebase** chat, saying what it needs from you. Until you answer, it doesn't reply to that person again.
-4. **You answer from Qp Homebase.** Swipe-reply to the alert and type your answer. The bot sends it to the person as you, then carries on with that chat.
-5. **Leaves out anyone you choose.** People on your exclude list never get an automatic reply. Their messages come to Qp Homebase instead.
-6. **Steps back when you're there.** If you reply to someone yourself, the bot stays out of that chat for 15 minutes.
+**On every number**
 
-Group chats are ignored.
+- **Learns how you text.** It reads your recent chats (up to 60 chats, the last 300 messages in each) and writes in your style: length, capitals, slang, emoji. It also learns how you talk to each person. It keeps learning from every message you send yourself.
+- **Replies automatically, as you.**
+- **Says "hold on" when it needs you.** That covers deals, prices or terms, documents, meetings, complaints, or anything it would have to guess. It sends "hold on" to the person and posts the message in **Qp Homebase**.
+- **Sends a picture of the chat** with every alert in Qp Homebase, so you see the conversation at a glance.
+- **Lets you answer from Qp Homebase.** Swipe-reply to the alert and type; the bot sends your answer to the person as you.
+- **Leaves out anyone you choose** (`!exclude Name`).
+- **Steps back while you're there.** If you reply to someone yourself, the bot stays out of that chat for 15 minutes.
 
-> ⚠️ WhatsApp doesn't officially allow automation on personal accounts, so there's a small risk to your number. The human-like delays and the reply limit (20 per chat per hour) keep it low.
+**Extra on the business profile (deal sourcing)**
+
+- **Replies an hour later.** Replies go out 60 minutes after the person's latest message. If they send another message, the hour restarts. Waiting replies survive a restart of the bot.
+- **Finds out what investors want.** It talks as you, a deal sourcer looking for investors: it asks about strategy (BTL, HMO, SA, R2R, flips…), areas, budget, cash or mortgage, and timeline. It tells them you'll send matching deals, and points them to **Deal Pro (usedealpro.com)** to search deals themselves.
+- **Posts a 📋 Deal sourcing task to Qp Homebase** with the investor's criteria as soon as they give any, and updates it when they add more.
+- **Leaves joint ventures to you.** It doesn't reply, and posts "🔔 you have to respond to *Name* about *…*" with a picture of the chat.
+- **Leaves Qp Digital to you too, with a suggested reply.** It doesn't reply, and posts "🔔 you have to respond to *Name* about *…*", the chat picture, and "💬 You could say: …".
+- **Reminds you** every 3 hours until you've answered anything it flagged.
+
+You can change the business details, the topics it leaves to you, and the reply delay in `config.business.json`.
+
+> ⚠️ WhatsApp doesn't officially allow automation on accounts that use the app, so there's a small risk to the number. Delays and reply limits keep it low.
 
 ## Before you start
 
-1. **Create the homebase chat.** In WhatsApp, create a group called **Qp Homebase**. You can add one person and then remove them, so it's just you. The bot finds it by name. To use a different chat, change `homebaseChat` in `config.json`. If no chat has that name, alerts go to your "Message yourself" chat.
+1. **Create the homebase chat.** In WhatsApp, create a group called **Qp Homebase**. If you're running both numbers, put both numbers in it. The bot finds it by name.
 2. **Install Node.js 20 or newer** from https://nodejs.org (the LTS download).
 3. **Get a Claude API key** at https://platform.claude.com (Settings → API keys).
 
@@ -37,58 +56,79 @@ cd ~/whatsapp-bot && npm install
 echo 'export ANTHROPIC_API_KEY="paste-your-key-here"' >> ~/.zshrc && source ~/.zshrc
 ```
 
-## Run it
+If you installed an earlier version, delete `~/whatsapp-bot` first and run these again. Your old settings won't carry over.
+
+## Link the business number
 
 ```bash
-cd ~/whatsapp-bot && npm run start:awake
+cd ~/whatsapp-bot && npm run start:awake -- business
 ```
 
-The first time, a QR code appears. On your phone, open WhatsApp → **Settings → Linked devices → Link a device** and scan it. You won't need to scan again.
+A QR code appears in Terminal, and a large copy opens in Preview. On the phone with the **business** number:
 
-Next, it reads your chats to learn your style. This takes a few minutes, and Qp Homebase gets a message when it's done. Send `!style` there to see what it learned about how you text.
+**WhatsApp Business → ⋮ (Android) or Settings (iPhone) → Linked devices → Link a device**, then scan the code.
 
-Then open `config.json` and change `ownerName` to your name.
+- **Scan straight away.** Each code works for about 20 seconds, then a new one replaces it.
+- **The bot stops after 5 unscanned codes.** That's on purpose: too many attempts make WhatsApp block linking for a while. Start it again when you're ready.
 
-Leave the Terminal window open. Closing it, or pressing Ctrl+C, stops the bot. `start:awake` stops the Mac sleeping while the bot runs.
+### Rather type a code than scan?
+
+Put the business number in `config.business.json`, for example `"linkWithPhoneNumber": "+44 7700 900123"`, and start the bot. It shows an 8-character code.
+
+On the phone: **Linked devices → Link a device → "Link with phone number instead"**, then type the code.
+
+### "Can't link new devices at this time"
+
+That message comes from WhatsApp, not the bot. Usually it means there were too many link attempts in a short time. To fix it:
+
+1. **Wait.** Usually an hour or two; occasionally up to 24 hours. Don't keep retrying in the meantime, because each try resets the wait.
+2. **Remove old links.** On the phone, open **Linked devices** and remove any old or unused entries. You can have at most 4.
+3. **Update WhatsApp Business** from the App Store or Play Store.
+4. **Clear the old login and start again:**
+
+```bash
+npm run reset -- business
+```
+
+```bash
+npm run start:awake -- business
+```
+
+This version also fixes two problems on the bot's side:
+
+- It uses the library's fix for WhatsApp's new login page (released 24 Nov).
+- It identifies itself as a current version of Chrome. The library's default was Chrome 101, which WhatsApp can reject.
+
+## After linking
+
+1. The bot reads your chats to learn your style. This takes a few minutes, and Qp Homebase gets a message when it's done.
+2. Open `config.business.json` and change `ownerName` to your name.
+3. Leave the Terminal window open; closing it stops the bot. `start:awake` keeps the Mac awake.
 
 ## Commands (send them in Qp Homebase)
 
 | Command | What it does |
 | --- | --- |
 | *swipe-reply to an alert* | Send your answer to that person |
-| `!reply 4 yeah 7 works` | Same, using the alert number |
+| `!reply 4 your text` | Same, using the alert number |
 | `!done 4` | You've dealt with it; the bot can carry on in that chat |
-| `!exclude Mum` | Never auto-reply to this person (a saved name or a number) |
-| `!include Mum` | Let the bot reply to them again |
+| `!exclude Name` / `!include Name` | Stop / restart auto-replies for someone (a saved name or a number) |
 | `!excluded` | List excluded and blocked people |
-| `!block +44 7700 900123` | Ignore someone completely: no reply, no alert |
+| `!block +44…` | Ignore someone completely |
 | `!pause` / `!resume` | Stop / restart all auto-replies |
 | `!status` | Current settings |
-| `!learn` | Re-read your chats and relearn your style |
+| `!learn` | Relearn your style |
 | `!style` | Show what it learned about how you text |
 | `!digest` | AI summary of messages since the last digest |
-| `!help` | List commands |
 
-## Settings (`config.json`)
+If both numbers are linked, each bot only listens to its own number. Answer business alerts from the **WhatsApp Business** app, and personal alerts from normal WhatsApp.
 
-The bot reloads this file by itself when you save it.
+## Files that stay on your Mac
 
-- `excludeList`: people it never replies to, e.g. `["Mum", "+44 7700 900123"]`. You can also manage this with `!exclude`.
-- `holdFor`: the kinds of messages that get "hold on". You can add your own in plain English.
-- `holdMessage`: what it says when it needs you. The default is `"hold on"`.
-- `homebaseChat`: the chat where alerts go.
-- `reportReplies`: set this to `true` to see every reply the bot sends, in homebase.
-- `quietHours`: no auto-replies overnight if you turn it on.
-- `replyDelaySeconds`, `youTakeOverMinutes`, `maxRepliesPerChatPerHour`: timing and safety limits.
+Nothing here is uploaded to GitHub. Chat text only leaves the Mac when it's sent to Claude to learn your style or write a reply.
 
-Your settings, your learned style (`style.json`) and your WhatsApp login stay on your Mac and are never uploaded anywhere except to Claude when writing a reply.
-
-## Limits
-
-- It only runs while your Mac is on and the bot is running.
-- It can't see photos or hear voice notes. It knows one was sent and usually holds.
-- It only knows what's in your chats, so for anything about your life it hasn't seen, it says "hold on".
-
-## Business number
-
-Use the **WhatsApp Business** app on your phone. Under **Settings → Business tools** you'll find a greeting message, an away message (with business hours), quick replies (type `/`) and labels. None of this needs the bot.
+- Settings: `config*.json`
+- Learned style: `style*.json`
+- Investor criteria: `leads*.json`
+- Queued replies: `schedule*.json`
+- WhatsApp login: `.wwebjs_auth/`

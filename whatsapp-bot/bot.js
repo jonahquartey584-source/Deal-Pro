@@ -7,20 +7,25 @@ import { fileURLToPath } from 'node:url';
 import qrcode from 'qrcode-terminal';
 import wweb from 'whatsapp-web.js';
 import { decide, inList } from './src/rules.js';
-import { learnStyle, replyAsOwner, summarise } from './src/ai.js';
+import { learnStyle, replyAsOwner, summarise, LEAD_FIELDS } from './src/ai.js';
+import { renderChatPng } from './src/snapshot.js';
 import { loadStyle, saveStyle, collectSamples, addSample, textOf, sample } from './src/style.js';
+import { profilePaths, readProfileArg, currentUserAgent, saveAndOpenQr, removeQrImage, normalisePhone } from './src/login.js';
 
-const { Client, LocalAuth } = wweb;
+const { Client, LocalAuth, MessageMedia } = wweb;
 const here = path.dirname(fileURLToPath(import.meta.url));
-const CONFIG_PATH = path.join(here, 'config.json');
-const STYLE_PATH = path.join(here, 'style.json');
+const paths = profilePaths(here, readProfileArg(process.argv.slice(2)));
+const CONFIG_PATH = paths.config;
+const STYLE_PATH = paths.style;
 const BOT_TAG = '🤖'; // every note the bot sends you starts with this, so it never reacts to itself
 
 // ---------- config ----------
 function loadConfig() {
   if (!fs.existsSync(CONFIG_PATH)) {
-    fs.copyFileSync(path.join(here, 'config.example.json'), CONFIG_PATH);
-    console.log('Created config.json from config.example.json – edit it to customise the bot.');
+    const profileExample = path.join(here, `config.${paths.profile}.example.json`);
+    const example = fs.existsSync(profileExample) ? profileExample : path.join(here, 'config.example.json');
+    fs.copyFileSync(example, CONFIG_PATH);
+    console.log(`Created ${path.basename(CONFIG_PATH)} from ${path.basename(example)} – edit it to customise the bot.`);
   }
   return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
 }
@@ -47,6 +52,9 @@ const replyLog = new Map(); // chatId -> [timestamps of bot replies]
 const lastFromThem = new Map(); // chatId -> their latest text (for learning from your own replies)
 const botSends = new Set(); // "chatId|text" of messages the bot is sending (so they aren't mistaken for you)
 const pending = new Map(); // chatId -> timer, so a burst of messages gets one reply
+const schedule = loadJson(paths.schedule, {}); // chatId -> { dueAt, name, number }: replies waiting to go out (survives restarts)
+const leads = loadJson(paths.leads, {}); // chatId -> last lead details posted to homebase
+const reminders = new Map(); // chatId -> timer for "you still need to respond" reminders
 const alerts = new Map(); // alert message id -> { chatId, name }
 const alertsByNo = new Map(); // alert number -> { chatId, name }
 let alertNo = 1;
@@ -54,6 +62,14 @@ const inbox = []; // messages since the last digest
 let saveTimer;
 
 // ---------- helpers ----------
+function loadJson(file, fallback) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
+  } catch {
+    return fallback;
+  }
+}
+const saveJson = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const clip = (text, n = 400) => (text.length > n ? text.slice(0, n) + '…' : text);
 const rand = ([min, max]) => (min + Math.random() * (max - min)) * 1000;
@@ -91,12 +107,68 @@ async function botSend(chat, rawText) {
 }
 
 /** Post an alert in homebase that you can answer by replying (swipe-reply) to it. */
-async function alert(chatId, name, body) {
+async function alert(chatId, name, body, picture) {
   const n = alertNo++;
-  const sent = await tellMe(`${body}\n\n_Reply to this message to answer ${name}, or send !reply ${n} <text>. !done ${n} lets the bot carry on._`);
+  const text = `${body}\n\n_Reply to this message to answer ${name}, or send !reply ${n} <text>. !done ${n} lets the bot carry on._`;
+  let sent;
+  if (picture && (homebaseId || myId)) {
+    sent = await client.sendMessage(homebaseId || myId, picture, { caption: `${BOT_TAG} ${text}` }).catch((err) => {
+      console.error('Could not send chat picture:', err.message);
+      return null;
+    });
+  }
+  sent ??= await tellMe(text);
   const target = { chatId, name };
   alertsByNo.set(n, target);
   if (sent?.id?._serialized) alerts.set(sent.id._serialized, target);
+}
+
+/** A WhatsApp-style picture of the recent conversation, or null if pictures are off or it fails. */
+async function chatPicture(person, recent, subtitle) {
+  if (config.chatPictures === false || !client.pupBrowser) return null;
+  try {
+    const messages = recent
+      .slice(-(config.chatPictureMessages ?? 15))
+      .map((m) => ({ fromMe: m.fromMe, text: describe(m), time: new Date(m.timestamp * 1000).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) }))
+      .filter((m) => !m.text.startsWith(BOT_TAG));
+    const png = await renderChatPng(client.pupBrowser, { title: person.name, subtitle, messages });
+    return new MessageMedia('image/png', png, `chat-${Date.now()}.png`);
+  } catch (err) {
+    console.error('Could not draw chat picture:', err.message);
+    return null;
+  }
+}
+
+/** Remind you again later if you still haven't answered someone the bot flagged. */
+function remindLater(chatId, name, about) {
+  const hours = config.remindAfterHours ?? 3;
+  if (!hours) return;
+  clearTimeout(reminders.get(chatId));
+  reminders.set(
+    chatId,
+    setTimeout(async () => {
+      reminders.delete(chatId);
+      if (!waitingOnYou.get(chatId)) return;
+      await alert(chatId, name, `⏰ Reminder: you still need to respond to *${name}*${about ? ` about ${about}` : ''}.`);
+      remindLater(chatId, name, about);
+    }, hours * 3_600_000),
+  );
+}
+
+/** Post (or update) a deal sourcing task in homebase when an investor tells us what they want. */
+async function trackLead(chatId, person, lead) {
+  if (!config.leadTasks?.enabled || !lead?.isLead) return;
+  const details = Object.fromEntries(LEAD_FIELDS.map((f) => [f, (lead[f] || '').trim()]).filter(([, v]) => v));
+  if (!Object.keys(details).length) return;
+  const before = JSON.stringify(leads[chatId]?.details ?? {});
+  if (before === JSON.stringify(details)) return; // nothing new
+  const isNew = !leads[chatId];
+  leads[chatId] = { name: person.name, number: person.number, details, updatedAt: new Date().toISOString() };
+  saveJson(paths.leads, leads);
+  const labels = { lookingFor: 'Looking for', strategy: 'Strategy', areas: 'Areas', budget: 'Budget', timeline: 'Timeline', finance: 'Finance', notes: 'Notes' };
+  const lines = Object.entries(details).map(([k, v]) => `• *${labels[k]}:* ${v}`).join('\n');
+  const plan = config.leadTasks.plan ? `\n*Plan:* ${config.leadTasks.plan}` : '';
+  await tellMe(`📋 *${isNew ? 'New deal sourcing task' : 'Deal sourcing task updated'}* — ${person.name}${person.number ? ` (+${String(person.number).replace(/\D/g, '')})` : ''}${plan}\n${lines}\n\n_Task: find deals that match and send them over._`);
 }
 
 async function isControlChat(chat) {
@@ -131,27 +203,72 @@ async function relearn({ announce = true } = {}) {
 }
 
 // ---------- WhatsApp client ----------
+const QR_CODES_BEFORE_GIVING_UP = 5; // too many unscanned codes in a row makes WhatsApp block linking for a while
+const executablePath = process.env.CHROME_PATH || undefined; // optional: use an installed Chrome instead of the downloaded one
+const linkPhone = normalisePhone(config.linkWithPhoneNumber);
+console.log(`Profile: ${paths.profile}`);
+
 const client = new Client({
-  authStrategy: new LocalAuth({ dataPath: path.join(here, '.wwebjs_auth') }),
+  authStrategy: new LocalAuth({ dataPath: paths.authDir, clientId: paths.clientId }),
+  userAgent: await currentUserAgent(executablePath),
+  qrMaxRetries: QR_CODES_BEFORE_GIVING_UP - 1,
+  ...(linkPhone ? { pairWithPhoneNumber: { phoneNumber: linkPhone, showNotification: true } } : {}),
   puppeteer: {
     headless: true,
-    executablePath: process.env.CHROME_PATH || undefined, // optional: use an installed Chrome instead of the downloaded one
+    executablePath,
     args: process.env.CHROME_NO_SANDBOX ? ['--no-sandbox'] : [],
   },
 });
 
-client.on('qr', (qr) => {
-  console.log('\nScan this with WhatsApp on your phone: Settings → Linked devices → Link a device\n');
+let qrCount = 0;
+let everLoggedIn = false;
+client.on('qr', async (qr) => {
+  if (linkPhone) return; // linking with a pairing code instead
+  qrCount++;
+  console.clear();
+  console.log(`Link this bot (profile "${paths.profile}") to WhatsApp — code ${qrCount} of ${QR_CODES_BEFORE_GIVING_UP}\n`);
+  console.log('On the phone with the number you want the bot on:');
+  console.log('  • WhatsApp:          Settings → Linked devices → Link a device');
+  console.log('  • WhatsApp Business: ⋮ / Settings → Linked devices → Link a device');
+  console.log('Scan straight away — each code only works for about 20 seconds, then a new one appears here.\n');
   qrcode.generate(qr, { small: true });
+  try {
+    const file = await saveAndOpenQr(qr, paths.qrImage);
+    console.log(`\nThe same code is saved as a big image (opened in Preview): ${file}`);
+  } catch (err) {
+    console.log('(Could not save the QR image:', err.message + ')');
+  }
 });
-client.on('authenticated', () => console.log('Logged in.'));
-client.on('auth_failure', (m) => console.error('Login failed:', m));
+client.on('code', (code) => {
+  console.log('\n────────────────────────────────────────');
+  console.log(`  Pairing code:  ${code.slice(0, 4)}-${code.slice(4)}`);
+  console.log('────────────────────────────────────────');
+  console.log(`On the phone for +${linkPhone}: WhatsApp (or WhatsApp Business) → Linked devices → Link a device →`);
+  console.log('"Link with phone number instead", then type the code above. A new code appears every 3 minutes.\n');
+});
+client.on('authenticated', () => {
+  everLoggedIn = true;
+  removeQrImage(paths.qrImage);
+  console.log('Linked and logged in.');
+});
+client.on('auth_failure', (m) => console.error('Login failed:', m, '\nRun `npm run reset' + (paths.clientId ? ` -- ${paths.profile}` : '') + '` and start again.'));
 client.on('disconnected', (reason) => {
+  if (!everLoggedIn) {
+    removeQrImage(paths.qrImage);
+    console.error(`\nNo code was scanned (${reason}). Stopping here so WhatsApp doesn't block new links.`);
+    console.error('Start the bot again when you are ready to scan.');
+    process.exit(1);
+  }
+  if (reason === 'LOGOUT') {
+    console.error('\nThis bot was logged out from the phone (Linked devices). Start it again to link it.');
+    process.exit(1);
+  }
   console.error('Disconnected from WhatsApp:', reason, '– restarting in 10s');
   setTimeout(() => client.initialize(), 10_000);
 });
 
 client.on('ready', async () => {
+  everLoggedIn = true;
   myId = client.info.wid._serialized;
   const chats = await client.getChats();
   const wanted = (config.homebaseChat || '').trim().toLowerCase();
@@ -162,6 +279,11 @@ client.on('ready', async () => {
   }
   console.log(`Bot is running as ${client.info.pushname} (mode: ${config.mode}). Alerts go to: ${home?.name ?? 'Message yourself'}`);
   await tellMe(`Bot is on (${config.mode}). Send !help for commands.`);
+
+  // Pick up replies that were waiting when the bot last stopped.
+  for (const [chatId, entry] of Object.entries(schedule)) {
+    if (!pending.has(chatId)) scheduleReply(chatId, entry);
+  }
 
   const ageDays = style.updatedAt ? (Date.now() - new Date(style.updatedAt)) / 86_400_000 : Infinity;
   if (!style.guide || ageDays > (config.learn?.relearnEveryDays ?? 7)) {
@@ -193,14 +315,29 @@ async function onIncoming(msg) {
   inbox.push({ time: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }), contactName: name, text });
   if (inbox.length > 500) inbox.shift();
 
-  // Wait a little so a burst of messages gets one reply, like a person would.
+  // Wait before replying (a set time after their latest message, or a short random pause),
+  // so a burst of messages gets one reply, like a person would.
+  const delay = config.replyAfterMinutes ? config.replyAfterMinutes * 60_000 : rand(config.replyDelaySeconds ?? [10, 40]);
+  scheduleReply(chatId, { dueAt: Date.now() + delay, name, number: contact.number || msg.from });
+}
+
+function scheduleReply(chatId, entry) {
   clearTimeout(pending.get(chatId));
+  schedule[chatId] = entry;
+  saveJson(paths.schedule, schedule);
   pending.set(
     chatId,
-    setTimeout(() => {
+    setTimeout(async () => {
       pending.delete(chatId);
-      handleChat(chat, { name, number: contact.number || msg.from }).catch((err) => console.error('Error replying:', err));
-    }, rand(config.replyDelaySeconds ?? [10, 40])),
+      delete schedule[chatId];
+      saveJson(paths.schedule, schedule);
+      try {
+        const chat = await client.getChatById(chatId);
+        await handleChat(chat, { name: entry.name, number: entry.number });
+      } catch (err) {
+        console.error('Error replying:', err);
+      }
+    }, Math.max(entry.dueAt - Date.now(), 5_000)),
   );
 }
 
@@ -223,7 +360,7 @@ async function handleChat(chat, person) {
 
   if (decision.action === 'ignore' || !theirNew.length) return;
   if (decision.action === 'forward') {
-    if (config.notifyMe !== false) await alert(chatId, person.name, `*${person.name}*: ${clip(latest)}\n_(${decision.reason})_`);
+    if (config.notifyMe !== false) await alert(chatId, person.name, `*${person.name}*: ${clip(latest)}\n_(${decision.reason})_`, await chatPicture(person, recent, decision.reason));
     return;
   }
 
@@ -245,11 +382,27 @@ async function handleChat(chat, person) {
     return;
   }
 
+  await trackLead(chatId, person, result?.lead).catch((err) => console.error('Could not post lead:', err.message));
+
+  if (result?.action === 'notify') {
+    // A topic you always answer yourself (e.g. joint ventures, Qp Digital): no reply, just tell you.
+    const topic = (config.notifyTopics ?? []).find((t) => t.name.toLowerCase() === (result.topic || '').toLowerCase());
+    waitingOnYou.set(chatId, true);
+    const about = result.about || topic?.name || 'their message';
+    const suggestion = topic?.suggestReply && result.suggestedReply ? `\n\n💬 *You could say:*\n${result.suggestedReply}` : '';
+    const picture = await chatPicture(person, recent, `${topic?.name ?? 'Needs you'} · not replied`);
+    await alert(chatId, person.name, `🔔 *${topic?.name ?? 'Needs you'}* — you have to respond to *${person.name}* about ${about}.\n\n"${clip(latest, 300)}"${suggestion}`, picture);
+    remindLater(chatId, person.name, about);
+    return;
+  }
+
   if (!result || result.action === 'hold' || !result.messages?.length) {
     const reason = result?.reason || 'needs you';
     await botSend(chat, config.holdMessage || 'hold on');
     waitingOnYou.set(chatId, true);
-    await alert(chatId, person.name, `⏸ *${person.name}*: ${clip(latest)}\n\n*Needs you:* ${reason}\n(I told them "${config.holdMessage || 'hold on'}")`);
+    const picture = await chatPicture(person, recent, 'Bot said "hold on"');
+    await alert(chatId, person.name, `⏸ *${person.name}*: ${clip(latest)}\n\n*Needs you:* ${reason}\n(I told them "${config.holdMessage || 'hold on'}")`, picture);
+    remindLater(chatId, person.name, reason);
     return;
   }
 
@@ -286,7 +439,12 @@ async function onMine(msg) {
   }
   youRepliedAt.set(chatId, new Date());
   waitingOnYou.delete(chatId);
-  clearTimeout(pending.get(chatId));
+  clearTimeout(reminders.get(chatId));
+  clearTimeout(pending.get(chatId)); // you've answered, so drop any reply the bot had queued
+  if (schedule[chatId]) {
+    delete schedule[chatId];
+    saveJson(paths.schedule, schedule);
+  }
   if (textOf(msg)) {
     addSample(style, chatId, chat.name, { them: lastFromThem.get(chatId) ?? null, me: body });
     saveStyleSoon();
@@ -301,6 +459,7 @@ async function answer(target, rawText) {
   botSends.add(`${target.chatId}|${text}`);
   await chat.sendMessage(text);
   waitingOnYou.delete(target.chatId);
+  clearTimeout(reminders.get(target.chatId));
   addSample(style, target.chatId, chat.name, { them: lastFromThem.get(target.chatId) ?? null, me: text });
   saveStyleSoon();
   await tellMe(`Sent to ${target.name}.`);
@@ -341,6 +500,7 @@ async function handleCommand(body) {
       const target = alertsByNo.get(n);
       if (!target) return tellMe(`No alert #${rest[0] ?? ''}.`);
       waitingOnYou.delete(target.chatId);
+      clearTimeout(reminders.get(target.chatId));
       return tellMe(`OK, I'll carry on replying to ${target.name}.`);
     }
     case '!exclude':
@@ -381,12 +541,15 @@ async function handleCommand(body) {
   }
 }
 
-process.on('SIGINT', async () => {
+async function shutdown() {
   console.log('\nShutting down…');
   saveStyle(STYLE_PATH, style);
+  setTimeout(() => process.exit(0), 5000).unref(); // don't hang if the browser won't close
   await client.destroy().catch(() => {});
   process.exit(0);
-});
+}
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
 
 console.log('Starting WhatsApp… (first start downloads a browser and can take a minute)');
 client.initialize();

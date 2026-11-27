@@ -4,3 +4,9 @@ config.json
 .wwebjs_cache/
 .env
 style.json
+config.*.json
+style.*.json
+link-qr*.png
+schedule*.json
+leads*.json
+!config.*.example.json

@@ -60,31 +60,49 @@ ${lines}`;
   return ask({ config, system, prompt, maxTokens: 8000, effort: 'medium' });
 }
 
+const LEAD_FIELDS = ['lookingFor', 'strategy', 'areas', 'budget', 'timeline', 'finance', 'notes'];
+
 const REPLY_SCHEMA = {
   type: 'object',
   properties: {
-    action: { type: 'string', enum: ['reply', 'hold'] },
+    action: { type: 'string', enum: ['reply', 'hold', 'notify'] },
     messages: {
       type: 'array',
       items: { type: 'string' },
-      description: 'For "reply": the message(s) to send, in order. Empty for "hold".',
+      description: 'For "reply": the message(s) to send, in order. Empty for "hold" and "notify".',
     },
-    reason: { type: 'string', description: 'For "hold": one short line telling the owner what needs their input.' },
+    reason: { type: 'string', description: 'For "hold": one short line telling the owner what needs their input. Otherwise empty.' },
+    topic: { type: 'string', description: 'For "notify": the name of the matching notify topic, exactly as listed. Otherwise empty.' },
+    about: { type: 'string', description: 'For "notify": a few words on what they want, e.g. "a 50/50 JV on an HMO in Leeds". Otherwise empty.' },
+    suggestedReply: { type: 'string', description: 'For "notify": a reply the owner could send, written in their style. Otherwise empty.' },
+    lead: {
+      type: 'object',
+      description: 'What this person has said they are looking for as a property investor. Empty strings for anything not mentioned. isLead false if they are not a potential investor/buyer.',
+      properties: {
+        isLead: { type: 'boolean' },
+        ...Object.fromEntries(LEAD_FIELDS.map((f) => [f, { type: 'string' }])),
+      },
+      required: ['isLead', ...LEAD_FIELDS],
+      additionalProperties: false,
+    },
   },
-  required: ['action', 'messages', 'reason'],
+  required: ['action', 'messages', 'reason', 'topic', 'about', 'suggestedReply', 'lead'],
   additionalProperties: false,
 };
 
+export { LEAD_FIELDS };
+
 /**
- * Decide on a reply to the latest message in a chat, written in the owner's style.
- * Returns { action: "reply", messages: [...] } or { action: "hold", reason }.
+ * Decide what to do with the latest message in a chat, written in the owner's style.
+ * Returns { action: "reply" | "hold" | "notify", messages, reason, topic, about, suggestedReply, lead }.
  */
 export async function replyAsOwner({ config, styleGuide, contactName, contactExamples, generalExamples, history }) {
   const transcript = history.map((m) => `${m.fromMe ? 'ME' : 'THEM'}: ${m.text}`).join('\n');
   const examples = (list) => list.map((s) => `${s.them ? `THEM: ${s.them}\n` : ''}ME: ${s.me}`).join('\n---\n');
+  const notifyTopics = config.notifyTopics ?? [];
 
   const system = `You are ${config.ownerName}, replying to your own WhatsApp messages. The other person must not be able to tell it isn't really you.
-
+${config.about ? `\nABOUT ${config.ownerName.toUpperCase()} AND WHAT THEY WANT FROM THESE CHATS:\n${config.about}\n` : ''}
 HOW ${config.ownerName.toUpperCase()} TEXTS:
 ${styleGuide || '(No style guide yet. Copy the style of the ME messages below as closely as you can.)'}
 
@@ -93,13 +111,19 @@ Rules for writing:
 - Talk to this person the way ME talks to them in the examples, not the way you'd talk to anyone else.
 - If ME usually splits a reply into several short messages, return several; otherwise return one.
 - Never sound like an assistant. No "Sure!", "Certainly", "I hope this helps", no explaining.
-
+${notifyTopics.length ? `
+Do NOT reply (action "notify") when the conversation is about any of these. ${config.ownerName} answers these personally:
+${notifyTopics.map((t) => `- "${t.name}": ${t.description}`).join('\n')}
+For "notify", fill in topic, about${notifyTopics.some((t) => t.suggestReply) ? ', and suggestedReply (what ' + config.ownerName + ' could send, in their style)' : ''}.
+` : ''}
 Hold instead of replying (action "hold") when the message needs the real ${config.ownerName}:
 ${(config.holdFor ?? []).map((h) => `- ${h}`).join('\n')}
 - anything you'd have to guess or make up: facts about your life, where you are, your plans, what you think about something you haven't discussed before
 - anything where a wrong answer would cause a problem
 
-Otherwise reply (action "reply"). Small talk, banter, thanks, acknowledgements, and questions already answered in the conversation can all be replied to.`;
+Otherwise reply (action "reply").${config.about ? '' : ' Small talk, banter, thanks, acknowledgements, and questions already answered in the conversation can all be replied to.'}
+
+Always fill in "lead" with what this person has told you across the whole conversation about the property they want.`;
 
   const prompt = `${contactExamples.length ? `How ME usually texts ${contactName}:\n${examples(contactExamples)}\n\n` : ''}More examples of how ME texts other people:
 ${examples(generalExamples)}
@@ -107,7 +131,7 @@ ${examples(generalExamples)}
 CURRENT CONVERSATION WITH ${contactName} (latest last):
 ${transcript}
 
-Decide what ME does with the last message from THEM.`;
+Decide what ME does with the latest message(s) from THEM.`;
 
   return ask({ config, system, prompt, schema: REPLY_SCHEMA, maxTokens: 4000 });
 }
