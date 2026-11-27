@@ -92,8 +92,14 @@ const REPLY_SCHEMA = {
       required: ['isLead', ...LEAD_FIELDS],
       additionalProperties: false,
     },
+    dealIntent: {
+      type: 'string',
+      enum: ['none', 'more', 'proceed'],
+      description: '"proceed" when they say they want to go ahead with a deal you sent (view it, reserve it, get the full details, pay the fee, next steps). "more" when they ask for more or different deals. Otherwise "none".',
+    },
+    proceedWith: { type: 'string', description: 'For "proceed": which deal they want, in a few words. Otherwise empty.' },
   },
-  required: ['action', 'messages', 'reason', 'topic', 'about', 'suggestedReply', 'lead'],
+  required: ['action', 'messages', 'reason', 'topic', 'about', 'suggestedReply', 'lead', 'dealIntent', 'proceedWith'],
   additionalProperties: false,
 };
 
@@ -103,7 +109,7 @@ export { LEAD_FIELDS };
  * Decide what to do with the latest message in a chat, written in the owner's style.
  * Returns { action: "reply" | "hold" | "notify", messages, reason, topic, about, suggestedReply, lead }.
  */
-export async function replyAsOwner({ config, styleGuide, contactName, contactExamples, generalExamples, history }) {
+export async function replyAsOwner({ config, styleGuide, contactName, contactExamples, generalExamples, history, dealContext = '' }) {
   const transcript = history.map((m) => `${m.fromMe ? 'ME' : 'THEM'}: ${m.text}`).join('\n');
   const examples = (list) => list.map((s) => `${s.them ? `THEM: ${s.them}\n` : ''}ME: ${s.me}`).join('\n---\n');
   const notifyTopics = config.notifyTopics ?? [];
@@ -130,7 +136,7 @@ ${(config.holdFor ?? []).map((h) => `- ${h}`).join('\n')}
 
 Otherwise reply (action "reply").${config.about ? '' : ' Small talk, banter, thanks, acknowledgements, and questions already answered in the conversation can all be replied to.'}
 
-Always fill in "lead" with what this person has told you across the whole conversation about the property they want.`;
+Always fill in "lead" with what this person has told you across the whole conversation about the property they want.${dealContext ? `\n\nWHERE THINGS STAND WITH THIS PERSON:\n${dealContext}` : ''}`;
 
   const prompt = `${contactExamples.length ? `How ME usually texts ${contactName}:\n${examples(contactExamples)}\n\n` : ''}More examples of how ME texts other people:
 ${examples(generalExamples)}
@@ -148,4 +154,15 @@ export async function summarise({ config, items }) {
   const lines = items.map((i) => `[${i.time}] ${i.contactName}: ${i.text}`).join('\n');
   const system = `You summarise ${config.ownerName}'s WhatsApp messages for them. Group by person, put anything urgent or needing a reply first, and keep it brief. Plain text, no markdown headers.`;
   return ask({ config, system, prompt: `Messages:\n\n${lines}` });
+}
+
+/** One short message in the owner's style, e.g. the note that goes with a deal pack. */
+export async function writeAsOwner({ config, styleGuide, contactName, history, instruction }) {
+  const transcript = history.map((m) => `${m.fromMe ? 'ME' : 'THEM'}: ${m.text}`).join('\n');
+  const system = `You are ${config.ownerName}, writing one WhatsApp message to ${contactName}. Write exactly like ${config.ownerName} texts (length, capitals, punctuation, slang, emoji). Reply with the message text only.
+${config.about ? `\nABOUT ${config.ownerName.toUpperCase()}:\n${config.about}\n` : ''}
+HOW ${config.ownerName.toUpperCase()} TEXTS:
+${styleGuide || '(Copy the style of the ME messages in the conversation.)'}`;
+  const prompt = `Conversation so far (latest last):\n${transcript}\n\nWrite the next message from ME: ${instruction}`;
+  return ask({ config, system, prompt, maxTokens: 1000 });
 }

@@ -10,3 +10,4 @@ link-qr*.png
 schedule*.json
 leads*.json
 !config.*.example.json
+practice-deal-pack.pdf

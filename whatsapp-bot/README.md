@@ -21,14 +21,29 @@ Each number runs as its own **profile**, with its own login, settings and learne
 - **Leaves out anyone you choose** (`!exclude Name`).
 - **Steps back while you're there.** If you reply to someone yourself, the bot stays out of that chat for 15 minutes.
 
-**Extra on the business profile (deal sourcing)**
+**Extra on the business profile: the deal sourcing pipeline**
 
-- **Replies an hour later.** Replies go out 60 minutes after the person's latest message. If they send another message, the hour restarts. Waiting replies survive a restart of the bot.
-- **Finds out what investors want.** It talks as you, a deal sourcer looking for investors: it asks about strategy (BTL, HMO, SA, R2R, flips…), areas, budget, cash or mortgage, and timeline. It tells them you'll send matching deals, and points them to **Deal Pro (usedealpro.com)** to search deals themselves.
-- **Posts a 📋 Deal sourcing task to Qp Homebase** with the investor's criteria as soon as they give any, and updates it when they add more.
-- **Leaves joint ventures to you.** It doesn't reply, and posts "🔔 you have to respond to *Name* about *…*" with a picture of the chat.
-- **Leaves Qp Digital to you too, with a suggested reply.** It doesn't reply, and posts "🔔 you have to respond to *Name* about *…*", the chat picture, and "💬 You could say: …".
+This is how the bot handles steps 2–8 of your business system:
+
+1. **Replies 30 minutes later.** Replies go out half an hour after the person's latest message, and the wait restarts if they send another. Waiting replies survive a restart of the bot.
+2. **Collects their criteria.** It talks as you, a deal sourcer looking for investors. It asks about strategy (BTL, HMO, SA, R2R, flips…), areas, budget, cash or mortgage, and timeline, and mentions **Deal Pro (usedealpro.com)** once.
+3. **Searches with Claude.** Once it has strategy, areas and budget, **Claude** searches live UK listings. This runs through Claude Code on your Mac, using your Claude subscription. Claude opens each listing to check it's still available and works out the key figures.
+4. **Sends a deal pack.** The client gets a short message in your style plus a **PDF deal pack**. Their copy has no listing links or addresses (pre-NDA). Your copy, with links, goes to the Qp Homebase group.
+5. **Loops until they're happy.** It asks what they think. If they want something different or ask for more, it searches again and sends a new pack, without repeating deals they've already seen.
+6. **Hands over when they're ready.** When they want to go ahead, it steps back from that chat and alerts you: "🎯 *Name* wants to move forward with …". From there it's yours.
+
+Other things it does on the business number:
+
+- **Leaves joint ventures to you.** No reply; you get "🔔 you have to respond to *Name* about …" with a picture of the chat.
+- **Leaves Qp Digital to you, with a suggested reply.** Same alert, plus "💬 You could say: …".
 - **Reminds you** every 3 hours until you've answered anything it flagged.
+
+**Kept in step with the Qp Homebase planner app** (`localhost:4321`, on the same Mac):
+
+- **Deal sourcing plan:** each investor becomes a step in the plan. The step updates as things move: 📋 criteria → 🔎 searching → 📦 pack sent → 🎯 wants to proceed.
+- **CRM:** each investor becomes a contact under the business "Deal sourcing". Their stage moves lead → contacted → proposal, and their criteria and the packs sent are in the notes.
+- **To-dos:** today's list gets anything you have to answer yourself, such as JV and Qp Digital messages, holds, and clients ready to go ahead.
+- **If the planner isn't open:** the bot carries on and the planner simply isn't updated.
 
 You can change the business details, the topics it leaves to you, and the reply delay in `config.business.json`.
 
@@ -38,7 +53,14 @@ You can change the business details, the topics it leaves to you, and the reply 
 
 1. **Create the homebase chat.** In WhatsApp, create a group called **Qp Homebase**. If you're running both numbers, put both numbers in it. The bot finds it by name.
 2. **Install Node.js 20 or newer** from https://nodejs.org (the LTS download).
-3. **Have your OpenAI API key ready.** You can use the same key as Deal Pro. You'll find it at https://platform.openai.com/api-keys.
+3. **Have your OpenAI API key ready.** You can use the same key as Deal Pro. You'll find it at https://platform.openai.com/api-keys. OpenAI writes the chat replies.
+4. **Install Claude Code and sign in.** Claude does the deal searches using your Claude subscription. In Terminal, install it:
+
+   ```bash
+   npm install -g @anthropic-ai/claude-code
+   ```
+
+   Then run `claude` once, sign in with your Claude account, and type `/exit` to leave.
 
 ## Install (one time)
 
@@ -67,6 +89,22 @@ npx puppeteer browsers install chrome
 ```
 
 If you installed an earlier version, move the old `whatsapp-bot` folder (in your home folder) to the Bin first, then run these again. Your old settings won't carry over.
+
+## Test it first (practice chat)
+
+```bash
+cd ~/whatsapp-bot && npm run try -- business
+```
+
+You play an investor messaging you, and it shows exactly what the bot would do:
+
+- its replies
+- holds and 🔔 alerts
+- the 📋 criteria it picked up
+
+Once you've given a strategy, areas and budget, it runs the **real Claude deal search** and opens the PDF deal pack in Preview.
+
+Nothing is sent on WhatsApp. Type `/new` to start again and `/quit` to stop.
 
 ## Link the business number
 

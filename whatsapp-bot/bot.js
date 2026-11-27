@@ -7,7 +7,9 @@ import { fileURLToPath } from 'node:url';
 import qrcode from 'qrcode-terminal';
 import wweb from 'whatsapp-web.js';
 import { decide, inList } from './src/rules.js';
-import { learnStyle, replyAsOwner, summarise, LEAD_FIELDS } from './src/ai.js';
+import { learnStyle, replyAsOwner, summarise, writeAsOwner, LEAD_FIELDS } from './src/ai.js';
+import { searchDeals, renderPackPdf, criteriaKey, criteriaText, isReady } from './src/broker.js';
+import { createHomebase } from './src/homebase.js';
 import { renderChatPng } from './src/snapshot.js';
 import { loadStyle, saveStyle, collectSamples, addSample, textOf, sample } from './src/style.js';
 import { profilePaths, readProfileArg, currentUserAgent, saveAndOpenQr, removeQrImage, normalisePhone } from './src/login.js';
@@ -55,6 +57,9 @@ const pending = new Map(); // chatId -> timer, so a burst of messages gets one r
 const schedule = loadJson(paths.schedule, {}); // chatId -> { dueAt, name, number }: replies waiting to go out (survives restarts)
 const leads = loadJson(paths.leads, {}); // chatId -> last lead details posted to homebase
 const reminders = new Map(); // chatId -> timer for "you still need to respond" reminders
+const botMedia = new Set(); // chats the bot is sending a file to (so it isn't mistaken for you replying)
+const homebase = createHomebase(config); // the Qp Homebase planner app on this Mac
+let searchChain = Promise.resolve(); // deal searches run one at a time
 const alerts = new Map(); // alert message id -> { chatId, name }
 const alertsByNo = new Map(); // alert number -> { chatId, name }
 let alertNo = 1;
@@ -163,12 +168,162 @@ async function trackLead(chatId, person, lead) {
   const before = JSON.stringify(leads[chatId]?.details ?? {});
   if (before === JSON.stringify(details)) return; // nothing new
   const isNew = !leads[chatId];
-  leads[chatId] = { name: person.name, number: person.number, details, updatedAt: new Date().toISOString() };
+  leads[chatId] = { stage: 'new', packs: [], ...leads[chatId], name: person.name, number: person.number, details, updatedAt: new Date().toISOString() };
   saveJson(paths.leads, leads);
+  await syncHomebase(chatId);
   const labels = { lookingFor: 'Looking for', strategy: 'Strategy', areas: 'Areas', budget: 'Budget', timeline: 'Timeline', finance: 'Finance', notes: 'Notes' };
   const lines = Object.entries(details).map(([k, v]) => `• *${labels[k]}:* ${v}`).join('\n');
   const plan = config.leadTasks.plan ? `\n*Plan:* ${config.leadTasks.plan}` : '';
   await tellMe(`📋 *${isNew ? 'New deal sourcing task' : 'Deal sourcing task updated'}* — ${person.name}${person.number ? ` (+${String(person.number).replace(/\D/g, '')})` : ''}${plan}\n${lines}\n\n_Task: find deals that match and send them over._`);
+}
+
+// ---------- deal broker: criteria → Claude search → deal pack → feedback → … ----------
+const short = (d) => [d.strategy, d.areas, d.budget].filter(Boolean).join(' · ');
+
+/** Keep the Qp Homebase planner (plan step + CRM contact) in step with where this investor is. */
+async function syncHomebase(chatId) {
+  const L = leads[chatId];
+  if (!L || !homebase.enabled) return;
+  const last = L.packs?.at(-1);
+  const text = {
+    new: `📋 ${L.name} — ${short(L.details) || 'getting their criteria'}`,
+    searching: `🔎 Searching deals for ${L.name} — ${short(L.details)}`,
+    sent: `📦 Deal pack sent to ${L.name} (${last?.deals.length ?? 0} deals, ${last ? new Date(last.at).toLocaleDateString('en-GB') : ''}) — waiting for feedback`,
+    nodeals: `⚠️ No live deals found yet for ${L.name} — ${short(L.details)}`,
+    ready: `🎯 ${L.name} wants to proceed: ${L.proceedWith || 'a deal from the pack'} — call them`,
+  }[L.stage || 'new'];
+  const notes = `${criteriaText(L.details)}
+
+Deal packs sent: ${L.packs?.length ?? 0}${(L.packs ?? []).map((p, i) => `
+#${i + 1} ${new Date(p.at).toLocaleDateString('en-GB')}: ${p.deals.map((d) => `${d.title}, ${d.area}, ${d.price}`).join(' | ')}`).join('')}`;
+  const stepId = await homebase.upsertStep(L, text);
+  const contactId = await homebase.upsertContact(L, { name: L.name, phone: L.number, notes, stage: L.stage });
+  if (stepId) L.stepId = stepId;
+  if (contactId) L.contactId = contactId;
+  saveJson(paths.leads, leads);
+}
+
+/** What the reply AI should know about this investor's deals so far. */
+function dealContext(chatId) {
+  const L = leads[chatId];
+  if (!L || !config.broker?.enabled) return '';
+  const lines = [];
+  if (L.stage === 'searching') lines.push('You are searching for deals that match what they asked for. Tell them they are on the way if they ask; never make up deals.');
+  if (L.stage === 'nodeals') lines.push('Your last search found nothing suitable yet. You are still looking.');
+  (L.packs ?? []).forEach((p, i) =>
+    lines.push(`Deal pack #${i + 1} sent ${new Date(p.at).toLocaleDateString('en-GB')}:\n${p.deals.map((d, j) => `  ${j + 1}. ${d.title}, ${d.area}, ${d.price} (${d.strategy})`).join('\n')}`),
+  );
+  if (L.stage === 'ready') lines.push(`They want to go ahead (${L.proceedWith}). ${config.ownerName} is handling it personally now.`);
+  if (!isReady(L.details, config)) lines.push(`Before you can search you still need: ${(config.broker.requiredFields ?? ['strategy', 'areas', 'budget']).filter((f) => !L.details[f]).join(', ')}.`);
+  return lines.join('\n');
+}
+
+/** After replying: start a search when the criteria are complete (or changed), or hand over when they want to proceed. */
+async function brokerStep(chat, person, result, recent) {
+  const chatId = chat.id._serialized;
+  const L = leads[chatId];
+  if (!config.broker?.enabled || !L) return;
+
+  if (result?.dealIntent === 'proceed' && L.stage !== 'ready') {
+    L.stage = 'ready';
+    L.proceedWith = result.proceedWith || 'a deal from the pack';
+    saveJson(paths.leads, leads);
+    waitingOnYou.set(chatId, true);
+    await syncHomebase(chatId);
+    await homebase.addTodo(`Call ${L.name} — wants to proceed with ${L.proceedWith}`);
+    const picture = await chatPicture(person, recent, 'Ready to move forward');
+    await alert(chatId, person.name, `🎯 *${person.name} wants to move forward* with ${L.proceedWith}.
+
+The bot has stepped back from this chat — it's over to you.`, picture);
+    remindLater(chatId, person.name, `moving forward with ${L.proceedWith}`);
+    return;
+  }
+
+  if (L.stage === 'searching' || L.stage === 'ready' || !isReady(L.details, config)) return;
+  const changed = criteriaKey(L.details) !== L.searchedKey;
+  if (changed || result?.dealIntent === 'more') queueSearch(chatId);
+}
+
+function queueSearch(chatId) {
+  const L = leads[chatId];
+  L.stage = 'searching';
+  L.searchedKey = criteriaKey(L.details);
+  saveJson(paths.leads, leads);
+  searchChain = searchChain.then(() => runSearch(chatId)).catch((err) => console.error('Deal search error:', err));
+}
+
+async function runSearch(chatId) {
+  const L = leads[chatId];
+  await syncHomebase(chatId);
+  await tellMe(`🔎 Searching for deals for *${L.name}* (Claude)…
+${criteriaText(L.details)}`);
+  console.log(`Searching deals for ${L.name}: ${short(L.details)}`);
+  let res;
+  try {
+    const exclude = (L.packs ?? []).flatMap((p) => p.deals.map((d) => d.url)).filter(Boolean);
+    res = await searchDeals(config, L.details, { exclude });
+  } catch (err) {
+    L.stage = 'new';
+    L.searchedKey = null; // try again on their next message
+    saveJson(paths.leads, leads);
+    await syncHomebase(chatId);
+    await tellMe(`⚠️ The deal search for *${L.name}* didn't work: ${err.message}`);
+    return;
+  }
+
+  if (!res.deals.length) {
+    L.stage = 'nodeals';
+    saveJson(paths.leads, leads);
+    await syncHomebase(chatId);
+    await homebase.addTodo(`Find deals for ${L.name} (${short(L.details)}) — the search found none`);
+    await tellMe(`⚠️ No live deals found for *${L.name}* yet.
+${res.summary}
+
+_They haven't been told. The bot searches again if they change what they want or ask for more._`);
+    return;
+  }
+
+  const chat = await client.getChatById(chatId);
+  const brand = config.broker?.brand || `${config.ownerName} · Property deals`;
+  const packData = { clientName: L.name, ownerName: config.ownerName, brand, details: L.details, summary: res.summary, deals: res.deals };
+  const clientPdf = await renderPackPdf(client.pupBrowser, { ...packData, includeLinks: !!config.broker?.includeLinksForClient });
+  const ownerPdf = await renderPackPdf(client.pupBrowser, { ...packData, includeLinks: true });
+
+  const recent = await chat.fetchMessages({ limit: 20 });
+  const history = recent.map((m) => ({ fromMe: m.fromMe, text: describe(m) }));
+  const first = !(L.packs ?? []).length;
+  const note =
+    (await writeAsOwner({
+      config,
+      styleGuide: style.guide,
+      contactName: L.name,
+      history,
+      instruction: `You're about to send them a PDF deal pack with ${res.deals.length} deals that match what they asked for (${short(L.details)}). Say so briefly and ask them to have a look and tell you which ones they like${first ? '' : ', since these are new ones'}. Don't list the deals.`,
+    }).catch(() => null)) || `Found ${res.deals.length} deals that match what you're after, have a look and let me know which ones you like 👇`;
+
+  await botSend(chat, note);
+  botMedia.add(chatId);
+  await client.sendMessage(chatId, new MessageMedia('application/pdf', clientPdf, `Deals for ${L.name}.pdf`), { sendMediaAsDocument: true });
+
+  L.packs = [...(L.packs ?? []), { at: new Date().toISOString(), deals: res.deals.map((d) => ({ title: d.title, area: d.area, price: d.price, strategy: d.strategy, url: d.listingUrl, source: d.source })) }];
+  L.stage = 'sent';
+  saveJson(paths.leads, leads);
+  await syncHomebase(chatId);
+
+  const list = res.deals.map((d, i) => `${i + 1}. ${d.title}, ${d.area} — ${d.price}
+   ${d.listingUrl}`).join('\n');
+  await client
+    .sendMessage(homebaseId || myId, new MessageMedia('application/pdf', ownerPdf, `Deals for ${L.name} (with links).pdf`), {
+      sendMediaAsDocument: true,
+      caption: `${BOT_TAG} 📦 *Deal pack #${L.packs.length} sent to ${L.name}* (${res.deals.length} deals)
+
+${list}
+
+_Your copy has the listing links; theirs doesn't._`,
+    })
+    .catch(() => tellMe(`📦 *Deal pack #${L.packs.length} sent to ${L.name}*
+
+${list}`));
 }
 
 async function isControlChat(chat) {
@@ -291,6 +446,11 @@ client.on('ready', async () => {
   console.log(`Bot is running as ${client.info.pushname} (mode: ${config.mode}). Alerts go to: ${home?.name ?? 'Message yourself'}`);
   await tellMe(`Bot is on (${config.mode}). Send !help for commands.`);
 
+  // Restart any deal searches that were running when the bot last stopped.
+  for (const [chatId, L] of Object.entries(leads)) {
+    if (L.stage === 'searching') queueSearch(chatId);
+  }
+
   // Pick up replies that were waiting when the bot last stopped.
   for (const [chatId, entry] of Object.entries(schedule)) {
     if (!pending.has(chatId)) scheduleReply(chatId, entry);
@@ -386,6 +546,7 @@ async function handleChat(chat, person) {
       contactExamples: style.chats[chatId]?.samples?.slice(-20) ?? [],
       generalExamples: sample(style.general ?? [], 25),
       history,
+      dealContext: dealContext(chatId),
     });
   } catch (err) {
     console.error('AI request failed:', err.message);
@@ -403,6 +564,7 @@ async function handleChat(chat, person) {
     const suggestion = topic?.suggestReply && result.suggestedReply ? `\n\n💬 *You could say:*\n${result.suggestedReply}` : '';
     const picture = await chatPicture(person, recent, `${topic?.name ?? 'Needs you'} · not replied`);
     await alert(chatId, person.name, `🔔 *${topic?.name ?? 'Needs you'}* — you have to respond to *${person.name}* about ${about}.\n\n"${clip(latest, 300)}"${suggestion}`, picture);
+    await homebase.addTodo(`Respond to ${person.name} about ${about}`);
     remindLater(chatId, person.name, about);
     return;
   }
@@ -413,7 +575,9 @@ async function handleChat(chat, person) {
     waitingOnYou.set(chatId, true);
     const picture = await chatPicture(person, recent, 'Bot said "hold on"');
     await alert(chatId, person.name, `⏸ *${person.name}*: ${clip(latest)}\n\n*Needs you:* ${reason}\n(I told them "${config.holdMessage || 'hold on'}")`, picture);
+    await homebase.addTodo(`Reply to ${person.name}: ${reason}`);
     remindLater(chatId, person.name, reason);
+    await brokerStep(chat, person, result, recent);
     return;
   }
 
@@ -424,6 +588,7 @@ async function handleChat(chat, person) {
   if (config.notifyMe !== false && config.reportReplies) {
     await tellMe(`*${person.name}*: ${clip(latest, 150)}\n↳ ${result.messages.join(' / ')}`);
   }
+  await brokerStep(chat, person, result, recent);
 }
 
 async function onMine(msg) {
@@ -443,6 +608,10 @@ async function onMine(msg) {
   }
 
   // A message in a normal chat: either the bot sent it, or you typed it yourself.
+  if (msg.hasMedia && botMedia.has(chatId)) {
+    botMedia.delete(chatId);
+    return;
+  }
   const key = `${chatId}|${body}`;
   if (botSends.has(key)) {
     botSends.delete(key);

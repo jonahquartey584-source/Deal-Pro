@@ -8,10 +8,10 @@
   "holdMessage": "hold on",
   "mode": "auto",
 
-  "replyAfterMinutes": 60,
-  "_replyAfterMinutes_help": "Replies go out this many minutes after the person's latest message. If they send another message, the hour starts again.",
+  "replyAfterMinutes": 30,
+  "_replyAfterMinutes_help": "Replies go out this many minutes after the person's latest message. If they send another message, the wait starts again.",
 
-  "about": "I'm a UK property deal sourcer. I find investment property deals and I'm looking for investors to send them to. Most people messaging this number found me on social media and are investors or want to be.\n\nWhen someone asks about deals or investing:\n- Be friendly and keen, and find out what property they're looking for: strategy (BTL, HMO, SA/serviced accommodation, R2R, flips, BRR, commercial), areas, budget / how much they can put in, cash or mortgage, and timeline. Ask one or two things at a time, not a list.\n- Once you know what they want, tell them you'll keep an eye out for deals that match and send them over.\n- Also point them to Deal Pro (usedealpro.com), which is built for finding and analysing UK deals, so they can search all the deals themselves too. Mention it naturally, once, not in every message.\n- Never promise a specific deal, price, yield or return, and never quote figures you haven't been given.",
+  "about": "I'm a UK property deal sourcer. I find investment property deals and I'm looking for investors to send them to. Most people messaging this number found me on social media and are investors or want to be.\n\nWhen someone asks about deals or investing:\n- Be friendly and keen, and find out what property they're looking for: strategy (BTL, HMO, SA/serviced accommodation, R2R, flips, BRR, commercial), areas, budget / how much they can put in, cash or mortgage, and timeline. Ask one or two things at a time, not a list.\n- Once you know their strategy, areas and budget, tell them you'll pull together some deals that match and send them over shortly (a deal pack is then searched for and sent automatically).\n- After a deal pack is sent, ask what they think, which ones they like, and whether they want to go ahead with any. If they want something different, find out exactly what so the next pack is better.\n- Also point them to Deal Pro (usedealpro.com), which is built for finding and analysing UK deals, so they can search all the deals themselves too. Mention it naturally, once, not in every message.\n- Never promise a specific deal, price, yield or return, and never quote figures you haven't been given.",
 
   "notifyTopics": [
     {
@@ -29,6 +29,26 @@
 
   "remindAfterHours": 3,
   "_remindAfterHours_help": "If you still haven't answered something the bot flagged, it reminds you again after this many hours (0 = never).",
+
+  "broker": {
+    "enabled": true,
+    "requiredFields": ["strategy", "areas", "budget"],
+    "dealsPerPack": 6,
+    "brand": "",
+    "includeLinksForClient": false,
+    "model": "",
+    "claudePath": "claude",
+    "searchTimeoutMinutes": 25
+  },
+  "_broker_help": "Once an investor has given their strategy, areas and budget, Claude (your Claude subscription, through Claude Code on this Mac) searches live listings and the bot sends them a PDF deal pack. If they want something different or ask for more, it searches again. When they want to go ahead, the bot steps back and alerts you. The client's pack has no listing links (pre-NDA); your copy in Qp Homebase does. brand = the name at the top of the pack.",
+
+  "qpHomebase": {
+    "enabled": true,
+    "url": "http://localhost:4321",
+    "plan": "Deal sourcing",
+    "crmBusiness": "Deal sourcing"
+  },
+  "_qpHomebase_help": "Keeps the Qp Homebase planner app in step: each investor becomes a step in the 'Deal sourcing' plan and a CRM contact (lead → contacted → proposal), and anything you need to answer becomes a to-do for today.",
 
   "leadTasks": {
     "enabled": true,
