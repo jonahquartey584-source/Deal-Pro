@@ -38,25 +38,27 @@ You can change the business details, the topics it leaves to you, and the reply 
 
 1. **Create the homebase chat.** In WhatsApp, create a group called **Qp Homebase**. If you're running both numbers, put both numbers in it. The bot finds it by name.
 2. **Install Node.js 20 or newer** from https://nodejs.org (the LTS download).
-3. **Get a Claude API key** at https://platform.claude.com (Settings → API keys).
+3. **Have your OpenAI API key ready.** You can use the same key as Deal Pro. You'll find it at https://platform.openai.com/api-keys.
 
 ## Install (one time)
 
 In **Terminal**:
 
 ```bash
-git clone --depth 1 -b claude/keen-cerf-1ok1pd https://github.com/jonahquartey584-source/Deal-Pro.git /tmp/wa-download && cp -R /tmp/wa-download/whatsapp-bot ~/whatsapp-bot && rm -rf /tmp/wa-download
+curl -L -o /tmp/wa.zip https://codeload.github.com/jonahquartey584-source/Deal-Pro/zip/refs/heads/claude/keen-cerf-1ok1pd && unzip -q -o /tmp/wa.zip -d /tmp/wa-unzip && cp -R /tmp/wa-unzip/Deal-Pro-claude-keen-cerf-1ok1pd/whatsapp-bot ~/whatsapp-bot && echo "Downloaded to ~/whatsapp-bot"
 ```
+
+This downloads the project (about 65 MB, because the site's videos come with it) and keeps only the bot.
 
 ```bash
 cd ~/whatsapp-bot && npm install
 ```
 
 ```bash
-echo 'export ANTHROPIC_API_KEY="paste-your-key-here"' >> ~/.zshrc && source ~/.zshrc
+echo 'export OPENAI_API_KEY="paste-your-key-here"' >> ~/.zshrc && source ~/.zshrc
 ```
 
-If you installed an earlier version, delete `~/whatsapp-bot` first and run these again. Your old settings won't carry over.
+If you installed an earlier version, move the old `whatsapp-bot` folder (in your home folder) to the Bin first, then run these again. Your old settings won't carry over.
 
 ## Link the business number
 
@@ -125,7 +127,7 @@ If both numbers are linked, each bot only listens to its own number. Answer busi
 
 ## Files that stay on your Mac
 
-Nothing here is uploaded to GitHub. Chat text only leaves the Mac when it's sent to Claude to learn your style or write a reply.
+Nothing here is uploaded to GitHub. Chat text only leaves the Mac when it's sent to OpenAI to learn your style or write a reply.
 
 - Settings: `config*.json`
 - Learned style: `style*.json`
