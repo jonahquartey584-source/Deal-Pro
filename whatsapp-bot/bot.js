@@ -112,9 +112,14 @@ async function botSend(chat, rawText) {
 }
 
 /** Post an alert in homebase that you can answer by replying (swipe-reply) to it. */
-async function alert(chatId, name, body, picture) {
+async function alert(chatId, name, body, picture, extra = {}) {
   const n = alertNo++;
-  const text = `${body}\n\n_Reply to this message to answer ${name}, or send !reply ${n} <text>. !done ${n} lets the bot carry on._`;
+  const footer = extra.draft
+    ? extra.draft.length
+      ? `_Reply ✅ to this message to send the draft, or reply with your own words to send those instead. !skip ${n} to send nothing._`
+      : `_Reply to this message with what to send ${name}, or !skip ${n} to send nothing._`
+    : `_Reply to this message to answer ${name}, or send !reply ${n} <text>. !done ${n} lets the bot carry on._`;
+  const text = `${body}\n\n${footer}`;
   let sent;
   if (picture && (homebaseId || myId)) {
     sent = await client.sendMessage(homebaseId || myId, picture, { caption: `${BOT_TAG} ${text}` }).catch((err) => {
@@ -123,10 +128,34 @@ async function alert(chatId, name, body, picture) {
     });
   }
   sent ??= await tellMe(text);
-  const target = { chatId, name };
+  const target = { chatId, name, n, ...extra };
   alertsByNo.set(n, target);
   if (sent?.id?._serialized) alerts.set(sent.id._serialized, target);
+  return n;
 }
+
+/** Business number, approval mode: post a drafted reply to Qp Homebase and send nothing until you approve it. */
+const awaitingApproval = new Set(); // chats with a draft waiting for you (so the planner gets one to-do, not many)
+async function askApproval(chatId, person, result, recent, latest) {
+  const draft = result?.action === 'reply' ? result.messages.map((m) => m.trim()).filter(Boolean) : [];
+  // A newer message replaces any older draft for this chat, so a stale reply can't be sent.
+  for (const t of alertsByNo.values()) if (t.chatId === chatId && t.draft && !t.handled) Object.assign(t, { handled: true, superseded: true });
+  const why = result?.action === 'hold' ? `\n_(${result.reason || 'needs you'})_` : '';
+  const picture = await chatPicture(person, recent, 'Waiting for your approval');
+  await alert(
+    chatId,
+    person.name,
+    `✋ *Approve reply to ${person.name}*\n\n"${clip(latest, 300)}"\n\n${draft.length ? `*Draft:*\n${draft.join('\n')}` : '*No draft* — this one needs you.'}${why}`,
+    picture,
+    { draft },
+  );
+  if (!awaitingApproval.has(chatId)) {
+    awaitingApproval.add(chatId);
+    await homebase.addTodo(`Approve reply to ${person.name} (WhatsApp)`);
+  }
+}
+
+const APPROVE = /^(✅|👍|ok(ay)?|yes|y|send( it)?|approve(d)?|go)\W*$/i;
 
 /** A WhatsApp-style picture of the recent conversation, or null if pictures are off or it fails. */
 async function chatPicture(person, recent, subtitle) {
@@ -488,8 +517,17 @@ async function onIncoming(msg) {
 
   // Wait before replying (a set time after their latest message, or a short random pause),
   // so a burst of messages gets one reply, like a person would.
-  const delay = config.replyAfterMinutes ? config.replyAfterMinutes * 60_000 : rand(config.replyDelaySeconds ?? [10, 40]);
-  scheduleReply(chatId, { dueAt: Date.now() + delay, name, number: contact.number || msg.from });
+  // Approval mode (business number): a new number, or a deal sourcing lead already handled
+  // automatically, is answered almost straight away; anything else is drafted for you quickly.
+  const isNew = !contact.isMyContact;
+  let delay;
+  if (config.approval?.enabled) {
+    const instant = isNew || leads[chatId]?.auto;
+    delay = rand(instant ? config.approval.instantDelaySeconds ?? [3, 8] : config.approval.draftDelaySeconds ?? [5, 15]);
+  } else {
+    delay = config.replyAfterMinutes ? config.replyAfterMinutes * 60_000 : rand(config.replyDelaySeconds ?? [10, 40]);
+  }
+  scheduleReply(chatId, { dueAt: Date.now() + delay, name, number: contact.number || msg.from, isNew });
 }
 
 function scheduleReply(chatId, entry) {
@@ -504,7 +542,7 @@ function scheduleReply(chatId, entry) {
       saveJson(paths.schedule, schedule);
       try {
         const chat = await client.getChatById(chatId);
-        await handleChat(chat, { name: entry.name, number: entry.number });
+        await handleChat(chat, { name: entry.name, number: entry.number, isNew: entry.isNew });
       } catch (err) {
         console.error('Error replying:', err);
       }
@@ -567,6 +605,16 @@ async function handleChat(chat, person) {
     await homebase.addTodo(`Respond to ${person.name} about ${about}`);
     remindLater(chatId, person.name, about);
     return;
+  }
+
+  if (config.approval?.enabled) {
+    // Only deal sourcing chats with new numbers run by themselves; everything else waits for you.
+    const auto = leads[chatId]?.auto || (person.isNew && result?.isDealSourcing);
+    if (!auto) return askApproval(chatId, person, result, recent, latest);
+    if (leads[chatId] && !leads[chatId].auto) {
+      leads[chatId].auto = true;
+      saveJson(paths.leads, leads);
+    }
   }
 
   if (!result || result.action === 'hold' || !result.messages?.length) {
@@ -635,18 +683,32 @@ async function onMine(msg) {
 async function answer(target, rawText) {
   const text = rawText.trim();
   if (!text) return;
+  if (target.handled) return tellMe(target.superseded ? `${target.name} has sent more since — reply to the newer draft instead.` : `That one for ${target.name} has already been dealt with.`);
   const chat = await client.getChatById(target.chatId);
-  botSends.add(`${target.chatId}|${text}`);
-  await chat.sendMessage(text);
+  const approved = target.draft?.length && APPROVE.test(text);
+  const toSend = approved ? target.draft : [text];
+  for (const [i, m] of toSend.entries()) {
+    if (i > 0) await sleep(rand([1, 3]));
+    botSends.add(`${target.chatId}|${m}`);
+    await chat.sendMessage(m);
+  }
+  if (target.draft) {
+    target.handled = true;
+    awaitingApproval.delete(target.chatId);
+  }
   waitingOnYou.delete(target.chatId);
   clearTimeout(reminders.get(target.chatId));
-  addSample(style, target.chatId, chat.name, { them: lastFromThem.get(target.chatId) ?? null, me: text });
-  saveStyleSoon();
-  await tellMe(`Sent to ${target.name}.`);
+  if (!approved) {
+    addSample(style, target.chatId, chat.name, { them: lastFromThem.get(target.chatId) ?? null, me: text });
+    saveStyleSoon();
+  }
+  await tellMe(`${approved ? 'Draft approved and sent' : 'Sent'} to ${target.name}.`);
 }
 
 const HELP = `Commands (send them here):
-Reply to any alert (swipe right on it) to answer that person.
+Reply to any alert (swipe right on it) to answer that person. On a draft, reply ✅ to send it as written.
+!send N – send draft N as written
+!skip N – send nothing for alert N
 !reply N text – answer alert N
 !done N – you've dealt with alert N, the bot can carry on in that chat
 !exclude Name or +44… – never auto-reply to this person (their messages come here)
@@ -675,6 +737,18 @@ async function handleCommand(body) {
       const target = alertsByNo.get(n);
       if (!target) return tellMe(`No alert #${rest[0] ?? ''}.`);
       return answer(target, rest.slice(1).join(' '));
+    }
+    case '!send': {
+      const target = alertsByNo.get(n);
+      if (!target?.draft?.length) return tellMe(`No draft #${rest[0] ?? ''} to send.`);
+      return answer(target, '✅');
+    }
+    case '!skip': {
+      const target = alertsByNo.get(n);
+      if (!target) return tellMe(`No alert #${rest[0] ?? ''}.`);
+      target.handled = true;
+      awaitingApproval.delete(target.chatId);
+      return tellMe(`OK, nothing sent to ${target.name}.`);
     }
     case '!done': {
       const target = alertsByNo.get(n);

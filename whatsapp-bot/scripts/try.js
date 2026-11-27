@@ -33,6 +33,7 @@ console.log('Commands: /new = start a new conversation, /quit = stop.\n');
 const rl = readline.createInterface({ input, output });
 let history = [];
 let searchedKey = null;
+let autoChat = false; // practice chats act like a new number
 let packs = [];
 const packFile = path.join(here, 'practice-deal-pack.pdf');
 for (;;) {
@@ -47,6 +48,7 @@ for (;;) {
   if (text === '/new') {
     history = [];
     searchedKey = null;
+    autoChat = false;
     packs = [];
     console.log('— new conversation —\n');
     continue;
@@ -73,7 +75,14 @@ for (;;) {
     console.log('   (the AI declined to answer)\n');
     continue;
   }
-  const wait = config.replyAfterMinutes ? ` (real bot waits ${config.replyAfterMinutes} min first)` : '';
+  const wait = config.approval?.enabled ? '' : config.replyAfterMinutes ? ` (real bot waits ${config.replyAfterMinutes} min first)` : '';
+  if (config.approval?.enabled && r.action !== 'notify') {
+    const auto = autoChat || r.isDealSourcing;
+    if (auto) autoChat = true;
+    console.log(auto
+      ? '   ⚡ Deal sourcing from a new number → the real bot replies instantly, by itself.'
+      : '   ✋ Not deal sourcing → the real bot sends this as a DRAFT to Qp Homebase and waits for your ✅.');
+  }
   if (r.action === 'reply') {
     for (const m of r.messages) {
       console.log(`YOU (bot) › ${m}`);

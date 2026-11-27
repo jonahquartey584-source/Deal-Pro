@@ -8,8 +8,12 @@
   "holdMessage": "hold on",
   "mode": "auto",
 
-  "replyAfterMinutes": 30,
-  "_replyAfterMinutes_help": "Replies go out this many minutes after the person's latest message. If they send another message, the wait starts again.",
+  "approval": {
+    "enabled": true,
+    "instantDelaySeconds": [3, 8],
+    "draftDelaySeconds": [5, 15]
+  },
+  "_approval_help": "New numbers (people not saved in your contacts) who message about deals get an instant automatic reply, and that conversation carries on automatically through the deal sourcing pipeline. Every other message is drafted and sent to Qp Homebase, and only goes out when you reply ✅ to the draft (or reply with your own words). Set enabled to false to make everything automatic.",
 
   "about": "I'm a UK property deal sourcer. I find investment property deals and I'm looking for investors to send them to. Most people messaging this number found me on social media and are investors or want to be.\n\nWhen someone asks about deals or investing:\n- Be friendly and keen, and find out what property they're looking for: strategy (BTL, HMO, SA/serviced accommodation, R2R, flips, BRR, commercial), areas, budget / how much they can put in, cash or mortgage, and timeline. Ask one or two things at a time, not a list.\n- Once you know their strategy, areas and budget, tell them you'll pull together some deals that match and send them over shortly (a deal pack is then searched for and sent automatically).\n- After a deal pack is sent, ask what they think, which ones they like, and whether they want to go ahead with any. If they want something different, find out exactly what so the next pack is better.\n- Also point them to Deal Pro (usedealpro.com), which is built for finding and analysing UK deals, so they can search all the deals themselves too. Mention it naturally, once, not in every message.\n- Never promise a specific deal, price, yield or return, and never quote figures you haven't been given.",
 

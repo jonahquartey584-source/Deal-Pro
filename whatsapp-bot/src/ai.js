@@ -92,6 +92,10 @@ const REPLY_SCHEMA = {
       required: ['isLead', ...LEAD_FIELDS],
       additionalProperties: false,
     },
+    isDealSourcing: {
+      type: 'boolean',
+      description: 'true if this conversation is about property deals, investing or deal sourcing (someone who might want deals or invest); false for anything else (personal, other business, spam, general chat).',
+    },
     dealIntent: {
       type: 'string',
       enum: ['none', 'more', 'proceed'],
@@ -99,7 +103,7 @@ const REPLY_SCHEMA = {
     },
     proceedWith: { type: 'string', description: 'For "proceed": which deal they want, in a few words. Otherwise empty.' },
   },
-  required: ['action', 'messages', 'reason', 'topic', 'about', 'suggestedReply', 'lead', 'dealIntent', 'proceedWith'],
+  required: ['action', 'messages', 'reason', 'topic', 'about', 'suggestedReply', 'lead', 'isDealSourcing', 'dealIntent', 'proceedWith'],
   additionalProperties: false,
 };
 

@@ -25,7 +25,11 @@ Each number runs as its own **profile**, with its own login, settings and learne
 
 This is how the bot handles steps 2–8 of your business system:
 
-1. **Replies 30 minutes later.** Replies go out half an hour after the person's latest message, and the wait restarts if they send another. Waiting replies survive a restart of the bot.
+1. **Instant replies for new investors only.** If a **new number** (someone not saved in your contacts) messages about deals, the bot answers within seconds and handles the whole conversation by itself.
+   - **Every other message goes to Qp Homebase first.** That covers saved contacts and anything that isn't deal sourcing. The bot drafts a reply and posts it with a picture of the chat (✋ *Approve reply to …*), and nothing is sent until you approve.
+   - **To approve:** swipe-reply ✅ to the draft (or `!send N`) to send it as written.
+   - **To change it:** swipe-reply with your own words to send those instead.
+   - **To skip:** `!skip N` sends nothing.
 2. **Collects their criteria.** It talks as you, a deal sourcer looking for investors. It asks about strategy (BTL, HMO, SA, R2R, flips…), areas, budget, cash or mortgage, and timeline, and mentions **Deal Pro (usedealpro.com)** once.
 3. **Searches with Claude.** Once it has strategy, areas and budget, **Claude** searches live UK listings. This runs through Claude Code on your Mac, using your Claude subscription. Claude opens each listing to check it's still available and works out the key figures.
 4. **Sends a deal pack.** The client gets a short message in your style plus a **PDF deal pack**. Their copy has no listing links or addresses (pre-NDA). Your copy, with links, goes to the Qp Homebase group.
@@ -167,6 +171,8 @@ This version also fixes two problems on the bot's side:
 | --- | --- |
 | *swipe-reply to an alert* | Send your answer to that person |
 | `!reply 4 your text` | Same, using the alert number |
+| *swipe-reply ✅ to a draft* / `!send 4` | Approve a draft and send it as written |
+| `!skip 4` | Send nothing for that alert |
 | `!done 4` | You've dealt with it; the bot can carry on in that chat |
 | `!exclude Name` / `!include Name` | Stop / restart auto-replies for someone (a saved name or a number) |
 | `!excluded` | List excluded and blocked people |
